@@ -103,18 +103,11 @@ private fun IslandChallengeFrame(
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
-                        Text(
-                            "KUMSAL KOYU  ·  GÖREV $currentStep / 5",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp,
-                            color = SayiAviColors.GoldBright
-                        )
-                        LinearProgressIndicator(
-                            progress = { currentStep / 5f },
-                            modifier = Modifier.fillMaxWidth().height(6.dp),
-                            color = SayiAviColors.EmeraldGreen,
-                            trackColor = SayiAviColors.OceanBlue.copy(alpha = 0.45f)
+                        AdventureSectionProgress(
+                            label = "KUMSAL KOYU · GÖREV",
+                            completed = currentStep,
+                            total = 5,
+                            accent = SayiAviColors.GoldBright
                         )
                     }
                 }
@@ -274,9 +267,11 @@ fun ShellGroupingScreen(
                                 }
                             }
                         }
-                        if (feedback.isNotBlank()) Text(feedback,
-                            fontSize = 13.sp, color = SayiAviColors.TextNavy,
-                            fontWeight = FontWeight.Medium)
+                        AdventureFeedbackBanner(
+                            message = feedback,
+                            positive = isCorrect,
+                            modifier = Modifier.fillMaxWidth()
+                        )
                         if (!isCorrect && !showHint) {
                             TextButton(onClick = { showHint = true; onHintShown() }) {
                                 Text("💡 İpucu Göster", color = SayiAviColors.OceanBlue)
@@ -395,16 +390,11 @@ fun TreasureSealScreen(
                         }
                     }
                 }
-                AnimatedVisibility(visible = feedback.isNotEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isCorrect) SayiAviColors.EmeraldGreen.copy(alpha = 0.15f)
-                            else SayiAviColors.CoralRed.copy(alpha = 0.12f)
-                    ) {
-                        Text(feedback, modifier = Modifier.fillMaxWidth().padding(12.dp),
-                            color = SayiAviColors.TextNavy, fontSize = 13.sp)
-                    }
-                }
+                AdventureFeedbackBanner(
+                    message = feedback,
+                    positive = isCorrect,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 if (!isCorrect && !showHint) {
                     TextButton(onClick = { showHint = true; onHintShown() }) {
                         Text("💡 Bir İpucu Al", color = SayiAviColors.OceanBlue)

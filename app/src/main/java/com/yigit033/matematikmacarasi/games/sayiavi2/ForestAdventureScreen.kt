@@ -3,6 +3,7 @@ package com.yigit033.matematikmacarasi.games.sayiavi2
 import android.media.MediaPlayer
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
@@ -45,6 +46,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -102,6 +105,8 @@ fun ForestAdventureScreen(
     onExit: () -> Unit
 ) {
     val context = LocalContext.current
+    val haptics = LocalHapticFeedback.current
+    var lastActionPositive by remember { mutableStateOf(true) }
     var run by remember { mutableStateOf(store.load()) }
     var message by remember { mutableStateOf("") }
     var showExit by remember { mutableStateOf(false) }
@@ -117,6 +122,8 @@ fun ForestAdventureScreen(
         }
     }
     fun play(correct: Boolean) {
+        lastActionPositive = correct
+        if (correct) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         runCatching {
             (if (correct) soundCorrect else soundWrong)?.apply { seekTo(0); start() }
         }
@@ -150,7 +157,6 @@ fun ForestAdventureScreen(
         ForestStage.ROOTS -> 3
         ForestStage.SUMMARY -> 4
     }
-    val progress by animateFloatAsState(targetValue = stepsDone / 4f, label = "Orman ilerlemesi")
     Box(modifier = Modifier.fillMaxSize().background(ForestPalette.Night)) {
         ForestBackground()
         Column(
@@ -197,18 +203,12 @@ fun ForestAdventureScreen(
             ) {
                 Column(modifier = Modifier.padding(13.dp),
                     verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("ORMAN KEŞİF ROTASI", fontSize = 11.sp,
-                            letterSpacing = 1.sp, fontWeight = FontWeight.Bold,
-                            color = ForestPalette.Gold)
-                        Text("$stepsDone / 4", fontSize = 12.sp,
-                            color = ForestPalette.Cream)
-                    }
-                    LinearProgressIndicator(progress = { progress },
-                        color = ForestPalette.Gold,
-                        trackColor = ForestPalette.Teal,
-                        modifier = Modifier.fillMaxWidth().height(7.dp))
+                    AdventureSectionProgress(
+                        label = "ORMAN KEŞİF ROTASI",
+                        completed = stepsDone,
+                        total = 4,
+                        accent = ForestPalette.Gold
+                    )
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         listOf("Köprü", "Yaprak", "Patika", "Ağaç").forEachIndexed { i, title ->
                             Text(title, fontSize = 11.sp,
@@ -262,12 +262,14 @@ fun ForestAdventureScreen(
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         modifier = Modifier.fillMaxWidth()) {
                                         repeat(4) { slot ->
+                                            val plankColor by animateColorAsState(
+                                                targetValue = if (slot < filled) Color(0xFFB77B3F)
+                                                    else Color(0xFFDCE4CE),
+                                                label = "Kütük yerleştirme"
+                                            )
                                             Box(
                                                 modifier = Modifier.weight(1f).height(42.dp)
-                                                    .background(
-                                                        if (slot < filled) Color(0xFFB77B3F) else Color(0xFFDCE4CE),
-                                                        RoundedCornerShape(8.dp)
-                                                    )
+                                                    .background(plankColor, RoundedCornerShape(8.dp))
                                                     .border(1.dp, ForestPalette.Teal.copy(alpha = .45f),
                                                         RoundedCornerShape(8.dp)),
                                                 contentAlignment = Alignment.Center
@@ -528,17 +530,11 @@ fun ForestAdventureScreen(
                         }
                     }
                 }
-                AnimatedVisibility(visible = message.isNotBlank()) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().animateContentSize(),
-                        color = ForestPalette.Dark,
-                        shape = RoundedCornerShape(13.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, ForestPalette.Gold)
-                    ) {
-                        Text(message, modifier = Modifier.padding(14.dp),
-                            color = ForestPalette.Cream, fontSize = 13.sp)
-                    }
-                }
+                AdventureFeedbackBanner(
+                    message = message,
+                    positive = lastActionPositive,
+                    modifier = Modifier.fillMaxWidth()
+                )
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }

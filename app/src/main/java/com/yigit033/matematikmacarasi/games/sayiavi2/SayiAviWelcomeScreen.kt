@@ -1,17 +1,26 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import androidx.compose.animation.core.EaseInOutSine
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,31 +29,42 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 
 /**
- * Sayı Avı 2.0 Karşılama ve Bölge Seçim Ekranı.
- * Bölge 1 Kumsal Koyu ve Bölge 2 Gizemli Orman oynanabilir;
- * Antik Tapınak mevcut değilken sahte tıklanabilir alan sunulmaz.
+ * S2.3 Macera Atlası: yalnızca ilk iki bölge oynanabilir.
+ * Compose çizimleri görseldir; yıldız, checkpoint ve Premium kuralları ekran tarafından değiştirilmez.
  */
 @Composable
 fun SayiAviWelcomeScreen(
@@ -57,296 +77,310 @@ fun SayiAviWelcomeScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SayiAviColors.OceanDeep)
-    ) {
-        // Arka Plan Sahnesi
+    val completedRegions = listOf(isCompletedBefore, forestCompleted).count { it }
+    Box(modifier = modifier.fillMaxSize().background(AdventureTokens.Night)) {
         Image(
-            painter = painterResource(id = R.drawable.island_explorer_hero),
+            painter = painterResource(R.drawable.island_explorer_hero),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-
-        // Karartma Perdesi
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    androidx.compose.ui.graphics.Brush.verticalGradient(
-                        listOf(
-                            Color.Black.copy(alpha = 0.55f),
-                            Color.Black.copy(alpha = 0.25f),
-                            Color.Black.copy(alpha = 0.70f)
-                        )
-                    )
+        Box(modifier = Modifier.fillMaxSize().background(
+            Brush.verticalGradient(
+                listOf(
+                    AdventureTokens.Night.copy(alpha = .89f),
+                    Color(0xFF08404D).copy(alpha = .78f),
+                    AdventureTokens.Night.copy(alpha = .96f)
                 )
-        )
+            )
+        ))
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(15.dp)
         ) {
-            // Üst Çubuk
             SayiAviTopBar(
                 title = "Sayı Avcıları",
-                stageSubtitle = "Bölge Seçimi",
+                stageSubtitle = "Macera Atlası",
                 currentStageNumber = 0,
                 mapPiecesCollected = if (isCompletedBefore) 2 else 0,
                 starsCount = starsCount,
                 onBackClick = onBackClick
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Başlık & Hoş Geldin Kartı
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Surface(
-                    color = SayiAviColors.OceanNavy.copy(alpha = 0.90f),
-                    shape = RoundedCornerShape(20.dp),
-                    border = androidx.compose.foundation.BorderStroke(2.dp, SayiAviColors.GoldBorder),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFF102D40).copy(alpha = .94f),
+                    shape = RoundedCornerShape(22.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp,
+                        AdventureTokens.Gold.copy(alpha = .55f))
                 ) {
-                    Column(modifier = Modifier.padding(18.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.treasure_map_art),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .border(1.5.dp, SayiAviColors.GoldBorder, RoundedCornerShape(12.dp))
-                            )
-                            Spacer(modifier = Modifier.width(14.dp))
-                            Column {
-                                Text(
-                                    text = "Kayıp Hazine Macerası",
-                                    fontSize = 19.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    color = SayiAviColors.TextWhite
-                                )
-                                Text(
-                                    text = "İki oynanabilir bölge: 3'er ve 4'er sayma",
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = SayiAviColors.SkyLightBlue
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
+                    Column(modifier = Modifier.padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        Text("BÜYÜK MACERA · DÜNYA 01", fontSize = 11.sp,
+                            fontWeight = FontWeight.ExtraBold, letterSpacing = 1.4.sp,
+                            color = AdventureTokens.Gold)
+                        Text("Kayıp Haritanın İzinde", fontSize = 24.sp,
+                            fontWeight = FontWeight.Black, lineHeight = 28.sp,
+                            color = AdventureTokens.Cream)
                         Text(
-                            text = "Gizemli adanın hazinesini bulmak için 5 farklı görevi tamamla: Kabukları üçerli grupla, Sayı Tahtasını çöz, Şifre Kasasını aç, Hazine Rotasını keşfet ve Hazine Mührünü tamamla!",
-                            fontSize = 13.sp,
-                            color = Color(0xFFE2E8F0),
-                            lineHeight = 18.sp
+                            "Kumsal Koyu'nda üçer, Gizemli Orman'da dörder sayarak " +
+                                "haritanın sırlarını keşfet. İstediğin açık bölgeden başlayabilirsin.",
+                            fontSize = 13.sp, lineHeight = 19.sp,
+                            color = Color(0xFFE0ECF0)
                         )
-
-                        if (isCompletedBefore) {
-                            Spacer(modifier = Modifier.height(10.dp))
-                            Surface(
-                                color = SayiAviColors.EmeraldGreen.copy(alpha = 0.20f),
-                                shape = RoundedCornerShape(10.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, SayiAviColors.EmeraldGreen)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Star,
-                                        contentDescription = null,
-                                        tint = SayiAviColors.GoldBright,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = "Bu ada tamamlandı! ($totalCompletions kez tamamlandı)",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = SayiAviColors.EmeraldGreen
-                                    )
-                                }
-                            }
-                        }
+                        AdventureSectionProgress(
+                            label = "Tamamlanan bölgeler",
+                            completed = completedRegions,
+                            total = 2,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("KEŞİF HARİTASI", fontSize = 12.sp, letterSpacing = 1.2.sp,
+                        fontWeight = FontWeight.ExtraBold, color = AdventureTokens.Gold)
+                    Text("2 BÖLGE AÇIK", fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold, color = Color(0xFFBEE6DA))
+                }
 
-                // Bölge Listesi Başlığı
+                AdventureWorldMap(
+                    beachCompleted = isCompletedBefore,
+                    forestCompleted = forestCompleted,
+                    onBeachClick = onStartRegion1,
+                    onForestClick = onStartRegion2
+                )
+
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = AdventureTokens.Night.copy(alpha = .92f),
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp,
+                        AdventureTokens.Gold.copy(alpha = .35f))
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.treasure_map_art),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(51.dp).clip(RoundedCornerShape(12.dp))
+                        )
+                        Column(modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Sıradaki keşfin", fontSize = 12.sp,
+                                color = AdventureTokens.Gold, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = when {
+                                    !isCompletedBefore -> "Kumsal Koyu · 5 oyun görevi"
+                                    !forestCompleted -> "Gizemli Orman · 4 oyun görevi"
+                                    else -> "İki bölge tamamlandı · Tekrar keşfet"
+                                },
+                                fontSize = 13.sp, color = AdventureTokens.Cream,
+                                fontWeight = FontWeight.Medium
+                            )
+                            if (isCompletedBefore) Text(
+                                "Kumsal Koyu toplam bitirme: $totalCompletions",
+                                fontSize = 11.sp, color = Color(0xFFB6D3DB)
+                            )
+                        }
+                    }
+                }
                 Text(
-                    text = "KEŞİF BÖLGELERİ",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = SayiAviColors.GoldBright,
-                    letterSpacing = 1.sp
+                    "Antik Tapınak geliştirme aşamasında. Kilitli olması bir satın alma şartı değildir.",
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
+                    textAlign = TextAlign.Center,
+                    fontSize = 11.sp, lineHeight = 15.sp,
+                    color = Color(0xFFB5C6D0)
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // 1. Bölge: Kumsal Koyu (Açık ve Oynanabilir)
-                RegionCard(
-                    regionNumber = 1,
-                    title = "Kumsal Koyu",
-                    theme = "3'ün Katları & Kasa Şifresi",
-                    statusText = if (isCompletedBefore) "Tekrar Oyna ▶" else "Maceraya Başla ▶",
-                    isUnlocked = true,
-                    isCompleted = isCompletedBefore,
-                    nodeDrawableRes = R.drawable.island_node,
-                    onClick = onStartRegion1
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // 2. Bölge: Gizemli Orman — bağımsız kayıt ve dört oyun mekaniği.
-                RegionCard(
-                    regionNumber = 2,
-                    title = "Gizemli Orman",
-                    theme = "4'er Ritmik Sayma · Kütük Köprüsü",
-                    statusText = if (forestCompleted) "Yeniden Keşfet ▶" else "Ormana Gir ▶",
-                    isUnlocked = true,
-                    isCompleted = forestCompleted,
-                    nodeDrawableRes = R.drawable.forest_node,
-                    onClick = onStartRegion2
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-
-                // 3. Bölge: Antik Tapınak (Kilitli - Çok Yakında)
-                RegionCard(
-                    regionNumber = 3,
-                    title = "Antik Tapınak",
-                    theme = "Çarpım Tablosu Zirvesi",
-                    statusText = "Çok Yakında 🔒",
-                    isUnlocked = false,
-                    isCompleted = false,
-                    nodeDrawableRes = R.drawable.temple_node,
-                    onClick = {}
-                )
-
-                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
 
 @Composable
-private fun RegionCard(
-    regionNumber: Int,
-    title: String,
-    theme: String,
-    statusText: String,
-    isUnlocked: Boolean,
-    isCompleted: Boolean,
-    nodeDrawableRes: Int,
-    onClick: () -> Unit
+private fun AdventureWorldMap(
+    beachCompleted: Boolean,
+    forestCompleted: Boolean,
+    onBeachClick: () -> Unit,
+    onForestClick: () -> Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = isUnlocked, onClick = onClick)
-            .shadow(if (isUnlocked) 8.dp else 2.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isUnlocked) SayiAviColors.ParchmentLight else Color(0xFF1E293B).copy(alpha = 0.85f)
-        ),
-        border = androidx.compose.foundation.BorderStroke(
-            width = if (isUnlocked) 2.dp else 1.dp,
-            color = if (isUnlocked) SayiAviColors.GoldBorder else Color(0xFF475569)
-        )
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth().height(615.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .border(1.dp, AdventureTokens.Gold.copy(alpha = .5f),
+                RoundedCornerShape(24.dp))
+            .background(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF174F61), Color(0xFF145B59), Color(0xFF102E42))
+                )
+            )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Küçük Bölge Thumbnail
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(
-                        if (isUnlocked) SayiAviColors.SkyLightBlue.copy(alpha = 0.4f) else Color.DarkGray,
-                        RoundedCornerShape(12.dp)
-                    )
-                    .border(
-                        1.dp,
-                        if (isUnlocked) SayiAviColors.GoldBorder else Color.Gray,
-                        RoundedCornerShape(12.dp)
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = nodeDrawableRes),
-                    contentDescription = title,
-                    modifier = Modifier.size(52.dp),
-                    contentScale = ContentScale.Fit
-                )
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val w = size.width
+            val h = size.height
+            // Map land masses, water rings and soft depth cues.
+            drawCircle(Color(0xFF46917A).copy(alpha = .42f), radius = w * .40f,
+                center = Offset(w * .20f, h * .17f))
+            drawCircle(Color(0xFF348F79).copy(alpha = .49f), radius = w * .41f,
+                center = Offset(w * .86f, h * .52f))
+            drawCircle(Color(0xFF87785C).copy(alpha = .38f), radius = w * .34f,
+                center = Offset(w * .18f, h * .87f))
+            val route = Path().apply {
+                moveTo(w * .32f, h * .18f)
+                cubicTo(w * .90f, h * .29f, w * .05f, h * .40f, w * .68f, h * .52f)
+                cubicTo(w * .95f, h * .64f, w * .12f, h * .70f, w * .34f, h * .85f)
             }
+            drawPath(route, color = Color(0xFF0C3B42).copy(alpha = .85f),
+                style = Stroke(width = 11.dp.toPx(), cap = StrokeCap.Round))
+            drawPath(route, color = AdventureTokens.Gold.copy(alpha = .88f),
+                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round,
+                    pathEffect = PathEffect.dashPathEffect(
+                        floatArrayOf(10.dp.toPx(), 8.dp.toPx()))))
+            for (i in 0..17) {
+                val x = (i * 53 % 93 + 4) / 100f * w
+                val y = (i * 41 % 91 + 5) / 100f * h
+                drawCircle(color = Color.White.copy(alpha = .20f), radius = 2.2.dp.toPx(),
+                    center = Offset(x, y))
+            }
+        }
 
-            Spacer(modifier = Modifier.width(14.dp))
+        val size = (maxWidth - 18.dp).coerceAtMost(180.dp)
+        val xBeach = (maxWidth * .31f - size / 2).coerceIn(6.dp, maxWidth - size - 6.dp)
+        val xForest = (maxWidth * .69f - size / 2).coerceIn(6.dp, maxWidth - size - 6.dp)
+        val xTemple = (maxWidth * .34f - size / 2).coerceIn(6.dp, maxWidth - size - 6.dp)
 
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Bölge $regionNumber: $title",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isUnlocked) SayiAviColors.TextNavy else Color(0xFFCBD5E1)
-                    )
-                    if (isCompleted) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
-                            tint = SayiAviColors.GoldBright,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
+        AdventureMapNode(
+            number = 1, title = "Kumsal Koyu", topic = "Üçer sayma · 5 görev",
+            art = R.drawable.island_node, enabled = true,
+            finished = beachCompleted, onClick = onBeachClick,
+            modifier = Modifier.offset(xBeach, 32.dp).width(size)
+        )
+        AdventureMapNode(
+            number = 2, title = "Gizemli Orman", topic = "Dörder sayma · 4 görev",
+            art = R.drawable.forest_node, enabled = true,
+            finished = forestCompleted, onClick = onForestClick,
+            modifier = Modifier.offset(xForest, 236.dp).width(size)
+        )
+        AdventureMapNode(
+            number = 3, title = "Antik Tapınak", topic = "Geliştirme aşamasında",
+            art = R.drawable.temple_node, enabled = false,
+            finished = false, onClick = {},
+            modifier = Modifier.offset(xTemple, 442.dp).width(size)
+        )
+    }
+}
+
+@Composable
+private fun AdventureMapNode(
+    number: Int,
+    title: String,
+    topic: String,
+    art: Int,
+    enabled: Boolean,
+    finished: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val pulse by rememberInfiniteTransition(label = "Map island pulse").animateFloat(
+        initialValue = .99f, targetValue = 1.04f,
+        animationSpec = infiniteRepeatable(tween(1850, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse),
+        label = "Map active island"
+    )
+    Column(
+        modifier = modifier
+            .then(if (enabled) Modifier
+                .clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .semantics {
+                contentDescription = when {
+                    !enabled -> "$title, yakında, henüz oynanamaz"
+                    finished -> "$title, tamamlandı, yeniden oyna"
+                    else -> "$title, açık, oyna"
                 }
-
-                Text(
-                    text = theme,
-                    fontSize = 12.sp,
-                    color = if (isUnlocked) SayiAviColors.TextNavyMuted else Color(0xFF94A3B8)
-                )
-
-                Spacer(modifier = Modifier.height(6.dp))
-
-                Text(
-                    text = statusText,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = if (isUnlocked) SayiAviColors.EmeraldDark else Color(0xFF94A3B8)
-                )
+            },
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(112.dp)) {
+            Box(modifier = Modifier.size(108.dp)
+                .scale(if (enabled && !finished) pulse else 1f)
+                .background(
+                    color = if (finished) Color(0xFF4DDE9C).copy(alpha = .3f)
+                    else AdventureTokens.Gold.copy(alpha = if (enabled) .27f else .08f),
+                    shape = CircleShape
+                ))
+            Surface(
+                modifier = Modifier.size(98.dp).shadow(10.dp, CircleShape),
+                shape = CircleShape,
+                color = if (enabled) Color(0xFF12443F) else Color(0xFF293D40),
+                border = androidx.compose.foundation.BorderStroke(3.dp,
+                    if (finished) Color(0xFF75E3A6)
+                    else AdventureTokens.Gold.copy(alpha = if (enabled) .95f else .38f))
+            ) {
+                Image(painter = painterResource(art),
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                        .padding(6.dp)
+                        .then(if (enabled) Modifier else Modifier.scale(.84f)))
             }
-
-            if (!isUnlocked) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = "Kilitli",
-                    tint = Color(0xFF94A3B8),
-                    modifier = Modifier.size(24.dp)
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.PlayArrow,
-                    contentDescription = "Oyna",
-                    tint = SayiAviColors.EmeraldGreen,
-                    modifier = Modifier.size(28.dp)
+            Surface(
+                modifier = Modifier.align(Alignment.BottomEnd).size(30.dp),
+                shape = CircleShape,
+                color = if (finished) AdventureTokens.Emerald
+                    else if (enabled) AdventureTokens.Gold else Color(0xFF45505B),
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF102B38))
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (finished) Icon(Icons.Default.CheckCircle, null,
+                        tint = Color.White, modifier = Modifier.size(18.dp))
+                    else if (!enabled) Icon(Icons.Default.Lock, null,
+                        tint = Color.White, modifier = Modifier.size(16.dp))
+                    else Text("$number", fontSize = 13.sp,
+                        fontWeight = FontWeight.ExtraBold, color = AdventureTokens.Ink)
+                }
+            }
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = Color(0xFF0D2735).copy(alpha = if (enabled) .97f else .84f),
+            shape = RoundedCornerShape(14.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp,
+                if (enabled) AdventureTokens.Gold.copy(alpha = .7f)
+                else Color(0xFF70808B).copy(alpha = .4f))
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 7.dp, vertical = 9.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(title, color = AdventureTokens.Cream,
+                    fontSize = 14.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(topic, color = Color(0xFFB9D7DC),
+                    textAlign = TextAlign.Center, fontSize = 10.sp,
+                    maxLines = 2, lineHeight = 13.sp)
+                Text(
+                    text = if (!enabled) "ÇOK YAKINDA"
+                        else if (finished) "TEKRAR OYNA ▶" else "KEŞFET ▶",
+                    color = if (enabled) AdventureTokens.Gold else Color(0xFFA5B4BC),
+                    fontSize = 10.sp, fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = .6.sp
                 )
             }
         }
     }
 }
-

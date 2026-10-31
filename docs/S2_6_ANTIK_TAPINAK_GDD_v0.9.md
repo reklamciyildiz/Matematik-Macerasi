@@ -63,3 +63,21 @@ Tapınağın Matematik Macerası için gerçek değer önerisi *bir başka sayı
 - İlerleme ritüel geçişlerinde kalıcıdır; bitmemiş bir ritüelin kısmi dokunuşları kaydedilmez.
 - **Doğrulanmadı:** Android Gradle assemble/test, CI sonucu, TalkBack, fiziksel cihaz ve öğretmen/çocuk testleri. Bu kontroller geçmeden “release-ready” veya “sorunsuz” iddiasında bulunulmamalı.
 - **Kalan kalite işleri:** Premium sanat/animasyon seti, her ritüelde daha güçlü fiziksel manipülasyon, yanlış/ipucu/deneme telemetrisi ve sınıf bağımsız kişisel beceri raporuna temkinli entegrasyon, arayüz erişilebilirliği ve gerçek cihaz testleri.
+
+## S2.6 kalite denetimi — 2026-11-01
+
+Kod denetiminde uygulananlar:
+- Checkpoint geçişleri senkronize ve sıralı; geçerli seed olmadan aşama ilerletilemez.
+- Hatalı sayım, ipucu ve doğru hamleler yerel olarak kayıt altına alınır; dört ritüel ayrı özetlenir.
+- Mozaik ve denge düzenekleri görsel karo dizilimleri içerir; eş gruplama fiziksel paylaştırmaya dönüştürüldü.
+- Dörtlü adım ilerlemesi ile yeniden oynama, eski oyuncu yıldızlarından ve premium kimliklerinden bağımsızdır.
+- Küçük ekranda grup satırının taşması önlenmek üzere gruplar dikey yerleştirildi.
+
+**Yayın kapıları (henüz geçilmedi):**
+1. `./gradlew :app:testDebugUnitTest :app:assembleDebug` başarılı Android SDK ortamında çalışmalı.
+2. İkinci ve dördüncü odadaki fiziki etkileşimler ile görsel geri bildirim gerçek çocuk testinden geçmeli.
+3. Premium sanat varlıkları, animasyon ve ses tasarımı henüz nihai kaliteye ulaşmadı.
+4. Ağ kesilmesi, ekran döndürme, zorla kapatma ve yeniden açma, cihazın erişilebilirlik araçları ve ilk/tekrar oynama testleri yapılmalı.
+5. Eğitim ölçümünde her ritüelin yanlış/deneme bilgisi yalnızca gözlem olarak adlandırılmalı; MEB yeterlilik iddiasına dönüştürülmemeli.
+
+Bu nedenle **S2.6 yazılım iyileştirmeleri `main` üzerinde, S2.6 Final kabulü BEKLEMEDE**. GitHub'a push edilmesi tek başına release-ready anlamına gelmez.

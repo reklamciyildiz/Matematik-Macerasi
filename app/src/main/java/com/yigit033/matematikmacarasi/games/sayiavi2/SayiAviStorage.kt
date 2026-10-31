@@ -28,6 +28,9 @@ class SayiAviStorage private constructor(context: Context) {
         private const val RUN_START = "g2_run_start"
         private const val RUN_COUNTERS = "g2_run_counters"
         private const val ROUTE_STEP = "g2_route_step"
+        private const val GROUP_DONE = "g3_group_done"
+        private const val GROUP_PARTIAL = "g3_group_partial"
+        private const val SEAL_INDEX = "g3_seal_index"
         private const val LAST_SUMMARY = "g2_last_summary"
 
         @Volatile
@@ -106,6 +109,8 @@ class SayiAviStorage private constructor(context: Context) {
             .putBoolean(KEY_MAP_PIECE_1, false).putBoolean(KEY_MAP_PIECE_2, false)
             .putString(RUN_COUNTERS, SayiAviRunCounters().encode())
             .putInt(ROUTE_STEP, 0)
+            .putInt(GROUP_DONE, 0).putInt(GROUP_PARTIAL, 0)
+            .putInt(SEAL_INDEX, 0)
             .apply()
     }
 
@@ -114,6 +119,18 @@ class SayiAviStorage private constructor(context: Context) {
 
     fun saveRunCounters(value: SayiAviRunCounters) {
         prefs.edit().putString(RUN_COUNTERS, value.encode()).apply()
+    }
+
+    /** Yeni bölümlerde ara kayıt: kabuklar ile mühür sorusu kalınan yerden açılır. */
+    fun getFinishedGroups(): Int = prefs.getInt(GROUP_DONE, 0).coerceIn(0, 4)
+    fun getPartialShells(): Int = prefs.getInt(GROUP_PARTIAL, 0).coerceIn(0, 2)
+    fun saveGroupingProgress(groups: Int, partial: Int) {
+        prefs.edit().putInt(GROUP_DONE, groups.coerceIn(0, 4))
+            .putInt(GROUP_PARTIAL, partial.coerceIn(0, 2)).apply()
+    }
+    fun getSealQuestionIndex(): Int = prefs.getInt(SEAL_INDEX, 0).coerceIn(0, 2)
+    fun saveSealQuestionIndex(index: Int) {
+        prefs.edit().putInt(SEAL_INDEX, index.coerceIn(0, 2)).apply()
     }
 
     fun getRouteStep(): Int = prefs.getInt(ROUTE_STEP, 0).coerceIn(0, 4)
@@ -169,6 +186,7 @@ class SayiAviStorage private constructor(context: Context) {
             .putBoolean(KEY_MAP_PIECE_1, false)
             .putBoolean(KEY_MAP_PIECE_2, false)
             .putString(KEY_LAST_STAGE, "STAGE_A")
+            .putInt(GROUP_DONE, 0).putInt(GROUP_PARTIAL, 0).putInt(SEAL_INDEX, 0)
             .apply()
     }
 }

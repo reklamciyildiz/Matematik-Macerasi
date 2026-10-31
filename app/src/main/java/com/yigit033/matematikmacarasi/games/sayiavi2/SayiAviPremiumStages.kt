@@ -131,12 +131,17 @@ fun ShellGroupingScreen(
     starsCount: Int,
     onAttemptRecorded: (Boolean) -> Unit,
     onHintShown: () -> Unit,
+    initialFinishedGroups: Int,
+    initialPartialShells: Int,
+    onGroupingProgress: (Int, Int) -> Unit,
     onCompleted: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var finishedGroups by remember(data) { mutableIntStateOf(0) }
-    var partialShells by remember(data) { mutableIntStateOf(0) }
+    var finishedGroups by remember(data) { mutableIntStateOf(initialFinishedGroups.coerceIn(0, data.groups)) }
+    var partialShells by remember(data) {
+        mutableIntStateOf(if (initialFinishedGroups >= data.groups) 0 else initialPartialShells.coerceIn(0, 2))
+    }
     var isCorrect by remember(data) { mutableStateOf(false) }
     var showHint by remember(data) { mutableStateOf(false) }
     var feedback by remember(data) { mutableStateOf("") }
@@ -214,6 +219,7 @@ fun ShellGroupingScreen(
                                         finishedGroups++
                                         partialShells = 0
                                     } else partialShells = next
+                                    onGroupingProgress(finishedGroups, partialShells)
                                 }
                             },
                             modifier = Modifier.weight(1f).height(52.dp),
@@ -228,6 +234,7 @@ fun ShellGroupingScreen(
                                     finishedGroups--
                                     partialShells = 2
                                 }
+                                onGroupingProgress(finishedGroups, partialShells)
                             },
                             enabled = shellsCount > 0,
                             modifier = Modifier.weight(1f).height(52.dp),
@@ -302,12 +309,14 @@ fun TreasureSealScreen(
     starsCount: Int,
     onAttemptRecorded: (Boolean) -> Unit,
     onHintShown: () -> Unit,
+    initialQuestionIndex: Int,
+    onQuestionProgress: (Int) -> Unit,
     onCompleted: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     require(challenges.size == 3)
-    var questionIndex by remember(challenges) { mutableIntStateOf(0) }
+    var questionIndex by remember(challenges) { mutableIntStateOf(initialQuestionIndex.coerceIn(0, 2)) }
     var isCorrect by remember(challenges, questionIndex) { mutableStateOf(false) }
     var showHint by remember(challenges, questionIndex) { mutableStateOf(false) }
     var feedback by remember(challenges, questionIndex) { mutableStateOf("") }
@@ -411,7 +420,10 @@ fun TreasureSealScreen(
                                 advanced = true
                                 onCompleted()
                             }
-                        } else questionIndex++
+                        } else {
+                            questionIndex++
+                            onQuestionProgress(questionIndex)
+                        }
                     },
                     gradient = SayiAviColors.OrangeButtonGradient
                 )

@@ -192,6 +192,9 @@ fun SayiAvi2Screen(
                 starsCount = currentStars,
                 onAttemptRecorded = { correct -> attempt(4, correct) },
                 onHintShown = { hint() },
+                initialFinishedGroups = storage.getFinishedGroups(),
+                initialPartialShells = storage.getPartialShells(),
+                onGroupingProgress = { done, partial -> storage.saveGroupingProgress(done, partial) },
                 onCompleted = {
                     playCorrectSound()
                     storage.saveLastStage("STAGE_A")
@@ -261,6 +264,8 @@ fun SayiAvi2Screen(
                 starsCount = currentStars,
                 onAttemptRecorded = { correct -> attempt(5, correct) },
                 onHintShown = { hint() },
+                initialQuestionIndex = storage.getSealQuestionIndex(),
+                onQuestionProgress = { storage.saveSealQuestionIndex(it) },
                 onCompleted = {
                     if (!completionHandled) {
                         completionHandled = true

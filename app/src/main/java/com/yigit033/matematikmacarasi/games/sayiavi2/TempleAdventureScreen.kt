@@ -60,17 +60,28 @@ private class TempleCheckpoint(context: Context) {
     val attempts: Int get() = prefs.getInt("attempts", 0)
     val errors: Int get() = prefs.getInt("errors", 0)
     val hints: Int get() = prefs.getInt("hints", 0)
+    fun stageAttempts(index: Int): Int = prefs.getInt("ritual_${index}_attempts", 0)
+    fun stageErrors(index: Int): Int = prefs.getInt("ritual_${index}_errors", 0)
     @Synchronized fun record(correct: Boolean, hint: Boolean = false): Boolean {
         if (seed <= 0L || stage == 4) return false
         return prefs.edit()
             .putInt("attempts", attempts + if (hint) 0 else 1)
             .putInt("errors", errors + if (!correct && !hint) 1 else 0)
-            .putInt("hints", hints + if (hint) 1 else 0).commit()
+            .putInt("hints", hints + if (hint) 1 else 0)
+            .putInt("ritual_${stage}_attempts", stageAttempts(stage) + if (hint) 0 else 1)
+            .putInt("ritual_${stage}_errors", stageErrors(stage) + if (!correct && !hint) 1 else 0)
+            .commit()
     }
-    @Synchronized fun start(seed: Long, tier: LearningTier): Boolean =
-        prefs.edit().putLong("seed", seed).putString("tier", tier.name)
+    @Synchronized fun start(seed: Long, tier: LearningTier): Boolean {
+        val editor = prefs.edit().putLong("seed", seed).putString("tier", tier.name)
             .putInt("stage", 0).putInt("attempts", 0).putInt("errors", 0)
-            .putInt("hints", 0).commit()
+            .putInt("hints", 0)
+        repeat(4) { i ->
+            editor.putInt("ritual_${i}_attempts", 0)
+            editor.putInt("ritual_${i}_errors", 0)
+        }
+        return editor.commit()
+    }
     @Synchronized fun advance(next: Int): Boolean {
         val previous = stage
         if (seed <= 0 || next != previous + 1 || next !in 1..4) return false
@@ -157,7 +168,13 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                 else "Dört odada matematiksel düzenekleri çalıştır.",
                 color = Color.White, fontSize = 20.sp)
             Text("Tamamlanan keşifler: " + checkpoint.runs, color = Color.White)
-            if (stage == 4) Text("Bu tur: $attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFF9FE9DA))
+            if (stage == 4) {
+                Text("Bu tur: $attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFF9FE9DA))
+                names.forEachIndexed { index, title ->
+                    Text("$title: ${checkpoint.stageAttempts(index)} hamle, ${checkpoint.stageErrors(index)} yanlış", color = Color.White, fontSize = 12.sp)
+                }
+                Text("Bu veriler oyun içi gözlemdir; kalıcı öğrenme veya MEB kazanımı tamamlandı anlamına gelmez.", color = Color(0xFFB7DBE6), fontSize = 11.sp)
+            }
             Button(onClick = {
                 val now = System.currentTimeMillis().coerceAtLeast(seed + 1L).coerceAtLeast(1L)
                 if (checkpoint.start(now, tier)) {

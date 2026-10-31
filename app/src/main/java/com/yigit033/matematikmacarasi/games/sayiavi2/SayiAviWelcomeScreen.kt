@@ -218,7 +218,7 @@ private fun AdventureWorldMap(
     onForestClick: () -> Unit
 ) {
     BoxWithConstraints(
-        modifier = Modifier.fillMaxWidth().height(615.dp)
+        modifier = Modifier.fillMaxWidth().height(645.dp)
             .clip(RoundedCornerShape(24.dp))
             .border(1.dp, AdventureTokens.Gold.copy(alpha = .5f),
                 RoundedCornerShape(24.dp))
@@ -235,13 +235,13 @@ private fun AdventureWorldMap(
             drawCircle(Color(0xFF46917A).copy(alpha = .42f), radius = w * .40f,
                 center = Offset(w * .20f, h * .17f))
             drawCircle(Color(0xFF348F79).copy(alpha = .49f), radius = w * .41f,
-                center = Offset(w * .86f, h * .52f))
+                center = Offset(w * .86f, h * .47f))
             drawCircle(Color(0xFF87785C).copy(alpha = .38f), radius = w * .34f,
-                center = Offset(w * .18f, h * .87f))
+                center = Offset(w * .18f, h * .80f))
             val route = Path().apply {
-                moveTo(w * .32f, h * .18f)
-                cubicTo(w * .90f, h * .29f, w * .05f, h * .40f, w * .68f, h * .52f)
-                cubicTo(w * .95f, h * .64f, w * .12f, h * .70f, w * .34f, h * .85f)
+                moveTo(w * .31f, h * .12f)
+                cubicTo(w * .90f, h * .25f, w * .05f, h * .36f, w * .69f, h * .44f)
+                cubicTo(w * .94f, h * .58f, w * .10f, h * .67f, w * .34f, h * .77f)
             }
             drawPath(route, color = Color(0xFF0C3B42).copy(alpha = .85f),
                 style = Stroke(width = 11.dp.toPx(), cap = StrokeCap.Round))
@@ -266,19 +266,19 @@ private fun AdventureWorldMap(
             number = 1, title = "Kumsal Koyu", topic = "Üçer sayma · 5 görev",
             art = R.drawable.island_node, enabled = true,
             finished = beachCompleted, onClick = onBeachClick,
-            modifier = Modifier.offset(xBeach, 32.dp).width(size)
+            modifier = Modifier.offset(xBeach, 18.dp).width(size)
         )
         AdventureMapNode(
             number = 2, title = "Gizemli Orman", topic = "Dörder sayma · 4 görev",
             art = R.drawable.forest_node, enabled = true,
             finished = forestCompleted, onClick = onForestClick,
-            modifier = Modifier.offset(xForest, 236.dp).width(size)
+            modifier = Modifier.offset(xForest, 227.dp).width(size)
         )
         AdventureMapNode(
             number = 3, title = "Antik Tapınak", topic = "Geliştirme aşamasında",
             art = R.drawable.temple_node, enabled = false,
             finished = false, onClick = {},
-            modifier = Modifier.offset(xTemple, 442.dp).width(size)
+            modifier = Modifier.offset(xTemple, 436.dp).width(size)
         )
     }
 }

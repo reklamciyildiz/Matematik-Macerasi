@@ -3,7 +3,7 @@
 
 **Ürün:** Matematik Macerası — Sayı Avcıları  
 **Konum:** Kumsal Koyu (üçerli sayma) → Gizemli Orman (dörder sayma) → **Antik Tapınak (eş gruplardan çarpmanın ilişkilerine)**  
-**Mevcut durum:** Saf Kotlin matematik motoru ve deterministik birim testler eklendi; **oynanabilir ekran, harita kilit açma ve ödül kaydı HENÜZ eklenmedi**. Bu ayrım bilinçlidir.
+**Mevcut durum (2026-11-01):** Dört ritüelin ilk oynanabilir Kotlin/Compose sürümü, ayrı yerel checkpoint, yeniden oynama ve atlas giriş bağlantısı `main`e eklendi. Bu bir **oynanabilir prototiptir**, görsel/pedagojik/cihaz kabulü tamamlanmış ürün değildir. Tapınak, mevcut yıldız ve Premium kayıtlarını değiştirmez; tapınağa özel yıldız dağıtımı ve kapsamlı beceri ölçümü henüz tasarlanmadı.
 
 ### 1. Konsept kararı
 Bölgeyi başka bir “5'in katını bul” oyunu yapmayacağız. Çocuğun önceki iki bölgede öğrendiği ritmik saymayı ve eş grup kurmayı artık bir yapı inşa etme, denkliği test etme, eksik parçayı bulma ve ters işlem çözme becerisine bağlayacağız.
@@ -53,3 +53,13 @@ Bölgenin dramatik hedefi: **Dört Ritüel** tamamlandığında tapınağın saa
 **S2.6** Antik Tapınak'ın Kotlin/Compose oynanabilir dünyası, kalıcı kayıt, adaptif motor bağlantısı, Android CI ve gerçek cihaz kabulüdür.
 
 Tapınağın Matematik Macerası için gerçek değer önerisi *bir başka sayı katı ezberi* değil, **“ritmik saymadan matematiksel yapıyı keşfetmeye geçiş”** olmasıdır.
+
+
+## 7. Uygulama ve doğrulama durumu (2026-11-01)
+
+- `TempleAdventureScreen.kt`: Dört ritüel için Compose etkileşimleri, çevrimdışı yerel seed/tier/stage/runs kaydı.
+- `SayiAvi2Screen.kt`: Haritadan ayrı `TEMPLE` akışına giriş/çıkış.
+- `SayiAviWelcomeScreen.kt`: Üçüncü atlas düğümü açıldı, tamamlanma yerel kayıttan gösterilir.
+- İlerleme ritüel geçişlerinde kalıcıdır; bitmemiş bir ritüelin kısmi dokunuşları kaydedilmez.
+- **Doğrulanmadı:** Android Gradle assemble/test, CI sonucu, TalkBack, fiziksel cihaz ve öğretmen/çocuk testleri. Bu kontroller geçmeden “release-ready” veya “sorunsuz” iddiasında bulunulmamalı.
+- **Kalan kalite işleri:** Premium sanat/animasyon seti, her ritüelde daha güçlü fiziksel manipülasyon, yanlış/ipucu/deneme telemetrisi ve sınıf bağımsız kişisel beceri raporuna temkinli entegrasyon, arayüz erişilebilirliği ve gerçek cihaz testleri.

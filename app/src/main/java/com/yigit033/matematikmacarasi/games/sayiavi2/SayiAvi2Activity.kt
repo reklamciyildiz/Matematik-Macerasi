@@ -58,8 +58,8 @@ class SayiAvi2Activity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     SayiAvi2Screen(
                         currentStars = currentStars,
-                        onRewardEarned = { isFirstTime ->
-                            handleMissionCompleted(isFirstTime) { updatedStars ->
+                        onRewardEarned = { isFirstTime, summary ->
+                            handleMissionCompleted(isFirstTime, summary) { updatedStars ->
                                 currentStars = updatedStars
                             }
                         },
@@ -72,7 +72,11 @@ class SayiAvi2Activity : ComponentActivity() {
         }
     }
 
-    private fun handleMissionCompleted(isFirstTime: Boolean, onStarsUpdated: (Int) -> Unit) {
+    private fun handleMissionCompleted(
+        isFirstTime: Boolean,
+        summary: SayiAviLearningSummary,
+        onStarsUpdated: (Int) -> Unit
+    ) {
         try {
             if (isFirstTime) {
                 // 1 Yıldız ekle (Idempotent: addStars("sayi_avi_2_stage1", 1) tekil anahtarla korur)
@@ -85,9 +89,9 @@ class SayiAvi2Activity : ComponentActivity() {
                 gameStatisticsHelper.recordGameCompletion(
                     gameType = GameType.NUMBER_HUNT_GAME,
                     level = 1,
-                    score = 100,
+                    score = if (summary.complete) summary.actionAccuracyPercent else 0,
                     stars = 1,
-                    gameStartTime = System.currentTimeMillis() - 60000,
+                    gameStartTime = System.currentTimeMillis() - summary.elapsedSeconds.coerceIn(1L, 3600L) * 1000L,
                     taskId = dailyTaskId
                 )
 

@@ -77,8 +77,9 @@ object SayiAviEngine {
         val targetSequence: List<Int>
     ) {
         init {
-            require(targetSequence == listOf(6, 9, 12, 15)) { "Hedef sıra [6, 9, 12, 15] olmalıdır" }
-            require(nodes.count { it.isTarget } == 4) { "Tam 4 adet hedef ada bulunmalıdır" }
+            require(targetSequence.size == 4 && targetSequence.zipWithNext().all { (a, b) -> b - a == 3 })
+            require(nodes.size == 8 && nodes.map { it.value }.distinct().size == 8)
+            require(nodes.filter { it.isTarget }.sortedBy { it.targetStepIndex }.map { it.value } == targetSequence)
         }
     }
 
@@ -154,8 +155,8 @@ object SayiAviEngine {
 
         val hint = when {
             isSuccess -> null
-            attemptIndex == 0 -> "İpucu: 3'er 3'er saymayı hatırla: 3, 6, 9, 12, 15, 18..."
-            else -> "Pedagojik İpucu: 3'ün katları cetveli: 3, 6, 9, 12, 15, 18, 21, 24. Bir sayının 3'ün katı olması için 3'e kalansız bölünmesi gerekir!"
+            attemptIndex == 0 -> "İpucu: Taşları üçer ritmik sayarak kontrol et."
+            else -> "İpucu: Üçün katlarını bulmak için sayıların 3'e kalansız bölünüp bölünmediğini kontrol et."
         }
 
         val title = if (isSuccess) "Harika Keşif!" else "Tekrar Kontrol Et"
@@ -193,7 +194,7 @@ object SayiAviEngine {
 
         val rng = Random(seed)
         // Başlangıç sayısı: 3'ün katı olan bir sayı (3, 6, 9)
-        val startMultiplier = rng.nextInt(1, 4) // 1, 2 veya 3
+        val startMultiplier = rng.nextInt(1, 9) // 1..8, her seferinde +3
         val start = startMultiplier * 3
         val seq = listOf(start, start + 3, start + 6)
         val correct = start + 9
@@ -241,28 +242,20 @@ object SayiAviEngine {
      * - Doğal konumlandırma koordinatları (xPercent, yPercent).
      */
     fun generateStageCRoute(seed: Long? = null): StageCRouteData {
-        val targetSequence = listOf(6, 9, 12, 15)
-
-        // Ada taşlarının koordinatları (okyanus manzarası üzerinde doğal bir patika)
-        // 6: Kumsal başlangıcı (sol alt)
-        // 9: İlk mercan resifi (orta-sol)
-        // 12: Kayalık ada (orta-sağ)
-        // 15: Hazine adası girişi (üst sağ)
-        val nodes = listOf(
-            RouteNode(id = 1, value = 6, isTarget = true, targetStepIndex = 0, xPercent = 0.22f, yPercent = 0.78f),
-            RouteNode(id = 2, value = 8, isTarget = false, targetStepIndex = -1, xPercent = 0.68f, yPercent = 0.74f),
-            RouteNode(id = 3, value = 9, isTarget = true, targetStepIndex = 1, xPercent = 0.38f, yPercent = 0.58f),
-            RouteNode(id = 4, value = 10, isTarget = false, targetStepIndex = -1, xPercent = 0.78f, yPercent = 0.52f),
-            RouteNode(id = 5, value = 12, isTarget = true, targetStepIndex = 2, xPercent = 0.52f, yPercent = 0.38f),
-            RouteNode(id = 6, value = 14, isTarget = false, targetStepIndex = -1, xPercent = 0.24f, yPercent = 0.34f),
-            RouteNode(id = 7, value = 15, isTarget = true, targetStepIndex = 3, xPercent = 0.74f, yPercent = 0.20f),
-            RouteNode(id = 8, value = 17, isTarget = false, targetStepIndex = -1, xPercent = 0.35f, yPercent = 0.16f)
-        )
-
-        return StageCRouteData(
-            nodes = nodes,
-            targetSequence = targetSequence
-        )
+        val rng = if (seed != null) Random(seed) else Random.Default
+        val start = if (seed == null || seed == 0L) 6 else listOf(3, 6, 9, 12, 15).random(rng)
+        val targets = (0..3).map { start + 3 * it }
+        val distractors = if (seed == null || seed == 0L) listOf(8, 10, 14, 17)
+            else (2..start + 20).filter { it !in targets }.shuffled(rng).take(4)
+        val values = listOf(targets[0], distractors[0], targets[1], distractors[1],
+            targets[2], distractors[2], targets[3], distractors[3])
+        val xy = listOf(0.22f to 0.78f, 0.68f to 0.74f, 0.38f to 0.58f, 0.78f to 0.52f,
+            0.52f to 0.38f, 0.24f to 0.34f, 0.74f to 0.20f, 0.35f to 0.16f)
+        val nodes = values.mapIndexed { i, value ->
+            RouteNode(i + 1, value, i % 2 == 0, if (i % 2 == 0) i / 2 else -1,
+                xy[i].first, xy[i].second)
+        }
+        return StageCRouteData(nodes, targets)
     }
 
     /**
@@ -293,10 +286,10 @@ object SayiAviEngine {
                 feedbackMessage = msg
             )
         } else {
-            val msg = if (expectedValue == 6) {
-                "Yolculuğa ilk adım olan 6 taşıyla başlamalısın!"
+            val msg = if (currentStepIndex == 0) {
+                "Haritada başlangıç sayısını bul!"
             } else {
-                "Bu taş rotaya uymuyor. Sıradaki adım $expectedValue olmalı (+3 kuralı)!"
+                "Doğru sayıdan 3 ilerleyerek yeniden dene."
             }
             return StageCStepResult(
                 isSequenceComplete = false,

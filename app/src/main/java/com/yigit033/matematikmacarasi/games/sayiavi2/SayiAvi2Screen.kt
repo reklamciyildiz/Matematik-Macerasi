@@ -36,7 +36,7 @@ enum class SayiAviMissionStage {
 @Composable
 fun SayiAvi2Screen(
     currentStars: Int,
-    onRewardEarned: (Boolean) -> Unit, // isFirstTime: Boolean
+    onRewardEarned: (Boolean, SayiAviLearningSummary) -> Unit,
     onExitGame: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -58,14 +58,34 @@ fun SayiAvi2Screen(
     var showExitDialog by remember { mutableStateOf(false) }
 
     // Oyun Verileri
-    var stageAGridData by remember { mutableStateOf(SayiAviEngine.generateStageAGrid(seed = null)) }
-    var stageBVaultData by remember { mutableStateOf(SayiAviEngine.generateStageBVault(seed = null)) }
-    var stageCRouteData by remember { mutableStateOf(SayiAviEngine.generateStageCRoute(seed = null)) }
+    var runSeed by remember { mutableLongStateOf(storage.getRunSeed()) }
+    val stageAGridData = remember(runSeed) { SayiAviEngine.generateStageAGrid(if (runSeed == 0L) null else runSeed + 101) }
+    val stageBVaultData = remember(runSeed) { SayiAviEngine.generateStageBVault(if (runSeed == 0L) null else runSeed + 202) }
+    val stageCRouteData = remember(runSeed) { SayiAviEngine.generateStageCRoute(if (runSeed == 0L) null else runSeed + 303) }
 
     // Süre Sayacı
-    var missionStartTime by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var missionStartTime by remember { mutableLongStateOf(storage.getRunStart()) }
     var totalTimeSeconds by remember { mutableLongStateOf(0L) }
     var isFirstCompletionResult by remember { mutableStateOf(false) }
+    var counters by remember { mutableStateOf(storage.getRunCounters()) }
+    var lastSummary by remember { mutableStateOf<SayiAviLearningSummary?>(null) }
+
+    fun attempt(stage: Int, correct: Boolean) {
+        counters = counters.attempt(stage, correct)
+        storage.saveRunCounters(counters)
+    }
+    fun hint() {
+        counters = counters.hint()
+        storage.saveRunCounters(counters)
+    }
+    fun newRun() {
+        val now = System.currentTimeMillis()
+        storage.beginRun(now, now)
+        runSeed = now
+        missionStartTime = now
+        counters = SayiAviRunCounters()
+        lastSummary = null
+    }
 
     // Ses Çalarlar (Güvenli Başlatma)
     val mediaPlayerCorrect = remember {
@@ -138,9 +158,8 @@ fun SayiAvi2Screen(
                 totalCompletions = storage.getTotalCompletions(),
                 starsCount = currentStars,
                 onStartRegion1 = {
-                    missionStartTime = System.currentTimeMillis()
+                    newRun()
                     currentStage = SayiAviMissionStage.BRIEFING
-                    storage.saveLastStage("STAGE_A")
                 },
                 onBackClick = onExitGame,
                 modifier = modifier
@@ -163,6 +182,9 @@ fun SayiAvi2Screen(
             StageAScreen(
                 gridData = stageAGridData,
                 starsCount = currentStars,
+                initialAttempts = counters.aAttempts,
+                onAttemptRecorded = { correct -> attempt(1, correct) },
+                onHintShown = { hint() },
                 onStageACompleted = {
                     playSuccessSound()
                     storage.setMapPiece1(true)
@@ -178,6 +200,8 @@ fun SayiAvi2Screen(
             StageBScreen(
                 vaultData = stageBVaultData,
                 starsCount = currentStars,
+                onAttemptRecorded = { correct -> attempt(2, correct) },
+                onHintShown = { hint() },
                 onStageBCompleted = {
                     playSuccessSound()
                     storage.setMapPiece2(true)
@@ -193,14 +217,18 @@ fun SayiAvi2Screen(
             StageCScreen(
                 routeData = stageCRouteData,
                 starsCount = currentStars,
+                initialStepIndex = storage.getRouteStep(),
+                onRouteProgress = { storage.saveRouteStep(it) },
+                onAttemptRecorded = { correct -> attempt(3, correct) },
+                onHintShown = { hint() },
                 onStageCCompleted = {
                     playSuccessSound()
                     totalTimeSeconds = ((System.currentTimeMillis() - missionStartTime) / 1000).coerceAtLeast(1)
-                    val isFirstTime = storage.recordMissionCompletion(totalTimeSeconds)
+                    val summary = SayiAviLearningSummary(counters, totalTimeSeconds)
+                    lastSummary = summary
+                    val isFirstTime = storage.recordMissionCompletion(totalTimeSeconds, summary)
                     isFirstCompletionResult = isFirstTime
-
-                    // Yıldız ödülünü kaydet
-                    onRewardEarned(isFirstTime)
+                    onRewardEarned(isFirstTime, summary)
 
                     currentStage = SayiAviMissionStage.REWARD_SUMMARY
                 },
@@ -213,14 +241,11 @@ fun SayiAvi2Screen(
             SayiAviRewardScreen(
                 isFirstCompletion = isFirstCompletionResult,
                 totalCompletions = storage.getTotalCompletions(),
+                learningSummary = lastSummary ?: storage.getLastSummary(),
                 timeSpentSeconds = totalTimeSeconds,
                 starsCount = currentStars,
                 onReplayClick = {
-                    storage.resetForReplay()
-                    stageAGridData = SayiAviEngine.generateStageAGrid(seed = System.currentTimeMillis())
-                    stageBVaultData = SayiAviEngine.generateStageBVault(seed = System.currentTimeMillis())
-                    stageCRouteData = SayiAviEngine.generateStageCRoute(seed = System.currentTimeMillis())
-                    missionStartTime = System.currentTimeMillis()
+                    newRun()
                     currentStage = SayiAviMissionStage.STAGE_A_GRID
                 },
                 onReturnToGamesClick = onExitGame,

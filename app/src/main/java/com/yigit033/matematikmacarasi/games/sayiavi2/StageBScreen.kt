@@ -56,6 +56,8 @@ fun StageBScreen(
     vaultData: SayiAviEngine.StageBVaultData,
     starsCount: Int,
     onStageBCompleted: () -> Unit,
+    onAttemptRecorded: (Boolean) -> Unit,
+    onHintShown: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -297,10 +299,11 @@ fun StageBScreen(
                             number = option,
                             visualState = visualState,
                             onClick = {
-                                selectedOption = option
-                                val result = SayiAviEngine.evaluateStageB(option, vaultData)
-
-                                if (result.isSuccess) {
+                                if (!isChestOpen) {
+                                    selectedOption = option
+                                    val result = SayiAviEngine.evaluateStageB(option, vaultData)
+                                    onAttemptRecorded(result.isSuccess)
+                                    if (result.isSuccess) {
                                     wrongOption = null
                                     errorMessage = null
                                     isChestOpen = true
@@ -308,7 +311,9 @@ fun StageBScreen(
                                 } else {
                                     wrongOption = option
                                     errorMessage = result.feedbackMessage
-                                    explanationText = result.pedagogicalExplanation
+                                    explanationText = "İki komşu sayının farkını bul; bu farkı son sayıya ekle."
+                                    onHintShown()
+                                    }
                                 }
                             },
                             size = 72.dp
@@ -360,7 +365,7 @@ fun StageBScreen(
                         Spacer(modifier = Modifier.height(14.dp))
 
                         Text(
-                            text = "Tebrikler! 12'den sonra 3 ekleyerek 15 şifresini buldun ve kasayı açtın! Haritanın iki parçası da birleşti. Şimdi Hazine Rotasına çıkarak sandığa ulaşabilirsin!",
+                            text = "Harika! Örüntüdeki eksik ${vaultData.correctAnswer} sayısını buldun. Haritanın ikinci parçasını kazandın; şimdi Hazine Rotasına geçebilirsin!",
                             fontSize = 13.sp,
                             color = SayiAviColors.TextNavyMuted,
                             textAlign = TextAlign.Center,

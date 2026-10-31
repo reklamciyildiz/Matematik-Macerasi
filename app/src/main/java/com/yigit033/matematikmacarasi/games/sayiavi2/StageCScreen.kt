@@ -64,15 +64,22 @@ fun StageCScreen(
     routeData: SayiAviEngine.StageCRouteData,
     starsCount: Int,
     onStageCCompleted: () -> Unit,
+    initialStepIndex: Int,
+    onRouteProgress: (Int) -> Unit,
+    onAttemptRecorded: (Boolean) -> Unit,
+    onHintShown: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Ziyaret edilen düğümlerin kimlikleri (sırayla)
-    var visitedNodeIds by remember { mutableStateOf(listOf<Int>()) }
-    var currentStepIndex by remember { mutableStateOf(0) } // 0 -> 6 bekleniyor, 1 -> 9, 2 -> 12, 3 -> 15
+    var visitedNodeIds by remember(routeData) { mutableStateOf(
+        routeData.nodes.filter { it.isTarget }.sortedBy { it.targetStepIndex }
+            .take(initialStepIndex).map { it.id }
+    ) }
+    var currentStepIndex by remember(routeData) { mutableStateOf(initialStepIndex) }
     var errorNodeId by remember { mutableStateOf<Int?>(null) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
-    var isRouteComplete by remember { mutableStateOf(false) }
+    var isRouteComplete by remember(routeData) { mutableStateOf(initialStepIndex >= 4) }
 
     Box(
         modifier = modifier
@@ -131,7 +138,7 @@ fun StageCScreen(
                 ) {
                     Column {
                         Text(
-                            text = "🗺️ Rotayı Çiz: 6 ➔ 9 ➔ 12 ➔ 15",
+                            text = "🗺️ ${routeData.targetSequence.first()} ile başla, üçer ilerle",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = SayiAviColors.GoldBright
@@ -140,8 +147,7 @@ fun StageCScreen(
                             text = if (isRouteComplete) {
                                 "Hazineye Ulaşıldı! Sandığı Aç ▶"
                             } else {
-                                val expected = routeData.targetSequence.getOrElse(currentStepIndex) { 0 }
-                                "Sıradaki Adım: $expected taşına bas! (+3 artış)"
+                                if (currentStepIndex == 0) "Başlangıç sayısını bul" else "Son doğru sayıya 3 ekle"
                             },
                             fontSize = 12.sp,
                             color = if (isRouteComplete) SayiAviColors.EmeraldGreen else SayiAviColors.SkyLightBlue,
@@ -156,6 +162,7 @@ fun StageCScreen(
                                 if (visitedNodeIds.isNotEmpty()) {
                                     visitedNodeIds = visitedNodeIds.dropLast(1)
                                     currentStepIndex = visitedNodeIds.size
+                                    onRouteProgress(currentStepIndex)
                                     errorNodeId = null
                                     feedbackMessage = null
                                 }
@@ -273,10 +280,13 @@ fun StageCScreen(
                                         currentStepIndex = currentStepIndex,
                                         data = routeData
                                     )
+                                    onAttemptRecorded(stepResult.isValidStep)
+                                    if (!stepResult.isValidStep) onHintShown()
 
                                     if (stepResult.isValidStep) {
                                         visitedNodeIds = visitedNodeIds + node.id
                                         currentStepIndex++
+                                        onRouteProgress(currentStepIndex)
                                         errorNodeId = null
                                         feedbackMessage = stepResult.feedbackMessage
 

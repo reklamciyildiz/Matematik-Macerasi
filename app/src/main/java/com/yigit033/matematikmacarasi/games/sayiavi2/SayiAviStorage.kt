@@ -24,6 +24,11 @@ class SayiAviStorage private constructor(context: Context) {
         private const val KEY_MAP_PIECE_2 = "mission_1_map_piece_2"
         private const val KEY_LAST_STAGE = "mission_1_last_stage"
         private const val KEY_BEST_TIME_SEC = "mission_1_best_time_sec"
+        private const val RUN_SEED = "g2_run_seed"
+        private const val RUN_START = "g2_run_start"
+        private const val RUN_COUNTERS = "g2_run_counters"
+        private const val ROUTE_STEP = "g2_route_step"
+        private const val LAST_SUMMARY = "g2_last_summary"
 
         @Volatile
         private var INSTANCE: SayiAviStorage? = null
@@ -86,13 +91,47 @@ class SayiAviStorage private constructor(context: Context) {
 
     fun getLastStage(): String? = prefs.getString(KEY_LAST_STAGE, null)
 
+    fun getRunSeed(): Long = prefs.getLong(RUN_SEED, 0L)
+    fun getRunStart(): Long = prefs.getLong(RUN_START, System.currentTimeMillis())
+
+    fun beginRun(seed: Long, start: Long) {
+        prefs.edit()
+            .putLong(RUN_SEED, seed).putLong(RUN_START, start)
+            .putString(KEY_LAST_STAGE, "STAGE_A")
+            .putBoolean(KEY_MAP_PIECE_1, false).putBoolean(KEY_MAP_PIECE_2, false)
+            .putString(RUN_COUNTERS, SayiAviRunCounters().encode())
+            .putInt(ROUTE_STEP, 0)
+            .apply()
+    }
+
+    fun getRunCounters(): SayiAviRunCounters =
+        SayiAviRunCounters.decode(prefs.getString(RUN_COUNTERS, null)) ?: SayiAviRunCounters()
+
+    fun saveRunCounters(value: SayiAviRunCounters) {
+        prefs.edit().putString(RUN_COUNTERS, value.encode()).apply()
+    }
+
+    fun getRouteStep(): Int = prefs.getInt(ROUTE_STEP, 0).coerceIn(0, 4)
+
+    fun saveRouteStep(value: Int) {
+        prefs.edit().putInt(ROUTE_STEP, value.coerceIn(0, 4)).apply()
+    }
+
+    fun getLastSummary(): SayiAviLearningSummary? {
+        val parts = prefs.getString(LAST_SUMMARY, null)?.split("|") ?: return null
+        if (parts.size != 2) return null
+        val run = SayiAviRunCounters.decode(parts[0]) ?: return null
+        val time = parts[1].toLongOrNull() ?: return null
+        return SayiAviLearningSummary(run, time)
+    }
+
     /**
      * Bölüm tamamlandığında çağrılır:
      * - Tamamlama sayısını artırır
      * - Eğer ilk tamamlama ise yıldız hakkını kaydeder ve true döndürür
      * - Replay ise false döndürür (0 yıldız)
      */
-    fun recordMissionCompletion(timeSpentSeconds: Long): Boolean {
+    fun recordMissionCompletion(timeSpentSeconds: Long, summary: SayiAviLearningSummary): Boolean {
         val alreadyAwarded = isStarAwarded()
         val currentCount = getTotalCompletions()
         val bestTime = prefs.getLong(KEY_BEST_TIME_SEC, Long.MAX_VALUE)
@@ -103,6 +142,7 @@ class SayiAviStorage private constructor(context: Context) {
         editor.putBoolean(KEY_MAP_PIECE_2, true)
         editor.putInt(KEY_TOTAL_COMPLETIONS, currentCount + 1)
         editor.putString(KEY_LAST_STAGE, "COMPLETED")
+        editor.putString(LAST_SUMMARY, summary.counters.encode() + "|" + summary.elapsedSeconds)
 
         if (timeSpentSeconds in 1 until bestTime) {
             editor.putLong(KEY_BEST_TIME_SEC, timeSpentSeconds)

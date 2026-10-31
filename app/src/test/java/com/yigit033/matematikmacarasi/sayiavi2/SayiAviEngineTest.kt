@@ -74,7 +74,7 @@ class SayiAviEngineTest {
         assertEquals(listOf(7), failResult1.wrongSelections)
         assertEquals(1, failResult1.missingTargetsCount)
         assertNotNull(failResult1.pedagogicalHint)
-        assertTrue(failResult1.pedagogicalHint!!.contains("3, 6, 9"))
+        assertTrue(failResult1.pedagogicalHint!!.contains("ritmik"))
 
         // 3. İkinci denemede daha ayrıntılı ipucu verilmeli
         val failResult2 = SayiAviEngine.evaluateStageA(
@@ -83,7 +83,7 @@ class SayiAviEngineTest {
             attemptIndex = 1
         )
         assertFalse(failResult2.isSuccess)
-        assertTrue(failResult2.pedagogicalHint!!.contains("cetveli"))
+        assertTrue(failResult2.pedagogicalHint!!.contains("kalansız"))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -178,6 +178,41 @@ class SayiAviEngineTest {
         )
         assertTrue(step4.isValidStep)
         assertTrue("4. adım tamamlandığında rota bitmeli", step4.isSequenceComplete)
+    }
+
+    @Test
+    fun testG2RouteSeedVariants() {
+        val starts = mutableSetOf<Int>()
+        for (seed in 1L..200L) {
+            val route = SayiAviEngine.generateStageCRoute(seed)
+            assertEquals(8, route.nodes.map { it.value }.distinct().size)
+            val goals = route.nodes.filter { it.isTarget }.sortedBy { it.targetStepIndex }
+            assertEquals(route.targetSequence, goals.map { it.value })
+            assertTrue(route.targetSequence.zipWithNext().all { (a,b) -> b - a == 3 })
+            starts += route.targetSequence.first()
+            for (i in goals.indices) {
+                val result = SayiAviEngine.evaluateStageCStep(goals[i].id, i, route)
+                assertTrue(result.isValidStep)
+                assertEquals(i == 3, result.isSequenceComplete)
+            }
+        }
+        assertTrue(starts.size >= 3)
+    }
+
+    @Test
+    fun testG2MetricsRoundTrip() {
+        val counters = com.yigit033.matematikmacarasi.games.sayiavi2.SayiAviRunCounters()
+            .attempt(1, false).attempt(1, true).attempt(2, true)
+            .attempt(3, true).attempt(3, false).attempt(3, true)
+            .attempt(3, true).attempt(3, true).hint()
+        val parsed = com.yigit033.matematikmacarasi.games.sayiavi2.SayiAviRunCounters.decode(counters.encode())
+        assertEquals(counters, parsed)
+        val summary = com.yigit033.matematikmacarasi.games.sayiavi2.SayiAviLearningSummary(counters, 160L)
+        assertEquals(8, summary.attempts)
+        assertEquals(2, summary.errors)
+        assertEquals(75, summary.actionAccuracyPercent)
+        assertEquals(1, summary.firstTryStages)
+        assertNull(com.yigit033.matematikmacarasi.games.sayiavi2.SayiAviRunCounters.decode("1,broken"))
     }
 
     @Test

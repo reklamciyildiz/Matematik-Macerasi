@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -45,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,6 +69,7 @@ fun SayiAviTopBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .statusBarsPadding()
             .background(SayiAviColors.TopBarScrim)
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
@@ -76,7 +79,7 @@ fun SayiAviTopBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             // Sol: Geri butonu ve Başlık
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = onBackClick,
                     modifier = Modifier
@@ -94,9 +97,11 @@ fun SayiAviTopBar(
 
                 Spacer(modifier = Modifier.width(10.dp))
 
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = SayiAviColors.TextWhite
@@ -104,6 +109,8 @@ fun SayiAviTopBar(
                     if (stageSubtitle != null) {
                         Text(
                             text = stageSubtitle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             color = SayiAviColors.SkyLightBlue

@@ -50,6 +50,7 @@ import com.yigit033.matematikmacarasi.R
 fun SayiAviRewardScreen(
     isFirstCompletion: Boolean,
     totalCompletions: Int,
+    learningSummary: SayiAviLearningSummary?,
     timeSpentSeconds: Long,
     starsCount: Int,
     onReplayClick: () -> Unit,
@@ -230,11 +231,24 @@ fun SayiAviRewardScreen(
                         Spacer(modifier = Modifier.height(10.dp))
 
                         // Metrik Satırları
-                        MetricItem(title = "Kazanılan Beceri", value = "3'ün Katları & Ritmik Sayma")
-                        MetricItem(title = "Aşama 1: Sayı Avı", value = "5/5 Hedef Bulundu ✅")
-                        MetricItem(title = "Aşama 2: Şifre Kasası", value = "6, 9, 12, 15 Örüntüsü ✅")
-                        MetricItem(title = "Aşama 3: Hazine Rotası", value = "Doğru Rota Çizildi ✅")
-                        MetricItem(title = "Tamamlama Süresi", value = "$timeSpentSeconds saniye ⏱️")
+                        MetricItem(title = "Çalışılan Konu", value = "3'ün Katları")
+                        if (learningSummary?.complete == true) {
+                            MetricItem(title = "Doğru Hamle Oranı", value = "${learningSummary.actionAccuracyPercent}%")
+                            MetricItem(title = "Sayı Tahtası", value = "${learningSummary.counters.aAttempts} kontrol")
+                            MetricItem(title = "Şifre Kasası", value = "${learningSummary.counters.bAttempts} deneme")
+                            MetricItem(title = "Hazine Rotası", value = "${learningSummary.counters.cAttempts} hamle")
+                            MetricItem(title = "Yanlış Hamleler", value = "${learningSummary.errors}")
+                            MetricItem(title = "Gösterilen İpuçları", value = "${learningSummary.counters.hintsShown}")
+                            MetricItem(title = "İlk Denemede", value = "${learningSummary.firstTryStages}/3 aşama")
+                        } else {
+                            MetricItem(title = "Hamle Verileri", value = "Eksik oturum")
+                        }
+                        MetricItem(title = "Geçen Süre", value = "$timeSpentSeconds sn")
+                        Text(
+                            text = "Bu oran yalnızca oyun içi hamleleri gösterir; öğrenmeyi kanıtlamaz. Oyun araları süreye dahil olabilir.",
+                            fontSize = 11.sp, color = SayiAviColors.TextNavyMuted,
+                            textAlign = TextAlign.Center
+                        )
 
                         Spacer(modifier = Modifier.height(20.dp))
 

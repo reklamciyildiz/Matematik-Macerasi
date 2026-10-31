@@ -66,12 +66,15 @@ fun StageAScreen(
     gridData: SayiAviEngine.StageAGridData,
     starsCount: Int,
     onStageACompleted: () -> Unit,
+    initialAttempts: Int,
+    onAttemptRecorded: (Boolean) -> Unit,
+    onHintShown: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedNumbers by remember { mutableStateOf(setOf<Int>()) }
     var errorNumbers by remember { mutableStateOf(setOf<Int>()) }
-    var attemptCount by remember { mutableStateOf(0) }
+    var attemptCount by remember(gridData) { mutableStateOf(initialAttempts) }
     var showHintDialog by remember { mutableStateOf(false) }
     var currentHintText by remember { mutableStateOf<String?>(null) }
     var showSuccessDialog by remember { mutableStateOf(false) }
@@ -160,11 +163,12 @@ fun StageAScreen(
                         IconButton(
                             onClick = {
                                 currentHintText = if (attemptCount == 0) {
-                                    "💡 İpucu: 3'er 3'er saymayı hatırla: 3, 6, 9, 12, 15, 18..."
+                                    "💡 İpucu: Üçer ritmik sayarak tahtadaki sayıları kontrol et."
                                 } else {
-                                    "💡 Ritmik Sayma Cetveli: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30. Bir sayının 3'ün katı olması için bu listede yer alması gerekir!"
+                                    "💡 3'ün katları 3'e kalansız bölünür. Taşlarını bu kuralla tekrar kontrol et."
                                 }
                                 showHintDialog = true
+                                onHintShown()
                             },
                             modifier = Modifier
                                 .size(40.dp)
@@ -279,6 +283,7 @@ fun StageAScreen(
                             attemptIndex = attemptCount
                         )
                         attemptCount++
+                        onAttemptRecorded(result.isSuccess)
 
                         if (result.isSuccess) {
                             errorNumbers = emptySet()
@@ -290,6 +295,7 @@ fun StageAScreen(
                             if (result.pedagogicalHint != null) {
                                 currentHintText = result.pedagogicalHint
                                 showHintDialog = true
+                                onHintShown()
                             }
                         }
                     }

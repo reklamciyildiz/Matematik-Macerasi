@@ -198,7 +198,7 @@ fun SayiAviBriefingScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "3, 6, 9, 12, 15, 18, 21, 24, 27, 30... Sayılar her adımda 3 artar!",
+                                    text = "3'ten başlayıp her seferinde 3 ekleyebilirsin. Şimdi tahtada bu kuralı kullan!",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = SayiAviColors.TextNavy

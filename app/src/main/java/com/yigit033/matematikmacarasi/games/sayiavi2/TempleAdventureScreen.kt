@@ -2,6 +2,17 @@ package com.yigit033.matematikmacarasi.games.sayiavi2
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.weight
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import com.yigit033.matematikmacarasi.R
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -107,15 +118,19 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
 
     BackHandler(onBack = onExit)
     Column(
-        Modifier.fillMaxSize().background(Color(0xFF122F43))
+        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF1E5464), Color(0xFF102C42), Color(0xFF081B30))))
             .verticalScroll(rememberScrollState()).padding(18.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         OutlinedButton(onClick = onExit) { Text("← Macera haritası") }
-        Text("ANTİK TAPINAK", fontSize = 27.sp, fontWeight = FontWeight.Black, color = Color(0xFFFFD77C))
+        Image(painter = painterResource(R.drawable.temple_node), contentDescription = "Antik Tapınak", modifier = Modifier.fillMaxWidth().height(140.dp), contentScale = ContentScale.Fit)
+        Text("✦ ANTİK TAPINAK ✦", fontSize = 27.sp, fontWeight = FontWeight.Black, color = Color(0xFFFFD77C))
         Text("Çarpmanın Sırları · " + runTier.title,
             color = Color(0xFFEAF4FA), fontSize = 15.sp)
         Text("Ritüeller: " + stage + "/4", color = Color(0xFF9FE9DA), fontSize = 14.sp)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            repeat(4) { index -> Box(Modifier.weight(1f).height(9.dp).background(if (index < stage) Color(0xFFFFD77C) else Color(0xFF456A78), CircleShape)) }
+        }
         if (seed == 0L || stage == 4) {
             Text(if (stage == 4) "Tapınak aydınlandı! Dört ritüel tamamlandı."
                 else "Dört odada matematiksel düzenekleri çalıştır.",
@@ -133,17 +148,20 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
         } else {
             Text(names[stage], color = Color(0xFFFFD77C),
                 fontWeight = FontWeight.Bold, fontSize = 23.sp)
+            Surface(color = Color(0xFF18394E), shape = RoundedCornerShape(20.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x88FFD77C)), modifier = Modifier.fillMaxWidth()) {
+                Text(listOf("Kadim mozaikleri taş taş inşa et.", "Sütunların dengeli düzenini açığa çıkar.", "Kayıp çarpanı eş gruplarla keşfet.", "Aynada ters işlemin sırrını çöz.")[stage], Modifier.padding(15.dp), color = Color.White)
+            }
             when (stage) {
                 0 -> {
                     val q = quest.mosaic
                     Text("Bir mozaik oluştur: " + q.rows + " sıra, her sırada " +
                         q.columns + " taş.", color = Color.White)
                     repeat(q.rows) { r ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
                             repeat(q.columns) { c ->
                                 val index = r * q.columns + c
                                 Box(
-                                    Modifier.size(28.dp)
+                                    Modifier.size(31.dp).padding(2.dp)
                                         .background(if (index < placed) Color(0xFFFFC75D)
                                             else Color(0xFF355B70), RoundedCornerShape(6.dp))
                                         .border(1.dp, Color.White.copy(alpha = .4f),

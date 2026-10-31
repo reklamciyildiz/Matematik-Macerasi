@@ -304,15 +304,15 @@ fun StageBScreen(
                                     val result = SayiAviEngine.evaluateStageB(option, vaultData)
                                     onAttemptRecorded(result.isSuccess)
                                     if (result.isSuccess) {
-                                    wrongOption = null
-                                    errorMessage = null
-                                    isChestOpen = true
-                                    showSuccessDialog = true
-                                } else {
-                                    wrongOption = option
-                                    errorMessage = result.feedbackMessage
-                                    explanationText = "İki komşu sayının farkını bul; bu farkı son sayıya ekle."
-                                    onHintShown()
+                                        wrongOption = null
+                                        errorMessage = null
+                                        isChestOpen = true
+                                        showSuccessDialog = true
+                                    } else {
+                                        wrongOption = option
+                                        errorMessage = result.feedbackMessage
+                                        explanationText = "İki komşu sayının farkını bul; bu farkı son sayıya ekle."
+                                        onHintShown()
                                     }
                                 }
                             },

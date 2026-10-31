@@ -246,7 +246,7 @@ object SayiAviEngine {
         val start = if (seed == null || seed == 0L) 6 else listOf(3, 6, 9, 12, 15).random(rng)
         val targets = (0..3).map { start + 3 * it }
         val distractors = if (seed == null || seed == 0L) listOf(8, 10, 14, 17)
-            else (2..start + 20).filter { it !in targets }.shuffled(rng).take(4)
+            else (2..(start + 20)).filter { it !in targets }.shuffled(rng).take(4)
         val values = listOf(targets[0], distractors[0], targets[1], distractors[1],
             targets[2], distractors[2], targets[3], distractors[3])
         val xy = listOf(0.22f to 0.78f, 0.68f to 0.74f, 0.38f to 0.58f, 0.78f to 0.52f,

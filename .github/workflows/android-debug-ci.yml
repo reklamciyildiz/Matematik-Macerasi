@@ -22,11 +22,64 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - name: Install Android API 36 SDK
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build and unit test (debug only)
+
+      # Hosted Ubuntu runner includes Android SDK command-line tools.
+      # Installing only the required platform avoids third-party SDK setup failures.
+      - name: Install Android API 36
+        shell: bash
+        run: |
+          SDK_MANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDK_MANAGER" ]; then
+            SDK_MANAGER="$(command -v sdkmanager || true)"
+          fi
+          if [ -z "$SDK_MANAGER" ] || [ ! -x "$SDK_MANAGER" ]; then
+            echo "::error::Android SDK command-line manager missing on runner"
+            exit 1
+          fi
+          yes | "$SDK_MANAGER" --licenses >/dev/null || true
+          "$SDK_MANAGER" "platforms;android-36" "build-tools;36.0.0"
+
+      # Repository intentionally does not commit the developer's real Firebase config.
+      # This placeholder is ONLY to exercise the Google Services Gradle plugin during
+      # compile and unit tests. Its credentials cannot connect to Firebase.
+      # NEVER install, upload or publish APKs built with this CI-only configuration.
+      - name: Create compile-only Firebase fixture
+        shell: bash
+        run: |
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "ci-build-only",
+              "storage_bucket": "ci-build-only.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "com.yigit033.matematikmacarasi"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  { "current_key": "CI_ONLY_NOT_VALID" }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+          echo "::notice::Compile-only Firebase config; Firebase, billing and ads are NOT exercised."
+
+      - name: Unit tests and Android debug compilation
+        shell: bash
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug

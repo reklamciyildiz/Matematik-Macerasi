@@ -40,6 +40,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -234,13 +235,15 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     }
 
     BackHandler(onBack = onExit)
+    val scrollState = rememberScrollState()
+    LaunchedEffect(seed, stage) { scrollState.scrollTo(0) }
     val isLanding = seed == 0L || stage == 4
     Column(
         Modifier.fillMaxSize()
             .background(Brush.verticalGradient(listOf(
                 Color(0xFF1E5464), Color(0xFF102C42), Color(0xFF081B30)
             )))
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {

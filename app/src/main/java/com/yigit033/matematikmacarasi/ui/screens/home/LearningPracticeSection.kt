@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.learning.Lesson
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
 import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
+import com.yigit033.matematikmacarasi.games.sayiavi2.ForestAdventureActivity
 
 /** Eski yıldız ve Premium anahtarlarını değiştirmeyen ayrı ders kaydı. */
 private class PilotProgress(context: Context) {
@@ -134,12 +135,17 @@ private fun PracticeLesson(lesson: Lesson, onBack: () -> Unit, onFinish: (Int, I
             Text("Doğru hamle oranı: $percentage%", color = HomeColors.TextPrimary)
             Text("Bu sonuç sadece oturumdaki hamleleri gösterir.",
                 color = HomeColors.TextSecondary, fontSize = 11.sp)
-            if (lesson.id == "count_3") {
+            if (lesson.id == "count_3" || lesson.id == "count_4") {
+                val adventure = if (lesson.id == "count_3") SayiAvi2Activity::class.java
+                    else ForestAdventureActivity::class.java
                 Button(
-                    onClick = { context.startActivity(Intent(context, SayiAvi2Activity::class.java)) },
+                    onClick = { context.startActivity(Intent(context, adventure)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E))
-                ) { Text("Sayı Avcıları'nda Uygula ▶", color = Color.White) }
+                ) {
+                    Text(if (lesson.id == "count_3") "Sayı Avcıları'nda Uygula ▶"
+                        else "Gizemli Orman'da Uygula ▶", color = Color.White)
+                }
             }
             Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Patikaya Dön") }
         } else {

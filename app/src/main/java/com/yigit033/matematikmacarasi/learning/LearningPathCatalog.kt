@@ -3,7 +3,7 @@ package com.yigit033.matematikmacarasi.learning
 import kotlin.random.Random
 
 /** P2 pilot içerikleri: sınıfa ait bütün müfredatın karşılığı değildir. */
-enum class Skill { COUNT_2, COUNT_3, ADD_10, ADD_20, MULTIPLY, DIVISIBLE_15 }
+enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY, DIVISIBLE_15 }
 data class Lesson(val id: String, val title: String, val teaching: String, val example: String,
     val hint: String, val skill: Skill)
 data class PracticeQuestion(val text: String, val choices: List<Int>, val answer: Int, val explanation: String) {
@@ -16,6 +16,9 @@ object LearningPathCatalog {
             "2 → 4 → 6 → 8", "Son sayıya 2 ekle.", Skill.COUNT_2)
         val c3 = Lesson("count_3", "Üçer Ritmik Sayma", "Her yeni sayıya ulaşmak için 3 ekle.",
             "3 → 6 → 9 → 12", "Son sayıya 3 ekle.", Skill.COUNT_3)
+        val c4 = Lesson("count_4", "Dörder Ritmik Sayma",
+            "Her yeni sayıyı bulmak için 4 ekle. Sonra Gizemli Orman'da uygula.",
+            "4 → 8 → 12 → 16", "Son sayıdan başlayarak 4 artır.", Skill.COUNT_4)
         val a10 = Lesson("add_10", "10 İçinde Toplama", "İki grubu birleştirerek toplamını bul.",
             "3 + 2 = 5", "Sayıların birinden başlayıp diğer sayı kadar ilerle.", Skill.ADD_10)
         val a20 = Lesson("add_20", "20 İçinde Toplama", "İki sayıyı birleştir ve sonucu kontrol et.",
@@ -27,8 +30,8 @@ object LearningPathCatalog {
             "15, 30, 45, 60", "15'er ilerleyerek ortak katları bul.", Skill.DIVISIBLE_15)
         return when {
             grade <= 1 -> listOf(c2, a10)
-            grade == 2 -> listOf(c3, a20)
-            grade in 3..4 -> listOf(mul, c3)
+            grade == 2 -> listOf(c3, c4, a20)
+            grade in 3..4 -> listOf(mul, c3, c4)
             else -> listOf(div, mul) // 5-8. sınıflar için açıkça temel tekrar
         }
     }
@@ -42,8 +45,12 @@ object LearningPathCatalog {
         val explanation: String
         val wrong: List<Int>
         when (lesson.skill) {
-            Skill.COUNT_2, Skill.COUNT_3 -> {
-                val step = if (lesson.skill == Skill.COUNT_2) 2 else 3
+            Skill.COUNT_2, Skill.COUNT_3, Skill.COUNT_4 -> {
+                val step = when (lesson.skill) {
+                    Skill.COUNT_2 -> 2
+                    Skill.COUNT_3 -> 3
+                    else -> 4
+                }
                 val start = step * random.nextInt(1, 9)
                 answer = start + 3 * step
                 text = "$start, ${start + step}, ${start + 2 * step}, ?"

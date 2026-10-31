@@ -92,6 +92,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     var runTier by remember { mutableStateOf(checkpoint.tier) }
     var placed by remember(seed, stage) { mutableIntStateOf(0) }
     var rotated by remember(seed, stage) { mutableStateOf(false) }
+    var distributed by remember(seed, stage) { mutableIntStateOf(0) }
     var selected by remember(seed, stage) { mutableIntStateOf(0) }
     var message by remember(seed, stage) { mutableStateOf("") }
     var hintSeen by remember(seed, stage) { mutableStateOf(false) }
@@ -201,19 +202,23 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     val q = quest.gate
                     Text(q.total.toString() + " taşı " + q.groups +
                         " eş gruba paylaştır. Her grupta kaç taş olur?", color = Color.White)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        q.options.forEach { value ->
-                            OutlinedButton(onClick = {
-                                selected = value
-                                record(value == q.itemsPerGroup)
-                                message = if (value == q.itemsPerGroup)
-                                    "Doğru! Her grup aynı sayıda taş aldı."
-                                else "Grupları yeniden saymayı dene."
-                            }) { Text(value.toString()) }
+                    Text("Taşları eş gruplara sırayla dağıt.", color = Color(0xFF9FE9DA))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                        repeat(q.groups) { group ->
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Grup " + (group + 1), color = Color.White, fontSize = 11.sp)
+                                val count = distributed / q.groups + if (group < distributed % q.groups) 1 else 0
+                                Text("$count taş", color = Color(0xFFFFD77C), fontSize = 12.sp)
+                            }
                         }
                     }
-                    Button(enabled = selected == q.itemsPerGroup,
-                        onClick = { advance() }) { Text("Kapıyı aç") }
+                    Button(enabled = distributed < q.total, onClick = { distributed++ }) {
+                        Text("Sıradaki gruba taş koy: $distributed / ${q.total}")
+                    }
+                    Button(enabled = distributed > 0, onClick = { distributed-- }) { Text("Son taşı geri al") }
+                    if (distributed == q.total) Text("${q.groups} × ${q.itemsPerGroup} = ${q.total}", color = Color(0xFF9FE9DA))
+                    Button(enabled = distributed == q.total,
+                        onClick = { record(true); advance() }) { Text("Kapıyı aç") }
                 }
                 3 -> {
                     val q = quest.mirror

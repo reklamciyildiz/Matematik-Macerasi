@@ -136,6 +136,11 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.MatematikMacerasi" />
         <activity
+            android:name=".games.sayiavi2.ForestAdventureActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
             android:name=".games.interactive.NumberHuntLevelSelectActivity"
             android:exported="false"
             android:theme="@style/Theme.MatematikMacerasi" />

@@ -74,6 +74,9 @@ class SayiAvi2Activity : ComponentActivity() {
                                 currentStars = updatedStars
                             }
                         },
+                        onForestReturn = {
+                            currentStars = starManager.getDisplayStars()
+                        },
                         onExitGame = {
                             finish()
                         }

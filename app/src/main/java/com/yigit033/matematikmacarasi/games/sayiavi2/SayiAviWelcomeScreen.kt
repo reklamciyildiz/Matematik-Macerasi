@@ -43,15 +43,17 @@ import com.yigit033.matematikmacarasi.R
 
 /**
  * Sayı Avı 2.0 Karşılama ve Bölge Seçim Ekranı.
- * GDD v1.0 kuralı: Tek açık oyun bölümü (Bölge 1: Kumsal Koyu);
- * sonraki dünyalar (Orman, Tapınak) 'yakında' etiketiyle net olarak kilitli gösterilir, sahte tıklanabilir buton yapılmaz.
+ * Bölge 1 Kumsal Koyu ve Bölge 2 Gizemli Orman oynanabilir;
+ * Antik Tapınak mevcut değilken sahte tıklanabilir alan sunulmaz.
  */
 @Composable
 fun SayiAviWelcomeScreen(
     isCompletedBefore: Boolean,
     totalCompletions: Int,
+    forestCompleted: Boolean,
     starsCount: Int,
     onStartRegion1: () -> Unit,
+    onStartRegion2: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -132,7 +134,7 @@ fun SayiAviWelcomeScreen(
                                     color = SayiAviColors.TextWhite
                                 )
                                 Text(
-                                    text = "3'ün Katları & Ritmik Sayma",
+                                    text = "İki oynanabilir bölge: 3'er ve 4'er sayma",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = SayiAviColors.SkyLightBlue
@@ -206,16 +208,16 @@ fun SayiAviWelcomeScreen(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // 2. Bölge: Gizemli Orman (Kilitli - Çok Yakında)
+                // 2. Bölge: Gizemli Orman — bağımsız kayıt ve dört oyun mekaniği.
                 RegionCard(
                     regionNumber = 2,
                     title = "Gizemli Orman",
-                    theme = "4'ün Katları & Antik Köprü",
-                    statusText = "Çok Yakında 🔒",
-                    isUnlocked = false,
-                    isCompleted = false,
+                    theme = "4'er Ritmik Sayma · Kütük Köprüsü",
+                    statusText = if (forestCompleted) "Yeniden Keşfet ▶" else "Ormana Gir ▶",
+                    isUnlocked = true,
+                    isCompleted = forestCompleted,
                     nodeDrawableRes = R.drawable.forest_node,
-                    onClick = {}
+                    onClick = onStartRegion2
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))

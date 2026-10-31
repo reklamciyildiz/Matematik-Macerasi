@@ -72,7 +72,7 @@ object ForestEngine {
         val starting = r.nextInt(5, 10) * 4
         val found = r.nextInt(3, 6)
         fun options(correct: Int): List<Int> {
-            val all = linkedSetOf(correct, correct + 4, correct + 2, correct - 4)
+            val all = linkedSetOf(correct, correct + 4, correct + 2, correct + 1)
             return all.toList().shuffled(r)
         }
         return listOf(

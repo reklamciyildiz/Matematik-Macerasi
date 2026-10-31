@@ -1,6 +1,9 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
 import android.content.Context
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.media.MediaPlayer
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,11 +42,21 @@ enum class SayiAviMissionStage {
 fun SayiAvi2Screen(
     currentStars: Int,
     onRewardEarned: (Boolean, SayiAviLearningSummary) -> Unit,
+    onForestReturn: () -> Unit,
     onExitGame: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val storage = remember { SayiAviStorage.getInstance(context) }
+    val forestStorage = remember { ForestProgressStore(context) }
+    var forestRevision by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    val forestCompleted = remember(forestRevision) { forestStorage.hasCompleted() }
+    val forestLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        forestRevision++
+        onForestReturn()
+    }
 
     // Oyun Aşaması
     var currentStage by remember {
@@ -164,7 +177,11 @@ fun SayiAvi2Screen(
             SayiAviWelcomeScreen(
                 isCompletedBefore = storage.isMissionCompleted(),
                 totalCompletions = storage.getTotalCompletions(),
+                forestCompleted = forestCompleted,
                 starsCount = currentStars,
+                onStartRegion2 = {
+                    forestLauncher.launch(Intent(context, ForestAdventureActivity::class.java))
+                },
                 onStartRegion1 = {
                     newRun()
                     currentStage = SayiAviMissionStage.BRIEFING

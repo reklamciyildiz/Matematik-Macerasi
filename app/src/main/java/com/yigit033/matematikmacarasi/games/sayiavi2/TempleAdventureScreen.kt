@@ -4,15 +4,12 @@ import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.yigit033.matematikmacarasi.R
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -63,20 +60,20 @@ private class TempleCheckpoint(context: Context) {
     val attempts: Int get() = prefs.getInt("attempts", 0)
     val errors: Int get() = prefs.getInt("errors", 0)
     val hints: Int get() = prefs.getInt("hints", 0)
-    fun record(correct: Boolean, hint: Boolean = false): Boolean {
+    @Synchronized fun record(correct: Boolean, hint: Boolean = false): Boolean {
         if (seed <= 0L || stage == 4) return false
         return prefs.edit()
             .putInt("attempts", attempts + if (hint) 0 else 1)
             .putInt("errors", errors + if (!correct && !hint) 1 else 0)
             .putInt("hints", hints + if (hint) 1 else 0).commit()
     }
-    fun start(seed: Long, tier: LearningTier): Boolean =
+    @Synchronized fun start(seed: Long, tier: LearningTier): Boolean =
         prefs.edit().putLong("seed", seed).putString("tier", tier.name)
             .putInt("stage", 0).putInt("attempts", 0).putInt("errors", 0)
             .putInt("hints", 0).commit()
-    fun advance(next: Int): Boolean {
+    @Synchronized fun advance(next: Int): Boolean {
         val previous = stage
-        if (next != previous + 1 || next !in 1..4) return false
+        if (seed <= 0 || next != previous + 1 || next !in 1..4) return false
         val edit = prefs.edit().putInt("stage", next)
         if (next == 4) edit.putInt("runs", runs + 1)
         return edit.commit()
@@ -93,18 +90,21 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     var placed by remember(seed, stage) { mutableIntStateOf(0) }
     var rotated by remember(seed, stage) { mutableStateOf(false) }
     var distributed by remember(seed, stage) { mutableIntStateOf(0) }
-    var selected by remember(seed, stage) { mutableIntStateOf(0) }
+    var selected by remember(seed, stage) { mutableIntStateOf(-1) }
     var message by remember(seed, stage) { mutableStateOf("") }
     var hintSeen by remember(seed, stage) { mutableStateOf(false) }
     var attemptCount by remember(seed, stage) { mutableIntStateOf(checkpoint.attempts) }
     var errorCount by remember(seed, stage) { mutableIntStateOf(checkpoint.errors) }
     var hintCount by remember(seed, stage) { mutableIntStateOf(checkpoint.hints) }
-    fun record(correct: Boolean, hint: Boolean = false) {
+    fun record(correct: Boolean, hint: Boolean = false): Boolean {
         if (checkpoint.record(correct, hint)) {
             attemptCount = checkpoint.attempts
             errorCount = checkpoint.errors
             hintCount = checkpoint.hints
-        } else message = "İlerleme kaydedilemedi."
+            return true
+        }
+        message = "İlerleme kaydedilemedi."
+        return false
     }
     val quest = remember(seed, runTier) { TempleEngine.create(seed, runTier) }
     val names = listOf("Mozaik Odası", "Denge Sütunları", "Kayıp Çarpan Kapısı", "Ayna Mekanizması")
@@ -138,7 +138,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
             Text("Tamamlanan keşifler: " + checkpoint.runs, color = Color.White)
             if (stage == 4) Text("Bu tur: $attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFF9FE9DA))
             Button(onClick = {
-                val now = System.currentTimeMillis().coerceAtLeast(1L)
+                val now = System.currentTimeMillis().coerceAtLeast(seed + 1L).coerceAtLeast(1L)
                 if (checkpoint.start(now, tier)) {
                     seed = now
                     runTier = tier
@@ -172,7 +172,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                                         }
                                         .semantics {
                                             contentDescription = "Mozaik taşı " + (index + 1) +
-                                                if (index < placed) ", yerleştirildi" else ", boş"
+                                                (if (index < placed) ", yerleştirildi" else ", boş")
                                         },
                                     contentAlignment = Alignment.Center
                                 ) { Text(if (index < placed) "◆" else "+", color = Color.White) }
@@ -180,7 +180,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         }
                     }
                     Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
-                    Button(enabled = placed == q.tiles, onClick = { record(true); advance() }) {
+                    Button(enabled = placed == q.tiles, onClick = { if (record(true)) advance() }) {
                         Text("Mozaik tamamlandı")
                     }
                 }
@@ -189,8 +189,8 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     Text("Soldaki düzeni döndürerek iki tarafın eşit olduğunu kanıtla.",
                         color = Color.White)
                     Text(q.leftRows.toString() + " × " + q.leftColumns.toString() +
-                        "    =    " + if (rotated) q.rightRows.toString() +
-                        " × " + q.rightColumns.toString() else "? × ?",
+                        "    =    " + (if (rotated) q.rightRows.toString() +
+                        " × " + q.rightColumns.toString() else "? × ?"),
                         color = Color(0xFFFFD77C), fontSize = 24.sp)
                     Button(onClick = { rotated = !rotated }) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
@@ -203,7 +203,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     Text(q.total.toString() + " taşı " + q.groups +
                         " eş gruba paylaştır. Her grupta kaç taş olur?", color = Color.White)
                     Text("Taşları eş gruplara sırayla dağıt.", color = Color(0xFF9FE9DA))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         repeat(q.groups) { group ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("Grup " + (group + 1), color = Color.White, fontSize = 11.sp)
@@ -218,7 +218,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     Button(enabled = distributed > 0, onClick = { distributed-- }) { Text("Son taşı geri al") }
                     if (distributed == q.total) Text("${q.groups} × ${q.itemsPerGroup} = ${q.total}", color = Color(0xFF9FE9DA))
                     Button(enabled = distributed == q.total,
-                        onClick = { record(true); advance() }) { Text("Kapıyı aç") }
+                        onClick = { if (record(true)) advance() }) { Text("Kapıyı aç") }
                 }
                 3 -> {
                     val q = quest.mirror
@@ -233,8 +233,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                             (q.resultAfterDivision - 1).coerceAtLeast(1))
                             .distinct().forEach { value ->
                                 OutlinedButton(onClick = {
-                                    selected = value
-                                    record(value == q.resultAfterDivision)
+                                    if (record(value == q.resultAfterDivision)) selected = value
                                     message = if (value == q.resultAfterDivision)
                                         "Ters işlem bağlantısını buldun."
                                     else "Çarpma dizilimine tekrar bak."
@@ -247,7 +246,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
             }
             if (stage >= 2) {
                 OutlinedButton(onClick = {
-                    if (!hintSeen) { record(false, hint = true); hintSeen = true }
+                    if (!hintSeen && record(false, hint = true)) hintSeen = true
                 }) { Text(if (hintSeen) "İpucu gösterildi" else "İpucu al") }
                 if (hintSeen) Text(if (stage == 2) "Toplam taşı eş grup sayısına böl." else "Çarpımdan bir çarpana bölersen diğerini bulursun.", color = Color(0xFF9FE9DA))
             }

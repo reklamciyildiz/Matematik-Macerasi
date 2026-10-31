@@ -45,6 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
+import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
+import com.yigit033.matematikmacarasi.games.basic.MultiplicationGameActivity
+import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import androidx.annotation.DrawableRes
 
 /**
  * Onaylı Referansa Sadık "Senin İçin Önerilen" Bölümü (Sprint H2)
@@ -63,6 +67,24 @@ fun RecommendedSection(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
+    val (recommendedTitle, recommendedSubtitle, recommendedActivity, recommendedImage) = when {
+        grade <= 1 -> listOf("Toplama Oyunu", "10 içinde toplama denemeleri", "addition", "addition")
+        grade in 3..4 -> listOf("Çarpma Oyunu", "Eşit grupları keşfet", "multiply", "multiply")
+        grade >= 5 -> listOf("Sayı Avı", "Temel sayı bilgini tekrar et", "number", "number")
+        else -> listOf("Sayı Avı", "Üçer ritmik saymayı uygula", "number", "number")
+    }
+    val selectedActivity = when (recommendedActivity) {
+        "addition" -> AdditionGameActivity::class.java
+        "multiply" -> MultiplicationGameActivity::class.java
+        else -> SayiAvi2Activity::class.java
+    }
+    val selectedImage = when (recommendedImage) {
+        "addition" -> R.drawable.ic_addition
+        "multiply" -> R.drawable.ic_multiplication
+        else -> R.drawable.card_number_hunt
+    }
+    val nextLesson = LearningPathCatalog.forGrade(userClass).first()
 
     Box(
         modifier = modifier
@@ -135,11 +157,12 @@ fun RecommendedSection(
                 // 1. Önerilen Oyun: Sayı Avı (Referanstaki sahil/ada temalı kart)
                 item {
                     RecommendedGameCard(
-                        title = "Sayı Avı",
-                        subtitle = "Katları keşfet ve puan topla!",
+                        title = recommendedTitle,
+                        subtitle = recommendedSubtitle,
                         badge = "Oyun",
+                        imageRes = selectedImage,
                         onPlayClick = {
-                            val intent = Intent(context, SayiAvi2Activity::class.java)
+                            val intent = Intent(context, selectedActivity)
                             context.startActivity(intent)
                         }
                     )
@@ -148,8 +171,8 @@ fun RecommendedSection(
                 // 2. Önerilen Öğrenme: Katlar Konusu (Referanstaki mor kitaplı kart)
                 item {
                     RecommendedLearnCard(
-                        title = "Katlar Konusu",
-                        subtitle = "Eğlenceli anlatımlar ve alıştırmalar",
+                        title = nextLesson.title,
+                        subtitle = "4 soruluk çalışan ders ve ilerleme kaydı",
                         badge = "Öğren",
                         onLearnClick = onNavigateToLearn
                     )
@@ -164,6 +187,7 @@ private fun RecommendedGameCard(
     title: String,
     subtitle: String,
     badge: String,
+    @DrawableRes imageRes: Int,
     onPlayClick: () -> Unit
 ) {
     Box(
@@ -181,7 +205,7 @@ private fun RecommendedGameCard(
     ) {
         // Arka plan resim dokusu
         Image(
-            painter = painterResource(id = R.drawable.card_number_hunt),
+            painter = painterResource(id = imageRes),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             alpha = 0.25f,

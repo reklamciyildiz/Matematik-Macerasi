@@ -48,6 +48,7 @@ data class LearnTopicPreview(
  */
 @Composable
 fun LearnTabScreen(
+    userClass: String,
     onNavigateToGames: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -107,13 +108,17 @@ fun LearnTabScreen(
                     fontWeight = FontWeight.ExtraBold
                 )
                 Text(
-                    text = "İnteraktif konu anlatımları ve ders adımları",
+                    text = "Kısa dersler, gerçek alıştırmalar ve kazanım takibi",
                     color = HomeColors.TextSecondary,
                     fontSize = 13.sp
                 )
             }
         }
 
+        LearningPracticeSection(userClass = userClass)
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Gelecek dersler; içerik henüz kullanıma açılmadı.
         // Bilgilendirme Bannerı
         Box(
             modifier = Modifier
@@ -135,13 +140,13 @@ fun LearnTabScreen(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
-                        text = "Konu Anlatımları Hazırlanıyor!",
+                        text = "Yeni Dersler Hazırlanıyor",
                         color = HomeColors.StarGold,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Matematik Macerası 2.0 sürümü için interaktif ders motoru geliştirilmektedir. Aşağıdaki konular çok yakında açılacak.",
+                        text = "Yukarıdaki iki kısa ders kullanılabilir. Aşağıdaki geniş konu başlıkları henüz açılmadı.",
                         color = HomeColors.TextSecondary,
                         fontSize = 12.sp,
                         lineHeight = 16.sp
@@ -153,7 +158,7 @@ fun LearnTabScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Gelecek Konu Müfredatı",
+            text = "Gelecek İçerikler",
             color = HomeColors.TextAccentCyan,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
@@ -256,7 +261,7 @@ fun LearnTabScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Konu anlatımları hazırlanırken 10 farklı oyunda rekorlarını geliştirebilirsin.",
+                    text = "Derslerden sonra mevcut oyunlarda pratik yapmaya devam edebilirsin.",
                     color = HomeColors.TextSecondary,
                     fontSize = 12.sp
                 )

@@ -346,6 +346,7 @@ fun HomeScreenNew(
                             .statusBarsPadding()
                     ) {
                         LearnTabScreen(
+                            userClass = userClass,
                             onNavigateToGames = { currentTab = HomeTab.GAMES },
                             modifier = Modifier.padding(bottom = 84.dp)
                         )

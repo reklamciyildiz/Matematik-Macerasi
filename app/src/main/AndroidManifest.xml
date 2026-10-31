@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Internet İzni -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    
+    <!-- Google Play Billing İzni -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+    
+    <!-- Google Play Families Policy: Reklam Kimligi (AD_ID) Iznini Kaldir -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_ADSERVICES_AD_ID" tools:node="remove" />
+    
+    <!-- Bildirim İzinleri -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".modules.MatematikMacerasiApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MatematikMacerasi"
+        tools:targetApi="31">
+        
+        <!-- Büyük ekran desteği -->
+        <meta-data
+            android:name="android.max_aspect"
+            android:value="2.4" />
+        <meta-data
+            android:name="android.allow_multiple_resumed_activities"
+            android:value="true" />
+        
+        <!-- AdMob uygulama ID'si -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9425978099676149~7802874919"/>
+            
+        <!-- Ana Aktivite (Varsayılan İkon) -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.App.Starting">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity>
+        
+        <!-- Robot İkonu için Activity Alias -->
+        <activity-alias
+            android:name=".RobotIconActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_robot"
+            android:roundIcon="@mipmap/ic_launcher_robot"
+            android:targetActivity=".MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity-alias>
+        
+        <!-- Uzay İkonu için Activity Alias -->
+        <activity-alias
+            android:name=".SpaceIconActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_space"
+            android:roundIcon="@mipmap/ic_launcher_space"
+            android:targetActivity=".MainActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity-alias>
+        
+        <activity
+            android:name=".games.GameSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.ComingSoonActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".profile.ProfileActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.basic.AdditionGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.basic.SubtractionGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.basic.MultiplicationGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.basic.DivisionGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.interactive.BalloonPopGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.interactive.NumberHuntGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.sayiavi2.SayiAvi2Activity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.interactive.NumberHuntLevelSelectActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.interactive.MathMazeGameActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.interactive.SpaceMathAdventureActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".screens.AvatarStoreActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".screens.SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".settings.IconSelectorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
+            android:name=".games.interactive.MarketSimulatorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        
+        <!-- Billing Test Activity - Geliştirme ve test için -->
+        <activity
+            android:name=".services.payments.BillingTestActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        
+        <!-- Bildirim Alıcısı -->
+        <receiver
+            android:name=".services.TaskReminderReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="com.yigit033.matematikmacarasi.DAILY_TASK_REMINDER" />
+                <action android:name="com.yigit033.matematikmacarasi.NEW_DAILY_TASKS" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

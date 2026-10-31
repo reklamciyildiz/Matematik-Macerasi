@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="140dp"
+    android:height="140dp"
+    android:viewportWidth="140"
+    android:viewportHeight="140">
+    
+    <!-- Yüz - mavi sihirbaz -->
+    <path
+        android:fillColor="#42A5F5"
+        android:pathData="M70,30 a40,40 0 1,0 0,80 a40,40 0 1,0 0,-80" />
+    
+    <!-- Sihirbaz şapkası -->
+    <path
+        android:fillColor="#1565C0"
+        android:pathData="M40,40 L100,40 L70,10 Z" />
+    
+    <!-- Şapka bandı -->
+    <path
+        android:fillColor="#90CAF9"
+        android:pathData="M40,40 L100,40 L100,35 L40,35 Z" />
+    
+    <!-- Gözler -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,60 a8,8 0 1,0 0,16 a8,8 0 1,0 0,-16" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,60 a8,8 0 1,0 0,16 a8,8 0 1,0 0,-16" />
+    
+    <!-- Göz bebekleri -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M55,68 a4,4 0 1,0 0,-8 a4,4 0 1,0 0,8" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M85,68 a4,4 0 1,0 0,-8 a4,4 0 1,0 0,8" />
+    
+    <!-- Gülümseyen ağız -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M60,85 Q70,95 80,85" />
+    
+    <!-- Sihirli asa -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M100,60 L120,50" />
+    
+    <!-- Asa ucu yıldız -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M120,50 L122,45 L125,50 L120,47 L120,53 Z" />
+    
+    <!-- Bölme işareti sembolleri -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,25 a3,3 0 1,0 0,6 a3,3 0 1,0 0,-6" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M35,50 L45,50" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,75 a3,3 0 1,0 0,6 a3,3 0 1,0 0,-6" />
+</vector> 

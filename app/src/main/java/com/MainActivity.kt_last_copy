@@ -1,0 +1,1465 @@
+package com.yigit033.matematikmacarasi
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
+import com.yigit033.matematikmacarasi.games.basic.SubtractionGameActivity
+import com.yigit033.matematikmacarasi.games.basic.MultiplicationGameActivity
+import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
+import com.yigit033.matematikmacarasi.games.GameSelectionActivity
+import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
+import com.yigit033.matematikmacarasi.games.interactive.NumberHuntGameActivity
+import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
+import com.yigit033.matematikmacarasi.games.interactive.SpaceMathAdventureActivity
+import com.yigit033.matematikmacarasi.profile.ProfileActivity
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import com.yigit033.matematikmacarasi.screens.SettingsDialog
+import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
+import com.yigit033.matematikmacarasi.ui.components.AnimatedBackground
+import com.yigit033.matematikmacarasi.ui.components.ChildFriendlyButton
+import com.yigit033.matematikmacarasi.ui.components.ChildFriendlyCard
+import com.yigit033.matematikmacarasi.ui.components.ClickableCard
+import com.yigit033.matematikmacarasi.ui.components.StaticBackground
+import com.yigit033.matematikmacarasi.ui.components.SubtitleText
+import com.yigit033.matematikmacarasi.ui.components.TitleText
+import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
+import com.yigit033.matematikmacarasi.services.AudioService
+import com.yigit033.matematikmacarasi.services.AvatarService
+import com.yigit033.matematikmacarasi.services.StarManager
+import android.util.Log
+import android.content.Context
+import android.content.SharedPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
+import coil.Coil
+import coil.annotation.ExperimentalCoilApi
+import com.google.gson.Gson
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.annotation.DrawableRes
+import android.content.pm.PackageManager
+import android.Manifest
+import android.os.Build
+import android.widget.Toast
+import com.yigit033.matematikmacarasi.ui.components.AnimatedTitle
+import com.yigit033.matematikmacarasi.ui.components.ColorfulPuzzleIcon
+import com.yigit033.matematikmacarasi.ui.components.AnimatedClockIcon
+import com.yigit033.matematikmacarasi.ui.components.RobotWithBlinkingEyesIcon
+import com.yigit033.matematikmacarasi.ui.components.GameControllerWithStarsIcon
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.foundation.Canvas
+import kotlin.random.Random
+import com.yigit033.matematikmacarasi.services.EventBus
+import com.yigit033.matematikmacarasi.services.AvatarChangedEvent
+import androidx.compose.runtime.collectAsState
+import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
+import com.yigit033.matematikmacarasi.ui.components.BasicOperationCard
+import com.yigit033.matematikmacarasi.ui.components.GameCard
+import com.yigit033.matematikmacarasi.ui.components.DailyTaskItem
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.window.Dialog
+
+class MainActivity : ComponentActivity() {
+    private var lastResumeTime = 0L
+    private var audioService: AudioService? = null
+    private lateinit var dailyTaskManager: DailyTaskManager
+    private lateinit var starManager: StarManager
+    private lateinit var sharedPreferences: SharedPreferences
+    
+    private val permissions = arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
+    
+    @OptIn(ExperimentalCoilApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        
+        sharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+        initializeServices()
+        clearImageCache()
+        
+        checkAndRequestPermissions()
+        
+        setContent {
+            MatematikMacerasiTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    MainScreen()
+                }
+            }
+        }
+    }
+    
+    private fun initializeServices() {
+        try {
+            audioService = AudioService.getInstance(this)
+            audioService?.let { service ->
+                val soundStatus = service.checkSoundFilesStatus()
+                Log.d("MainActivity", "Ses Dosyaları Durumu: $soundStatus")
+            }
+            dailyTaskManager = DailyTaskManager(this)
+            starManager = StarManager.getInstance(this)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Servisler başlatılamadı", e)
+        }
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        lastResumeTime = System.currentTimeMillis()
+        audioService?.resumeBackgroundMusic()
+        
+        try {
+            if (::dailyTaskManager.isInitialized) {
+                val updatedTasks = dailyTaskManager.getTodayTasks()
+                EventBus.updateDailyTasks(updatedTasks)
+                Log.d("MainActivity", "Görevler güncellendi")
+            }
+            
+            val userName = getUserName()
+            EventBus.updateProfileData(userName, lastResumeTime)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "onResume güncelleme hatası: ${e.message}", e)
+        }
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        audioService?.pauseBackgroundMusic()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        audioService?.release()
+        audioService = null
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 1001 && resultCode == RESULT_OK) {
+            lastResumeTime = System.currentTimeMillis()
+            val userName = getUserName()
+            EventBus.updateProfileData(userName, lastResumeTime)
+            Log.d("MainActivity", "Profil sayfasından döndü")
+        }
+        
+        if (::dailyTaskManager.isInitialized) {
+            try {
+                val updatedTasks = dailyTaskManager.getTodayTasks()
+                EventBus.updateDailyTasks(updatedTasks)
+                Log.d("MainActivity", "Görevler güncellendi")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Görev güncelleme hatası: ${e.message}", e)
+            }
+        }
+    }
+
+    fun openProfileScreen() {
+        try {
+            val intent = Intent(this, ProfileActivity::class.java)
+            startActivityForResult(intent, 1001)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Profil ekranı açılamadı: ${e.message}", e)
+            Toast.makeText(this, "Profil ekranı açılamadı", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun getUserName(): String {
+        return sharedPreferences.getString("user_name", "") ?: ""
+    }
+
+    fun getStarManager(): StarManager {
+        return starManager
+    }
+    
+    private fun checkAndRequestPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val permissionsToRequest = permissions.filter {
+                checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED
+            }.toTypedArray()
+            
+            if (permissionsToRequest.isNotEmpty()) {
+                requestPermissions(permissionsToRequest, 100)
+            }
+        }
+    }
+    
+    @OptIn(ExperimentalCoilApi::class)
+    private fun clearImageCache() {
+        try {
+            val imageLoader = Coil.imageLoader(this)
+            imageLoader.memoryCache?.clear()
+            imageLoader.diskCache?.clear()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Görüntü önbelleği temizlenemedi", e)
+        }
+    }
+}
+
+// Günlük görev türlerini tanımlayan enum sınıfı
+enum class DailyTaskType {
+    DIVISION, ADDITION, SUBTRACTION, MULTIPLICATION, MATCHING, COMPARISON, ANY
+}
+
+// Oyun türlerini tanımlayan enum sınıfı
+enum class GameType {
+    ADDITION_GAME,
+    SUBTRACTION_GAME,
+    MULTIPLICATION_GAME,
+    DIVISION_GAME,
+    BALLOON_POP_GAME,
+    NUMBER_HUNT_GAME,
+    MATH_MAZE_GAME,
+    SPACE_MATH_ADVENTURE,
+    SHAPE_RECOGNITION
+}
+
+// Günlük görev veri sınıfı
+data class DailyTask(
+    val id: Int,
+    val type: DailyTaskType,
+    val description: String,
+    val targetCount: Int,
+    val currentCount: Int = 0,
+    val reward: Int = 10, // Tamamlanınca kazanılacak puan/yıldız
+    val gameType: GameType, // İlgili oyun türü
+    val isCompleted: Boolean = currentCount >= targetCount
+)
+
+// Günlük görevleri yöneten sınıf
+class DailyTaskManager(private val context: Context) {
+    private val sharedPreferences: SharedPreferences by lazy {
+        context.getSharedPreferences("daily_tasks", Context.MODE_PRIVATE)
+    }
+    
+    private val gson: Gson by lazy {
+        Gson()
+    }
+    
+    // Bugünün tarihini al
+    private fun getCurrentDateKey(): String {
+        return try {
+            val dateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            dateFormat.format(java.util.Date())
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Tarih formatı oluşturulamadı", e)
+            ""
+        }
+    }
+    
+    // Bugün için görevleri al
+    fun getTodayTasks(): List<DailyTask> {
+        return try {
+            val currentDateKey = getCurrentDateKey()
+            if (currentDateKey.isEmpty()) return emptyList()
+            
+            val lastGeneratedDate = sharedPreferences.getString("last_generated_date", "")
+            
+            if (lastGeneratedDate != currentDateKey) {
+                return generateDailyTasks().also { saveTodayTasks(it) }
+            }
+            
+            val tasksJson = sharedPreferences.getString("tasks_$currentDateKey", null)
+            tasksJson?.let {
+                try {
+                    gson.fromJson(it, Array<DailyTask>::class.java).toList()
+                } catch (e: Exception) {
+                    Log.e("DailyTaskManager", "JSON dönüşüm hatası", e)
+                    generateDailyTasks()
+                }
+            } ?: generateDailyTasks()
+            
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Görevler alınamadı", e)
+            emptyList()
+        }
+    }
+    
+    // Görevleri kaydet
+    fun saveTodayTasks(tasks: List<DailyTask>) {
+        try {
+            val currentDateKey = getCurrentDateKey()
+            if (currentDateKey.isEmpty()) return
+            
+            val editor = sharedPreferences.edit()
+            val tasksJson = gson.toJson(tasks)
+            
+            editor.putString("tasks_$currentDateKey", tasksJson)
+            editor.putString("last_generated_date", currentDateKey)
+            editor.apply()
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Görevler kaydedilemedi", e)
+        }
+    }
+    
+    // Görev ilerlemesini güncelle
+    fun updateTaskProgress(taskId: Int) {
+        try {
+            val tasks = getTodayTasks().toMutableList()
+            val taskIndex = tasks.indexOfFirst { it.id == taskId }
+            
+            if (taskIndex != -1) {
+                val task = tasks[taskIndex]
+                if (task.currentCount < task.targetCount) {
+                    tasks[taskIndex] = task.copy(currentCount = task.currentCount + 1)
+                    saveTodayTasks(tasks)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Görev ilerlemesi güncellenemedi", e)
+        }
+    }
+    
+    // Görevi tamamla ve güncellenmiş görev listesini döndür
+    fun completeTask(taskId: Int): List<DailyTask> {
+        try {
+            val tasks = getTodayTasks().toMutableList()
+            val taskIndex = tasks.indexOfFirst { it.id == taskId }
+            
+            if (taskIndex != -1) {
+                val task = tasks[taskIndex]
+                if (!task.isCompleted) {
+                    // Görevi tamamlanmış olarak işaretle
+                    tasks[taskIndex] = task.copy(currentCount = task.targetCount)
+                    saveTodayTasks(tasks)
+                    Log.d("DailyTaskManager", "Görev tamamlandı: $taskId")
+                }
+            }
+            return tasks
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Görev tamamlanamadı", e)
+            return getTodayTasks()
+        }
+    }
+    
+    // Rastgele günlük görevler üret
+    private fun generateDailyTasks(): List<DailyTask> {
+        return try {
+            val random = java.util.Random()
+            val tasks = mutableListOf<DailyTask>()
+            val gameTypes = GameType.values()
+            val usedGameTypes = mutableSetOf<GameType>()
+            var taskId = 1
+            
+            // Her gün için 5-6 görev oluştur
+            val taskCount = random.nextInt(2) + 5 // 5-6 görev
+            
+            while (tasks.size < taskCount && usedGameTypes.size < gameTypes.size) {
+                // Rastgele bir oyun seç
+                val gameType = gameTypes[random.nextInt(gameTypes.size)]
+                
+                // Aynı oyundan en fazla bir görev olsun
+                if (gameType in usedGameTypes) continue
+                
+                // Oyun türüne göre hedef sayısını belirle 
+                val targetCount = random.nextInt(3) + 1 // 1-3 arası
+                
+                // Oyun türüne göre görev türü ve açıklaması oluştur
+                val (taskType, description) = when (gameType) {
+                    GameType.ADDITION_GAME -> Pair(
+                        DailyTaskType.ADDITION,
+                        "$targetCount Toplama Oyunu Oyna"
+                    )
+                    GameType.SUBTRACTION_GAME -> Pair(
+                        DailyTaskType.SUBTRACTION,
+                        "$targetCount Çıkarma Oyunu Oyna"
+                    )
+                    GameType.MULTIPLICATION_GAME -> Pair(
+                        DailyTaskType.MULTIPLICATION,
+                        "$targetCount Çarpma Oyunu Oyna"
+                    )
+                    GameType.DIVISION_GAME -> Pair(
+                        DailyTaskType.DIVISION,
+                        "$targetCount Bölme Oyunu Oyna"
+                    )
+                    GameType.BALLOON_POP_GAME -> Pair(
+                        DailyTaskType.ANY,
+                        "$targetCount Balon Patlatma Oyunu Oyna"
+                    )
+                    GameType.NUMBER_HUNT_GAME -> Pair(
+                        DailyTaskType.MATCHING,
+                        "$targetCount Sayı Avı Oyunu Oyna"
+                    )
+                    GameType.MATH_MAZE_GAME -> Pair(
+                        DailyTaskType.COMPARISON,
+                        "$targetCount Matematik Labirenti Oyunu Oyna"
+                    )
+                    GameType.SPACE_MATH_ADVENTURE -> Pair(
+                        DailyTaskType.ANY,
+                        "$targetCount Uzay Matematik Macerası Oyna"
+                    )
+                    GameType.SHAPE_RECOGNITION -> Pair(
+                        DailyTaskType.MATCHING,
+                        "$targetCount Şekil Tanıma Oyunu Oyna"
+                    )
+                }
+                
+                tasks.add(
+                    DailyTask(
+                        id = taskId++,
+                        type = taskType,
+                        description = description,
+                        targetCount = targetCount,
+                        gameType = gameType
+                    )
+                )
+                
+                usedGameTypes.add(gameType)
+            }
+            
+            // Her zaman en az bir "Herhangi Bir" görevi ekle
+            tasks.add(
+                DailyTask(
+                    id = taskId,
+                    type = DailyTaskType.ANY,
+                    description = "Herhangi Bir Oyunda İlerle",
+                    targetCount = 1,
+                    gameType = GameType.values()[random.nextInt(GameType.values().size)]
+                )
+            )
+            
+            tasks
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Görevler oluşturulamadı", e)
+            emptyList()
+        }
+    }
+    
+    // Görevin tamamlandı mı kontrolü
+    fun isTaskCompleted(taskId: Int): Boolean {
+        val tasks = getTodayTasks()
+        val task = tasks.find { it.id == taskId } ?: return false
+        return task.currentCount >= task.targetCount
+    }
+    
+    // Tüm görevlerin tamamlandı mı kontrolü
+    fun areAllTasksCompleted(): Boolean {
+        val tasks = getTodayTasks()
+        return tasks.all { it.currentCount >= it.targetCount }
+    }
+    
+    // Tamamlanan görevlerin ödüllerini ver
+    fun claimRewards(): Int {
+        val tasks = getTodayTasks()
+        var totalRewards = 0
+        
+        tasks.forEach { task ->
+            if (task.currentCount >= task.targetCount) {
+                totalRewards += task.reward
+            }
+        }
+        
+        // Ödül verildikten sonra görevleri sıfırlama işlemi yapılabilir
+        // Bu örnekte şimdilik sadece toplam ödül miktarını döndürüyoruz
+        
+        return totalRewards
+    }
+    
+    fun getTotalStars(): Int {
+        return try {
+            val tasks = getTodayTasks()
+            tasks.filter { it.isCompleted }.sumOf { it.reward }
+        } catch (e: Exception) {
+            Log.e("DailyTaskManager", "Toplam yıldız hesaplanamadı", e)
+            0
+        }
+    }
+}
+
+@Composable
+fun MainScreen() {
+    val context = LocalContext.current
+    val mainActivity = context as? MainActivity
+    
+    var showDailyTasks by remember { mutableStateOf(false) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+    
+    val audioService = AudioService.getInstance(context)
+    val avatarService = remember { AvatarService(context) }
+    val dailyTaskManager = remember { DailyTaskManager(context) }
+    val starManager = remember { mainActivity?.getStarManager() ?: StarManager.getInstance(context) }
+    
+    var userName by remember { mutableStateOf("") }
+    var currentAvatar by remember { mutableStateOf(avatarService.getCurrentAvatar()) }
+    var dailyTasks by remember { mutableStateOf(dailyTaskManager.getTodayTasks()) }
+    var uncompletedTaskCount by remember { mutableStateOf(0) }
+    var totalStars by remember { mutableStateOf(0) }
+    
+    // EventBus'tan gelen güncellemeleri dinle
+    val currentAvatarId = EventBus.currentAvatarId.collectAsState()
+    val eventBusTasks = EventBus.dailyTasks.collectAsState()
+    val profileUpdateTime = EventBus.profileUpdateTime.collectAsState()
+    
+    // Avatar değişikliklerini dinle
+    LaunchedEffect(currentAvatarId.value) {
+        currentAvatar = avatarService.getCurrentAvatar()
+    }
+    
+    // Görev güncellemelerini dinle
+    LaunchedEffect(eventBusTasks.value) {
+        if (eventBusTasks.value.isNotEmpty()) {
+            dailyTasks = eventBusTasks.value
+            uncompletedTaskCount = dailyTasks.count { !it.isCompleted }
+        }
+    }
+    
+    // Profil güncellemelerini dinle
+    LaunchedEffect(profileUpdateTime.value) {
+        if (profileUpdateTime.value > 0) {
+            userName = mainActivity?.getUserName() ?: ""
+            totalStars = starManager.getTotalStars()
+        }
+    }
+    
+    // Başlangıç durumu
+    LaunchedEffect(Unit) {
+        userName = mainActivity?.getUserName() ?: ""
+        dailyTasks = dailyTaskManager.getTodayTasks()
+        uncompletedTaskCount = dailyTasks.count { !it.isCompleted }
+        totalStars = starManager.getTotalStars()
+        currentAvatar = avatarService.getCurrentAvatar()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF800080), // Orta Mor (Üst)
+                        Color(0xFF87CEEB)  // Açık Mavi (Alt)
+                    )
+                )
+            )
+    ) {
+        Canvas(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            val random = Random(1)
+            val starCount = 30
+            
+            repeat(starCount) {
+                val x = random.nextFloat() * size.width
+                val y = random.nextFloat() * size.height
+                val starSize = random.nextFloat() * 3f + 1f
+                val alpha = random.nextFloat() * 0.4f + 0.1f
+                
+                drawCircle(
+                    color = Color.White.copy(alpha = alpha),
+                    radius = starSize,
+                    center = Offset(x, y)
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.07f),
+                            Color.Transparent
+                        ),
+                        center = Offset.Infinite,
+                        radius = 1000f
+                    )
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(top = 24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable {
+                            mainActivity?.openProfileScreen()
+                        }
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Card(
+                            shape = CircleShape,
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            modifier = Modifier
+                                .border(width = 2.dp, color = Color(0xFFFFD700), shape = CircleShape)
+                                .size(60.dp)
+                        ) {
+                            AnimatedAvatarView(
+                                avatar = currentAvatar,
+                                modifier = Modifier.fillMaxSize(),
+                                contentDescription = "Avatar"
+                            )
+                        }
+                        
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .offset(x = 8.dp, y = 8.dp)
+                                .wrapContentSize()
+                                .background(
+                                    color = Color(0xFFE91E63),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .border(1.5.dp, Color.White, RoundedCornerShape(12.dp))
+                                .padding(horizontal = 6.dp, vertical = 3.dp)
+                                .defaultMinSize(minWidth = 22.dp, minHeight = 22.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(horizontal = 2.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = "Yıldız",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text(
+                                    text = "$totalStars",
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.width(16.dp))
+                    
+                    Box(
+                        modifier = Modifier.height(60.dp),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        Text(
+                            text = userName,
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.SansSerif,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 10.dp)
+                        )
+                    }
+                }
+
+                IconButton(
+                    onClick = { showDailyTasks = true },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                ) {
+                    BadgedBox(
+                        badge = {
+                            if (uncompletedTaskCount > 0) {
+                                Badge { 
+                                    Text(
+                                        text = "$uncompletedTaskCount",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = "Günlük Görevler",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            AnimatedTitle(
+                text = "Matematik Macerası",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp)
+                ) {
+                val horizontalScrollState = rememberScrollState()
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Temel İşlemler",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+                    
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = horizontalScrollState.value == 0,
+                        enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInHorizontally(),
+                        exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutHorizontally()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        ) {
+                            Text(
+                                text = "Kaydır", 
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                                contentDescription = "Sağa Kaydır",
+                                tint = Color.White.copy(alpha = 0.7f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+                
+                Row(
+                    modifier = Modifier
+                        .horizontalScroll(horizontalScrollState)
+                        .padding(bottom = 32.dp)
+                ) {
+                    BasicOperationCard(
+                        icon = R.drawable.ic_addition,
+                        title = "Toplama",
+                        color = Color(0xFF2196F3),
+                        onClick = {
+                            val intent = Intent(context, AdditionGameActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    BasicOperationCard(
+                        icon = R.drawable.ic_subtraction,
+                        title = "Çıkarma",
+                        color = Color(0xFFE91E63),
+                        onClick = {
+                            val intent = Intent(context, SubtractionGameActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    BasicOperationCard(
+                        icon = R.drawable.ic_multiplication,
+                        title = "Çarpma",
+                        color = Color(0xFF4CAF50),
+                        onClick = {
+                            val intent = Intent(context, MultiplicationGameActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    BasicOperationCard(
+                        icon = R.drawable.ic_division,
+                        title = "Bölme",
+                        color = Color(0xFFFF9800),
+                        onClick = {
+                            val intent = Intent(context, DivisionGameActivity::class.java)
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+            }
+
+            // Diğer Konular Bölümü - Kartların yatay boşluklarını tamamen kaldırıyoruz
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 8.dp)
+            ) {
+                // "Diğer Konular" başlığı
+                Text(
+                    text = "Diğer Konular",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 16.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                // İlk satır - İki kart yan yana
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 0.dp), // Yatay boşluğu tamamen kaldırıyoruz
+                    horizontalArrangement = Arrangement.spacedBy(1.dp) // Kartlar arasındaki boşluğu minimize ediyoruz
+                ) {
+                    // Sol sütun - Şekiller ve Algoritma kategorileri
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Şekiller & Matematik kartı - Geometri temalı
+                        GameCard(
+                            icon = R.drawable.ic_shapes,
+                            title = "Şekiller & Matematik",
+                            color = Color(0xFF009688),
+                            badgeCount = 0,
+                            onClick = {
+                                val intent = Intent(context, GameSelectionActivity::class.java)
+                                intent.putExtra("category", "shapes")
+                                context.startActivity(intent)
+                            },
+                            customIcon = { ColorfulPuzzleIcon() }
+                        )
+                        
+                        // Algoritma & Matematik kartı - Robot temalı, 2 yeni oyunu belirten rozet
+                        GameCard(
+                            icon = R.drawable.ic_algorithm,
+                            title = "Algoritma & Matematik",
+                            color = Color(0xFF9C27B0),
+                            badgeCount = 2,
+                            onClick = {
+                                val intent = Intent(context, GameSelectionActivity::class.java)
+                                intent.putExtra("category", "algorithm")
+                                context.startActivity(intent)
+                            },
+                            customIcon = { RobotWithBlinkingEyesIcon() }
+                        )
+                    }
+                    
+                    // Sağ sütun - Gerçek Hayat ve Eğlence kategorileri
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Gerçek & Matematik kartı - Saat temalı, 1 yeni oyunu belirten rozet
+                        GameCard(
+                            icon = R.drawable.ic_clock,
+                            title = "Gerçek & Matematik",
+                            color = Color(0xFFFF5722),
+                            badgeCount = 1,
+                            onClick = {
+                                val intent = Intent(context, GameSelectionActivity::class.java)
+                                intent.putExtra("category", "real")
+                                context.startActivity(intent)
+                            },
+                            customIcon = { AnimatedClockIcon() }
+                        )
+                        
+                        // Eğlence & Matematik kartı - Oyun kumandası temalı, 3 yeni oyunu belirten rozet
+                        GameCard(
+                            icon = R.drawable.ic_fun,
+                            title = "Eğlence & Matematik",
+                            color = Color(0xFF673AB7),
+                            badgeCount = 3,
+                            onClick = {
+                                val intent = Intent(context, GameSelectionActivity::class.java)
+                                intent.putExtra("category", "interactive")
+                                context.startActivity(intent)
+                            },
+                            customIcon = { GameControllerWithStarsIcon() }
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(80.dp))
+        }
+
+        // Alt kısımdaki uygulama kontrolleri - Ekranın en altında konumlandırılmış
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .align(Alignment.BottomCenter),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Uygulama ikonu değiştirme butonu - Sol alt köşede
+            IconButton(
+                onClick = {
+                    try {
+                        val appContext = context.applicationContext
+                        val intent = Intent(appContext, IconSelectorActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        appContext.startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "İkon değiştirme sayfası açılamadı", e)
+                        try {
+                            val robotIntent = Intent(context, RobotIconActivity::class.java)
+                            robotIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            context.startActivity(robotIntent)
+                        } catch (e2: Exception) {
+                            Log.e("MainActivity", "Robot icon sayfası da açılamadı", e2)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Apps,
+                    contentDescription = "Uygulama İkonunu Değiştir",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            // Ayarlar butonu - Sağ alt köşede
+            IconButton(
+                onClick = {
+                    try {
+                        val appContext = context.applicationContext ?: run {
+                            Log.e("MainActivity", "ApplicationContext null")
+                            throw NullPointerException("ApplicationContext null")
+                        }
+                        
+                        val intent = Intent(appContext, SettingsActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        intent.putExtra("caller_activity", "MainActivity")
+                        intent.putExtra("timestamp", System.currentTimeMillis())
+                        
+                        Log.d("MainActivity", "Intent oluşturuldu: $intent")
+                        Log.d("MainActivity", "Intent flags: ${intent.flags}")
+                        Log.d("MainActivity", "Intent extras: ${intent.extras}")
+                        
+                        appContext.startActivity(intent)
+                        Log.d("MainActivity", "SettingsActivity başlatıldı")
+                    } catch (e: ClassNotFoundException) {
+                        Log.e("MainActivity", "SettingsActivity sınıfı bulunamadı: ${e.message}", e)
+                        throw e
+                    } catch (e: Exception) {
+                        Log.e("MainActivity", "Intent oluşturma veya başlatma hatası: ${e.message}", e)
+                        throw e
+                    }
+                },
+                modifier = Modifier
+                    .size(56.dp)
+                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Ayarlar",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+    }
+
+    if (showDailyTasks) {
+        DailyTasksDialog(
+            tasks = dailyTasks,
+            onDismiss = { showDailyTasks = false },
+            onTaskCompleted = { taskId ->
+                val updatedTasks = dailyTaskManager.completeTask(taskId)
+                dailyTasks = updatedTasks
+                uncompletedTaskCount = updatedTasks.count { !it.isCompleted }
+                EventBus.updateDailyTasks(updatedTasks)
+            }
+        )
+    }
+
+    if (showSettingsDialog) {
+        SettingsDialog(
+            onDismiss = { showSettingsDialog = false },
+            audioService = audioService,
+            isBackupMode = true
+        )
+    }
+}
+
+@Composable
+fun BasicOperationCard(
+    @DrawableRes icon: Int,
+    title: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(120.dp)
+            .height(160.dp)
+            .clickable { onClick() },
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 30.dp, y = (-30).dp)
+                    .background(
+                        color = color.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    )
+            )
+            
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(0.65f)
+                        .fillMaxWidth()
+                        .padding(top = 12.dp, start = 12.dp, end = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(70.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(color.copy(alpha = 0.1f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = icon),
+                            contentDescription = title,
+                            tint = color,
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .weight(0.35f)
+                        .fillMaxWidth()
+                        .background(
+                            color = color.copy(alpha = 0.25f),
+                            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF1565C0),
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GameCard(
+    @DrawableRes icon: Int,
+    title: String,
+    color: Color,
+    badgeCount: Int = 0,
+    customIcon: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(0.93f)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(22.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(150.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 75.dp, y = (-75).dp)
+                    .background(
+                        color = color.copy(alpha = 0.1f),
+                        shape = CircleShape
+                    )
+            )
+            
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(0.6f)
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (badgeCount > 0) {
+                        BadgedBox(
+                            badge = {
+                                Badge {
+                                    Text(
+                                        text = badgeCount.toString(),
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(75.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(color.copy(alpha = 0.1f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (customIcon != null) {
+                                    Box(modifier = Modifier.size(52.dp)) {
+                                        customIcon()
+                                    }
+                                } else {
+                                    Icon(
+                                        painter = painterResource(id = icon),
+                                        contentDescription = title,
+                                        tint = color,
+                                        modifier = Modifier.size(52.dp)
+                                    )
+                                }
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(75.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(color.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (customIcon != null) {
+                                Box(modifier = Modifier.size(52.dp)) {
+                                    customIcon()
+                                }
+                            } else {
+                                Icon(
+                                    painter = painterResource(id = icon),
+                                    contentDescription = title,
+                                    tint = color,
+                                    modifier = Modifier.size(52.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .fillMaxWidth()
+                        .background(
+                            color = color.copy(alpha = 0.18f),
+                            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp, bottomStart = 0.dp, bottomEnd = 0.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = Color(0xFF1565C0),
+                        fontSize = 18.sp,
+                        lineHeight = 21.sp,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    MatematikMacerasiTheme {
+        MainScreen()
+    }
+}
+
+@Composable
+fun DailyTasksDialog(
+    tasks: List<DailyTask>,
+    onDismiss: () -> Unit,
+    onTaskCompleted: (Int) -> Unit
+) {
+    val context = LocalContext.current
+    
+    androidx.compose.ui.window.Dialog(
+        onDismissRequest = onDismiss
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 8.dp
+            ),
+            border = androidx.compose.foundation.BorderStroke(
+                width = 2.dp,
+                color = Color(0xFFFFD54F)
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Günlük Görevler",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = Color(0xFF333333)
+                    )
+                    
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Kapat",
+                        tint = Color.Gray,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clickable { onDismiss() }
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                tasks.forEach { task ->
+                    DailyTaskItem(
+                        task = task,
+                        onTaskClick = { 
+                            val intent = when (task.gameType) {
+                                GameType.ADDITION_GAME -> Intent(context, AdditionGameActivity::class.java)
+                                GameType.SUBTRACTION_GAME -> Intent(context, SubtractionGameActivity::class.java)
+                                GameType.MULTIPLICATION_GAME -> Intent(context, MultiplicationGameActivity::class.java)
+                                GameType.DIVISION_GAME -> Intent(context, DivisionGameActivity::class.java)
+                                GameType.BALLOON_POP_GAME -> Intent(context, BalloonPopGameActivity::class.java)
+                                GameType.NUMBER_HUNT_GAME -> Intent(context, NumberHuntGameActivity::class.java)
+                                GameType.MATH_MAZE_GAME -> Intent(context, MathMazeGameActivity::class.java)
+                                GameType.SPACE_MATH_ADVENTURE -> Intent(context, SpaceMathAdventureActivity::class.java)
+                                GameType.SHAPE_RECOGNITION -> {
+                                    Intent(context, GameSelectionActivity::class.java)
+                                }
+                            }
+                            
+                            if (!task.isCompleted) {
+                                onTaskCompleted(task.id)
+                            }
+                            
+                            intent.putExtra("daily_task_id", task.id)
+                            context.startActivity(intent)
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DailyTaskItem(
+    task: DailyTask,
+    onTaskClick: () -> Unit
+) {
+    val progress = task.currentCount.toFloat() / task.targetCount.toFloat()
+    val isCompleted = task.isCompleted
+    
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onTaskClick() }
+            .background(Color(0xFFF5F5F5))
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val (iconTint, iconResId) = when (task.gameType) {
+            GameType.DIVISION_GAME -> Pair(Color.Blue, R.drawable.ic_division_task)
+            GameType.ADDITION_GAME -> Pair(Color(0xFF4CAF50), R.drawable.ic_addition_task)
+            GameType.SUBTRACTION_GAME -> Pair(Color(0xFFE91E63), R.drawable.ic_subtraction_task)
+            GameType.MULTIPLICATION_GAME -> Pair(Color(0xFF673AB7), R.drawable.ic_multiplication_task)
+            GameType.NUMBER_HUNT_GAME, GameType.SHAPE_RECOGNITION -> 
+                Pair(Color(0xFFFF9800), R.drawable.ic_matching_task)
+            GameType.MATH_MAZE_GAME -> Pair(Color(0xFF009688), R.drawable.ic_comparison_task)
+            GameType.BALLOON_POP_GAME -> Pair(Color(0xFFE91E63), R.drawable.ic_balloon_task)
+            GameType.SPACE_MATH_ADVENTURE -> Pair(Color(0xFF3F51B5), R.drawable.ic_spaceship)
+        }
+        
+        Icon(
+            painter = painterResource(id = iconResId),
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(24.dp)
+        )
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = task.description,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF333333)
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp),
+                color = iconTint,
+                trackColor = Color(0xFFE0E0E0)
+            )
+        }
+        
+        Spacer(modifier = Modifier.width(12.dp))
+        
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    if (isCompleted) Color(0xFF4CAF50) else Color(0xFF2196F3)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isCompleted) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
+                )
+            } else {
+                Text(
+                    text = "${task.currentCount}/${task.targetCount}",
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}

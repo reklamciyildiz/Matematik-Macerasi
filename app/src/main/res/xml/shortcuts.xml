@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Ana ekrana kısayol -->
+    <shortcut
+        android:shortcutId="main"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/app_name"
+        android:shortcutLongLabel="@string/app_name">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.yigit033.matematikmacarasi"
+            android:targetClass="com.yigit033.matematikmacarasi.MainActivity" />
+    </shortcut>
+</shortcuts> 

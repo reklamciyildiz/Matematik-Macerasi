@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Uzay İstasyonu - ana modül (merkezi silindir) -->
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M11,8L13,8L13,16L11,16z"/>
+
+    <!-- Uzay İstasyonu - yatay kol (sol) -->
+    <path
+        android:fillColor="#455A64"
+        android:pathData="M6,10L11,10L11,14L6,14z"/>
+    
+    <!-- Uzay İstasyonu - yatay kol (sağ) -->
+    <path
+        android:fillColor="#455A64"
+        android:pathData="M13,10L18,10L18,14L13,14z"/>
+    
+    <!-- Uzay İstasyonu - güneş panelleri (sol) -->
+    <path
+        android:fillColor="#90A4AE"
+        android:pathData="M2,9L6,9L6,15L2,15z"/>
+    
+    <!-- Uzay İstasyonu - güneş panelleri (sağ) -->
+    <path
+        android:fillColor="#90A4AE"
+        android:pathData="M18,9L22,9L22,15L18,15z"/>
+    
+    <!-- Uzay İstasyonu - detaylar -->
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M12,8m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M12,16m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"/>
+    
+    <!-- Güneş paneli detayları - sol -->
+    <path
+        android:strokeColor="#37474F"
+        android:strokeWidth="0.3"
+        android:pathData="M2.5,10h3M2.5,11h3M2.5,12h3M2.5,13h3M2.5,14h3"/>
+    
+    <!-- Güneş paneli detayları - sağ -->
+    <path
+        android:strokeColor="#37474F"
+        android:strokeWidth="0.3"
+        android:pathData="M18.5,10h3M18.5,11h3M18.5,12h3M18.5,13h3M18.5,14h3"/>
+</vector> 

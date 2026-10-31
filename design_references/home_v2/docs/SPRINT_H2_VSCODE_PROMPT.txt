@@ -1,0 +1,74 @@
+# MATEMATİK MACERASI 2.0 — HOME SPRINT H2 / GÖRSEL REFERANSA SADIK ENTEGRASYON
+
+AKTİF PROJE: C:\active_projects\MatematikMacerasiii
+Bu, Play Store'daki orijinal Matematik Macerası kaynak projesidir. Önceki Sprint H1 ile dört sekmeli, işlevsel fakat KOYU/LACİVERT ve İLLÜSTRASYONSUZ bir ana sayfa oluşturduk. Şu andaki amacımız H1'i baştan icat etmek değil; ONAYLADIĞIMIZ referans görsele görsel olarak olabildiğince yaklaştırmaktır.
+
+## 0 — KAYNAKLAR VE HİYERARŞİ
+Bu paketi şu klasöre açtığımı varsay:
+C:\active_projects\MatematikMacerasiii\design_references\home_v2\
+
+Ana ve bağlayıcı referans: reference/HOME_APPROVED_REFERENCE.png
+Assetler:
+- assets/home/hero_fantasy_island_explorer.png (üst hero illüstrasyonu: ada + karakter birlikte, metinsiz)
+- assets/home/card_four_operations.png (dört işlem oyun kapağı)
+- assets/home/card_balloon_pop.png (balon oyunu kapağı)
+- assets/home/card_number_hunt.png (sayı avı oyun kapağı)
+- assets/home/card_space_adventure.png (uzay macerası kapağı)
+Ayrıca `ASSET_MAPPING.md`, `HOME_DESIGN_BRIEF.md` ve `ART_ASSET_MANIFEST.md` dosyalarını oku.
+
+Onaylı görselin SON tasarım referansı olduğunu kabul et. Mevcut H1 ekranının koyu panel/kart görünümünü hedef tasarım olarak kabul etme. Kaynak görsel bir mockup'tır: UI metinlerini, tutarları, kullanıcı verilerini veya butonları PNG'den kopyalama.
+
+## 1 — KRİTİK KORUMA KURALLARI
+1. Değişiklikleri yalnızca orijinal MatematikMacerasiii çalışma ağacında, önce güvenli geri alınabilir yerel yedek aldıktan sonra yap. Var olan referans yedeğine ve v2_vertical_slice projesine dokunma.
+2. Hiçbir mevcut oyunu, Activity giriş noktasını, profil/avatar/StarManager/DailyTaskManager/PurchaseManager işlevini bozma. SharedPreferences migrasyonu veya yıldız birleştirme yapma. Premium haklarını değiştirme.
+3. Release applicationId, imzalama, versionCode, Google Play Billing, AdMob, Firebase ve canlı servisleri değiştirme; Git init/commit/push, deploy, mağaza yayını yok.
+4. Kullanıcının H1'de zaten çalışır hâle gelen dört sekmeli navigasyonunu ve gerçek oyun yönlendirmelerini koru. Hedef, H1 üzerinde kontrollü UI iyileştirmesi.
+5. Buradaki illüstrasyonları tekrar tasarlama, rastgele stok ikon/Canvas ada üretme, yeni ürün fikri icat etme. Eksik asset varsa açıkça listele.
+
+## 2 — EKRANIN GÖRSEL TANIMI
+Referansı 5 ana bölgeye ayrıştırarak yeniden üret:
+
+A. ÜST PROFİL + HERO
+- Mavi-gökyüzü, deniz, fantastik kale/adalar ortamı. Üst alanı koyu panel arka planla kapatma; görsel en üstte gerçekten görünmeli.
+- ProfileHeader: Seçili mevcut Lottie avatarı, gerçek kullanıcı adı/sınıfı, güvenilir mevcut yıldız bakiyesi, gerçek günlük görev rozeti. Referanstaki örnek 245 yıldız/12 elmas/12. seviye ve benzeri hayali verileri ekleme. Mevcutta olmayan ikinci para birimini gösterme.
+- Hero'nun solunda resmin içindeki kaşif, sağda görev metni ve eylemi. Görselin kendisi interaktif değildir; yerleşimde yeterli kontrast ve güvenli boşluk için gerektiğinde lokal gradient/dekoratif yüzey kullan.
+- Günün gerçek, oynanabilir görevi `DailyTaskManager` üzerinden gelsin. Başlığı/verisi dinamik: gerekmedikçe sabit `Sayıların Gizemini Çöz!` kullanma. CTA gerçek ilgili oyuna gitsin. Görev bulunamazsa düzgün boş durum.
+- Referanstaki sıcak krem parşömen panel stilini hedefle; elimizde henüz BAĞIMSIZ/metinsiz parchment asset'i bulunmadığından, mevcut Compose ile estetiğe yakın, ölçeklenebilir geçici açık tonlu görev kartı yap ve eksik premium parchment görselini ayrı ihtiyaç olarak bildir. Koyu lacivert kutu kullanma.
+
+B. HIZLI ERİŞİM
+- Geniş ve enerjik başlık; arka alanı koyu mavi yerine canlı derin mavi geçişli.
+- Dört işlem, Balon Patlatma, Sayı Avı ve Uzay Macerası oyun kartları referanstaki gibi canlı turuncu/mavi/yeşil/mor görünüme sahip olsun. Verilen görselleri gerçek `Image`/`painterResource` olarak, uygun `ContentScale.Crop` ve maskeyle, metinleri üstüne Compose `Text` olarak koy.
+- 360–430dp ekranlarda 4 kartı zorla yan yana sığdırma: kartlar yatay kaymalı, ilk bakışta 1.8–2.3 kart görünsün. Görsellerin ana objeleri kırpılmasın. Her kart çalışan mevcut oyun girişine bağlı olsun.
+- Uygun kart başlıkları: Dört İşlem Oyunları, Balon Patlatma, Sayı Avı, Uzay Macerası. Dört işlem kartı mevcut dört işlem seçimine veya var olan uygun işlevsel menüye gitmeli.
+
+C. SENİN İÇİN ÖNERİLEN
+- Referanstaki gibi açık mavi/beyaz büyük yumuşatılmış yüzey, iki canlı yatay öneri kartı (dar telefonda yatay kaydırmalı).
+- Gerçek önerilen oyun verisi ve mevcut `GameStatisticsService`/yaş-sınıf bilgilerini kullan. Öğren içerikleri mevcut değilse gerçek olmayan konu dersi veya çalışıyor gibi davranan `Şimdi Öğren` butonu oluşturma; dürüst `Hazırlanıyor` sun veya çalışan bir alıştırmaya yönlendir.
+- Mevcut sayı avı illüstrasyonu uygun olduğu yerde kullanılabilir. Açık kitap/öğren illustrasyonu ayrıca eksikse bunu bildir, görsel olmayan basit ama temiz fallback kullan.
+
+D. GELİŞİMİM
+- Referanstaki gibi AÇIK renkli kart yüzeyi; okunaklı, oyun estetiğinde istatistik kutuları.
+- Sadece doğrulanabilen gerçek veriler. Mevcutta seri/kupa/haftalık hedef verisi yoksa üretme. Gerçek yıldız, tamamlanan oyunlar/görevler vb. metrikleri kullan; yoksa anlamlı boş durum.
+
+E. SABİT ALT NAVİGASYON
+- Ana Sayfa | Oyunlar | Öğren | Profil. Referanstaki parlak mavi seçili buton ve kompakt koyu mavi bar hissi korunmalı.
+- Alt sistem insets ve cihaz gezinme çubuğuna saygılı olmalı; içerik barın altında kalmamalı.
+- Mevcut oyun, profil ve görev akışlarına gerçek bağlantılar sürmeli.
+
+## 3 — KODLAMA YAKLAŞIMI
+- Bütün görseli tek PNG olarak koyma; ayrı Compose katmanları kullan. UI metinleri ve sayılar görselde gömülü olmamalı.
+- H1'in çalışır navigation/state kodunu yeniden yazmak yerine görsel Composable'ları modülerleştir.
+- Compose UI'ı Android bağımlılıklarından mümkün olduğunca ayrık tut; bu sprintte KMP dönüşümü yok.
+- Assetleri gerektiği gibi Android `res/drawable-nodpi` veya uygun asset klasörüne yerleştir; 1024–1254px PNG'leri yüklerken RAM ve decode performansını değerlendir. Gerekirse kayıpsız kaliteyi koruyarak WebP optimize kopyası üret, orijinal paket dosyasını değiştirme.
+- Profil & Hero birlikte ilk viewport'ta baskın, Hızlı Erişim'in başlangıcı aşağıda görünmeli; Öneriler ve Gelişim kaydırma ile erişilir. Kartlarda ve CTA'da en az 48dp etkin dokunma alanı; küçük ekran, büyük yazı, tablet ve yatay kırpma testleri.
+- Onaylanan referansın renk hiyerarşisi ve eğlenceli karakteri baskın olsun; mevcut ekranın koyu, kurumsal dashboard görünümü devam etmesin.
+
+## 4 — AŞAMALI DOĞRULAMA, TESLİM
+- Önce kaynak paketi ve mevcut H1 kodunu oku; hangi varlıklar var/yok ve bunların hangi bileşenlere girdiğini kısa bir tabloyla belirt.
+- Sonra yalnızca HOME görsel entegrasyonunu yap. Yeni oyun, eğitim motoru, Premium ekranı, para birimi, kullanıcı verisi dönüşümü yapma.
+- Android debug APK üret; mümkünse emülatörde 360dp ve büyük ekranda görsel screenshot al. Referansla yan yana YERLEŞİM kontrolü yap: profil, hero, renk, hızlı oyunlar, öneriler, gelişim, alt bar.
+- Profil, yıldız, gerçek görev yönlendirmesi, dört sekme, dört hızlı oyun, cold restart ve premium hakları için PASS/FAIL/NOT TESTED sonuçları sun.
+- Eksik resimleri önem sırasıyla belirt: özellikle metinsiz parşömen, şeffaf maskot varyantı ve öğrenme kartı görseli. Gerekli assetleri ChatGPT ile üreteceğiz; onları kendin uydurma.
+- Her değişen dosyayı listele. İş bitince ekran görüntülerini ve raporu sun; SONRAKİ ONAYIMI BEKLE.
+
+Başarı kriteri: Mevcut H1 ekranındaki basit koyu kart düzeni yerine, onaylı renkli oyun ekranının kompozisyonuna belirgin şekilde yaklaşan, gerçek sistemlerle çalışan, fotoğraf gibi kaplanmamış, telefon ölçeklerine uygun Compose arayüzü.

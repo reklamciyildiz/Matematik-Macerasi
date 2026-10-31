@@ -1,0 +1,346 @@
+{
+  "title": "Matematik Macerası 2.0 — Sayı Avı G1",
+  "version": "1.0",
+  "created": "2026-10-31",
+  "assetCount": 26,
+  "assets": [
+    {
+      "file": "references/GDD_APPROVED_CONCEPT_BOARD.webp",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "bytes": 410632,
+      "kind": "reference",
+      "usage": "Design reference ONLY. Not production screens.",
+      "restrictions": "Never use as a game screen/image background.",
+      "sha256": "8179d101fde6ab262ef8be4d3438f9f4fc9556c45592422974b277d4b6ec2796"
+    },
+    {
+      "file": "assets/scenes/island_explorer_hero.webp",
+      "dimensions": [
+        1086,
+        1448
+      ],
+      "mode": "RGBA",
+      "bytes": 335708,
+      "kind": "scene",
+      "usage": "Intro / world-landing hero illustration; text and buttons placed in Compose.",
+      "restrictions": "Contains character and dog baked into illustration; avoid layering same characters again.",
+      "sha256": "351bb51e21703c325038da0a5c5ef6acdbdd6be5de9ce14e5204e213da7b166a"
+    },
+    {
+      "file": "assets/scenes/number_board_backdrop.webp",
+      "dimensions": [
+        840,
+        1400
+      ],
+      "mode": "RGBA",
+      "bytes": 100528,
+      "kind": "scene",
+      "usage": "Behind 4x4 number grid; use ContentScale.Crop and dim/scrim as needed.",
+      "restrictions": "Already derived from approved island art and softened; keep math tiles native Compose.",
+      "sha256": "a8d031f17373a876a79ee45a5675319de0e5b6e430ba9314685e51dc92625e02"
+    },
+    {
+      "file": "assets/scenes/route_ocean_backdrop.webp",
+      "dimensions": [
+        840,
+        1320
+      ],
+      "mode": "RGBA",
+      "bytes": 148356,
+      "kind": "scene",
+      "usage": "Hazine Rotasi background; dynamic touchable stepping stones must be Compose overlays.",
+      "restrictions": "Contains scenic ocean and islands, but NO real route path logic baked in.",
+      "sha256": "99550e3df565bd5f204ac860ba7a68286af2a1100c3c6dedb4054a5ca52a51cf"
+    },
+    {
+      "file": "assets/scenes/treasure_map_art.webp",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "bytes": 280004,
+      "kind": "illustration",
+      "usage": "Decorative art for map/mission preview card only.",
+      "restrictions": "Contains decorative 6 and red X baked in. DO NOT use as live mathematics board or dynamic map numbers.",
+      "sha256": "360a06fc7df07d8e1725757eb5fe5cdf3943e1b71c86d315cd759e9e3c2c2776"
+    },
+    {
+      "file": "assets/characters/explorer_idle.webp",
+      "dimensions": [
+        111,
+        121
+      ],
+      "mode": "RGBA",
+      "bytes": 7728,
+      "kind": "small_sprite",
+      "usage": "Explorer hero thumbnail for sidebars, only <=90dp.",
+      "restrictions": "Low-resolution sprite from approved game concept; do not upscale.",
+      "sha256": "783b8496bcb5657d4c1f354e1593cc63df86c725d5bba903c5df01bb571942a4"
+    },
+    {
+      "file": "assets/characters/explorer_point.webp",
+      "dimensions": [
+        123,
+        125
+      ],
+      "mode": "RGBA",
+      "bytes": 7960,
+      "kind": "small_sprite",
+      "usage": "Explorer hero pointing, only <=90dp.",
+      "restrictions": "Low-resolution sprite from approved game concept; do not upscale.",
+      "sha256": "cbf21c8c254c071c07790140945a1b76c7bf99acc43f0af3d530daaf517163f4"
+    },
+    {
+      "file": "assets/characters/explorer_map.webp",
+      "dimensions": [
+        108,
+        128
+      ],
+      "mode": "RGBA",
+      "bytes": 7898,
+      "kind": "small_sprite",
+      "usage": "Explorer hero reading map, only <=90dp.",
+      "restrictions": "Low-resolution sprite from approved game concept; do not upscale.",
+      "sha256": "ca8bdaaac09d0bbbf5633e628546f42a5020e31899b8193afe9b97636b2f8d90"
+    },
+    {
+      "file": "assets/characters/companion_dog.webp",
+      "dimensions": [
+        97,
+        117
+      ],
+      "mode": "RGBA",
+      "bytes": 6340,
+      "kind": "small_sprite",
+      "usage": "Friendly dog thumbnail, <=100dp.",
+      "restrictions": "Low-resolution sprite from approved game concept; do not upscale.",
+      "sha256": "c0c1f1b7d35f26dddaefbd90484e122a694a4aca0325df73cf8eaf613730e6d0"
+    },
+    {
+      "file": "assets/props/chest_closed.webp",
+      "dimensions": [
+        120,
+        124
+      ],
+      "mode": "RGBA",
+      "bytes": 7706,
+      "kind": "small_sprite",
+      "usage": "Treasure-chest collectible illustration, <=100dp.",
+      "restrictions": "Low-resolution sprite, avoid full-screen use.",
+      "sha256": "641952a7d0a41af20fb5c0cd4ca32adb4ff3cbfed71dfb305afee275dc5605c8"
+    },
+    {
+      "file": "assets/props/chest_open.webp",
+      "dimensions": [
+        120,
+        123
+      ],
+      "mode": "RGBA",
+      "bytes": 7848,
+      "kind": "small_sprite",
+      "usage": "Open-chest illustration, <=100dp.",
+      "restrictions": "Low-resolution sprite, avoid full-screen use.",
+      "sha256": "77c95ccfdd7e71045371ca8574c974100f8e262087f20d41c77cc77a1fa38401"
+    },
+    {
+      "file": "assets/props/map_piece.webp",
+      "dimensions": [
+        78,
+        97
+      ],
+      "mode": "RGBA",
+      "bytes": 4954,
+      "kind": "small_sprite",
+      "usage": "Map-piece reward icon, <=96dp.",
+      "restrictions": "Low-resolution sprite, avoid full-screen use.",
+      "sha256": "b623deb708f3f503d48b2bea9ac20a2b1ae94d60034179139185f6c6f7b4b99d"
+    },
+    {
+      "file": "assets/props/island_node.webp",
+      "dimensions": [
+        105,
+        124
+      ],
+      "mode": "RGBA",
+      "bytes": 9176,
+      "kind": "small_sprite",
+      "usage": "Island illustration, <=90dp.",
+      "restrictions": "Small source, avoid full-screen use.",
+      "sha256": "53d82cfe7ea1d22c9540ef67e706ff8b41cd6b3f47e702b23ef13afa68803475"
+    },
+    {
+      "file": "assets/props/forest_node.webp",
+      "dimensions": [
+        113,
+        124
+      ],
+      "mode": "RGBA",
+      "bytes": 9268,
+      "kind": "small_sprite",
+      "usage": "Forest island thumbnail, <=90dp.",
+      "restrictions": "Small source, avoid full-screen use.",
+      "sha256": "8e19ed9e659150c145f5d3060cea4c2811d31ed2b60daeab753c6f81a5dd2b8e"
+    },
+    {
+      "file": "assets/props/temple_node.webp",
+      "dimensions": [
+        100,
+        123
+      ],
+      "mode": "RGBA",
+      "bytes": 8882,
+      "kind": "small_sprite",
+      "usage": "Temple art thumbnail, <=90dp.",
+      "restrictions": "Small source, avoid full-screen use.",
+      "sha256": "257620f1a8750de2b2793252be9095613324c7660538febf64850107bac0cff0"
+    },
+    {
+      "file": "assets/ui/number_tile_normal.webp",
+      "dimensions": [
+        260,
+        260
+      ],
+      "mode": "RGBA",
+      "bytes": 2852,
+      "kind": "ninepatch_candidate",
+      "usage": "Number tile visual state; render number text in Compose.",
+      "restrictions": "Apply ContentScale.FillBounds or draw background with Compose; do not bake numerals.",
+      "sha256": "b381e1f2256bbcb5ccf8d38192a8d12657e20f1f6a49893b495134e62cc5f15c"
+    },
+    {
+      "file": "assets/ui/number_tile_selected.webp",
+      "dimensions": [
+        260,
+        260
+      ],
+      "mode": "RGBA",
+      "bytes": 3890,
+      "kind": "ninepatch_candidate",
+      "usage": "Number tile visual state; render number text in Compose.",
+      "restrictions": "Apply ContentScale.FillBounds or draw background with Compose; do not bake numerals.",
+      "sha256": "bb7c402397cd4ed90ad000a2a69c2730cb12ad5f627f732c5873bbaaae716af8"
+    },
+    {
+      "file": "assets/ui/number_tile_disabled.webp",
+      "dimensions": [
+        260,
+        260
+      ],
+      "mode": "RGBA",
+      "bytes": 2586,
+      "kind": "ninepatch_candidate",
+      "usage": "Number tile visual state; render number text in Compose.",
+      "restrictions": "Apply ContentScale.FillBounds or draw background with Compose; do not bake numerals.",
+      "sha256": "ce2a60645abb46a2f4c035bbb325a85df3316731c9675b2ac8acfdecd88a31a6"
+    },
+    {
+      "file": "assets/ui/number_tile_error.webp",
+      "dimensions": [
+        260,
+        260
+      ],
+      "mode": "RGBA",
+      "bytes": 3554,
+      "kind": "ninepatch_candidate",
+      "usage": "Number tile visual state; render number text in Compose.",
+      "restrictions": "Apply ContentScale.FillBounds or draw background with Compose; do not bake numerals.",
+      "sha256": "dffbdc6eaf3ab7f31073f39408a0473679c8621d403ce26e495b8c3913a1fd1e"
+    },
+    {
+      "file": "assets/ui/panel_parchment_wide.webp",
+      "dimensions": [
+        1024,
+        520
+      ],
+      "mode": "RGBA",
+      "bytes": 6326,
+      "kind": "frame",
+      "usage": "Blank parchment surface: title, paragraph, progress and interactive buttons must be Compose.",
+      "restrictions": "If scaling panel heavily, use proper nine-slice scaling or redraw in Compose to protect corners.",
+      "sha256": "7f72474421a4e0d92cbc990ddadbc6af7040ebd633a0dbe86f8574e0534afef8"
+    },
+    {
+      "file": "assets/ui/panel_parchment_tall.webp",
+      "dimensions": [
+        870,
+        1120
+      ],
+      "mode": "RGBA",
+      "bytes": 7304,
+      "kind": "frame",
+      "usage": "Blank parchment surface: title, paragraph, progress and interactive buttons must be Compose.",
+      "restrictions": "If scaling panel heavily, use proper nine-slice scaling or redraw in Compose to protect corners.",
+      "sha256": "abae094b48c6ff5b62747a2758a79a7bc21fafaa5b4c83533c464a16885f86f6"
+    },
+    {
+      "file": "assets/ui/button_green.webp",
+      "dimensions": [
+        850,
+        190
+      ],
+      "mode": "RGBA",
+      "bytes": 6988,
+      "kind": "button_bg",
+      "usage": "Decorative button background; actual button/text/semantics must be native Compose.",
+      "restrictions": "Prefer Compose gradient if possible; do not duplicate hit target in static image.",
+      "sha256": "6727429233096498d40c7367965163b51a9e08a861b52dae543f5405e619ef65"
+    },
+    {
+      "file": "assets/ui/button_blue.webp",
+      "dimensions": [
+        850,
+        190
+      ],
+      "mode": "RGBA",
+      "bytes": 7016,
+      "kind": "button_bg",
+      "usage": "Decorative button background; actual button/text/semantics must be native Compose.",
+      "restrictions": "Prefer Compose gradient if possible; do not duplicate hit target in static image.",
+      "sha256": "ced63b575ffd473269abc613f8e691476f97c7e0d46d14cdfd88b123ae4a2265"
+    },
+    {
+      "file": "assets/ui/button_orange.webp",
+      "dimensions": [
+        850,
+        190
+      ],
+      "mode": "RGBA",
+      "bytes": 6670,
+      "kind": "button_bg",
+      "usage": "Decorative button background; actual button/text/semantics must be native Compose.",
+      "restrictions": "Prefer Compose gradient if possible; do not duplicate hit target in static image.",
+      "sha256": "23f000c59e42a793d1207d28ade19ae091ebd9194d4c0eeb9c61196a9ea18d9c"
+    },
+    {
+      "file": "assets/ui/button_disabled.webp",
+      "dimensions": [
+        850,
+        190
+      ],
+      "mode": "RGBA",
+      "bytes": 4994,
+      "kind": "button_bg",
+      "usage": "Decorative button background; actual button/text/semantics must be native Compose.",
+      "restrictions": "Prefer Compose gradient if possible; do not duplicate hit target in static image.",
+      "sha256": "e778ab0e45eb0b0444c67e88d6014a0298f59b95a011e35f8b62609e8146f48c"
+    },
+    {
+      "file": "assets/props/star_reward.webp",
+      "dimensions": [
+        256,
+        256
+      ],
+      "mode": "RGBA",
+      "bytes": 4538,
+      "kind": "icon",
+      "usage": "Gold star reward / UI badge; update counts with actual StarManager.",
+      "restrictions": "Not a currency balance by itself.",
+      "sha256": "a676c1934c3c56a58cebd647dfd805feb17c4a9c21ccf30f934511c431065f96"
+    }
+  ]
+}

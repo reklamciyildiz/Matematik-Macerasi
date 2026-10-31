@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Deep space background -->
+    <path
+        android:fillColor="#0D0221"
+        android:pathData="M0,0h108v108h-108z" />
+    
+    <!-- Nebula gradient -->
+    <path
+        android:fillColor="#3F0071"
+        android:pathData="M0,0L108,54L0,108z"
+        android:fillAlpha="0.7" />
+    
+    <path
+        android:fillColor="#610094"
+        android:pathData="M108,0L0,54L108,108z"
+        android:fillAlpha="0.6" />
+    
+    <!-- Stars -->
+    <!-- Small stars -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,12a1,1 0 1,0 2,0a1,1 0 1,0 -2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M25,22a0.8,0.8 0 1,0 1.6,0a0.8,0.8 0 1,0 -1.6,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,10a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,25a0.6,0.6 0 1,0 1.2,0a0.6,0.6 0 1,0 -1.2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,15a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65,20a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M75,12a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,28a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M95,18a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,32a0.6,0.6 0 1,0 1.2,0a0.6,0.6 0 1,0 -1.2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,38a0.8,0.8 0 1,0 1.6,0a0.8,0.8 0 1,0 -1.6,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M32,45a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M42,38a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52,48a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M62,35a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,42a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M82,35a0.6,0.6 0 1,0 1.2,0a0.6,0.6 0 1,0 -1.2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M92,48a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M15,58a0.8,0.8 0 1,0 1.6,0a0.8,0.8 0 1,0 -1.6,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M25,68a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M35,62a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M45,72a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,65a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65,55a0.6,0.6 0 1,0 1.2,0a0.6,0.6 0 1,0 -1.2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M75,72a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,62a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M95,55a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M18,85a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M28,95a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,88a0.9,0.9 0 1,0 1.8,0a0.9,0.9 0 1,0 -1.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,98a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M58,90a0.6,0.6 0 1,0 1.2,0a0.6,0.6 0 1,0 -1.2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,82a0.5,0.5 0 1,0 1,0a0.5,0.5 0 1,0 -1,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M78,92a0.8,0.8 0 1,0 1.6,0a0.8,0.8 0 1,0 -1.6,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M88,85a0.4,0.4 0 1,0 0.8,0a0.4,0.4 0 1,0 -0.8,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M98,95a0.7,0.7 0 1,0 1.4,0a0.7,0.7 0 1,0 -1.4,0" />
+        
+    <!-- Medium stars with glow -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,20m-1.2,0a1.2,1.2 0 1,1 2.4,0a1.2,1.2 0 1,1 -2.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.4"
+        android:pathData="M20,20m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0" />
+        
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,25m-1.2,0a1.2,1.2 0 1,1 2.4,0a1.2,1.2 0 1,1 -2.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.4"
+        android:pathData="M80,25m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0" />
+        
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,80m-1.2,0a1.2,1.2 0 1,1 2.4,0a1.2,1.2 0 1,1 -2.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.4"
+        android:pathData="M40,80m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0" />
+        
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M90,75m-1.2,0a1.2,1.2 0 1,1 2.4,0a1.2,1.2 0 1,1 -2.4,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.4"
+        android:pathData="M90,75m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0" />
+    
+    <!-- Larger star with rays -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,36m-1.5,0a1.5,1.5 0 1,1 3,0a1.5,1.5 0 1,1 -3,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.5"
+        android:pathData="M54,36m-2.5,0a2.5,2.5 0 1,1 5,0a2.5,2.5 0 1,1 -5,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.3"
+        android:pathData="M51,36L57,36" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.3"
+        android:pathData="M54,33L54,39" />
+        
+    <!-- Distant galaxy/nebula -->
+    <path
+        android:fillColor="#FB2576"
+        android:fillAlpha="0.5"
+        android:pathData="M70,70a15,10 0 1,0 30,0a15,10 0 1,0 -30,0z" />
+    <path
+        android:fillColor="#3F0071"
+        android:fillAlpha="0.7"
+        android:pathData="M10,90a12,8 0 1,0 24,0a12,8 0 1,0 -24,0z" />
+</vector> 

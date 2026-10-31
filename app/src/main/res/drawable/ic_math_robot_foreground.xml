@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Robot Main Body -->
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M32,35L76,35A8,8 0 0 1 84,43L84,75A8,8 0 0 1 76,83L32,83A8,8 0 0 1 24,75L24,43A8,8 0 0 1 32,35z" />
+        
+    <!-- Robot Head -->
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M35,20L73,20A6,6 0 0 1 79,26L79,38A6,6 0 0 1 73,44L35,44A6,6 0 0 1 29,38L29,26A6,6 0 0 1 35,20z" />
+        
+    <!-- Neck -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M47,41L61,41L61,47L47,47z" />
+        
+    <!-- Face panel -->
+    <path
+        android:fillColor="#455A64"
+        android:pathData="M39,26L69,26A2,2 0 0 1 71,28L71,36A2,2 0 0 1 69,38L39,38A2,2 0 0 1 37,36L37,28A2,2 0 0 1 39,26z" />
+        
+    <!-- Left Eye -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M45,32m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+        
+    <!-- Right Eye -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M63,32m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+        
+    <!-- Mouth -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#4CAF50"
+        android:strokeWidth="1.5"
+        android:pathData="M48,34L54,36L60,34" />
+        
+    <!-- Left Antenna -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M42,20L42,15L39,12" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#546E7A"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M42,20L42,15L39,12" />
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M39,12m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0" />
+        
+    <!-- Right Antenna -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M66,20L66,15L69,12" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#546E7A"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M66,20L66,15L69,12" />
+    <path
+        android:fillColor="#4FC3F7"
+        android:pathData="M69,12m-2,0a2,2 0 1,1 4,0a2,2 0 1,1 -4,0" />
+        
+    <!-- Body Details -->
+    <!-- Screen -->
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M34,50L74,50L74,70L34,70z" />
+        
+    <!-- Math symbols on screen -->
+    <path
+        android:fillColor="#1976D2"
+        android:strokeColor="#1565C0"
+        android:strokeWidth="0.8"
+        android:pathData="M38,54L42,54L42,66L38,66z" />
+        
+    <path
+        android:fillColor="#FFA000"
+        android:strokeColor="#FF8F00"
+        android:strokeWidth="0.8"
+        android:pathData="M45,54L51,66L39,66z" />
+        
+    <path
+        android:fillColor="#D32F2F"
+        android:strokeColor="#C62828"
+        android:strokeWidth="0.8"
+        android:pathData="M54,54L60,54L60,66L54,66zM54,60L60,60" />
+        
+    <path
+        android:fillColor="#7B1FA2"
+        android:strokeColor="#6A1B9A"
+        android:strokeWidth="0.8"
+        android:pathData="M66,56L70,56M66,60L70,60M66,64L70,64" />
+        
+    <!-- Buttons -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M40,76m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+        
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M54,76m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+        
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M68,76m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+        
+    <!-- Left Arm -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M24,50L20,50L16,54L16,70L20,74L24,74" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#455A64"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M24,50L20,50L16,54L16,70L20,74L24,74" />
+        
+    <!-- Right Arm -->
+    <path
+        android:fillColor="#546E7A"
+        android:pathData="M84,50L88,50L92,54L92,70L88,74L84,74" />
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#455A64"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M84,50L88,50L92,54L92,70L88,74L84,74" />
+        
+    <!-- Left Hand -->
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M13,62a3,8 0 1,0 6,0a3,8 0 1,0 -6,0" />
+        
+    <!-- Right Hand -->
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M89,62a3,8 0 1,0 6,0a3,8 0 1,0 -6,0" />
+        
+    <!-- Robot body highlight -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.1"
+        android:pathData="M32,35L76,35A8,8 0 0 1 84,43L84,43L24,43L24,43A8,8 0 0 1 32,35z" />
+        
+    <!-- Robot head highlight -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.1"
+        android:pathData="M35,20L73,20A6,6 0 0 1 79,26L79,26L29,26L29,26A6,6 0 0 1 35,20z" />
+</vector> 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Arka plan daire -->
+    <path
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"
+        android:fillColor="#F29E38"/>
+
+    <!-- 3 rakamı -->
+    <path
+        android:pathData="M40,30L80,30L80,60L60,60L80,60L80,90L40,90L40,60"
+        android:strokeWidth="12"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000"/>
+
+    <!-- Sol göz -->
+    <path
+        android:pathData="M50,45m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"
+        android:fillColor="#000000"/>
+
+    <!-- Sağ göz -->
+    <path
+        android:pathData="M70,45m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"
+        android:fillColor="#000000"/>
+
+    <!-- Gülümseyen ağız -->
+    <path
+        android:pathData="M50,65C55,70 65,70 70,65"
+        android:strokeWidth="3"
+        android:strokeColor="#000000"
+        android:fillColor="#00000000"/>
+    
+</vector> 

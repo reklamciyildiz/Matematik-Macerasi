@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+    
+    <!-- Mavi konfeti parçası 1 -->
+    <path
+        android:fillColor="#1E88E5"
+        android:pathData="M20,40 L30,35 L35,45 L25,50 Z" />
+    
+    <!-- Kırmızı konfeti parçası 1 -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M45,60 L55,65 L50,75 L40,70 Z" />
+    
+    <!-- Sarı konfeti parçası 1 -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M80,30 L90,32 L88,42 L78,40 Z" />
+    
+    <!-- Yeşil konfeti parçası 1 -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M120,50 L128,54 L125,64 L117,60 Z" />
+    
+    <!-- Mor konfeti parçası 1 -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M150,70 L160,68 L162,78 L152,80 Z" />
+    
+    <!-- Turuncu konfeti parçası 1 -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M170,20 L180,18 L182,28 L172,30 Z" />
+    
+    <!-- Mavi konfeti parçası 2 -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M30,100 L40,95 L45,105 L35,110 Z" />
+    
+    <!-- Kırmızı konfeti parçası 2 -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M60,120 L70,115 L75,125 L65,130 Z" />
+    
+    <!-- Sarı konfeti parçası 2 -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M100,80 L110,78 L112,88 L102,90 Z" />
+    
+    <!-- Yeşil konfeti parçası 2 -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M140,110 L150,105 L155,115 L145,120 Z" />
+    
+    <!-- Mor konfeti parçası 2 -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M160,30 L170,28 L172,38 L162,40 Z" />
+    
+    <!-- Turuncu konfeti parçası 2 -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M180,60 L190,58 L192,68 L182,70 Z" />
+    
+    <!-- Mavi yuvarlak konfeti -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M50,20 A5,5 0 1,1 60,20 A5,5 0 1,1 50,20" />
+    
+    <!-- Kırmızı yuvarlak konfeti -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M70,40 A4,4 0 1,1 78,40 A4,4 0 1,1 70,40" />
+    
+    <!-- Sarı yuvarlak konfeti -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M90,60 A3,3 0 1,1 96,60 A3,3 0 1,1 90,60" />
+    
+    <!-- Yeşil yuvarlak konfeti -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M110,90 A6,6 0 1,1 122,90 A6,6 0 1,1 110,90" />
+    
+    <!-- Mor yuvarlak konfeti -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M130,10 A5,5 0 1,1 140,10 A5,5 0 1,1 130,10" />
+    
+    <!-- Turuncu yuvarlak konfeti -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M150,50 A4,4 0 1,1 158,50 A4,4 0 1,1 150,50" />
+    
+    <!-- Mavi yıldız konfeti -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M20,80 L23,75 L28,75 L24,70 L26,65 L20,68 L14,65 L16,70 L12,75 L17,75 Z" />
+    
+    <!-- Kırmızı yıldız konfeti -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M85,15 L88,10 L93,10 L89,5 L91,0 L85,3 L79,0 L81,5 L77,10 L82,10 Z" />
+    
+    <!-- Yeşil yıldız konfeti -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M175,90 L178,85 L183,85 L179,80 L181,75 L175,78 L169,75 L171,80 L167,85 L172,85 Z" />
+        
+</vector> 

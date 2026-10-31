@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M60,60m-56,0a56,56 0,1 1,112 0a56,56 0,1 1,-112 0" />
+
+    <!-- Wizard Hat -->
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M30,25L60,-15L90,25z" />
+
+    <!-- Face -->
+    <path
+        android:fillColor="#CE93D8"
+        android:pathData="M60,40m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0" />
+
+    <!-- Left Eye -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#263238"
+        android:pathData="M48,40m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+
+    <!-- Right Eye -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#263238"
+        android:pathData="M72,40m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+
+    <!-- Mouth -->
+    <path
+        android:fillColor="#6A1B9A"
+        android:pathData="M52,55L68,55A4,4 0,0 1,68 63L52,63A4,4 0,0 1,52 55z" />
+
+    <!-- Wand -->
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M85,70l-3,-3l-20,20l3,3z" />
+    <path
+        android:fillColor="#7B1FA2"
+        android:pathData="M90,65m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+
+    <!-- Stars -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M20,30L23,36L30,37L25,42L26,49L20,46L14,49L15,42L10,37L17,36z" />
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M100,35L102,39L107,40L103.5,43L104,48L100,46L96,48L96.5,43L93,40L98,39z" />
+</vector> 

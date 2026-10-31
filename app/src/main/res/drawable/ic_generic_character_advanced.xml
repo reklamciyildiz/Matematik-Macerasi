@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="140dp"
+    android:height="140dp"
+    android:viewportWidth="140"
+    android:viewportHeight="140">
+    
+    <!-- Arka plan - yarı saydam mavi-gri daire -->
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M70,70 a50,50 0 1,0 0,0.1 a50,50 0 1,0 0,-0.1"
+        android:alpha="0.2" />
+    
+    <!-- Matematik sistemi/gezegen simgesi -->
+    <path
+        android:fillColor="#455A64"
+        android:pathData="M70,70 a30,30 0 1,0 0,0.1 a30,30 0 1,0 0,-0.1" />
+    
+    <!-- Yörünge halkası 1 -->
+    <path
+        android:strokeColor="#455A64"
+        android:strokeWidth="2"
+        android:pathData="M40,70 A30,10 0 1,0 100,70 A30,10 0 1,0 40,70"
+        android:alpha="0.7" />
+    
+    <!-- Yörünge halkası 2 -->
+    <path
+        android:strokeColor="#455A64"
+        android:strokeWidth="2"
+        android:pathData="M70,40 A10,30 0 1,0 70,100 A10,30 0 1,0 70,40"
+        android:alpha="0.7" />
+    
+    <!-- Matematik sembol küresi 1 - Toplama -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M110,70 a10,10 0 1,0 0,0.1 a10,10 0 1,0 0,-0.1" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M105,70 L115,70 M110,65 L110,75" />
+    
+    <!-- Matematik sembol küresi 2 - Çıkarma -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M70,110 a10,10 0 1,0 0,0.1 a10,10 0 1,0 0,-0.1" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M65,110 L75,110" />
+    
+    <!-- Matematik sembol küresi 3 - Çarpma -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M30,70 a10,10 0 1,0 0,0.1 a10,10 0 1,0 0,-0.1" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M26,66 L34,74 M34,66 L26,74" />
+    
+    <!-- Matematik sembol küresi 4 - Bölme -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M70,30 a10,10 0 1,0 0,0.1 a10,10 0 1,0 0,-0.1" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M65,30 L75,30" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,26 a2,2 0 1,0 0,0.1 a2,2 0 1,0 0,-0.1" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,34 a2,2 0 1,0 0,0.1 a2,2 0 1,0 0,-0.1" />
+    
+    <!-- Merkezdeki ağ çizgileri -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:pathData="M70,70 L110,70 M70,70 L70,110 M70,70 L30,70 M70,70 L70,30"
+        android:alpha="0.5" />
+    
+    <!-- İç yüzey deseni / ızgara -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:pathData="M60,60 L80,60 L80,80 L60,80 Z"
+        android:alpha="0.3" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:pathData="M65,65 L75,65 L75,75 L65,75 Z"
+        android:alpha="0.3" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:pathData="M70,60 L70,80 M60,70 L80,70"
+        android:alpha="0.3" />
+</vector> 

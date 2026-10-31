@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="140dp"
+    android:height="140dp"
+    android:viewportWidth="140"
+    android:viewportHeight="140">
+    
+    <!-- Yüz - yeşil robot -->
+    <path
+        android:fillColor="#66BB6A"
+        android:pathData="M70,30 a40,40 0 1,0 0,80 a40,40 0 1,0 0,-80" />
+    
+    <!-- Gözler -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,60 a8,8 0 1,0 0,16 a8,8 0 1,0 0,-16" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,60 a8,8 0 1,0 0,16 a8,8 0 1,0 0,-16" />
+    
+    <!-- Göz bebekleri -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M57,68 a4,4 0 1,0 0,-8 a4,4 0 1,0 0,8" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M87,68 a4,4 0 1,0 0,-8 a4,4 0 1,0 0,8" />
+    
+    <!-- Gülen ağız -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,85 Q70,95 80,85" />
+    
+    <!-- Artı işareti desen -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M70,40 L70,60 M60,50 L80,50" />
+    
+    <!-- Robot kulaklar -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M30,60 L20,45 L20,75 Z" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M110,60 L120,45 L120,75 Z" />
+    
+    <!-- Robotik detaylar -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M65,30 L75,30" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M45,40 L50,45" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M95,40 L90,45" />
+</vector> 

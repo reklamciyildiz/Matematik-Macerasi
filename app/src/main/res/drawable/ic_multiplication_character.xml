@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="140dp"
+    android:height="140dp"
+    android:viewportWidth="140"
+    android:viewportHeight="140">
+    
+    <!-- Yüz - mor süper kahraman -->
+    <path
+        android:fillColor="#AB47BC"
+        android:pathData="M70,30 a40,40 0 1,0 0,80 a40,40 0 1,0 0,-80" />
+    
+    <!-- Göz maskesi - süper kahraman -->
+    <path
+        android:fillColor="#7B1FA2"
+        android:pathData="M40,55 L100,55 L100,70 L40,70 Z" />
+    
+    <!-- Gözler -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,55 a7,7 0 1,0 0,14 a7,7 0 1,0 0,-14" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,55 a7,7 0 1,0 0,14 a7,7 0 1,0 0,-14" />
+    
+    <!-- Göz bebekleri -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M55,62 a3,3 0 1,0 0,-6 a3,3 0 1,0 0,6" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M85,62 a3,3 0 1,0 0,-6 a3,3 0 1,0 0,6" />
+    
+    <!-- Gülümseyen ağız -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M55,80 Q70,90 85,80" />
+    
+    <!-- Kahraman pelerini -->
+    <path
+        android:fillColor="#7B1FA2"
+        android:pathData="M50,110 L70,70 L90,110 Z" />
+    
+    <!-- Çarpı işareti desenler -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3"
+        android:pathData="M60,40 L80,50 M80,40 L60,50" />
+    
+    <!-- Süper kahraman sembolü -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M70,95 a5,5 0 1,0 0,10 a5,5 0 1,0 0,-10" />
+</vector> 

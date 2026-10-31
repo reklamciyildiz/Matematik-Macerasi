@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Matematik Büyücüsü Avatar XML -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M60,60m-56,0a56,56 0,1 1,112 0a56,56 0,1 1,-112 0" />
+    <path
+        android:fillColor="#CE93D8"
+        android:pathData="M60,40m-25,0a25,25 0,1 1,50 0a25,25 0,1 1,-50 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M72,40m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#263238"
+        android:pathData="M48,40m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+    <path
+        android:fillColor="#263238"
+        android:pathData="M72,40m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+    <path
+        android:fillColor="#673AB7"
+        android:pathData="M60,55A8,4 0,0 1,60 63A8,4 0,0 1,60 55z" />
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M30,25L90,25L60,5z" />
+    <path
+        android:fillColor="#CE93D8"
+        android:pathData="M40,75L80,75L80,95A2,2 0,0 1,78 97L42,97A2,2 0,0 1,40 95L40,75z" />
+    <path
+        android:fillColor="#4A148C"
+        android:pathData="M85,65A3,3 0,0 1,85 80L85,85A3,3 0,0 1,79 85L79,80A3,3 0,0 1,85 65z" />
+</vector> 

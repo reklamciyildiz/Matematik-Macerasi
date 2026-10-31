@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    
+    <!-- Konfeti parçaları - farklı renk ve pozisyonlarda -->
+    <!-- Sarı konfeti -->
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M100,120 L120,130 L110,150 L90,140 Z" />
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M300,80 L320,90 L310,110 L290,100 Z" />
+    <path
+        android:fillColor="#FFC107"
+        android:pathData="M400,220 L420,230 L410,250 L390,240 Z" />
+        
+    <!-- Mavi konfeti -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M150,80 L165,85 L160,100 L145,95 Z" />
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M350,180 L365,185 L360,200 L345,195 Z" />
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M200,280 L215,285 L210,300 L195,295 Z" />
+        
+    <!-- Kırmızı konfeti -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M120,200 L140,200 L140,220 L120,220 Z" />
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M250,150 L270,150 L270,170 L250,170 Z" />
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M320,300 L340,300 L340,320 L320,320 Z" />
+        
+    <!-- Yeşil konfeti -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M180,120 L190,135 L175,145 L165,130 Z" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M280,200 L290,215 L275,225 L265,210 Z" />
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M380,270 L390,285 L375,295 L365,280 Z" />
+        
+    <!-- Mor konfeti -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M220,100 L230,105 L225,115 L215,110 Z" />
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M300,220 L310,225 L305,235 L295,230 Z" />
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M150,320 L160,325 L155,335 L145,330 Z" />
+        
+    <!-- Turuncu konfeti -->
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M130,160 L145,170 L135,185 L120,175 Z" />
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M260,100 L275,110 L265,125 L250,115 Z" />
+    <path
+        android:fillColor="#FF9800"
+        android:pathData="M400,140 L415,150 L405,165 L390,155 Z" />
+</vector> 

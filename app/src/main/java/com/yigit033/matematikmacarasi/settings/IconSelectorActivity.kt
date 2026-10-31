@@ -1,0 +1,758 @@
+package com.yigit033.matematikmacarasi.settings
+
+import android.app.Activity
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.Process
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.yigit033.matematikmacarasi.MainActivity
+import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import kotlinx.coroutines.flow.collect
+
+/**
+ * Alternatif ikonları seçmek için kullanılan ekran
+ */
+class IconSelectorActivity : ComponentActivity() {
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        setContent {
+            MaterialTheme {
+                IconSelectorScreen(
+                    onBackClick = { finish() }
+                )
+            }
+        }
+    }
+    
+    /**
+     * Uygulama ikonunu değiştir
+     */
+    private fun changeAppIcon(iconType: String) {
+        val packageManager = packageManager
+        val context = this
+        
+        try {
+            // İkon tercihini kaydet
+            IconPreferenceManager.getInstance(this).saveSelectedIcon(iconType)
+            
+            // İkonları yapılandır
+            when (iconType) {
+                IconPreferenceManager.ICON_DEFAULT -> {
+                    // Varsayılan ikon için - MainActivity etkin, diğerleri devre dışı
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                }
+                IconPreferenceManager.ICON_ROBOT -> {
+                    // Robot ikonu için - RobotIconActivity etkin, diğerleri devre dışı
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                }
+                IconPreferenceManager.ICON_SPACE -> {
+                    // Uzay ikonu için - SpaceIconActivity etkin, diğerleri devre dışı
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                    packageManager.setComponentEnabledSetting(
+                        ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
+                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                        PackageManager.DONT_KILL_APP
+                    )
+                }
+            }
+            
+            // İkon değişimi yapıldı, kullanıcıya bildirim göster
+            Log.d("IconSelector", "İkon başarıyla değiştirildi: $iconType")
+            
+            // Kullanıcıya bilgi ver ve uygulamayı yeniden başlat
+            Toast.makeText(
+                this, 
+                "İkon değişiyor! Uygulama yeniden başlatılıyor...", 
+                Toast.LENGTH_LONG
+            ).show()
+            
+            // Uygulamayı yeniden başlat (1 saniye bekle)
+            Handler(Looper.getMainLooper()).postDelayed({
+                restartApplication()
+            }, 1000)
+        } catch (e: Exception) {
+            Log.e("IconSelector", "İkon değiştirme hatası: ${e.message}")
+            Toast.makeText(
+                this,
+                "İkon değiştirme sırasında bir hata oluştu.",
+                Toast.LENGTH_LONG
+            ).show()
+            
+            // Hata durumunda varsayılan ayarlara dön
+            try {
+                packageManager.setComponentEnabledSetting(
+                    ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
+                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                    PackageManager.DONT_KILL_APP
+                )
+                packageManager.setComponentEnabledSetting(
+                    ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP
+                )
+                packageManager.setComponentEnabledSetting(
+                    ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
+                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                    PackageManager.DONT_KILL_APP
+                )
+            } catch (e2: Exception) {
+                Log.e("IconSelector", "Kurtarma hatası: ${e2.message}")
+            }
+        }
+    }
+    
+    /**
+     * Uygulamayı güvenli bir şekilde yeniden başlat
+     */
+    private fun restartApplication() {
+        try {
+            // Ana ekrana dönmek ve uygulamayı yeniden başlatmak için Intent oluştur
+            val selectedIcon = IconPreferenceManager.getInstance(this).getSelectedIcon()
+            
+            // Package Manager'dan launcher intent al
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            
+            if (intent != null) {
+                // Intent'in tüm önceki örneklerini temizle
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
+                               Intent.FLAG_ACTIVITY_CLEAR_TASK or
+                               Intent.FLAG_ACTIVITY_CLEAR_TOP
+                
+                Log.d("IconSelector", "Uygulama yeniden başlatılıyor: $packageName")
+                
+                // Kısa bir gecikme ile yeni bir intent başlat
+                startActivity(intent)
+                
+                // Tüm aktiviteleri kapat
+                finishAffinity()
+            } else {
+                Log.e("IconSelector", "Launcher intent bulunamadı, manuel yöntem deneniyor")
+                
+                // Alternatif yöntem - Ana aktiviteyi hedefleyen yeni bir intent oluştur
+                val mainIntent = Intent(this, MainActivity::class.java)
+                mainIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(mainIntent)
+                finish()
+            }
+        } catch (e: Exception) {
+            Log.e("IconSelector", "Yeniden başlatma hatası: ${e.message}")
+            
+            try {
+                // Son çare - En basit yeniden başlatma yöntemi
+                val homeIntent = Intent(Intent.ACTION_MAIN)
+                homeIntent.addCategory(Intent.CATEGORY_HOME)
+                homeIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(homeIntent)
+                
+                // Bir uygulamadan çıkış yaptıktan sonra 500ms sonra tekrar aç
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+                    if (launchIntent != null) {
+                        startActivity(launchIntent)
+                    }
+                    finish()
+                }, 500)
+            } catch (e2: Exception) {
+                Log.e("IconSelector", "Kritik başlatma hatası: ${e2.message}")
+                finish()
+            }
+        }
+    }
+    
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun IconSelectorScreen(onBackClick: () -> Unit) {
+        val context = LocalContext.current
+        val iconPreferenceManager = IconPreferenceManager.getInstance(context)
+        var selectedIcon by remember { mutableStateOf(iconPreferenceManager.getSelectedIcon()) }
+        
+        // Premium durumunu kontrol et
+        var isPremium by remember { mutableStateOf(false) }
+        var showPremiumDialog by remember { mutableStateOf(false) }
+        var isLoading by remember { mutableStateOf(true) }
+        var selectedPremiumIcon by remember { mutableStateOf("") }
+        
+        // PurchaseManager'ı güvenli bir şekilde başlat
+        var purchaseManager: PurchaseManager? = null
+        try {
+            purchaseManager = PurchaseManager.getInstance(context)
+        } catch (e: Exception) {
+            Log.e("IconSelector", "PurchaseManager başlatılamadı: ${e.message}")
+        }
+        
+        // Premium durumunu kontrol et
+        LaunchedEffect(Unit) {
+            try {
+                // Önce hızlı senkron kontrol yap (SharedPreferences üzerinden)
+                isPremium = purchaseManager?.isPremiumSync() ?: false
+                isLoading = false
+                
+                // Sonra arka planda asenkron olarak premium durumunu kontrol et
+                purchaseManager?.checkPremiumStatusAsync()
+                
+                // Premium durumu değişimlerini dinle
+                purchaseManager?.premiumState?.collect { premiumState ->
+                    isPremium = premiumState
+                    Log.d("IconSelector", "Premium durumu güncellendi: $isPremium")
+                }
+            } catch (e: Exception) {
+                Log.e("IconSelector", "Premium durumu kontrol edilirken hata: ${e.message}")
+                isLoading = false
+            }
+        }
+        
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { 
+                        Text(
+                            "Uygulama İkonunu Değiştir",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp
+                        ) 
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.Filled.ArrowBack, 
+                                contentDescription = "Geri",
+                                tint = Color(0xFF6200EA)
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = Color(0xFF6200EA)
+                    )
+                )
+            },
+            containerColor = Color(0xFFF3E5F5) // Açık mor arka plan
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFF3E5F5), // Açık mor
+                                Color(0xFFE1BEE7)  // Biraz daha koyu mor
+                            )
+                        )
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "İstediğin ikonu seç",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF6200EA),
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
+                    
+                    // Yükleme göstergesi
+                    if (isLoading) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            color = Color(0xFF6200EA),
+                            modifier = Modifier.padding(top = 32.dp)
+                        )
+                    } else {
+                        // Varsayılan ikon - Matematik Macerası (herkese açık)
+                    ModernIconOption(
+                        title = "Matematik Macerası",
+                        description = "Renkli matematik macerası ikonu",
+                        iconResId = R.drawable.ic_math_adventure_foreground,
+                        isSelected = selectedIcon == IconPreferenceManager.ICON_DEFAULT,
+                        backgroundColor = Color(0xFF2196F3), // Mavi
+                            isLocked = false,
+                        onSelect = {
+                            selectedIcon = IconPreferenceManager.ICON_DEFAULT
+                            changeAppIcon(IconPreferenceManager.ICON_DEFAULT)
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                        // Robot ikon - Premium gerektirir
+                    ModernIconOption(
+                        title = "Matematik Robotu",
+                        description = "Sevimli robot ikonu",
+                        iconResId = R.drawable.ic_math_robot_foreground,
+                        isSelected = selectedIcon == IconPreferenceManager.ICON_ROBOT,
+                        backgroundColor = Color(0xFF4CAF50), // Yeşil
+                            isLocked = !isPremium && selectedIcon != IconPreferenceManager.ICON_ROBOT,
+                        onSelect = {
+                            purchaseManager?.withPremiumCheck(
+                                onPremium = {
+                                    // Premium kullanıcılar için veya zaten seçili ise
+                                    selectedIcon = IconPreferenceManager.ICON_ROBOT
+                                    changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                },
+                                onNonPremium = {
+                                    // Zaten kullandığı ikon ise değişikliğe izin ver
+                                    if (selectedIcon == IconPreferenceManager.ICON_ROBOT) {
+                                        selectedIcon = IconPreferenceManager.ICON_ROBOT
+                                        changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                    } else {
+                                        // Premium gerektiğini göster
+                                        selectedPremiumIcon = IconPreferenceManager.ICON_ROBOT
+                                        showPremiumDialog = true
+                                    }
+                                },
+                                onError = { e ->
+                                    // Hata durumunda, eğer zaten kullanıyorsa izin ver
+                                    if (selectedIcon == IconPreferenceManager.ICON_ROBOT) {
+                                        selectedIcon = IconPreferenceManager.ICON_ROBOT
+                                        changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                    } else {
+                                        Log.e("IconSelector", "Premium kontrol hatası: ${e.message}")
+                                        // Premium dialogunu göster
+                                        selectedPremiumIcon = IconPreferenceManager.ICON_ROBOT
+                                        showPremiumDialog = true
+                                    }
+                                }
+                            ) ?: run {
+                                // PurchaseManager null ise sadece varsayılan ikona izin ver
+                                if (selectedIcon == IconPreferenceManager.ICON_ROBOT) {
+                                    selectedIcon = IconPreferenceManager.ICON_ROBOT
+                                    changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                } else {
+                                    selectedPremiumIcon = IconPreferenceManager.ICON_ROBOT
+                                    showPremiumDialog = true
+                                }
+                            }
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                        // Uzay ikon - Premium gerektirir
+                    ModernIconOption(
+                        title = "Uzay Matematik",
+                            description = "Uzay temalı ikon",
+                        iconResId = R.drawable.ic_math_space_foreground,
+                        isSelected = selectedIcon == IconPreferenceManager.ICON_SPACE,
+                        backgroundColor = Color(0xFFFF9800), // Turuncu
+                            isLocked = !isPremium && selectedIcon != IconPreferenceManager.ICON_SPACE,
+                        onSelect = {
+                            purchaseManager?.withPremiumCheck(
+                                onPremium = {
+                                    // Premium kullanıcılar için veya zaten seçili ise
+                                    selectedIcon = IconPreferenceManager.ICON_SPACE
+                                    changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                },
+                                onNonPremium = {
+                                    // Zaten kullandığı ikon ise değişikliğe izin ver
+                                    if (selectedIcon == IconPreferenceManager.ICON_SPACE) {
+                                        selectedIcon = IconPreferenceManager.ICON_SPACE
+                                        changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                    } else {
+                                        // Premium gerektiğini göster
+                                        selectedPremiumIcon = IconPreferenceManager.ICON_SPACE
+                                        showPremiumDialog = true
+                                    }
+                                },
+                                onError = { e ->
+                                    // Hata durumunda, eğer zaten kullanıyorsa izin ver
+                                    if (selectedIcon == IconPreferenceManager.ICON_SPACE) {
+                                        selectedIcon = IconPreferenceManager.ICON_SPACE
+                                        changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                    } else {
+                                        Log.e("IconSelector", "Premium kontrol hatası: ${e.message}")
+                                        // Premium dialogunu göster
+                                        selectedPremiumIcon = IconPreferenceManager.ICON_SPACE
+                                        showPremiumDialog = true
+                                    }
+                                }
+                            ) ?: run {
+                                // PurchaseManager null ise sadece varsayılan ikona izin ver
+                                if (selectedIcon == IconPreferenceManager.ICON_SPACE) {
+                                    selectedIcon = IconPreferenceManager.ICON_SPACE
+                                    changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                } else {
+                                    selectedPremiumIcon = IconPreferenceManager.ICON_SPACE
+                                    showPremiumDialog = true
+                                }
+                            }
+                        }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    Text(
+                        text = "İkon değişikliği uygulandıktan sonra uygulama yeniden başlatılacaktır.",
+                        fontSize = 14.sp,
+                        color = Color(0xFF666666),
+                            textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Premium bilgilendirme dialogu
+        if (showPremiumDialog) {
+            Dialog(onDismissRequest = { showPremiumDialog = false }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 8.dp
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Premium ikonu
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .background(
+                                    color = Color(0xFFFFD700).copy(alpha = 0.2f),
+                                    shape = CircleShape
+                                )
+                                .padding(16.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Premium",
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "Premium Özellik",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF6200EA)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = "Bu uygulama ikonu sadece premium üyelere özeldir. Premium üyelik satın alarak tüm uygulama ikonlarına erişebilirsiniz.",
+                            fontSize = 16.sp,
+                            color = Color(0xFF666666),
+                            textAlign = TextAlign.Center
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Button(
+                                onClick = { showPremiumDialog = false },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFE0E0E0),
+                                    contentColor = Color(0xFF666666)
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "Vazgeç",
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.width(16.dp))
+                            
+                            Button(
+                                onClick = {
+                                    showPremiumDialog = false
+                                    // Premium satın alma işlemi
+                                    try {
+                                        val activity = context as? Activity
+                                        if (activity != null && purchaseManager != null) {
+                                            purchaseManager.buyPremium(activity)
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e("IconSelector", "Premium satın alma başlatılamadı: ${e.message}")
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFFFD700),
+                                    contentColor = Color(0xFF6200EA)
+                                ),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text(
+                                    text = "Premium Al",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    @Composable
+    fun ModernIconOption(
+        title: String,
+        description: String,
+        iconResId: Int,
+        isSelected: Boolean,
+        backgroundColor: Color,
+        isLocked: Boolean,
+        onSelect: () -> Unit
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+                .clickable { onSelect() },
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = if (isSelected) 8.dp else 4.dp
+            ),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            border = if (isSelected) {
+                androidx.compose.foundation.BorderStroke(2.dp, backgroundColor)
+            } else {
+                null
+            }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // İkon Konteyneri
+                Box(
+                    modifier = Modifier
+                        .size(88.dp)
+                        .background(
+                            backgroundColor.copy(alpha = 0.1f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = backgroundColor.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .padding(12.dp)
+                        .alpha(if (isLocked) 0.6f else 1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = iconResId),
+                        contentDescription = title,
+                        modifier = Modifier.size(64.dp)
+                    )
+                    
+                    // Kilit ikonu (eğer kilitliyse)
+                    if (isLocked) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.Black.copy(alpha = 0.3f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Kilitli",
+                                tint = Color.White,
+                                modifier = Modifier.size(30.dp)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.width(16.dp))
+                
+                // İkon Detayları
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 8.dp),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF212121)
+                    )
+                    
+                    Text(
+                        text = description,
+                        fontSize = 14.sp,
+                        color = Color(0xFF757575)
+                    )
+                    
+                    // Premium gereklilik bilgisi - isLocked true olduğunda her ikonu için de göster
+                    if (isLocked) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Premium",
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            
+                            Spacer(modifier = Modifier.width(4.dp))
+                            
+                            Text(
+                                text = "Premium Özellik",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFFFD700)
+                            )
+                        }
+                    }
+                }
+                
+                // Seçim İkonu
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(backgroundColor, shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Seçildi",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+} 

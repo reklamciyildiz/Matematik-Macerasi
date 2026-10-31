@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#FB659B"
+        android:pathData="M60,60m-56,0a56,56 0,1 1,112 0a56,56 0,1 1,-112 0" />
+
+    <!-- Hair -->
+    <path
+        android:fillColor="#A63F3F"
+        android:pathData="M60,35m-27.5,0a27.5,27.5 0,1 1,55 0a27.5,27.5 0,1 1,-55 0" />
+
+    <!-- Face -->
+    <path
+        android:fillColor="#FFE1D0"
+        android:pathData="M60,45m-20,0a20,20 0,1 1,40 0a20,20 0,1 1,-40 0" />
+
+    <!-- Glasses -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="2"
+        android:pathData="M50,42m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="2"
+        android:pathData="M70,42m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="2"
+        android:pathData="M57,42L63,42" />
+
+    <!-- Eyes -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M50,42m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M70,42m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+
+    <!-- Mouth -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M52,55L68,55" />
+
+    <!-- Book -->
+    <path
+        android:fillColor="#B93E6E"
+        android:pathData="M45,85L75,85A3,3 0,0 1,78 88L78,97A3,3 0,0 1,75 100L45,100A3,3 0,0 1,42 97L42,88A3,3 0,0 1,45 85z" />
+    
+    <!-- Book Details -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M50,92L70,92" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M50,96L65,96" />
+    
+    <!-- Math Symbols Floating around -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M85,35L89,35L89,39L93,39L93,43L89,43L89,47L85,47L85,43L81,43L81,39L85,39z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M30,40L40,40" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2"
+        android:pathData="M35,35L35,45" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M94,60L96,60L96,62L94,62z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M25,60L35,60" />
+</vector> 

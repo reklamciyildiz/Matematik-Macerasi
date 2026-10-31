@@ -1,0 +1,703 @@
+package com.yigit033.matematikmacarasi.games.interactive
+
+import android.media.MediaPlayer
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.games.models.NumberHuntGameState
+import com.yigit033.matematikmacarasi.games.models.NumberHuntHelper
+import com.yigit033.matematikmacarasi.games.models.NumberHuntLevels
+import com.yigit033.matematikmacarasi.games.models.NumberItem
+import com.yigit033.matematikmacarasi.ui.components.GameCompletedScreen
+import com.yigit033.matematikmacarasi.ui.components.GameTopBar
+import com.yigit033.matematikmacarasi.ui.components.QuestionArea
+import com.yigit033.matematikmacarasi.ui.theme.AnimationDurations
+import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasıTheme
+import com.yigit033.matematikmacarasi.ui.theme.PrimaryBlue
+import kotlinx.coroutines.delay
+import kotlin.random.Random
+
+class NumberHuntGameActivity : ComponentActivity() {
+    
+    private var mediaPlayerCorrect: MediaPlayer? = null
+    private var mediaPlayerWrong: MediaPlayer? = null
+    private var mediaPlayerSuccess: MediaPlayer? = null
+    
+    private val handler = Handler(Looper.getMainLooper())
+    private val gameTimer = object : Runnable {
+        override fun run() {
+            if (gameState.timeRemaining > 0 && !gameState.isGameOver && !gameState.isGameCompleted) {
+                gameState = gameState.copy(timeRemaining = gameState.timeRemaining - 1)
+                
+                // Süre bitti mi kontrol et
+                if (gameState.timeRemaining <= 0) {
+                    endGame(completed = false)
+                }
+                
+                handler.postDelayed(this, 1000)
+            }
+        }
+    }
+    
+    private var gameState by mutableStateOf(createInitialGameState())
+    
+    // Zorluk seviyesi seçimi için state
+    private var showLevelSelectDialog by mutableStateOf(true)
+    private var selectedDifficultyLevel by mutableStateOf(0) // Seçilen zorluk seviyesi indeksi (0-4)
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        // Ses dosyalarını yükle
+        mediaPlayerCorrect = MediaPlayer.create(this, R.raw.correct_sound)
+        mediaPlayerWrong = MediaPlayer.create(this, R.raw.wrong_sound)
+        mediaPlayerSuccess = MediaPlayer.create(this, R.raw.success_sound)
+        
+        setContent {
+            MatematikMacerasıTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    if (showLevelSelectDialog) {
+                        LevelSelectDialog(
+                            onLevelSelected = { level ->
+                                selectedDifficultyLevel = level
+                                showLevelSelectDialog = false
+                                
+                                // Yeni oyun durumu oluştur
+                                gameState = createGameStateForLevel(level)
+                                
+                                // Oyunu başlat
+                                startGame()
+                            },
+                            onCancel = { finish() }
+                        )
+                    } else {
+                        NumberHuntGameScreen(
+                            gameState = gameState,
+                            onNumberClick = { number -> onNumberSelected(number) },
+                            onBackClick = { finish() },
+                            onRestartClick = { restartGame() },
+                            onNextLevelClick = { startNextLevel() },
+                            onHomeClick = { finish() }
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    @Composable
+    fun LevelSelectDialog(
+        onLevelSelected: (Int) -> Unit,
+        onCancel: () -> Unit
+    ) {
+        // Ekran arkaplanı - gradient mavi
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF1976D2), // Koyu mavi üst
+                            Color(0xFFBBDEFB)  // Açık mavi alt
+                        )
+                    )
+                )
+        ) {
+            // Dialog içeriği
+            Dialog(onDismissRequest = { onCancel() }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Sayı Avı - Zorluk Seviyesi Seç",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF1976D2)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(20.dp))
+                        
+                        // Seviye 1: Basit kurallar
+                        Button(
+                            onClick = { onLevelSelected(0) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF4CAF50)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Seviye 1: Basit Kurallar", fontSize = 16.sp, color = Color.White)
+                        }
+                        
+                        // Seviye 2: Orta seviye kurallar
+                        Button(
+                            onClick = { onLevelSelected(1) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFFA000)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Seviye 2: Orta Seviye Kurallar", fontSize = 16.sp, color = Color.White)
+                        }
+                        
+                        // Seviye 3: Zor kurallar
+                        Button(
+                            onClick = { onLevelSelected(2) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFF5722)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Seviye 3: Zor Kurallar", fontSize = 16.sp, color = Color.White)
+                        }
+                        
+                        // Seviye 4: Çok zor kurallar
+                        Button(
+                            onClick = { onLevelSelected(3) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF9C27B0)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Seviye 4: Çok Zor Kurallar", fontSize = 16.sp, color = Color.White)
+                        }
+                        
+                        // Seviye 5: Uzman kurallar
+                        Button(
+                            onClick = { onLevelSelected(4) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF3F51B5)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("Seviye 5: Uzman Kurallar", fontSize = 16.sp, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        
+        // Ses dosyalarını temizle
+        mediaPlayerCorrect?.release()
+        mediaPlayerWrong?.release()
+        mediaPlayerSuccess?.release()
+        
+        // Zamanlayıcıyı durdur
+        handler.removeCallbacks(gameTimer)
+    }
+    
+    private fun createInitialGameState(): NumberHuntGameState {
+        // İlk seviyeyi al
+        val currentLevel = NumberHuntLevels.levels[0]
+        
+        // Seviye için sayıları oluştur
+        val numbers = NumberHuntHelper.generateNumbersForLevel(currentLevel)
+        
+        return NumberHuntGameState(
+            level = currentLevel,
+            numbers = numbers,
+            timeRemaining = currentLevel.timeInSeconds
+        )
+    }
+    
+    private fun createGameStateForLevel(difficultyLevel: Int): NumberHuntGameState {
+        // Seçilen zorluk seviyesindeki kurallardan rastgele bir kural seç
+        val levelRules = NumberHuntLevels.levelRules[difficultyLevel]
+        val randomRule = levelRules.random()
+        
+        // Seviye için sayıları oluştur
+        val numbers = NumberHuntHelper.generateNumbersForLevel(randomRule)
+        
+        return NumberHuntGameState(
+            level = randomRule,
+            numbers = numbers,
+            timeRemaining = randomRule.timeInSeconds
+        )
+    }
+    
+    private fun startGame() {
+        // Zamanı başlat
+        handler.postDelayed(gameTimer, 1000)
+    }
+    
+    private fun onNumberSelected(number: NumberItem) {
+        if (gameState.isGameOver || gameState.isGameCompleted) return
+        
+        // Zaten seçilmiş sayıları tekrar seçmeyi engelle
+        if (number.isSelected) return
+        
+        // Güncellenmiş sayılar listesi oluştur
+        val updatedNumbers = gameState.numbers.map { 
+            if (it == number) it.copy(isSelected = true) else it 
+        }
+        
+        // Skoru güncelle
+        var newScore = gameState.score
+        var foundCount = gameState.foundNumbersCount
+        
+        if (number.isMatchingRule) {
+            // Doğru sayı seçildi
+            newScore += gameState.level.pointsPerCorrect
+            foundCount++
+            mediaPlayerCorrect?.start()
+        } else {
+            // Yanlış sayı seçildi
+            newScore = (newScore - gameState.level.pointsPerWrong).coerceAtLeast(0)
+            mediaPlayerWrong?.start()
+        }
+        
+        // Oyun durumunu güncelle
+        gameState = gameState.copy(
+            numbers = updatedNumbers,
+            score = newScore,
+            foundNumbersCount = foundCount
+        )
+        
+        // Tüm kurala uyan sayılar bulundu mu kontrol et
+        if (foundCount >= gameState.level.matchingNumbersCount) {
+            // Oyunu tamamla
+            endGame(completed = true)
+        }
+    }
+    
+    private fun endGame(completed: Boolean) {
+        // Zamanı durdur
+        handler.removeCallbacks(gameTimer)
+        
+        // Yıldızları hesapla
+        val stars = NumberHuntHelper.calculateStars(gameState.score, gameState.level)
+        
+        // Oyun durumunu güncelle
+        gameState = gameState.copy(
+            isGameOver = !completed,
+            isGameCompleted = completed,
+            stars = stars
+        )
+        
+        // Başarı sesini çal
+        if (completed) {
+            mediaPlayerSuccess?.start()
+        }
+    }
+    
+    private fun restartGame() {
+        // Aynı zorluk seviyesinde yeni bir oyun başlat
+        gameState = createGameStateForLevel(selectedDifficultyLevel)
+        
+        // Zamanı başlat
+        handler.removeCallbacks(gameTimer)
+        handler.postDelayed(gameTimer, 1000)
+    }
+    
+    private fun startNextLevel() {
+        // Seviyeyi artır, maksimum seviyeyi aşmadığını kontrol et
+        val nextDifficultyLevel = (selectedDifficultyLevel + 1).coerceAtMost(4)
+        selectedDifficultyLevel = nextDifficultyLevel
+        
+        // Bir sonraki seviye için yeni bir oyun başlat
+        gameState = createGameStateForLevel(nextDifficultyLevel)
+        
+        // Zamanı başlat
+        handler.removeCallbacks(gameTimer)
+        handler.postDelayed(gameTimer, 1000)
+    }
+}
+
+@Composable
+fun NumberHuntGameScreen(
+    gameState: NumberHuntGameState,
+    onNumberClick: (NumberItem) -> Unit,
+    onBackClick: () -> Unit,
+    onRestartClick: () -> Unit,
+    onNextLevelClick: () -> Unit,
+    onHomeClick: () -> Unit
+) {
+    // Statik arka plan kullan
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF1976D2), // Koyu mavi üst
+                        Color(0xFFBBDEFB)  // Açık mavi alt
+                    )
+                )
+            )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Modern üst bilgi çubuğu
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Başlık ve geri butonu
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF3F51B5)) // Daha koyu mavi (indigo) arka plan
+                        .padding(vertical = 8.dp, horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Geri Dön",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable { onBackClick() }
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "Sayı Avı",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Seviye bilgisi
+                    Card(
+                        modifier = Modifier.padding(4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF5C6BC0) // Açık indigo
+                        )
+                    ) {
+                        Text(
+                            text = "Seviye ${gameState.level.level}",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                
+                // Oyun bilgileri (skor, süre, soru sayacı)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF303F9F)) // Koyu indigo (çok koyu mavi)
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Yıldız ve skor
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_star),
+                            contentDescription = "Skor",
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = "${gameState.score}",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    // Süre
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_timer),
+                            contentDescription = "Süre",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = "${gameState.timeRemaining} s",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    // Soru sayacı
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_question),
+                            contentDescription = "Sorular",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = "${gameState.foundNumbersCount}/${gameState.level.matchingNumbersCount}",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Soru Alanı
+            QuestionArea(
+                question = gameState.level.rule,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Bul: ${gameState.foundNumbersCount}/${gameState.level.matchingNumbersCount}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Oyun Alanı
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Sayıları göster
+                gameState.numbers.forEach { number ->
+                    NumberBubble(
+                        number = number,
+                        onClick = { onNumberClick(number) },
+                        isGameActive = !gameState.isGameOver && !gameState.isGameCompleted
+                    )
+                }
+            }
+            
+            // Oyun sonu ekranı
+            if (gameState.isGameOver || gameState.isGameCompleted) {
+                GameCompletedScreen(
+                    score = gameState.score,
+                    stars = gameState.stars,
+                    onNextLevel = onNextLevelClick,
+                    onRestart = onRestartClick,
+                    onHome = onHomeClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NumberBubble(
+    number: NumberItem,
+    onClick: () -> Unit,
+    isGameActive: Boolean
+) {
+    // Pozisyon değerleri (0-1 arası normalize edilmiş)
+    val (xPercent, yPercent) = number.position
+    
+    // Ekran boyutlarını al
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+    val screenHeight = configuration.screenHeightDp
+    
+    // Oyun alanı yüksekliği - gerçek kullanılabilir alanı hesaplayalım
+    val gameAreaHeight = screenHeight * 0.65f // Kullanılabilir alanı artırdık
+    
+    // Balon boyutu (dp cinsinden)
+    val balloonSize = 56
+    
+    // Konumu hesapla
+    val xPos = (screenWidth * xPercent).toFloat()
+    val yPos = (gameAreaHeight * yPercent).toFloat()
+    
+    // Görünürlük durumu - seçildiğinde kaybolma
+    var visible by remember { mutableStateOf(!number.isSelected) }
+    
+    // Animasyonlar
+    var animationStarted by remember { mutableStateOf(false) }
+    
+    // Ölçeklendirme animasyonu
+    val scale by animateFloatAsState(
+        targetValue = if (number.isSelected) 1.3f else 1.0f,
+        animationSpec = tween(300),
+        label = "scale"
+    )
+    
+    // Nefes alma animasyonu
+    val infiniteTransition = rememberInfiniteTransition(label = "float")
+    val floatAnimation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "breathing"
+    )
+    
+    // Başlangıç animasyonu ve seçildiğinde kaybolma
+    LaunchedEffect(key1 = number) {
+        delay(Random.nextInt(300).toLong())
+        animationStarted = true
+    }
+    
+    LaunchedEffect(key1 = number.isSelected) {
+        if (number.isSelected) {
+            // Renk değişimini göster
+            delay(800)
+            visible = false
+        }
+    }
+    
+    // Sayı kabarcığının arka plan rengini belirle
+    val backgroundColor = when {
+        number.isSelected && number.isMatchingRule -> Color.Green.copy(alpha = 0.8f)
+        number.isSelected && !number.isMatchingRule -> Color.Red.copy(alpha = 0.8f)
+        !isGameActive -> Color.Gray.copy(alpha = 0.3f)
+        else -> PrimaryBlue.copy(alpha = 0.7f)
+    }
+    
+    // Eğer görünür durumdaysa göster
+    if (visible && animationStarted) {
+        Box(
+            modifier = Modifier
+                .offset(
+                    x = xPos.dp,
+                    y = yPos.dp
+                )
+                .size(balloonSize.dp)
+                .clip(CircleShape)
+                .background(backgroundColor)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = CircleShape
+                )
+                .rotate(number.angle)
+                .scale(scale * (1f + floatAnimation * 0.05f))
+                .clickable(enabled = isGameActive && !number.isSelected) { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = number.value.toString(),
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+} 

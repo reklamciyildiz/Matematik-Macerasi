@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Arka plan daire -->
+    <path
+        android:pathData="M60,60m-60,0a60,60 0,1 1,120 0a60,60 0,1 1,-120 0"
+        android:fillColor="#87CEEB"/>
+
+    <!-- Yüz -->
+    <path
+        android:pathData="M60,60m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0"
+        android:fillColor="#F0D0B0"/>
+
+    <!-- Saç -->
+    <path
+        android:pathData="M30,45C25,40 25,30 30,25C35,20 40,20 45,20C50,20 55,20 60,20C65,20 70,20 75,20C80,20 85,20 90,25C95,30 95,40 90,45C85,50 80,50 75,52C70,54 65,55 60,55C55,55 50,54 45,52C40,50 35,50 30,45Z"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- Bıyık -->
+    <path
+        android:pathData="M40,70C45,65 50,65 55,65C60,65 65,65 70,65C75,65 80,65 85,70C80,75 75,75 70,75C65,75 60,75 55,75C50,75 45,75 40,70Z"
+        android:fillColor="#FFFFFF"/>
+
+    <!-- Sol göz -->
+    <path
+        android:pathData="M50,50m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"
+        android:fillColor="#000000"/>
+
+    <!-- Sağ göz -->
+    <path
+        android:pathData="M70,50m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0"
+        android:fillColor="#000000"/>
+
+    <!-- Formül (E = mc²) -->
+    <path
+        android:pathData="M45,90L75,90M45,95L60,95M45,100L75,100"
+        android:strokeWidth="2"
+        android:strokeColor="#000000"/>
+    
+</vector> 

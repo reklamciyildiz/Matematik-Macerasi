@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108"
+    android:tint="#FFFFFF">
+    <group
+        android:scaleX="0.36"
+        android:scaleY="0.36"
+        android:translateX="34.56"
+        android:translateY="34.56">
+        
+        <!-- Matematik sembolleri içeren daire -->
+        <path
+            android:fillColor="#FF5722"
+            android:pathData="M54,27C39.09,27 27,39.09 27,54s12.09,27 27,27s27,-12.09 27,-27S68.91,27 54,27z" />
+            
+        <!-- "+" işareti -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M42,48L36,48L36,42L30,42L30,48L24,48L24,54L30,54L30,60L36,60L36,54L42,54L42,48z" />
+            
+        <!-- "-" işareti -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M62,48L82,48L82,54L62,54L62,48z" />
+            
+        <!-- "×" işareti -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M25,74L31,80L37,74L41,78L35,84L41,90L37,94L31,88L25,94L21,90L27,84L21,78L25,74z" />
+            
+        <!-- "÷" işareti -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M72,74C70.34,74 69,75.34 69,77C69,78.66 70.34,80 72,80C73.66,80 75,78.66 75,77C75,75.34 73.66,74 72,74z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M62,84L82,84L82,90L62,90L62,84z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M72,94C70.34,94 69,95.34 69,97C69,98.66 70.34,100 72,100C73.66,100 75,98.66 75,97C75,95.34 73.66,94 72,94z" />
+            
+        <!-- Gülen yüz -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M44,63C50.5,70 57.5,70 64,63" 
+            android:strokeWidth="5"
+            android:strokeColor="#FFFFFF" 
+            android:strokeLineCap="round"/>
+            
+        <!-- Gözler -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M47,52m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M61,52m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    </group>
+</vector> 

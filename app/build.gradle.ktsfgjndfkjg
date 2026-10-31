@@ -1,0 +1,151 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
+
+android {
+    namespace = "com.yigit033.matematikmacarasi"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.yigit033.matematikmacarasi"
+        minSdk = 21
+        targetSdk = 35
+        versionCode = 9
+        versionName = "1.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
+    }
+
+    // Debug signing config zaten var, yeniden tanımlamıyoruz
+    
+    // Keystore konfigürasyonunu geçici olarak kaldırıyoruz
+    /*
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore/matematikmacarasi.keystore")
+            storePassword = "matematikmacarasi"
+            keyAlias = "matematikmacarasi"
+            keyPassword = "matematikmacarasi"
+        }
+    }
+    */
+
+    buildTypes {
+        debug {
+            // Varsayılan debug signing konfigürasyonunu kullanır
+        }
+        
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            // Keystore konfigürasyonunu geçici olarak kaldırıyoruz
+            // signingConfig = signingConfigs.getByName("release")
+            
+            // Debug signing config ile geçici olarak imzalıyoruz
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    buildFeatures {
+        compose = true
+    }
+    
+    // Bundle seçenekleri
+    bundle {
+        language {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        abi {
+            enableSplit = true
+        }
+    }
+}
+
+dependencies {
+    // Temel Android bağımlılıkları
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.material)
+    implementation(libs.constraintlayout)
+    
+    // Google Fonts
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
+    
+    // Compose bağımlılıkları
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+    
+    // Google Play Billing Library - Satın alma işlemleri için
+    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    
+    // Firebase - Premium kod sistemi için
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    
+    // Veri Saklama
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    annotationProcessor(libs.androidx.room.compiler)
+    
+    // Ses
+    implementation(libs.androidx.media3.exoplayer)
+    
+    // Animasyon ve Görsel
+    implementation(libs.airbnb.lottie.compose)
+    implementation(libs.coil.compose)
+    
+    // Diğer Yardımcı Kütüphaneler
+    implementation(libs.timber)
+    implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Test Kütüphaneleri
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    implementation("com.google.firebase:firebase-database-ktx")  // ← ÖNEMLİ
+    implementation("com.google.firebase:firebase-auth-ktx")
+    
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
+    // Material Icons (Core ve Extended)
+    implementation("androidx.compose.material:material-icons-core:1.5.4")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+
+    // Material
+    implementation("androidx.compose.material:material:1.5.4")
+}
+
+// Google Services plugin'ini en sonda uygula
+apply(plugin = "com.google.gms.google-services")

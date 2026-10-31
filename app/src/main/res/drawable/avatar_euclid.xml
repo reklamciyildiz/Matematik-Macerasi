@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Face -->
+    <path
+        android:fillColor="#F5DEB3"
+        android:pathData="M100,100 a35,40 0 1,0 0.1,0 Z" />
+
+    <!-- Laurel Wreath -->
+    <path
+        android:strokeColor="#339933"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M80,60 Q60,80 70,100 M120,60 Q140,80 130,100" />
+
+    <path
+        android:strokeColor="#339933"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M75,65 Q65,80 70,95 M125,65 Q135,80 130,95" />
+
+    <!-- Beard -->
+    <path
+        android:fillColor="#CCCCAA"
+        android:pathData="M85,105 Q100,130 115,105 L115,125 Q100,140 85,125 Z" />
+
+    <!-- Eyes -->
+    <path
+        android:fillColor="#664433"
+        android:pathData="M85,95 a4,4 0 1,0 0.1,0 Z" />
+
+    <path
+        android:fillColor="#664433"
+        android:pathData="M115,95 a4,4 0 1,0 0.1,0 Z" />
+
+    <!-- Geometric Shapes -->
+    <path
+        android:strokeColor="#336699"
+        android:strokeWidth="2"
+        android:pathData="M150,60 L170,80 L150,100 L130,80 Z" />
+
+    <path
+        android:strokeColor="#CC6633"
+        android:strokeWidth="2"
+        android:pathData="M50,80 L70,50 L90,80 Z" />
+</vector> 

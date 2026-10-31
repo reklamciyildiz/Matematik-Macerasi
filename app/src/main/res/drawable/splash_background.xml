@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Arka plan rengi -->
+    <item android:drawable="@color/ic_launcher_background" />
+    
+    <!-- Büyük ikon -->
+    <item
+        android:drawable="@drawable/matematik_macerasi_teaching"
+        android:width="400dp"
+        android:height="400dp"
+        android:gravity="left" />
+</layer-list> 

@@ -1,0 +1,82 @@
+# MATEMATİK MACERASI GİZLİLİK POLİTİKASI
+
+**Son Güncelleme Tarihi: 20 Haziran 2024**
+
+## GİRİŞ
+
+Bu Gizlilik Politikası, "Matematik Macerası" uygulamasının (bundan sonra "Uygulama" olarak anılacaktır) kişisel verileri nasıl topladığını, kullandığını, koruduğunu ve gerektiğinde nasıl paylaştığını açıklamaktadır. Uygulamamız, 3-11 yaş arası çocuklar için tasarlanmış eğitici bir matematik oyunudur ve çocukların matematiksel becerilerini eğlenceli oyunlar aracılığıyla geliştirmeyi amaçlamaktadır.
+
+Matematik Macerası, çocukların gizliliğini büyük bir ciddiyetle ele almaktadır. Bu doğrultuda, Çocukların Çevrimiçi Gizliliğini Koruma Yasası (COPPA), Genel Veri Koruma Yönetmeliği (GDPR), Kaliforniya Tüketici Gizlilik Yasası (CCPA) ve diğer ilgili veri koruma kanunlarına tam uyum sağlamak için gerekli tüm adımları atmaktayız.
+
+## 1. VERİ SORUMLUSU
+
+Matematik Macerası uygulamasında toplanan kişisel verilerin sorumlusu şudur:
+
+Yiğit Tilaver
+İstanbul, Türkiye
+E-posta: yigittilaver2000@gmail.com
+
+
+## 2. ÇOCUKLARIN GİZLİLİĞİ HAKKINDA
+
+Uygulamamız çocuklar için tasarlanmıştır ve çocukların gizliliğini korumak en önemli önceliklerimizden biridir. Herhangi bir yaşın altındaki çocuklardan ebeveyn onayı olmadan kişisel veri toplamayız.
+
+Ebeveynler, çocuklarının kişisel verilerinin toplanıp işlenmesi konusunda kesinlikle rahat olabilirler, çünkü uygulamamız yerel veri toplama yöntemini kullanmaktadır. Yani verileriniz sadece kendi mobil cihazınızda durur.
+
+
+## 3. KULLANICI BİLGİLERİ HAKKINDA
+
+### 3.1 Kullanıcı Tarafından Sağlanan Bilgiler
+- **Oyun İlerleme Bilgileri**: Seviyeler, puanlar ve başarılar.
+- **Premium Durum**: Kullanıcının premium satın alıp almadığına dair bilgi.
+
+### 3.2 Toplamadığımız Veriler
+Aşağıdaki verileri **KESİNLİKLE TOPLAMIYORUZ**:
+- İsim, soyad veya tam doğum tarihi
+- E-posta adresi veya telefon numarası (satın alma işlemleri Google Play Store üzerinden gerçekleşir)
+- Hassas konum verileri
+- Fotoğraflar, videolar veya ses kayıtları
+- İletişim listesi, sosyal medya bilgileri
+- Çocukların gerçek zamanlı sohbet veya iletişim kurmasını sağlayan herhangi bir bilgi
+
+
+
+## 4. YASAL GEREKLİLİKLER
+Aşağıdaki durumlarda kişisel verileri paylaşabiliriz:
+- Yasal bir yükümlülüğe uymak gerektiğinde
+- Yasal hakları korumak için
+- Acil güvenlik durumlarında
+
+## 5. REKLAM VE ÖDÜLLÜ REKLAMLAR
+
+Uygulamamız, kullanıcılara ipuçları ve ekstra içerik sunmak için Google AdMob ödüllü reklamlarını kullanmaktadır. Bu reklamlar, kullanıcılar tarafından gönüllü olarak ve belirli ödüller karşılığında izlenir. Ödüllü reklamlar:
+
+- Yalnızca kullanıcı tarafından açıkça talep edildiğinde gösterilir
+- Premium kullanıcılara gösterilmez (premium kullanıcılar direkt ödülü alır)
+- Reklamların gösterilmesi için reklam tanımlayıcılar kullanılır
+- Reklamlar, COPPA ve GDPR uyumlu şekilde yönetilir
+- Çocuklara uygun içerik ilkelerimize uygun reklamlar gösterilir
+
+## 6. VERİ GÜVENLİĞİ
+
+Kişisel verilerinizin güvenliğini korumak için uygun teknik ve organizasyonel önlemleri alıyoruz:
+
+Oyun ilerleme verileri ve kullanıcı tercihleri, uygulamanın kaldırılmasına kadar cihazınızda yerel olarak saklanır.
+
+## 7. ÇEREZLER VE BENZERİ TEKNOLOJİLER
+
+Uygulamamız, cihazınıza "çerezler" yerleştirmez. Ancak cihaz tanımlayıcıları ve yerel depolama (SharedPreferences) gibi benzer teknolojileri kullanabilir. Bu teknolojiler, oyun ilerlemesi, ayarlar ve kullanıcı tercihlerini kaydetmek gibi temel özellikleri sağlamak için kullanılır.
+
+Matematik Macerası, kişisel bilgileri satmaz veya kâr elde etmek amacıyla paylaşmaz.
+
+
+## 8. BİZE ULAŞIN
+
+Gizlilik Politikamız veya genel olarak veri uygulamalarımız hakkında sorularınız veya endişeleriniz varsa, lütfen bizimle iletişime geçin:
+
+Yiğit Tilaver
+E-posta: yigittilaver2000@gmail.com
+Web: https://yigittilaver.dev
+
+**Not**: Gizlilik politikamız, sorumlu veri toplama ve kullanım konusundaki taahhüdümüzü yansıtmaktadır. Amacımız, çocukların öğrenme deneyimini keyifli hale getirirken gizliliklerini korumaktır. 
+

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Face -->
+    <path
+        android:fillColor="#F8E0D0"
+        android:pathData="M100,100 a35,40 0 1,0 0.1,0 Z" />
+
+    <!-- Vintage Hair -->
+    <path
+        android:fillColor="#553322"
+        android:pathData="M70,80 Q100,50 130,80 L130,120 Q115,130 100,130 Q85,130 70,120 Z" />
+
+    <!-- Eyes -->
+    <path
+        android:fillColor="#663333"
+        android:pathData="M85,95 a4,4 0 1,0 0.1,0 Z" />
+
+    <path
+        android:fillColor="#663333"
+        android:pathData="M115,95 a4,4 0 1,0 0.1,0 Z" />
+
+    <!-- Smile -->
+    <path
+        android:strokeColor="#553322"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M90,105 Q100,110 110,105" />
+
+    <!-- Victorian Accessory -->
+    <path
+        android:strokeColor="#AA6633"
+        android:strokeWidth="2"
+        android:pathData="M65,80 Q80,85 100,85 Q120,85 135,80" />
+
+    <!-- Binary Code -->
+    <path
+        android:fillColor="#0066CC"
+        android:pathData="M145,60 L155,60 L155,70 L145,70 Z" />
+
+    <path
+        android:fillColor="#0066CC"
+        android:pathData="M160,70 L170,70 L170,80 L160,80 Z" />
+
+    <path
+        android:fillColor="#0066CC"
+        android:pathData="M145,80 L155,80 L155,90 L145,90 Z" />
+</vector> 

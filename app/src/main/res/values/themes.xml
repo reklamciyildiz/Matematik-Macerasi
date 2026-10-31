@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.MatematikMacerasi" parent="android:Theme.Material.Light.NoActionBar" />
+    
+    <!-- Android 12+ Splash Screen API için tema -->
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Splash ekranı arka plan rengi -->
+        <item name="windowSplashScreenBackground">@color/colorPrimary</item>
+        
+        <!-- Splash ekranında gösterilecek ikon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        
+        <!-- İkonun animasyon süresi (ms cinsinden) -->
+        <item name="windowSplashScreenAnimationDuration">750</item>
+        
+        <!-- Splash ekranından sonra kullanılacak tema -->
+        <item name="postSplashScreenTheme">@style/Theme.MatematikMacerasi</item>
+    </style>
+</resources>

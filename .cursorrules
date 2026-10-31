@@ -1,0 +1,171 @@
+# Matematik Macerası Uygulaması - Teknik Dokümantasyon
+# Bu dosya, Matematik Macerası uygulamasının teknik detaylarını ve geliştiriciler için rehber içerir.
+
+## 1. Proje Özeti
+- Adı: Matematik Macerası
+- Platform: Native Android (Kotlin)
+- Hedef Kitle: 3-11 yaş arası çocuklar
+- Amaç: Eğlenceli matematik öğrenimi sağlamak
+
+## 2. Teknoloji Yığını
+- Framework: Native Android (Kotlin)
+- Durum Yönetimi: Provider
+- Veri Saklama: SharedPreferences
+- Ses: AudioPlayers
+- Animasyon: Lottie
+- Backend (Hazırlık): Supabase
+- Ek Kütüphaneler: Google Fonts, Logging
+
+## 3. Proje Mimarisi
+- lib/
+  - game/: Tüm oyun mantıkları ve sınıfları
+  - models/: Veri modelleri
+  - screens/: UI ekranları
+  - services/: İş mantığı servisleri
+  - utils/: Yardımcı sınıflar
+  - widgets/: Yeniden kullanılabilir UI bileşenleri
+  - main.dart: Uygulama giriş noktası
+
+## 4. Çekirdek Bileşenler
+- BaseGameScreen: Tüm oyunlar için temel sınıf
+- GameProgressService: İlerleme takibi
+- AudioService: Ses yönetimi
+- AvatarService: Karakter yönetimi
+- DailyTasksService: Günlük görevler
+
+## 5. Oyun Türleri
+- Temel İşlem Oyunları:
+  - Toplama (addition_game.dart)
+  - Çıkarma (subtraction_game.dart)
+  - Çarpma (multiplication_game.dart)
+  - Bölme (division_game.dart)
+- İnteraktif Oyunlar:
+  - Balon Patlatma (balloon_pop_game.dart)
+  - Uzay Matematik Macerası (space_math_adventure.dart)
+  - Sayı Avı (number_hunt_game.dart)
+  - Matematik Labirenti (math_maze_game.dart)
+- Konsept Oyunları:
+  - Şekil Tanıma (shape_recognition_game.dart)
+  - Sayı Eşleştirme (number_matching_game.dart)
+  - Saat Okuma (clock_reading_game.dart)
+  - Örüntü Bulmacası (pattern_puzzle_game.dart)
+
+## 6. Temel Oyun Mekanikleri
+- Dinamik Soru Üretimi: Sınıf seviyesine ve oyuncunun performansına göre
+- Zorluk Ayarları: Otomatik uyarlanan zorluk seviyeleri
+- Zamanlama Sistemi: Soru başına süre sınırlaması
+- Puan Hesaplama: Doğruluk ve hıza dayalı puanlama
+- Yıldız Sistemi: 1-3 yıldız performans puanlaması
+- Geri Bildirim: Sesli ve görsel anlık geri bildirim
+- Ödül Mekanizması: Başarı rozetleri ve günlük görevler
+
+## 7. Oyun Özelliklerinin Detayları
+
+### 7.1 Toplama Oyunu
+- Mekanik: İki sayıyı toplayıp doğru sonucu bulma
+- Zorluk: Sayı aralığı (1-10, 1-20, 1-100)
+- UI: Büyük, renkli butonlar ve sayı gösterim kutuları
+- Özellikler: Seviye başına 10 soru, doğru/yanlış sesli geri bildirim
+
+### 7.2 Balon Patlatma Oyunu
+- Mekanik: Ekranda yükselen balonlardaki matematik işlemlerinin sonuçlarını bulmak
+- Zamanlama: 60 saniyelik oyun süresi
+- Kontroller: Dokunma ile balon patlatma
+- Özellikler: 
+  - Rastgele yükselen balonlar
+  - Farklı renkte ve boyutta balonlar
+  - Patlatma animasyonları ve ses efektleri
+  - Seviyeye göre artan zorluk (balon hızı, işlem karmaşıklığı)
+
+### 7.3 Sayı Avı Oyunu
+- Mekanik: Belirli bir kurala uyan sayıları haritada bulma
+- Harita: Rastgele sayılarla dolu grid
+- Kurallar: "Çift sayıları bul", "3'e bölünebilen sayıları bul" vb.
+- Özellikler:
+  - Zamanlı oyun
+  - Seviye başına farklı arama kuralları
+  - İpucu sistemi
+
+### 7.4 Matematik Labirenti
+- Mekanik: Matematik işlemlerini yaparak labirentten çıkış yolunu bulma
+- Labirent: Algoritmik olarak üretilen dinamik labirent
+- Özellikler:
+  - Her kavşakta matematik soruları
+  - Doğru cevaplarla ilerleyebilme
+  - Aşamalı kilit açma sistemi
+
+## 8. Veri Modelleri
+- QuestionModel: Temel soru yapısı
+- GameProgress: Oyun ilerleme bilgileri
+- DailyQuest: Günlük görev yapısı
+- AvatarModel: Kullanıcı avatarı
+- ShapeType: Geometrik şekil türleri
+- QuestType: Görev türleri
+
+## 9. UI/UX Özellikleri
+- Çocuk Dostu Arayüz: Büyük butonlar, canlı renkler
+- Animasyonlu Arka Plan: Hareket eden temalar
+- Anlık Geri Bildirim: Doğru/yanlış için görsel ve sesli yanıtlar
+- Öğrenme Yolculuğu: Görsel ilerleme haritası
+- Karakter Özelleştirme: Avatar seçimi ve düzenleme
+
+## 10. Performans Optimizasyonları
+- const Widget Kullanımı: Gereksiz rebuild'leri önleme
+- Lazy Loading: Oyun ve assetlerin ihtiyaç duyulduğunda yüklenmesi
+- setState Optimizasyonu: Minimum state güncellemesi
+- Hata Yakalama: Try-catch blokları ile hata yönetimi
+- Bellek Yönetimi: Animasyonların ve controllerların dispose edilmesi
+
+## 11. Uygulama Özellikleri
+- Ana Ekran: Kategori seçimi, ilerleme gösterimi, günlük görevler
+- Profil: Avatar, istatistikler, başarılar
+- Oyun Seçim Ekranı: Seviye bazlı oyun kilitleri
+- Ayarlar: Ses, müzik, dil tercihleri
+- Öğrenme Yolculuğu: Kategorik ilerleme takibi
+
+## 12. Zorluk Seviyesi Sistemi
+- 5 Seviye: Kolay, Orta, Zor, Çok Zor, Uzman
+- Otomatik Adaptasyon: Oyuncu performansına göre zorluk ayarı
+- Özelleştirilmiş Parametreler: Her oyun için ayrı zorluk parametreleri
+  - Sayı aralıkları
+  - Soru sayısı
+  - Süre limitleri
+  - Öğe sayıları (balon, düşman, vb.)
+
+## 13. Ses Sistemi
+- Arka Plan Müziği: Oyun durumuna göre değişen
+- Efekt Sesleri: Doğru/yanlış cevaplar, başarılar
+- UI Sesleri: Buton tıklamaları, navigasyon
+- Platform Kontrolü: Web için ses optimizasyonları
+
+## 14. Geliştiriciler İçin Notlar
+- Performans: Büyük widget ağaçlarını parçalara ayırın
+- Animasyonlar: AnimationController'ları her zaman dispose edin
+- Hata Yönetimi: Kritik metodları try-catch ile koruyun
+- State Management: setState yerine mümkünse Provider kullanın
+- Genişletme: Yeni oyunlar BaseGameScreen'den türetilmelidir
+
+## 15. APK İÇİN NOTLAR
+- APK oluşturma sırasında hatalar çıkmaması için projenin teknik yapısını bozma!!
+- Her büyük bir aşama katettiğimizde debug APK oluşturalım, ve böylelikle uygulamanın son versiyonunu telefonumdan test ederek sorunsuz bir şekilde ilerlediğimizden emin olalım.
+- JAVA_HOME değişkeni ile ilgili sorun yaşarsan, Android Studio'nun kendi JDK'sını kullanarak APK oluşturmayı dene. " $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat assembleDebug "   
+- Keytool komutu çalışmıyor gibi görünüyorsa, bunun yerine Android Studio'nun kendi debug.keystore'unu kullanabilirsin.
+
+## 16. Dosyada syntax hatasını daha kolay bulabilmek için Notlar
+- .\gradlew.bat compileDebugKotlin --stacktrace     bunu terminalden kullan ve hatalı synatxları çok daha rahat bul!!
+
+
+## Dosyalarda veya projede herhangi bir hata olduğunda yapman gereken:
+- Tüm dosyayı ya daprojeyi baştan yazmak yerine nokta atışı hata tespiti yapıp, gerekli iyileştirmeleri o hatalara uygula!!
+
+## Senden projede herhangi bir değişiklik, düzenleme, güncelleme veya yeni bir özellik istediğimde projeye zarar vermemen için yapman gerekenler şunlar:
+- Projede herhangi bir değişiklik, düzenleme, güncelleme veya yeni bir özellik istediğimde, Bu iyileştirmeleri yaparken kodların bütünlüğüne ve dosya yapısına kesinlikle zarar verme ve ayrıca söylediğim sorunlar veya eksiklikler dışında uygulamadan herhangi bir yerde herhangi bir hataya neden olabilecek değişiklikler yapma!
+
+## Oyuncuların uygulamamızda ki oyunlarda kazanabilecekleri yıldız sayısı mantığı şu şekildedir:
+- Oyuncular matematik macerası uygulamamızdaki oyunlardan kazanabilecekleri yıldız sistemi şu şekilde olabilir => uygulama içerisinde herhangi bir oyunun herhangi bir seviyesinden maximum 3 yıldız kazanabilir, o oyundan toplam da da 3 * seviye sayısı kadar yıldız kazanabilir. Kuralımız budur
+
+## Matematik Macerası uygulamasına yeni bir oyun eklerken uyulması gereken standartları ve izlenmesi gereken adımları görebilmen ve bu adımları uygulayabilmeni sağlayacak dosyanın yolunu aşağıda veriyorum.
+- docs\game_development_guide.md
+
+## Play Store için hazırlanacak olan AAB dosyasının komutu şu şekilde olmalıdır:
+- $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat bundleRelease

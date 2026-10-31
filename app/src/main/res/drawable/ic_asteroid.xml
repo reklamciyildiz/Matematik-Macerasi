@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Ana asteroid şekli -->
+    <path
+        android:fillColor="#795548"
+        android:pathData="M32,4L38,12L44,20L40,30L34,42L24,46L12,42L4,34L2,24L8,12L18,4L26,6L32,4Z" />
+    <!-- Kraterler -->
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M20,16m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M32,24m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M16,30m-5,0a5,5 0,1 1,10 0a5,5 0,1 1,-10 0" />
+    <path
+        android:fillColor="#5D4037"
+        android:pathData="M28,36m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+</vector> 

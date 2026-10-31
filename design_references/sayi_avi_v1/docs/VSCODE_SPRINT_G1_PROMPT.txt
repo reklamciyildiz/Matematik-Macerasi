@@ -1,0 +1,57 @@
+# VS CODE CODING AGENT — MATEMATİK MACERASI 2.0 / SAYI AVI SPRINT G1
+
+## Bağlayıcı talimat
+Orijinal projenin çalışan oyunlarından **Sayı Avı** için, onaylanmış GDD uyarınca 3 aşamalı, gerçek ve test edilebilir playable vertical slice geliştir. Stil: Ana Sayfa H2'deki parlak mavi, fantastik adalar, görkemli hazine/macera estetiği. Verilen asset setini kullan; rastgele çizilmiş adalar, stock görseller veya koyu dashboard tasarımı İSTEMİYORUM.
+
+### Klasörler
+Aktif proje: `C:\active_projects\MatematikMacerasiii`
+Benim aktaracağım paket: `design_references\sayi_avi_v1\Matematik_Macerasi_Sayi_Avi_2_WebP_G1.zip`
+Projede `design_references\sayi_avi_v1\` klasörüne ZIP'i aç. `docs/` altındaki GDD, ASSET_MAPPING ve MANIFEST belgelerini önce **tamamen** oku. Referans tasarım `references/GDD_APPROVED_CONCEPT_BOARD.webp` yalnızca görsel yön içindir, oyun ekranı olarak kullanılmayacak.
+
+### 0. Ön audit ve korunacak durum
+1) Repo ve mevcut Sayı Avı Activity/Composable, oyun istatistikleri, navigasyon, StarManager, DailyTaskManager, Premium/PurchaseManager, SharedPreferences ve Gradle yapısını analiz et.
+2) Var olan veri/entitlement davranışlarını ve hata/teknik borçları raporla. Başka oyunları *değiştirme*.
+3) Başlamadan güvenli, ayrı bir yerel kurtarma noktası/yedek al. Mevcut backup_reference veya v2_vertical_slice üstüne yazma.
+4) Git init/commit/push, branch işlemleri, production migration, release signing, package id/versionCode, Play Store release ve deploy yapma. Gereksiz dosya taşıma/silme yok.
+5) Mevcut uygulamanın Sayı Avı'na giden menü bağlantısını koru; mevcut Sayı Avı kodunu test edilebilir adapter veya eski moda erişimle korumayı değerlendir; veri kaybına yol açacak ani overwrite yapma.
+
+### 1. Oynanış (testable rules)
+- İlk içerik **bir bölüm / üç stage**: A 4x4 sayı bulma (tam 5 doğru ve 11 çeldirici), B 6/9/12/? kasa örüntüsü, C 6->9->12->15 hazine yolu.
+- Ayrıntılı kurallar, deterministik seed, duplicate/invalid board engelleri, yanlışlarda pedagojik kademeli ipuçları, state machine ve oyun verisi `docs/GDD_V1_ACCEPTED.md` içinde; oradaki tüm kabul kriterlerini uygula.
+- Kullanıcı 5 kutu seçip 'Kontrol Et' basana kadar sonuç değerlendirme yok; 5 farklı hedefin tümünü seçince kazanır; yanlıştan sonra seçimi düzeltip tekrar deneyebilir.
+- Öğrenme metriği ve ödül idempotency zorunlu. 2X tıklama, app restart, back navigation iki yıldız ödülü yaratmamalı.
+- Metin/numara/hint, oyun state'i ve progress composable; screenshot içine gömülü statik sayılar/cevaplar kabul edilmez.
+- Aşamalar arası navigasyon ve çıkışta süreç geri dönüşü kalıcı, offline çalışır.
+
+### 2. Görsel / asset mimarisi
+- `assets/scenes` : tam ekran/hero sahne kaynakları.
+- `assets/characters`, `assets/props`: küçük ikon/sprite; `ASSET_MAPPING.md` boyut sınırlamalarına uy. Bazı küçük sprite'lar konsept atlasından ayrıştırılmıştır; büyütüp pixelated tam-ekran karakter yapma.
+- `assets/ui`: metinsiz WebP dekoratif taban. Taşlardaki sayıları, CTA yazılarını, geri tuşunu, kalpleri/yıldız sayacını Compose ile çiz; erişilebilir semantik ver.
+- `treasure_map_art.webp` üzerinde dekoratif bir **6** ve **X** var; bunu aktif matematik yol/oyun panosunda gösterme. Harita dekorunda bile yanıltıcı oluyorsa tamamen kullanma.
+- Ekran referansını panodan kırparak üste transparan hitbox koyma. Her ekran gerçek Compose layout ve state olacak.
+- PNG üretme/kopyalama yapma; var olan proje PNG'lerine dokunma. Yeni bütün bitmaps `webp` olmalı. Android resource naming lowercase_underscore.
+- Kaynak dosyaları `drawable-nodpi` veya uygun `assets/` altına gerektiği gibi kopyala; ContentScale/Crop, grafik hafıza yönetimi ve doğru aspect ratio önemlidir. Düşük kalite preview'ları fullscreen kullanma. Görsel dokuda 1. seçeneğin düşük kalite olması halinde Compose komponentleri kullan; keyfine göre grafik uydurma.
+- 360x800dp'den büyük farklı telefon ve landscape/rotation senaryolarında `Modifier` ölçülerini sınırlandır; sabit piksel yok, state bar/navigation bar insets, alt alanda buton kalması, fontScale 1.3, tap size >=48dp, kontrast, dikey scroll kontrol edilsin.
+
+### 3. İstenen ekranlar
+(A) Oyunlar -> Sayı Avı karşılama/bölge kartı (tek açık oyun bölümü; sonraki dünyalar 'yakında', gerçek açılmayan içerik sahte buton değil)
+(B) Kısa görev anlatımı (3'ün katları)
+(C) Sayı tahtası, canlı seçili taşlar, kontrol + ipucu
+(D) Doğru ve yanlış geri bildirim, düzeltme
+(E) Şifre kasası etkileşimi
+(F) Hazine rotası etkileşimi, gerçekten tıklanabilir doğru sıralı düğümler
+(G) Başarı/ödül/öğrenme özeti + yeniden oyna ve Oyunlar'a dön
+
+### 4. Test planı — FAIL / PASS / NOT TESTED ayrı belirt
+- Unit test: 16 benzersiz sayı, kesin 5 multiple-of-3; deterministik seed; 1000+ seed ile invariant; 11 çeldiricinin hiçbiri 3'ün katı değil; tek tek doğru/yanlış seçimler, geri alma, 5 taş seçimi;
+- 6,9,12,? =>15; route sequence =>6/9/12/15; her üretim için tek geçerli çözüm;
+- Ödül ilk completion 1, replay 0 ek yıldız; double-tap/restart/resume idempotent;
+- UI/emulator: girişten bitişe üç stage; çıkış/giriş; hatalı deneme; ipucu; 4 sekmeli Ana Sayfa'ya dönüş; mevcut 10 oyunun linkleri; avatar ve yıldız kalıcılığı; Premium hakları;
+- Ekran görüntüleri: sayfaların her biri, özellikle 360dp dar ekranda ve daha büyük telefonda; ekran ekran onaylanmış referans pano ile karşılaştır;
+- `gradlew.bat assembleDebug` build; APK tam yol + boyut + packageId; Play Store release ayarları değişmediğini doğrula.
+- Testi gerçekten çalıştırmadıysan PASS yazma. Gerçek çocuk/veli testini yapılmış gibi sunma.
+
+### 5. Kabul / teslim
+- Değişen dosyalar, mimari, asset dosyalarının mapping'i, gerçek oynanan üç aşamanın video veya screenshot kanıtı, build/test raporu, eski veri ve Premium koruma kontrolleri, aksayan eksikler, sonraki G2 önerisi.
+- Yeni asset/görsel gerekiyorsa **kendin resim üretme**, eksik listesi ver ve dur; tasarım asset'lerini ChatGPT'de hazırlayacağız.
+- Hiçbir commit/push/deploy yapma. Her şeyi yerel, onay bekleyen geliştirme olarak bırak.

@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Space Math Elements -->
+    
+    <!-- Earth-like planet with math symbols -->
+    <path
+        android:fillColor="#1E88E5"
+        android:pathData="M39,47A15,15 0 1,0 69,47A15,15 0 1,0 39,47" />
+        
+    <!-- Planet surface details -->
+    <path
+        android:fillColor="#81D4FA"
+        android:pathData="M43,40C47,38 51,42 57,40C63,38 65,43 65,47C65,51 62,52 58,53C54,54 50,51 45,54C40,57 40,47 43,40" />
+    
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M49,44C51,43 53,45 55,44C57,43 58,45 58,47C58,49 57,49 56,50C55,51 53,50 52,51C51,52 50,48 49,44" />
+    
+    <!-- Math symbols on planet -->
+    <path
+        android:fillColor="#FFF9C4"
+        android:strokeColor="#FBC02D"
+        android:strokeWidth="0.8"
+        android:pathData="M50,44L58,44M54,40L54,48" />
+    
+    <path
+        android:fillColor="#FFF9C4"
+        android:strokeColor="#FBC02D"
+        android:strokeWidth="0.8"
+        android:pathData="M48,54L48,54L52,50L56,54" />
+    
+    <!-- Planet Ring System -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#BBDEFB"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.8"
+        android:pathData="M32,47L76,47" />
+    
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#90CAF9"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.7"
+        android:pathData="M34,50L74,50" />
+    
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#64B5F6"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.6"
+        android:pathData="M36,53L72,53" />
+    
+    <!-- Mathematical Comets -->
+    <!-- Plus comet -->
+    <path
+        android:fillColor="#E91E63"
+        android:pathData="M26,24m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0" />
+    
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F8BBD0"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.8"
+        android:pathData="M33,24C40,24 45,26 50,28" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M26,21L26,27M23,24L29,24" />
+    
+    <!-- Division comet -->
+    <path
+        android:fillColor="#9C27B0"
+        android:pathData="M80,26m-6,0a6,6 0 1,1 12,0a6,6 0 1,1 -12,0" />
+    
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E1BEE7"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.8"
+        android:pathData="M73,26C65,26 60,28 55,30" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,20a1,1 0 1,0 2,0a1,1 0 1,0 -2,0M80,30a1,1 0 1,0 2,0a1,1 0 1,0 -2,0M77,26L85,26" />
+    
+    <!-- Rocket with math symbols -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M78,70L84,70L86,82L76,82z" />
+    
+    <path
+        android:fillColor="#FFA726"
+        android:pathData="M78,82L76,88L84,88L82,82z" />
+    
+    <path
+        android:fillColor="#E64A19"
+        android:pathData="M76,88L84,88L86,92L74,92z" />
+    
+    <path
+        android:fillColor="#FFCCBC"
+        android:pathData="M77,75L79,75L79,80L77,80z" />
+    
+    <path
+        android:fillColor="#FFCCBC"
+        android:pathData="M83,75L81,75L81,80L83,80z" />
+    
+    <path
+        android:fillColor="#607D8B"
+        android:pathData="M79,64L83,64A2,2 0 0 1 85,66L85,70A2,2 0 0 1 83,72L79,72A2,2 0 0 1 77,70L77,66A2,2 0 0 1 79,64z" />
+    
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M80,66L80,68L82,68L82,66z" />
+    
+    <path
+        android:fillColor="#FFD54F"
+        android:pathData="M80,69L80,71L82,71L82,69z" />
+    
+    <!-- Math Galaxy (spiral) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFD54F"
+        android:strokeWidth="1.5"
+        android:pathData="M24,73A2,2 0 0 1 28,73A4,4 0 0 1 32,73A6,6 0 0 1 36,73A8,8 0 0 1 40,73" />
+    
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFA000"
+        android:strokeWidth="1.2"
+        android:pathData="M25,77A3,3 0 0 1 31,77A5,5 0 0 1 35,77A7,7 0 0 1 39,77" />
+    
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FF8F00"
+        android:strokeWidth="1"
+        android:pathData="M26,81A4,4 0 0 1 34,81A6,6 0 0 1 38,81" />
+    
+    <!-- Small mathematical symbols as stars -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,40L22,40L22,38L24,38L24,40L26,40L26,42L24,42L24,44L22,44L22,42L20,42z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,56L80,58L88,58L88,56z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,60L80,62L88,62L88,60z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,90L28,90L24,84z" />
+    
+    <!-- Space Station/Satellite -->
+    <path
+        android:fillColor="#B0BEC5"
+        android:pathData="M47,17L61,17A2,2 0 0 1 63,19L63,25A2,2 0 0 1 61,27L47,27A2,2 0 0 1 45,25L45,19A2,2 0 0 1 47,17z" />
+    
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M47,17L61,17A1,1 0 0 1 62,18L62,18A1,1 0 0 1 61,19L47,19A1,1 0 0 1 46,18L46,18A1,1 0 0 1 47,17z" />
+    
+    <path
+        android:fillColor="#78909C"
+        android:pathData="M47,25L61,25A1,1 0 0 1 62,26L62,26A1,1 0 0 1 61,27L47,27A1,1 0 0 1 46,26L46,26A1,1 0 0 1 47,25z" />
+    
+    <!-- Solar Panels -->
+    <path
+        android:fillColor="#90A4AE"
+        android:pathData="M45,20L37,20L37,24L45,24z" />
+    
+    <path
+        android:fillColor="#90A4AE"
+        android:pathData="M63,20L71,20L71,24L63,24z" />
+    
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M37,20L37,24L38,24L38,20zM39,20L39,24L40,24L40,20zM41,20L41,24L42,24L42,20zM43,20L43,24L44,24L44,20z" />
+    
+    <path
+        android:fillColor="#CFD8DC"
+        android:pathData="M70,20L70,24L69,24L69,20zM68,20L68,24L67,24L67,20zM66,20L66,24L65,24L65,20zM64,20L64,24L63,24L63,20z" />
+    
+    <!-- Math equation display -->
+    <path
+        android:fillColor="#1A237E"
+        android:pathData="M49,20L59,20L59,24L49,24z" />
+    
+    <path
+        android:fillColor="#FFFFFF"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="0.5"
+        android:pathData="M51,22L53,22M52,21L52,23M55,22L57,22" />
+</vector> 

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Matematik Robot Avatar XML -->
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M60,60m-56,0a56,56 0,1 1,112 0a56,56 0,1 1,-112 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,35L80,35A5,5 0,0 1,85 40L85,80A5,5 0,0 1,80 85L40,85A5,5 0,0 1,35 80L35,40A5,5 0,0 1,40 35z" />
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M50,50m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M70,50m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+    <path
+        android:fillColor="#2196F3"
+        android:pathData="M60,70m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0" />
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M40,45L40,45A2,2 0,0 1,42 47L42,47A2,2 0,0 1,40 49L40,49A2,2 0,0 1,38 47L38,47A2,2 0,0 1,40 45z" />
+    <path
+        android:fillColor="#D32F2F"
+        android:pathData="M80,45L80,45A2,2 0,0 1,82 47L82,47A2,2 0,0 1,80 49L80,49A2,2 0,0 1,78 47L78,47A2,2 0,0 1,80 45z" />
+</vector> 

@@ -1,0 +1,2419 @@
+package com.yigit033.matematikmacarasi.games.interactive
+
+import android.content.Intent
+import android.media.MediaPlayer
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.games.models.NumberHuntGameState
+import com.yigit033.matematikmacarasi.games.models.NumberHuntHelper
+import com.yigit033.matematikmacarasi.games.models.NumberHuntLevels
+import com.yigit033.matematikmacarasi.games.models.NumberItem
+import com.yigit033.matematikmacarasi.ui.components.GameTopBar
+import com.yigit033.matematikmacarasi.ui.components.QuestionArea
+import com.yigit033.matematikmacarasi.ui.theme.AnimationDurations
+import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
+import com.yigit033.matematikmacarasi.ui.theme.PrimaryBlue
+import kotlinx.coroutines.delay
+import kotlin.random.Random
+import com.yigit033.matematikmacarasi.games.models.NumberHuntGameHelper
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.geometry.Offset
+import com.yigit033.matematikmacarasi.games.models.NumberHuntLevel
+import com.yigit033.matematikmacarasi.GameType
+import com.yigit033.matematikmacarasi.services.DailyTaskManager
+import com.yigit033.matematikmacarasi.services.GameStatisticsService
+import com.yigit033.matematikmacarasi.services.GameStatisticsHelper
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Refresh
+import com.yigit033.matematikmacarasi.services.payments.AdManager
+import com.yigit033.matematikmacarasi.utils.NetworkUtils
+
+class NumberHuntGameActivity : ComponentActivity() {
+    
+    companion object {
+        private const val TAG = "NumberHuntGameActivity"
+    }
+    
+    private var mediaPlayerCorrect: MediaPlayer? = null
+    private var mediaPlayerWrong: MediaPlayer? = null
+    private var mediaPlayerSuccess: MediaPlayer? = null
+    
+    private val handler = Handler(Looper.getMainLooper())
+    private val gameTimer = object : Runnable {
+        override fun run() {
+            if (gameState.timeRemaining > 0 && !gameState.isGameOver && !gameState.isGameCompleted) {
+                gameState = gameState.copy(timeRemaining = gameState.timeRemaining - 1)
+                
+                // Süre bitti mi kontrol et
+                if (gameState.timeRemaining <= 0) {
+                    endGame(completed = false)
+                }
+                
+                handler.postDelayed(this, 1000)
+            }
+        }
+    }
+    
+    // Günlük görev takibi için
+    private lateinit var dailyTaskManager: DailyTaskManager
+    private var dailyTaskId: Int = -1
+    
+    // Oyun istatistikleri servisi
+    private lateinit var gameStatisticsService: GameStatisticsService
+    
+    // Yeni eklenen istatistik yardımcısı
+    private lateinit var gameStatisticsHelper: GameStatisticsHelper
+    
+    // Oyun başlangıç zamanı
+    private var gameStartTime: Long = 0
+    
+    // GameType referansı ekle - günlük görevler için
+    private val gameType = GameType.NUMBER_HUNT_GAME
+    
+    private var gameState by mutableStateOf(createInitialGameState())
+    
+    // Zorluk seviyesi seçimi için state
+    private var showLevelSelectDialog by mutableStateOf(true)
+    private var selectedDifficultyLevel by mutableStateOf(0) // Seçilen zorluk seviyesi indeksi (0-4)
+    private var expandedLevel by mutableStateOf(-1) // Genişletilmiş seviye, -1 hiçbiri demektir
+    private var selectedRuleIndex by mutableStateOf(-1) // Seçilen kural indeksi, -1 hiçbiri demektir
+    private var selectedRule by mutableStateOf<com.yigit033.matematikmacarasi.games.models.NumberHuntLevel?>(null) // Seçilen kural
+    
+    // ÇOK ÖNEMLİ: Seviye seçildi mi kontrolü
+    private var levelWasSelected = false
+    
+    // AdManager'ı ekleyelim
+    private lateinit var adManager: AdManager
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        try {
+            // İnternet bağlantısı kontrolü
+            if (!NetworkUtils.isInternetAvailable(this)) {
+                Log.w(TAG, "İnternet bağlantısı yok, oyun başlatılamıyor")
+                Toast.makeText(
+                    this,
+                    "Bu oyunu oynamak için internet bağlantısı gereklidir!",
+                    Toast.LENGTH_LONG
+                ).show()
+                finish()
+                return
+            }
+            
+            // Ses çalar nesnelerini oluştur (güvenli başlatma)
+            mediaPlayerCorrect = try { MediaPlayer.create(this, R.raw.correct_sound) } catch (e: Exception) { null }
+            mediaPlayerWrong = try { MediaPlayer.create(this, R.raw.wrong_sound) } catch (e: Exception) { null }
+            mediaPlayerSuccess = try { MediaPlayer.create(this, R.raw.success) } catch (e: Exception) { null }
+        
+            // DailyTaskManager'ı başlat
+            dailyTaskManager = DailyTaskManager.getInstance(this)
+        
+            // Intent'ten görev ID'sini al (varsa)
+            dailyTaskId = intent.getIntExtra("daily_task_id", -1)
+        
+            // İstatistik servisini başlat
+            gameStatisticsService = GameStatisticsService(this)
+            
+            // Yeni eklenen istatistik yardımcısı
+            gameStatisticsHelper = GameStatisticsHelper(this)
+            
+            // AdManager'ı başlat
+            adManager = AdManager.getInstance(this)
+            // Oyun başında reklamı hazırla
+            adManager.loadInterstitialAd()
+            
+            // Oyunun başlangıç zamanını kaydet
+            gameStartTime = System.currentTimeMillis()
+            
+            // NİHAİ ÇÖZÜM: Intent'ten seviye kontrolü yap
+            val intentLevel = intent.getIntExtra("selected_level", -1)
+            val intentRuleIndex = intent.getIntExtra("selected_rule_index", -1)
+            val isSpecialRule = intent.getBooleanExtra("is_special_rule", false)
+            
+            // Eğer intent'ten seviye ve kural geldiyse, doğrudan oyunu başlat
+            if (intentLevel >= 0 && intentRuleIndex >= 0) {
+                Log.d(TAG, "Intent'ten gelen seviye ve kural: $intentLevel / $intentRuleIndex")
+                Log.d(TAG, "Özel kural mı: $isSpecialRule")
+                
+                // Seviye seçim diyaloğunu tamamen devre dışı bırak
+                showLevelSelectDialog = false
+                levelWasSelected = true
+                
+                // Seviye ve kural bilgilerini ayarla
+                selectedDifficultyLevel = intentLevel
+                
+                try {
+                    // Kuralı seç - hata kontrolü ile
+                    val levelRules = NumberHuntLevels.levelRules[intentLevel]
+                    Log.d(TAG, "Seviye $intentLevel için toplam ${levelRules.size} kural var")
+                    
+                    // Kural indeksi kontrolü
+                    if (intentRuleIndex < levelRules.size) {
+                        selectedRule = levelRules[intentRuleIndex]
+                        selectedRuleIndex = intentRuleIndex
+                        
+                        Log.d(TAG, "Seçilen kural: ${selectedRule?.rule}")
+                        
+                        // Basitleştirilmiş yaklaşım - tüm kurallar için aynı işlem
+                        try {
+                            // Oyun durumunu oluştur
+                            gameState = createGameStateForLevel(intentLevel)
+                                
+                            // Oyunu başlat
+                            startGame()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Oyun durumu oluşturulurken hata: ${e.message}")
+                            e.printStackTrace()
+                            
+                            // Hata durumunda varsayılan seviye ve kuralı kullan
+                            selectedDifficultyLevel = 0
+                            selectedRule = NumberHuntLevels.levelRules[0][0]
+                            selectedRuleIndex = 0
+                            gameState = createGameStateForLevel(0)
+                            startGame()
+                        }
+                    } else {
+                        Log.e(TAG, "Geçersiz kural indeksi: $intentRuleIndex, mevcut kural sayısı: ${levelRules.size}")
+                        // Hata durumunda varsayılan seviye ve kuralı kullan
+                        selectedDifficultyLevel = 0
+                        selectedRule = NumberHuntLevels.levelRules[0][0]
+                        selectedRuleIndex = 0
+                        gameState = createGameStateForLevel(0)
+                        startGame()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Kural seçiminde hata: ${e.message}")
+                    e.printStackTrace()
+                    // Hata durumunda varsayılan seviye ve kuralı kullan
+                    selectedDifficultyLevel = 0
+                    selectedRule = NumberHuntLevels.levelRules[0][0]
+                    selectedRuleIndex = 0
+                    gameState = createGameStateForLevel(0)
+                    startGame()
+                }
+            } else {
+                // Intent'ten seviye ve kural gelmemişse, seviye seçim ekranına yönlendir
+                // ve bu aktiviteyi sonlandır
+                val intent = Intent(this, NumberHuntLevelSelectActivity::class.java)
+                intent.putExtra("daily_task_id", dailyTaskId)
+                startActivity(intent)
+                finish()
+                return // Aktiviteyi sonlandır, aşağıdaki kodlar çalışmasın
+            }
+            
+            setContent {
+                MatematikMacerasiTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        // Artık sadece oyun ekranını göster
+                        NumberHuntGameScreen(
+                            gameState = gameState,
+                            onNumberClick = { number -> onNumberSelected(number) },
+                            onBackClick = { finish() },
+                            onRestartClick = { restartGame() },
+                            onNextLevelClick = { startNextLevel() },
+                            onHomeClick = { finish() }
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("NumberHuntGameActivity", "Oyun başlatılırken hata: ${e.message}")
+            e.printStackTrace()
+            finish()
+        }
+    }
+    
+    @Composable
+    fun LevelSelectDialog(
+        onLevelSelected: (level: Int, ruleLevel: com.yigit033.matematikmacarasi.games.models.NumberHuntLevel, ruleIndex: Int) -> Unit,
+        onCancel: () -> Unit
+    ) {
+        // Ekran arkaplanı - gradient mavi
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF1976D2), // Koyu mavi üst
+                            Color(0xFFBBDEFB)  // Açık mavi alt
+                        )
+                    )
+                )
+        ) {
+            // Dialog içeriği
+            Dialog(onDismissRequest = { onCancel() }) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Sayı Avı - Seviye Seç",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF1976D2)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        Text(
+                            text = "Alışveriş becerilerini test etmek için en uygun seviyeyi seç",
+                            fontSize = 14.sp,
+                            textAlign = TextAlign.Center,
+                            color = Color.Gray
+                        )
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        // Kaydırılabilir seviye listesi
+                        androidx.compose.foundation.lazy.LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f, fill = false)
+                        ) {
+                            // Her zorluk seviyesi için
+                            item {
+                                // Seviye 1: Basit kurallar
+                                LevelCard(
+                                    levelName = "Basit Kurallar",
+                                    levelDescription = "Temel sayı kavramlarıyla tanış",
+                                    levelColor = Color(0xFF4CAF50),
+                                    starCount = 1,
+                                    levelIndex = 0,
+                                    isExpanded = expandedLevel == 0,
+                                    rules = NumberHuntLevels.levelRules[0],
+                                    onExpandClick = {
+                                        expandedLevel = if (expandedLevel == 0) -1 else 0
+                                    },
+                                    onRuleSelected = { rule, index ->
+                                        // RADİKAL DEĞİŞİKLİK: Doğrudan parametreleri ilet
+                                        onLevelSelected(0, rule, index)
+                                    }
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Seviye 2: Orta seviye kurallar
+                                LevelCard(
+                                    levelName = "Orta Seviye Kurallar",
+                                    levelDescription = "Daha zorlu sayı avları",
+                                    levelColor = Color(0xFFFFA000),
+                                    starCount = 2,
+                                    levelIndex = 1,
+                                    isExpanded = expandedLevel == 1,
+                                    rules = NumberHuntLevels.levelRules[1],
+                                    onExpandClick = {
+                                        expandedLevel = if (expandedLevel == 1) -1 else 1
+                                    },
+                                    onRuleSelected = { rule, index ->
+                                        // RADİKAL DEĞİŞİKLİK: Doğrudan parametreleri ilet
+                                        onLevelSelected(1, rule, index)
+                                    }
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Seviye 3: Zor kurallar
+                                LevelCard(
+                                    levelName = "Zor Kurallar",
+                                    levelDescription = "Karmaşık sayı kurallarını keşfet",
+                                    levelColor = Color(0xFFFF5722),
+                                    starCount = 3,
+                                    levelIndex = 2,
+                                    isExpanded = expandedLevel == 2,
+                                    rules = NumberHuntLevels.levelRules[2],
+                                    onExpandClick = {
+                                        expandedLevel = if (expandedLevel == 2) -1 else 2
+                                    },
+                                    onRuleSelected = { rule, index ->
+                                        // RADİKAL DEĞİŞİKLİK: Doğrudan parametreleri ilet
+                                        onLevelSelected(2, rule, index)
+                                    }
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                // Seviye 4: Çok zor kurallar
+                                LevelCard(
+                                    levelName = "Çok Zor Kurallar",
+                                    levelDescription = "İleri düzey sayı avları",
+                                    levelColor = Color(0xFF9C27B0),
+                                    starCount = 4,
+                                    levelIndex = 3,
+                                    isExpanded = expandedLevel == 3,
+                                    rules = NumberHuntLevels.levelRules[3],
+                                    onExpandClick = {
+                                        expandedLevel = if (expandedLevel == 3) -1 else 3
+                                    },
+                                    onRuleSelected = { rule, index ->
+                                        // RADİKAL DEĞİŞİKLİK: Doğrudan parametreleri ilet
+                                        onLevelSelected(3, rule, index)
+                                    }
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                // Seviye 5: Uzman kurallar
+                                LevelCard(
+                                    levelName = "Uzman Kurallar",
+                                    levelDescription = "Ustalaşmış sayı avcıları için",
+                                    levelColor = Color(0xFF3F51B5),
+                                    starCount = 5,
+                                    levelIndex = 4,
+                                    isExpanded = expandedLevel == 4,
+                                    rules = NumberHuntLevels.levelRules[4],
+                                    onExpandClick = {
+                                        expandedLevel = if (expandedLevel == 4) -1 else 4
+                                    },
+                                    onRuleSelected = { rule, index ->
+                                        // RADİKAL DEĞİŞİKLİK: Doğrudan parametreleri ilet
+                                        onLevelSelected(4, rule, index)
+                                    }
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(24.dp))
+                        
+                        // İptal Butonu
+                        Button(
+                            onClick = { onCancel() },
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF673AB7)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("İptal", fontSize = 16.sp, color = Color.White)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    @Composable
+    fun LevelCard(
+        levelName: String,
+        levelDescription: String,
+        levelColor: Color,
+        starCount: Int,
+        levelIndex: Int,
+        isExpanded: Boolean,
+        rules: List<com.yigit033.matematikmacarasi.games.models.NumberHuntLevel>,
+        onExpandClick: () -> Unit,
+        onRuleSelected: (com.yigit033.matematikmacarasi.games.models.NumberHuntLevel, Int) -> Unit
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(4.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+            ) {
+                // Seviye başlığı - tıklanabilir
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(levelColor)
+                        .clickable { onExpandClick() }
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                        ) {
+                            Text(
+                                text = levelName,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
+                            
+                            Text(
+                                text = levelDescription,
+                                fontSize = 14.sp,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                        }
+                        
+                        // Yıldızlar
+                        Row {
+                            repeat(5) { index ->
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_star),
+                                    contentDescription = "Yıldız",
+                                    tint = if (index < starCount) Color(0xFFFFD700) else Color.White.copy(alpha = 0.3f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                // Kural listesi - genişletildiğinde görünür
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = fadeIn() + scaleIn(initialScale = 0.9f),
+                    exit = fadeOut() + scaleOut(targetScale = 0.9f)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        // İçindeki kurallar
+                        rules.forEachIndexed { index, rule ->
+                        Button(
+                                onClick = { onRuleSelected(rule, index) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                    containerColor = levelColor.copy(alpha = 0.8f)
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                                Text(
+                                    text = rule.rule,
+                                    fontSize = 14.sp,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        
+        // Ses kaynaklarını serbest bırak
+        mediaPlayerCorrect?.release()
+        mediaPlayerWrong?.release()
+        mediaPlayerSuccess?.release()
+        
+        mediaPlayerCorrect = null
+        mediaPlayerWrong = null
+        mediaPlayerSuccess = null
+        
+        // AdManager kaynaklarını temizle
+        try {
+            if (::adManager.isInitialized) {
+                adManager.destroy()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "AdManager temizlenirken hata: ${e.message}")
+        }
+    }
+    
+    private fun createInitialGameState(): NumberHuntGameState {
+        // İlk seviyeyi al
+        val currentLevel = NumberHuntLevels.levels[0]
+        
+        // Seviye için sayıları oluştur
+        val numbers = NumberHuntHelper.generateNumbersForLevel(currentLevel)
+        
+        return NumberHuntGameState(
+            level = currentLevel,
+            numbers = numbers,
+            timeRemaining = currentLevel.timeInSeconds
+        )
+    }
+    
+    /**
+     * Belirli bir seviye için oyun durumu oluşturur.
+     */
+    private fun createGameStateForLevel(levelIndex: Int): NumberHuntGameState {
+        Log.d(TAG, "createGameStateForLevel çağrıldı: levelIndex=$levelIndex, selectedRule=${selectedRule?.rule}")
+        
+        try {
+            // Seçilen kuralı kontrol et
+            val rule = selectedRule ?: throw IllegalStateException("Seçilen kural null olamaz")
+            
+            // Kural metnini al
+            val ruleText = rule.rule
+            Log.d(TAG, "Kural metni: $ruleText")
+            
+            // Özel kurallar için güvenli sayı oluşturma
+            val numbers = when {
+                // 3'e VE 5'e bölünebilen sayılar
+                ruleText.contains("3'e VE 5'e bölünebilen") -> {
+                    Log.d(TAG, "3'e VE 5'e bölünebilen sayılar için özel liste oluşturuluyor")
+                    createSpecialDivisibleByThreeAndFiveNumbers(rule)
+                }
+                
+                // Tam kare sayılar
+                ruleText.contains("Tam kare") -> {
+                    Log.d(TAG, "Tam kare sayılar için özel liste oluşturuluyor")
+                    createNumbersForRule(rule)
+                }
+                
+                // Rakamları toplamı 10 olan sayılar
+                ruleText.contains("Rakamları toplamı 10") -> {
+                    Log.d(TAG, "Rakamları toplamı 10 olan sayılar için özel liste oluşturuluyor")
+                    createNumbersForRule(rule)
+                }
+                
+                // Diğer tüm kurallar için normal sayı oluşturma
+                else -> {
+                    Log.d(TAG, "Standart sayı listesi oluşturuluyor")
+                    createNumbersForRule(rule)
+                }
+            }
+            
+            // Oluşturulan sayıları kontrol et
+            if (numbers.isEmpty()) {
+                Log.e(TAG, "Oluşturulan sayı listesi boş! Acil durum listesi oluşturuluyor.")
+                return createEmergencyGameState(rule)
+            }
+            
+            Log.d(TAG, "Oluşturulan sayı listesi: ${numbers.take(5)}... (toplam ${numbers.size} sayı)")
+            
+            // Oyun durumunu oluştur ve döndür
+                return NumberHuntGameState(
+                level = rule,
+                    numbers = numbers,
+                score = 0,
+                timeRemaining = rule.timeInSeconds,
+                foundNumbersCount = 0,
+                isGameOver = false,
+                isGameCompleted = false,
+                stars = 0
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "createGameStateForLevel hata: ${e.message}")
+            e.printStackTrace()
+            
+            // Hata durumunda acil durum oyun durumu oluştur
+            val safeLevel = selectedRule ?: NumberHuntLevels.levelRules[0][0]
+            return createEmergencyGameState(safeLevel)
+        }
+    }
+    
+    // Acil durum için oyun durumu oluştur
+    private fun createEmergencyGameState(rule: NumberHuntLevel): NumberHuntGameState {
+        Log.d(TAG, "Acil durum oyun durumu oluşturuluyor")
+        
+        // Basit sayı listesi oluştur
+        val emergencyNumbers = mutableListOf<NumberItem>()
+        
+        // 1-100 arası sayıları ekle
+        for (i in 1..100) {
+            val isTarget = when {
+                rule.rule.contains("3'e VE 5'e bölünebilen") -> i % 3 == 0 && i % 5 == 0
+                rule.rule.contains("Çift sayılar") -> i % 2 == 0
+                rule.rule.contains("Tek sayılar") -> i % 2 != 0
+                rule.rule.contains("3'e bölünebilen") -> i % 3 == 0
+                rule.rule.contains("5'e bölünebilen") -> i % 5 == 0
+                else -> i % 2 == 0 // Varsayılan olarak çift sayılar
+            }
+            
+            emergencyNumbers.add(
+                NumberItem(
+                    value = i,
+                    isMatchingRule = isTarget,
+                    isSelected = false,
+                    position = Pair(
+                        Random.nextFloat() * 0.8f + 0.1f,
+                        Random.nextFloat() * 0.8f + 0.1f
+                    ),
+                    angle = Random.nextFloat() * 20f - 10f
+                )
+            )
+        }
+        
+        return NumberHuntGameState(
+            level = rule,
+            numbers = emergencyNumbers,
+            score = 0,
+            timeRemaining = rule.timeInSeconds,
+            foundNumbersCount = 0,
+            isGameOver = false,
+            isGameCompleted = false,
+            stars = 0
+        )
+    }
+    
+    // 3'e VE 5'e bölünebilen sayılar için özel liste oluştur
+    private fun createSpecialDivisibleByThreeAndFiveNumbers(rule: NumberHuntLevel): List<NumberItem> {
+        Log.d(TAG, "createSpecialDivisibleByThreeAndFiveNumbers çağrıldı")
+        
+        val numbers = mutableListOf<NumberItem>()
+        val random = Random
+        
+        // Hedef sayılar (3'e VE 5'e bölünebilen sayılar)
+        val targetNumbers = mutableListOf<Int>()
+        
+        // 1-100 arasındaki 3'e VE 5'e bölünebilen sayıları bul
+        for (i in 1..100) {
+            if (i % 3 == 0 && i % 5 == 0) {
+                targetNumbers.add(i)
+            }
+        }
+        
+        Log.d(TAG, "3'e VE 5'e bölünebilen sayılar: $targetNumbers")
+        
+        // Hedef olmayan sayılar
+        val nonTargetNumbers = (1..100).filter { it % 3 != 0 || it % 5 != 0 }.shuffled()
+        
+        // Toplam sayı miktarı
+        val totalNumbers = rule.totalNumbers
+        val targetCount = rule.matchingNumbersCount
+        val nonTargetCount = totalNumbers - targetCount
+        
+        Log.d(TAG, "Toplam sayı: $totalNumbers, Hedef sayı: $targetCount, Hedef olmayan sayı: $nonTargetCount")
+        
+        // Hedef sayıları ekle
+        for (i in 0 until targetCount) {
+            if (i < targetNumbers.size) {
+                val number = targetNumbers[i]
+                numbers.add(
+                    NumberItem(
+                        value = number,
+                        isMatchingRule = true,
+                        isSelected = false,
+                        position = Pair(
+                            random.nextFloat() * 0.8f + 0.1f,
+                            random.nextFloat() * 0.8f + 0.1f
+                        ),
+                        angle = random.nextFloat() * 20f - 10f
+                    )
+                )
+            }
+        }
+        
+        // Hedef olmayan sayıları ekle
+        for (i in 0 until nonTargetCount) {
+            if (i < nonTargetNumbers.size) {
+                val number = nonTargetNumbers[i]
+                numbers.add(
+                    NumberItem(
+                        value = number,
+                        isMatchingRule = false,
+                        isSelected = false,
+                        position = Pair(
+                            random.nextFloat() * 0.8f + 0.1f,
+                            random.nextFloat() * 0.8f + 0.1f
+                        ),
+                        angle = random.nextFloat() * 20f - 10f
+                    )
+                )
+            }
+        }
+        
+        Log.d(TAG, "Oluşturulan sayı listesi boyutu: ${numbers.size}")
+        return numbers
+    }
+    
+    private fun startGame() {
+        Log.d(TAG, "startGame: Oyun başlatılıyor...")
+        
+        // NOT: Sayı kontrolü ve değiştirme kodları kaldırıldı
+        // Artık sayılar yalnızca restartGame ve startNextLevel'da oluşturuluyor ve değiştirilmiyor
+        
+        // Sadece zamanı başlat - kısa bir gecikme
+        handler.postDelayed(gameTimer, 500)
+    }
+    
+    private fun onNumberSelected(number: NumberItem) {
+        if (gameState.isGameOver || gameState.isGameCompleted) return
+        
+        // Zaten seçilmiş sayıları tekrar seçmeyi engelle
+        if (number.isSelected) return
+        
+        // Güncellenmiş sayılar listesi oluştur
+        val updatedNumbers = gameState.numbers.map { 
+            if (it == number) it.copy(isSelected = true) else it 
+        }
+        
+        // Skoru güncelle
+        var newScore = gameState.score
+        var foundCount = gameState.foundNumbersCount
+        var newTimeRemaining = gameState.timeRemaining
+        
+        if (number.isMatchingRule) {
+            // Doğru sayı seçildi
+            newScore += gameState.level.pointsPerCorrect
+            foundCount++
+            mediaPlayerCorrect?.start()
+        } else {
+            // Yanlış sayı seçildi
+            newScore = (newScore - gameState.level.pointsPerWrong).coerceAtLeast(0)
+            
+            // Yanlış cevap için süre cezası (seviye zorluğuna göre artan ceza)
+            val timePenalty = when (gameState.level.level) {
+                1 -> 3  // Kolay seviye: 3 saniye ceza
+                2 -> 5  // Orta seviye: 5 saniye ceza
+                3 -> 7  // Zor seviye: 7 saniye ceza
+                4 -> 10 // Çok zor seviye: 10 saniye ceza
+                5 -> 15 // Uzman seviye: 15 saniye ceza
+                else -> 5 // Varsayılan: 5 saniye ceza
+            }
+            
+            // Süreyi güncelle (0'ın altına düşmemesini sağla)
+            newTimeRemaining = (newTimeRemaining - timePenalty).coerceAtLeast(1)
+            Log.d(TAG, "Yanlış cevap! Süre cezası: $timePenalty saniye. Kalan süre: $newTimeRemaining")
+            
+            mediaPlayerWrong?.start()
+        }
+        
+        // Oyun durumunu güncelle
+        gameState = gameState.copy(
+            numbers = updatedNumbers,
+            score = newScore,
+            foundNumbersCount = foundCount,
+            timeRemaining = newTimeRemaining
+        )
+        
+        // Tüm kurala uyan sayılar bulundu mu kontrol et
+        if (foundCount >= gameState.level.matchingNumbersCount) {
+            // Oyunu tamamla
+            endGame(completed = true)
+        }
+    }
+    
+    private fun endGame(completed: Boolean) {
+        // Zamanlayıcıyı durdur
+        handler.removeCallbacks(gameTimer)
+        
+        // Tüm sesi durdur
+        mediaPlayerCorrect?.pause()
+        mediaPlayerWrong?.pause()
+        
+        // Oyun durumunu güncelle
+        gameState = if (completed) {
+            gameState.copy(isGameCompleted = true)
+        } else {
+            gameState.copy(isGameOver = true)
+        }
+        
+        // Başarı sesi çal (tamamlandıysa)
+        if (completed) {
+            mediaPlayerSuccess?.start()
+        }
+        
+        // Yıldız puanı hesapla
+        val accuracy = if (gameState.foundNumbersCount > 0) {
+            gameState.foundNumbersCount.toFloat() / gameState.level.matchingNumbersCount.toFloat()
+        } else {
+            0f
+        }
+        
+        val stars = when {
+            accuracy >= 0.9f -> 3
+            accuracy >= 0.7f -> 2
+            accuracy >= 0.5f -> 1
+            else -> 0
+        }
+        
+        // Oyun durumunu güncelle
+        gameState = gameState.copy(stars = stars)
+        
+        try {
+            // Doğru ID formatının oluşturulması için log ile takip
+            Log.d(TAG, "endGame: Oyun tamamlandı - Seviye: ${selectedDifficultyLevel + 1}, Skor: ${gameState.score}, Yıldız: $stars")
+            Log.d(TAG, "endGame: GameType = $gameType")
+            Log.d(TAG, "endGame: Seçilen Kural Indeksi = $selectedRuleIndex, Kural = ${selectedRule?.rule ?: "Bilinmiyor"}")
+            
+            // GameStatisticsHelper kullanarak istatistikleri kaydet
+            gameStatisticsHelper.recordGameCompletion(
+                gameType = gameType,
+                level = selectedDifficultyLevel + 1,
+                score = gameState.score,
+                stars = stars,
+                gameStartTime = gameStartTime,
+                taskId = dailyTaskId
+            )
+            
+            // Kullanıcıya kazandığı yıldızları bildir
+            Toast.makeText(this, 
+                "$stars yıldız kazandınız! Toplam yıldızlarınıza eklendi.", 
+                Toast.LENGTH_LONG
+            ).show()
+            
+            Log.d(TAG, "gameStatisticsHelper.recordGameCompletion çağrıldı")
+            
+            // Kaydedilen yıldızları ve toplam yıldız sayısını logla
+            val totalStars = gameStatisticsService.getTotalStars()
+            Log.d(TAG, "Toplam Yıldızlar (işlem sonrası): $totalStars")
+            Log.d(TAG, "GameDataRepository kayıt ID: NumberHuntGameActivity_level_${selectedDifficultyLevel + 1}")
+            
+            // Oyun bitişinde geçiş reklamı göster
+            try {
+                if (::adManager.isInitialized) {
+                    Log.d(TAG, "Oyun sonunda interstitial reklam gösterilecek")
+                    showInterstitialAd()
+                } else {
+                    Log.w(TAG, "AdManager başlatılmamış, reklam gösterilemiyor")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Reklam gösterimi sırasında hata: ${e.message}", e)
+            }
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "İstatistikler kaydedilirken hata: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+    
+    /**
+     * Oyunu yeniden başlatır.
+     */
+    private fun restartGame() {
+        try {
+            Log.d(TAG, "restartGame: Oyun yeniden başlatılıyor...")
+            
+        // Zamanı durdur
+        handler.removeCallbacks(gameTimer)
+        
+            // Şu anki oyun durumunu al
+            val currentLevel = gameState.level
+            Log.d(TAG, "restartGame: Mevcut kural: ${currentLevel.rule}")
+            
+            // NİHAİ ÇÖZÜM: Yeni bir aktivite başlat
+            val intent = Intent(this, NumberHuntGameActivity::class.java)
+            intent.putExtra("selected_level", selectedDifficultyLevel)
+            intent.putExtra("selected_rule_index", selectedRuleIndex)
+            intent.putExtra("daily_task_id", dailyTaskId)
+            
+            // Mevcut aktiviteyi bitir ve yeni aktiviteyi başlat
+            startActivity(intent)
+                finish()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "restartGame sırasında hata: ${e.message}", e)
+            Toast.makeText(this, "Oyun yeniden başlatılırken hata oluştu", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Bir sonraki seviyeye geçer.
+     */
+    private fun startNextLevel() {
+        try {
+            Log.d(TAG, "startNextLevel: Sonraki seviyeye geçiliyor...")
+            
+            // Zamanı durdur
+            handler.removeCallbacks(gameTimer)
+            
+            // Seviyeyi artır, maksimum seviyeyi aşmadığını kontrol et
+            val nextDifficultyLevel = (selectedDifficultyLevel + 1).coerceAtMost(4)
+            
+            // Sonraki seviyeden rastgele bir kural seç
+            val levelRules = NumberHuntLevels.levelRules[nextDifficultyLevel]
+            val nextRuleIndex = kotlin.random.Random.nextInt(levelRules.size)
+            
+            Log.d(TAG, "startNextLevel: Bir sonraki seviye - $nextDifficultyLevel, Kural indeksi: $nextRuleIndex")
+            
+            // NİHAİ ÇÖZÜM: Yeni bir aktivite başlat
+            val intent = Intent(this, NumberHuntGameActivity::class.java)
+            intent.putExtra("selected_level", nextDifficultyLevel)
+            intent.putExtra("selected_rule_index", nextRuleIndex)
+            intent.putExtra("daily_task_id", dailyTaskId)
+            
+            // Mevcut aktiviteyi bitir ve yeni aktiviteyi başlat
+            startActivity(intent)
+            finish()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "startNextLevel sırasında hata: ${e.message}", e)
+            Toast.makeText(this, "Sonraki seviyeye geçerken hata oluştu", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    /**
+     * Oyun UI'ını yeniden oluşturmak için setContent'i çağırır.
+     * Bu fonksiyon, oyun durumu değiştiğinde ekranın yenilenmesini sağlar.
+     */
+    private fun updateGameUI() {
+        try {
+            // ÇOK ÖNEMLİ: Seviye seçim ekranının görünmemesini sağla
+            showLevelSelectDialog = false
+            levelWasSelected = true
+            
+            // UI'ı yeniden oluştur
+            setContent {
+                MatematikMacerasiTheme {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        // ÇOK ÖNEMLİ: Burada da korumayı sürdür
+                        showLevelSelectDialog = false
+                        levelWasSelected = true
+                        
+                        NumberHuntGameScreen(
+                            gameState = gameState,
+                            onNumberClick = { number -> onNumberSelected(number) },
+                            onBackClick = { finish() },
+                            onRestartClick = { restartGame() },
+                            onNextLevelClick = { startNextLevel() },
+                            onHomeClick = { finish() }
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "updateGameUI sırasında hata: ${e.message}", e)
+            
+            // HATA DURUMUNDA BİLE KORUMA
+            showLevelSelectDialog = false
+            levelWasSelected = true
+        }
+    }
+    
+    /**
+     * Acil durum için NumberItem listesi oluşturur.
+     * Bu fonksiyon, diğer tüm mekanizmalar başarısız olduğunda çağrılır.
+     */
+    private fun createEmergencyNumberItems(rule: com.yigit033.matematikmacarasi.games.models.NumberHuntLevel): List<com.yigit033.matematikmacarasi.games.models.NumberItem> {
+        android.util.Log.e("NumberHuntGameActivity", "ACİL DURUM: Son çare mekanizması devreye girdi!")
+        
+        // NumberHuntGameHelper'daki acil durum fonksiyonunu kullan
+        return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+    }
+    
+    /**
+     * Belirli bir kural için garanti edilmiş sayılar oluşturur.
+     * Bu fonksiyon, kurala uyan ve uymayan sayıları manuel olarak oluşturur.
+     */
+    private fun generateGuaranteedNumbers(rule: com.yigit033.matematikmacarasi.games.models.NumberHuntLevel): Pair<List<Int>, List<Int>> {
+        // YENİ: NumberHuntGameHelper'daki geliştirilmiş fonksiyonu kullan
+        android.util.Log.d("NumberHuntGameActivity", "Helper'daki geliştirilmiş generateGuaranteedNumbers fonksiyonu kullanılıyor")
+        
+        // BİLEŞİK KURAL KONTROLÜ
+        val isCompoundRule = rule.rule.contains(" VE ") || rule.rule.contains(" ve ") || 
+                             rule.rule.contains(" hem ") || rule.rule.contains(" HEM ")
+        
+        if (isCompoundRule) {
+            android.util.Log.d("NumberHuntGameActivity", "BİLEŞİK KURAL TESPİT EDİLDİ: ${rule.rule}")
+        }
+        
+        // Helper'daki geliştirilmiş fonksiyonu kullan
+        return com.yigit033.matematikmacarasi.games.models.NumberHuntGameHelper.generateGuaranteedNumbers(rule)
+    }
+    
+    /**
+     * Manuel olarak oluşturulan sayılardan NumberItem listesi üretir.
+     */
+    private fun createNumberItemsManually(
+        matchingNumbers: List<Int>,
+        nonMatchingNumbers: List<Int>,
+        rule: com.yigit033.matematikmacarasi.games.models.NumberHuntLevel
+    ): List<NumberItem> {
+        android.util.Log.d("NumberHuntGameActivity", "createNumberItemsManually: Sayılar manuel olarak yerleştiriliyor...")
+        android.util.Log.d("NumberHuntGameActivity", "createNumberItemsManually: Kural: ${rule.rule}")
+        android.util.Log.d("NumberHuntGameActivity", "createNumberItemsManually: Kurala uyan sayı adedi: ${matchingNumbers.size}/${rule.matchingNumbersCount}")
+        
+        // Sayı adedi kontrolü
+        if (matchingNumbers.size < rule.matchingNumbersCount) {
+            android.util.Log.e("NumberHuntGameActivity", "createNumberItemsManually: KRİTİK HATA! Yeterli kurala uyan sayı yok! Acil durum protokolü devreye giriyor.")
+            return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+        }
+        
+        if (nonMatchingNumbers.size < (rule.totalNumbers - rule.matchingNumbersCount)) {
+            android.util.Log.e("NumberHuntGameActivity", "createNumberItemsManually: KRİTİK HATA! Yeterli kurala uymayan sayı yok! Acil durum protokolü devreye giriyor.")
+            return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+        }
+        
+        val numberItems = mutableListOf<NumberItem>()
+        
+        // Sayıları grid şeklinde yerleştir
+        val gridSize = kotlin.math.ceil(kotlin.math.sqrt(rule.totalNumbers.toDouble())).toInt()
+        val cellWidth = 1.0f / gridSize
+        val cellHeight = 1.0f / gridSize
+        
+        // Kurala uyan sayıları yerleştir - her sayı için tekrar kural kontrolü yap
+        var matchingAdded = 0
+        for (value in matchingNumbers) {
+            // Sayının gerçekten kurala uyduğundan emin ol
+            val actuallyMatches = try {
+                rule.rulePredicate(value)
+        } catch (e: Exception) {
+                false
+            }
+            
+            // Sadece kurala gerçekten uyan sayıları ekle
+            if (actuallyMatches) {
+                val row = matchingAdded / gridSize
+                val col = matchingAdded % gridSize
+                
+                val x = (col + 0.5f) * cellWidth
+                val y = (row + 0.5f) * cellHeight
+                
+                // Rastgele offset ekle
+                val offsetX = (kotlin.random.Random.nextFloat() - 0.5f) * 0.1f
+                val offsetY = (kotlin.random.Random.nextFloat() - 0.5f) * 0.1f
+                
+                numberItems.add(
+                    NumberItem(
+                        value = value,
+                        isMatchingRule = true, // Gerçekten kurala uyduğunu doğruladığımız için true
+                        position = Pair(
+                            (x + offsetX).coerceIn(0.05f, 0.95f),
+                            (y + offsetY).coerceIn(0.05f, 0.95f)
+                        ),
+                        angle = kotlin.random.Random.nextFloat() * 20f - 10f
+                    )
+                )
+                matchingAdded++
+                
+                // Yeterli sayıda kurala uyan sayı eklediysek, döngüden çık
+                if (matchingAdded >= rule.matchingNumbersCount) {
+                    break
+                }
+            }
+        }
+        
+        // Eğer yeterli sayıda kurala uyan sayı ekleyemezsek, acil duruma geç
+        if (matchingAdded < rule.matchingNumbersCount) {
+            android.util.Log.e("NumberHuntGameActivity", "createNumberItemsManually: KRİTİK HATA! Yeterli kurala uyan sayı eklenemedi! Acil durum protokolü devreye giriyor.")
+            return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+        }
+        
+        // Kurala uymayan sayıları yerleştir - her sayı için tekrar kontrol et
+        var nonMatchingAdded = 0
+        for (value in nonMatchingNumbers) {
+            // Sayının gerçekten kurala uymadığından emin ol
+            val actuallyMatches = try {
+                rule.rulePredicate(value)
+            } catch (e: Exception) {
+                false
+            }
+            
+            // Sadece kurala gerçekten UYMAYAN sayıları ekle
+            if (!actuallyMatches) {
+                val row = (nonMatchingAdded + rule.matchingNumbersCount) / gridSize
+                val col = (nonMatchingAdded + rule.matchingNumbersCount) % gridSize
+                
+                val x = (col + 0.5f) * cellWidth
+                val y = (row + 0.5f) * cellHeight
+                
+                // Rastgele offset ekle
+                val offsetX = (kotlin.random.Random.nextFloat() - 0.5f) * 0.1f
+                val offsetY = (kotlin.random.Random.nextFloat() - 0.5f) * 0.1f
+                
+                numberItems.add(
+                    NumberItem(
+                        value = value,
+                        isMatchingRule = false, // Kurala uymadığını doğruladığımız için false
+                        position = Pair(
+                            (x + offsetX).coerceIn(0.05f, 0.95f),
+                            (y + offsetY).coerceIn(0.05f, 0.95f)
+                        ),
+                        angle = kotlin.random.Random.nextFloat() * 20f - 10f
+                    )
+                )
+                nonMatchingAdded++
+                
+                // Yeterli sayıda kurala uymayan sayı eklediysek, döngüden çık
+                if (nonMatchingAdded >= (rule.totalNumbers - rule.matchingNumbersCount)) {
+                    break
+                }
+            }
+        }
+        
+        // Eğer yeterli sayıda kurala uymayan sayı ekleyemezsek, acil duruma geç
+        if (nonMatchingAdded < (rule.totalNumbers - rule.matchingNumbersCount)) {
+            android.util.Log.e("NumberHuntGameActivity", "createNumberItemsManually: KRİTİK HATA! Yeterli kurala uymayan sayı eklenemedi! Acil durum protokolü devreye giriyor.")
+            return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+        }
+        
+        // Son bir kontrol daha
+        val matchingCount = numberItems.count { it.isMatchingRule }
+        android.util.Log.d("NumberHuntGameActivity", "createNumberItemsManually: Oluşturulan kurala uyan sayı adedi: $matchingCount/${rule.matchingNumbersCount}")
+        
+        if (matchingCount != rule.matchingNumbersCount) {
+            android.util.Log.e("NumberHuntGameActivity", "createNumberItemsManually: KRİTİK HATA! Sayı adedi eşleşmiyor! Acil durum protokolü devreye giriyor.")
+            return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+        }
+        
+        return numberItems
+    }
+    
+    /**
+     * Tamamen önceden tanımlanmış, tamamen güvenilir sayıları kullanarak NumberItem listesi oluşturur.
+     * Bu fonksiyon, diğer tüm karmaşık mekanizmalar yerine basit ve kesin bir çözüm sunar.
+     */
+    private fun createHardcodedNumberItems(rule: com.yigit033.matematikmacarasi.games.models.NumberHuntLevel): List<NumberItem> {
+        Log.d(TAG, "createHardcodedNumberItems: TAMAMEN SABİT SAYILAR kullanılıyor. Kural: ${rule.rule}")
+        
+        val numberItems = mutableListOf<NumberItem>()
+        
+        // Kurala kesinlikle uyan sayılar
+        val matchingNumbers = when {
+            // 3'e bölünebilen sayılar
+            rule.rule.contains("3'e bölünebilen") -> {
+                listOf(3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45)
+            }
+            
+            // 5'e bölünebilen sayılar
+            rule.rule.contains("5'e bölünebilen") -> {
+                listOf(5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75)
+            }
+            
+            // Çift sayılar
+            rule.rule.contains("Çift sayıları") -> {
+                listOf(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30)
+            }
+            
+            // Tek sayılar
+            rule.rule.contains("Tek sayıları") -> {
+                listOf(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29)
+            }
+            
+            // 25'ten büyük sayılar
+            rule.rule.contains("25'ten büyük") -> {
+                listOf(26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 54)
+            }
+            
+            // Asal sayılar
+            rule.rule.contains("Asal sayıları") -> {
+                listOf(2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47)
+            }
+            
+            // Tam kare sayılar
+            rule.rule.contains("Tam kare") -> {
+                listOf(1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196, 225)
+            }
+            
+            // Rakamları toplamı 10 olan sayılar
+            rule.rule.contains("Rakamları toplamı 10") -> {
+                listOf(19, 28, 37, 46, 55, 64, 73, 82, 91, 109, 118, 127, 136, 145, 154)
+            }
+            
+            // 2'ye VE 3'e bölünebilen sayılar (6'ya bölünebilen sayılar)
+            rule.rule.contains("2'ye") && rule.rule.contains("3'e") && 
+            (rule.rule.contains(" VE ") || rule.rule.contains(" ve ")) -> {
+                listOf(6, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72, 78, 84, 90)
+            }
+            
+            // 3'e VE 5'e bölünebilen sayılar (15'e bölünebilen sayılar)
+            rule.rule.contains("3'e") && rule.rule.contains("5'e") && 
+            (rule.rule.contains(" VE ") || rule.rule.contains(" ve ")) -> {
+                listOf(15, 30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225)
+            }
+            
+            // 4'e VE 7'ye bölünebilen sayılar (28'e bölünebilen sayılar)
+            rule.rule.contains("4'e") && rule.rule.contains("7'ye") && 
+            (rule.rule.contains(" VE ") || rule.rule.contains(" ve ")) -> {
+                listOf(28, 56, 84, 112, 140, 168, 196, 224, 252, 280, 308, 336, 364, 392, 420)
+            }
+            
+            // Varsayılan - çift sayılar (en güvenilir)
+            else -> {
+                listOf(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30)
+            }
+        }
+        
+        // Kurala kesinlikle UYMAYAN sayılar
+        val nonMatchingNumbers = when {
+            // 3'e bölünebilen sayılar
+            rule.rule.contains("3'e bölünebilen") -> {
+                listOf(1, 2, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22, 23, 25, 26, 28, 29)
+            }
+            
+            // 5'e bölünebilen sayılar
+            rule.rule.contains("5'e bölünebilen") -> {
+                listOf(1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24)
+            }
+            
+            // Çift sayılar
+            rule.rule.contains("Çift sayıları") -> {
+                listOf(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41)
+            }
+            
+            // Tek sayılar
+            rule.rule.contains("Tek sayıları") -> {
+                listOf(2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40)
+            }
+            
+            // 25'ten büyük sayılar
+            rule.rule.contains("25'ten büyük") -> {
+                listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+            }
+            
+            // Asal sayılar
+            rule.rule.contains("Asal sayıları") -> {
+                listOf(1, 4, 6, 8, 9, 10, 12, 14, 15, 16, 18, 20, 21, 22, 24, 25, 26, 27, 28, 30)
+            }
+            
+            // Tam kare sayılar
+            rule.rule.contains("Tam kare") -> {
+                listOf(2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24)
+            }
+            
+            // Rakamları toplamı 10 olan sayılar
+            rule.rule.contains("Rakamları toplamı 10") -> {
+                listOf(12, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 29, 30, 31, 32, 33)
+            }
+            
+            // 2'ye VE 3'e bölünebilen sayılar (6'ya bölünebilen sayılar)
+            rule.rule.contains("2'ye") && rule.rule.contains("3'e") && 
+            (rule.rule.contains(" VE ") || rule.rule.contains(" ve ")) -> {
+                listOf(1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23)
+            }
+            
+            // 3'e VE 5'e bölünebilen sayılar (15'e bölünebilen sayılar)
+            rule.rule.contains("3'e") && rule.rule.contains("5'e") && 
+            (rule.rule.contains(" VE ") || rule.rule.contains(" ve ")) -> {
+                listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21)
+            }
+            
+            // 4'e VE 7'ye bölünebilen sayılar (28'e bölünebilen sayılar)
+            rule.rule.contains("4'e") && rule.rule.contains("7'ye") && 
+            (rule.rule.contains(" VE ") || rule.rule.contains(" ve ")) -> {
+                listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+            }
+            
+            // Varsayılan - tek sayılar (en güvenilir)
+            else -> {
+                listOf(1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39)
+            }
+        }
+        
+        // *** YENİ KOD - ÇOK ÖNEMLİ! ***
+        // Kesinlikle görünmesi gereken sayı adedi
+        val requiredMatchingCount = rule.matchingNumbersCount
+        
+        // İstenilen sayıda kurala uyan sayı seç
+        val finalMatchingNumbers = matchingNumbers.take(requiredMatchingCount)
+        
+        // Kalan sayılar için kurala uymayan sayıları seç
+        val nonMatchingNeeded = rule.totalNumbers - finalMatchingNumbers.size
+        val finalNonMatchingNumbers = nonMatchingNumbers.take(nonMatchingNeeded)
+        
+        // *** YENİ KOD: IZGARA TEMELLİ YERLEŞTİRME ***
+        // Ekranı mantıksal bir ızgaraya bölüyoruz
+        val gridSize = 4 // 4x4 = 16 hücre
+        
+        // Önceden kullanılmış hücreleri takip etmek için (çakışmaları önlemek için)
+        val usedCells = mutableSetOf<Pair<Int, Int>>()
+        
+        // ÖNCELİKLE KURALA UYAN SAYILARI YERLEŞTİR
+        // Bu sayılar MUTLAKA ekranda görünmeli
+        for (value in finalMatchingNumbers) {
+            // Rastgele bir hücre seç - ama kullanılmamış olsun
+            var cellRow: Int
+            var cellCol: Int
+            var cell: Pair<Int, Int>
+            
+            do {
+                cellRow = kotlin.random.Random.nextInt(0, gridSize)
+                cellCol = kotlin.random.Random.nextInt(0, gridSize)
+                cell = Pair(cellRow, cellCol)
+            } while (cell in usedCells)
+            
+            // Hücreyi işaretle
+            usedCells.add(cell)
+            
+            // Hücrenin ekrandaki konumunu hesapla
+            val cellWidth = 1.0f / gridSize
+            val cellHeight = 1.0f / gridSize
+            
+            // Hücre içinde rastgele bir konum
+            val x = (cellCol * cellWidth) + (kotlin.random.Random.nextFloat() * cellWidth * 0.8f) + (cellWidth * 0.1f)
+            val y = (cellRow * cellHeight) + (kotlin.random.Random.nextFloat() * cellHeight * 0.8f) + (cellHeight * 0.1f)
+            
+            // Rastgele açı
+            val angle = kotlin.random.Random.nextFloat() * 40f - 20f
+            
+            // Sayıyı ekle
+            numberItems.add(
+                NumberItem(
+                    value = value,
+                    isMatchingRule = true, // Kurala uygun
+                    position = Pair(x, y),
+                    angle = angle
+                )
+            )
+        }
+        
+        // SONRA KURALA UYMAYAN SAYILARI YERLEŞTİR
+        for (value in finalNonMatchingNumbers) {
+            // Rastgele bir hücre seç - ama kullanılmamış olsun
+            var cellRow: Int
+            var cellCol: Int
+            var cell: Pair<Int, Int>
+            
+            do {
+                cellRow = kotlin.random.Random.nextInt(0, gridSize)
+                cellCol = kotlin.random.Random.nextInt(0, gridSize)
+                cell = Pair(cellRow, cellCol)
+            } while (cell in usedCells)
+            
+            // Hücreyi işaretle
+            usedCells.add(cell)
+            
+            // Hücrenin ekrandaki konumunu hesapla
+            val cellWidth = 1.0f / gridSize
+            val cellHeight = 1.0f / gridSize
+            
+            // Hücre içinde rastgele bir konum
+            val x = (cellCol * cellWidth) + (kotlin.random.Random.nextFloat() * cellWidth * 0.8f) + (cellWidth * 0.1f)
+            val y = (cellRow * cellHeight) + (kotlin.random.Random.nextFloat() * cellHeight * 0.8f) + (cellHeight * 0.1f)
+            
+            // Rastgele açı
+            val angle = kotlin.random.Random.nextFloat() * 40f - 20f
+            
+            // Sayıyı ekle
+            numberItems.add(
+                NumberItem(
+                    value = value,
+                    isMatchingRule = false, // Kurala uygun DEĞİL
+                    position = Pair(x, y),
+                    angle = angle
+                )
+            )
+        }
+        
+        // Son kontrol: Kurala uyan sayı sayısını log'la
+        val matchingCount = numberItems.count { it.isMatchingRule }
+        Log.d(TAG, "createHardcodedNumberItems: Kurala uyan sayı adedi: $matchingCount/$requiredMatchingCount")
+        
+        if (matchingCount != rule.matchingNumbersCount) {
+            android.util.Log.e("NumberHuntGameActivity", "createHardcodedNumberItems: KRİTİK HATA! Sayı adedi eşleşmiyor! Acil durum protokolü devreye giriyor.")
+            return NumberHuntGameHelper.createEmergencyNumberItems(rule)
+        }
+        
+        return numberItems
+    }
+    
+    // Kural için sayı listesi oluştur
+    private fun createNumbersForRule(rule: NumberHuntLevel): List<NumberItem> {
+        Log.d(TAG, "createNumbersForRule çağrıldı: ${rule.rule}")
+        
+        // 4'e ve 7'ye bölünebilen sayılar için özel kontrol
+        if (rule.rule.contains("Hem 4'e hem de 7'ye bölünebilen")) {
+            Log.d(TAG, "4'e ve 7'ye bölünebilen sayılar için özel sayı listesi oluşturuluyor")
+            return createSpecial4And7DivisibleNumbers(rule)
+        }
+        
+        val numbers = mutableListOf<NumberItem>()
+        val random = Random
+        
+        // Sayı aralığı
+        val minNumber = 1
+        val maxNumber = 100
+        
+        // Kurala göre hedef sayıları belirle
+        val targetNumbers = mutableListOf<Int>()
+        val nonTargetNumbers = mutableListOf<Int>()
+        
+        // Tüm sayıları kontrol et ve kurala göre ayır
+        for (i in minNumber..maxNumber) {
+            if (isNumberMatchingRule(i, rule.rule)) {
+                targetNumbers.add(i)
+            } else {
+                nonTargetNumbers.add(i)
+            }
+        }
+        
+        // Hedef sayıları karıştır
+        targetNumbers.shuffle()
+        nonTargetNumbers.shuffle()
+        
+        Log.d(TAG, "Kurala uyan sayı adedi: ${targetNumbers.size}")
+        Log.d(TAG, "Kurala uymayan sayı adedi: ${nonTargetNumbers.size}")
+        
+        // Toplam sayı miktarı
+        val totalNumbers = rule.totalNumbers
+        val targetCount = rule.matchingNumbersCount.coerceAtMost(targetNumbers.size)
+        val nonTargetCount = (totalNumbers - targetCount).coerceAtMost(nonTargetNumbers.size)
+        
+        Log.d(TAG, "Toplam sayı: $totalNumbers, Hedef sayı: $targetCount, Hedef olmayan sayı: $nonTargetCount")
+        
+        // *** YENİ: GRID TABANLI YERLEŞTİRME SİSTEMİ ***
+        // Ekranı mantıksal bir ızgaraya bölüyoruz
+        val gridSize = kotlin.math.ceil(kotlin.math.sqrt(totalNumbers.toDouble())).toInt()
+        val cellWidth = 1.0f / gridSize
+        val cellHeight = 1.0f / gridSize
+        
+        // Kullanılmış hücreleri izlemek için set
+        val usedCells = mutableSetOf<Pair<Int, Int>>()
+        
+        // ÖNCE KURALA UYAN SAYILARI YERLEŞTİR
+        // Seçilen hedef sayıları ekle
+        val selectedTargets = targetNumbers.take(targetCount)
+        for (value in selectedTargets) {
+            // Rastgele bir boş hücre seç
+            var row: Int
+            var col: Int
+            var cell: Pair<Int, Int>
+            
+            do {
+                row = random.nextInt(gridSize)
+                col = random.nextInt(gridSize)
+                cell = Pair(row, col)
+            } while (cell in usedCells)
+            
+            // Hücreyi işaretle
+            usedCells.add(cell)
+            
+            // Hücre içinde pozisyon hesapla
+            val x = (col + 0.5f) * cellWidth
+            val y = (row + 0.5f) * cellHeight
+            
+            // Rastgele küçük offset ekle (hücre içinde hafif rastgelelik)
+            val offsetX = (random.nextFloat() - 0.5f) * 0.1f
+            val offsetY = (random.nextFloat() - 0.5f) * 0.1f
+            
+            // Sayı öğesini ekle
+            numbers.add(
+                NumberItem(
+                    value = value,
+                    isMatchingRule = true,
+                    isSelected = false,
+                    position = Pair(
+                        (x + offsetX).coerceIn(0.05f, 0.95f),
+                        (y + offsetY).coerceIn(0.05f, 0.95f)
+                    ),
+                    angle = random.nextFloat() * 20f - 10f
+                )
+            )
+        }
+        
+        // SONRA KURALA UYMAYAN SAYILARI YERLEŞTİR
+        // Seçilen karıştırıcı sayıları ekle
+        val selectedNonTargets = nonTargetNumbers.take(nonTargetCount)
+        for (value in selectedNonTargets) {
+            // Rastgele bir boş hücre seç
+            var row: Int
+            var col: Int
+            var cell: Pair<Int, Int>
+            
+            do {
+                row = random.nextInt(gridSize)
+                col = random.nextInt(gridSize)
+                cell = Pair(row, col)
+            } while (cell in usedCells)
+            
+            // Hücreyi işaretle
+            usedCells.add(cell)
+            
+            // Hücre içinde pozisyon hesapla
+            val x = (col + 0.5f) * cellWidth
+            val y = (row + 0.5f) * cellHeight
+            
+            // Rastgele küçük offset ekle (hücre içinde hafif rastgelelik)
+            val offsetX = (random.nextFloat() - 0.5f) * 0.1f
+            val offsetY = (random.nextFloat() - 0.5f) * 0.1f
+            
+            // Sayı öğesini ekle
+            numbers.add(
+                NumberItem(
+                    value = value,
+                    isMatchingRule = false,
+                    isSelected = false,
+                    position = Pair(
+                        (x + offsetX).coerceIn(0.05f, 0.95f),
+                        (y + offsetY).coerceIn(0.05f, 0.95f)
+                    ),
+                    angle = random.nextFloat() * 20f - 10f
+                )
+            )
+        }
+        
+        Log.d(TAG, "Oluşturulan sayı listesi boyutu: ${numbers.size}")
+        return numbers
+    }
+    
+    // Sayının kurala uyup uymadığını kontrol et
+    private fun isNumberMatchingRule(number: Int, rule: String): Boolean {
+        return when {
+            // Temel kurallar
+            rule.contains("Çift sayılar") -> number % 2 == 0
+            rule.contains("Tek sayılar") -> number % 2 != 0
+            
+            // Bölünebilme kuralları
+            rule.contains("3'e VE 5'e bölünebilen") -> number % 3 == 0 && number % 5 == 0
+            
+            // 4'e ve 7'ye bölünebilme kontrolü
+            rule.contains("Hem 4'e hem de 7'ye bölünebilen") -> number % 4 == 0 && number % 7 == 0
+            
+            rule.contains("3'e bölünebilen") -> number % 3 == 0
+            rule.contains("5'e bölünebilen") -> number % 5 == 0
+            rule.contains("2'ye bölünebilen") -> number % 2 == 0
+            rule.contains("4'e bölünebilen") -> number % 4 == 0
+            rule.contains("6'ya bölünebilen") -> number % 6 == 0
+            rule.contains("7'ye bölünebilen") -> number % 7 == 0
+            rule.contains("8'e bölünebilen") -> number % 8 == 0
+            rule.contains("9'a bölünebilen") -> number % 9 == 0
+            rule.contains("10'a bölünebilen") -> number % 10 == 0
+            
+            // Özel kurallar
+            rule.contains("25'ten büyük") -> number > 25
+            rule.contains("10'dan küçük") -> number < 10
+            rule.contains("Asal sayılar") -> isPrime(number)
+            rule.contains("Tam kare") -> isPerfectSquare(number)
+            rule.contains("Rakamları toplamı") -> {
+                val sum = number.toString().sumOf { it.toString().toInt() }
+                when {
+                    rule.contains("Rakamları toplamı 10") -> sum == 10
+                    rule.contains("Rakamları toplamı çift") -> sum % 2 == 0
+                    rule.contains("Rakamları toplamı tek") -> sum % 2 != 0
+                    else -> false
+                }
+            }
+            
+            // Varsayılan
+            else -> false
+        }
+    }
+    
+    // Asal sayı kontrolü
+    private fun isPrime(number: Int): Boolean {
+        if (number <= 1) return false
+        if (number <= 3) return true
+        if (number % 2 == 0 || number % 3 == 0) return false
+        
+        var i = 5
+        while (i * i <= number) {
+            if (number % i == 0 || number % (i + 2) == 0) return false
+            i += 6
+        }
+        
+        return true
+    }
+    
+    // Tam kare kontrolü
+    private fun isPerfectSquare(number: Int): Boolean {
+        val sqrt = kotlin.math.sqrt(number.toDouble()).toInt()
+        return sqrt * sqrt == number
+    }
+    
+    // *** YENİ EKLENEN FONKSIYON ***
+    override fun onResume() {
+        super.onResume()
+        
+        // ÇOK ÖNEMLİ: Aktivite yeniden öne geldiğinde, seviye zaten seçilmişse
+        // seviye seçim ekranının gösterilmemesini sağla
+        if (levelWasSelected) {
+            showLevelSelectDialog = false
+        }
+    }
+    
+    /**
+     * 4'e VE 7'ye bölünebilen sayılar için özel liste oluşturur (28'in katları)
+     */
+    private fun createSpecial4And7DivisibleNumbers(rule: NumberHuntLevel): List<NumberItem> {
+        Log.d(TAG, "createSpecial4And7DivisibleNumbers çağrıldı")
+        
+        val numbers = mutableListOf<NumberItem>()
+        val random = Random
+        
+        // 4'e VE 7'ye bölünebilen sayılar (28'in katları)
+        val divisibleBy28 = listOf(28, 56, 84, 112, 140, 168, 196, 224, 252, 280, 308, 336)
+        
+        // Log işlemleri
+        Log.d(TAG, "28'e bölünebilen sayılar: $divisibleBy28")
+        
+        // Karıştırıcı sayılar - özellikle sadece 4'e veya sadece 7'ye bölünebilenler
+        val divisibleBy4Only = (4..100 step 4).filter { it % 7 != 0 }.take(10)
+        val divisibleBy7Only = (7..100 step 7).filter { it % 4 != 0 }.take(10)
+        val otherNumbers = (1..50).filter { it % 4 != 0 && it % 7 != 0 }.shuffled().take(10)
+        
+        val nonMatchingNumbers = (divisibleBy4Only + divisibleBy7Only + otherNumbers).shuffled()
+        
+        Log.d(TAG, "Karıştırıcı sayılar (sadece 4'e bölünenler): $divisibleBy4Only")
+        Log.d(TAG, "Karıştırıcı sayılar (sadece 7'ye bölünenler): $divisibleBy7Only")
+        
+        // Toplam sayı miktarı
+        val totalNumbers = rule.totalNumbers
+        val targetCount = rule.matchingNumbersCount.coerceAtMost(divisibleBy28.size)
+        val nonTargetCount = (totalNumbers - targetCount).coerceAtMost(nonMatchingNumbers.size)
+        
+        Log.d(TAG, "Toplam sayı: $totalNumbers, Hedef sayı: $targetCount, Hedef olmayan sayı: $nonTargetCount")
+        
+        // Güvenli sayı üretimi için grid tabanlı yerleştirme
+        val gridSize = kotlin.math.ceil(kotlin.math.sqrt(totalNumbers.toDouble())).toInt()
+        val cellWidth = 1.0f / gridSize
+        val cellHeight = 1.0f / gridSize
+        
+        // Kullanılmış hücreler
+        val usedCells = mutableSetOf<Pair<Int, Int>>()
+        
+        // Kurala uyan sayıları ekle
+        val selectedDivisibleBy28 = divisibleBy28.take(targetCount)
+        
+        Log.d(TAG, "Seçilen 28'e bölünebilen sayılar: $selectedDivisibleBy28")
+        
+        for (value in selectedDivisibleBy28) {
+            // Rastgele bir hücre seç
+            var row: Int
+            var col: Int
+            var cell: Pair<Int, Int>
+            
+            do {
+                row = random.nextInt(gridSize)
+                col = random.nextInt(gridSize)
+                cell = Pair(row, col)
+            } while (cell in usedCells)
+            
+            // Hücreyi işaretle
+            usedCells.add(cell)
+            
+            // Sayı pozisyonu
+            val x = (col + 0.5f) * cellWidth
+            val y = (row + 0.5f) * cellHeight
+            
+            // Rastgele offset ekle
+            val offsetX = (random.nextFloat() - 0.5f) * 0.1f
+            val offsetY = (random.nextFloat() - 0.5f) * 0.1f
+            
+            numbers.add(
+                NumberItem(
+                    value = value,
+                    isMatchingRule = true, // Kurala uygun (28'in katı)
+                    position = Pair(
+                        (x + offsetX).coerceIn(0.05f, 0.95f),
+                        (y + offsetY).coerceIn(0.05f, 0.95f)
+                    ),
+                    angle = random.nextFloat() * 20f - 10f
+                )
+            )
+        }
+        
+        // Karıştırıcı sayıları ekle
+        val selectedNonMatching = nonMatchingNumbers.take(nonTargetCount)
+        
+        for (value in selectedNonMatching) {
+            // Rastgele bir hücre seç
+            var row: Int
+            var col: Int
+            var cell: Pair<Int, Int>
+            
+            do {
+                row = random.nextInt(gridSize)
+                col = random.nextInt(gridSize)
+                cell = Pair(row, col)
+            } while (cell in usedCells)
+            
+            // Hücreyi işaretle
+            usedCells.add(cell)
+            
+            // Sayı pozisyonu
+            val x = (col + 0.5f) * cellWidth
+            val y = (row + 0.5f) * cellHeight
+            
+            // Rastgele offset ekle
+            val offsetX = (random.nextFloat() - 0.5f) * 0.1f
+            val offsetY = (random.nextFloat() - 0.5f) * 0.1f
+            
+            numbers.add(
+                NumberItem(
+                    value = value,
+                    isMatchingRule = false, // Kurala uygun DEĞİL
+                    position = Pair(
+                        (x + offsetX).coerceIn(0.05f, 0.95f),
+                        (y + offsetY).coerceIn(0.05f, 0.95f)
+                    ),
+                    angle = random.nextFloat() * 20f - 10f
+                )
+            )
+        }
+        
+        // Son kontrol
+        val matchingCount = numbers.count { it.isMatchingRule }
+        
+        Log.d(TAG, "Oluşturulan sayı listesi boyutu: ${numbers.size}")
+        Log.d(TAG, "Kurala uyan sayı adedi: $matchingCount/$targetCount")
+        Log.d(TAG, "Kurala uyan sayılar: ${numbers.filter { it.isMatchingRule }.map { it.value }}")
+        
+        return numbers
+    }
+    
+    private fun showInterstitialAd() {
+        // Geliştirilmiş agresif reklam stratejisi
+        try {
+            // Önce internet bağlantısı kontrolü yap
+            if (!NetworkUtils.isInternetAvailable(this)) {
+                Log.d(TAG, "İnternet bağlantısı yok, reklam gösterilemiyor")
+                NetworkUtils.showNoInternetToast(this)
+                return
+            }
+            
+            // AdManager'ı kontrol et ve yeni agresif reklam metodunu kullan
+            if (::adManager.isInitialized) {
+                Log.d(TAG, "Oyun sonunda agresif reklam gösterilecek")
+                adManager.showInterstitialAdAfterGame(this)
+            } else {
+                Log.w(TAG, "AdManager başlatılmamış")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Reklam gösterimi sırasında hata: ${e.message}", e)
+        }
+    }
+}
+
+    @Composable
+    fun NumberHuntGameScreen(
+        gameState: NumberHuntGameState,
+        onNumberClick: (NumberItem) -> Unit,
+        onBackClick: () -> Unit,
+        onRestartClick: () -> Unit,
+        onNextLevelClick: () -> Unit,
+        onHomeClick: () -> Unit
+    ) {
+    // Statik arka plan kullan
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                        Color(0xFF1976D2), // Koyu mavi üst
+                        Color(0xFFBBDEFB)  // Açık mavi alt
+                        )
+                    )
+                )
+        ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Modern üst bilgi çubuğu
+            Column(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Başlık ve geri butonu
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF3F51B5)) // Daha koyu mavi (indigo) arka plan
+                        .padding(vertical = 8.dp, horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Geri Dön",
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clickable { onBackClick() }
+                    )
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "Sayı Avı",
+                        color = Color.White,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    
+                    // Seviye bilgisi
+                    Card(
+                        modifier = Modifier.padding(4.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFF5C6BC0) // Açık indigo
+                        )
+                    ) {
+                        Text(
+                            text = "Seviye ${gameState.level.level}",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                
+                // Oyun bilgileri (skor, süre, soru sayacı)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF303F9F)) // Koyu indigo (çok koyu mavi)
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Yıldız ve skor
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_star),
+                            contentDescription = "Skor",
+                            tint = Color(0xFFFFD700),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = "Skor: ${gameState.score}",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    // Süre
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_timer),
+                            contentDescription = "Süre",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = "${gameState.timeRemaining} s",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                    
+                    // Soru sayacı
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_question),
+                            contentDescription = "Sorular",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        
+                        Spacer(modifier = Modifier.width(4.dp))
+                        
+                        Text(
+                            text = "${gameState.foundNumbersCount}/${gameState.level.matchingNumbersCount}",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Soru Alanı
+            QuestionArea(
+                question = gameState.level.rule,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Text(
+                    text = "Bul: ${gameState.foundNumbersCount}/${gameState.level.matchingNumbersCount}",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Oyun Alanı
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(horizontal = 16.dp)
+            ) {
+                // Sayıları göster
+                gameState.numbers.forEach { number ->
+                    NumberBubble(
+                        number = number,
+                        onClick = { onNumberClick(number) },
+                        isGameActive = !gameState.isGameOver && !gameState.isGameCompleted
+                    )
+                }
+            }
+            
+            // Oyun sonu ekranı
+            if (gameState.isGameOver || gameState.isGameCompleted) {
+                NumberHuntGameCompletedScreen(
+                    score = gameState.score,
+                    stars = gameState.stars,
+                    onNextLevel = onNextLevelClick,
+                    onRestart = onRestartClick,
+                    onHome = onHomeClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun NumberBubble(
+    number: NumberItem,
+    onClick: () -> Unit,
+    isGameActive: Boolean
+) {
+    // Pozisyon değerleri (0-1 arası normalize edilmiş)
+    val position = number.position
+    val xPercent = position.first
+    val yPercent = position.second
+    
+    // Ekran boyutlarını al
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+    val screenHeight = configuration.screenHeightDp
+    
+    // Oyun alanı yüksekliği - gerçek kullanılabilir alanı hesaplayalım
+    val gameAreaHeight = screenHeight * 0.65f
+    
+    // Balon boyutu (dp cinsinden)
+    val balloonSize = 56
+    
+    // Güvenli alan hesaplama (balon boyutunu hesaba katarak)
+    val safeMargin = balloonSize / 2 + 8
+    val rightMargin = safeMargin + 12
+    
+    // Güvenli alan genişliği ve yüksekliği - sağ tarafa daha fazla pay bırak
+    val safeAreaWidth = screenWidth - safeMargin - rightMargin
+    val safeAreaHeight = gameAreaHeight - safeMargin * 2
+    
+    // Güvenli sınırlar içinde konumu hesapla - balonları daha sola kaydır
+    val xOffset = -30f // Daha fazla sola kaydırma (-25f -> -30f)
+    val xPos = safeMargin + (safeAreaWidth * xPercent).toFloat() + xOffset
+    val yPos = safeMargin + (safeAreaHeight * yPercent).toFloat()
+
+    
+    
+    // Görünürlük durumu
+    var visible by remember { mutableStateOf(true) }
+    var animationStarted by remember { mutableStateOf(false) }
+    
+    // Ölçeklendirme animasyonu
+    val scale by animateFloatAsState(
+        targetValue = if (number.isSelected) 1.3f else 1.0f,
+        animationSpec = tween(300),
+        label = "scale"
+    )
+    
+    // Başlangıç animasyonu - hızlı başlatma
+    LaunchedEffect(Unit) {
+        // Kısa bir gecikme ile başlat (en fazla 150ms) - çok daha hızlı
+        delay(Random.nextInt(150).toLong())
+        animationStarted = true
+    }
+    
+    // Seçildiğinde kaybolma
+    LaunchedEffect(number.isSelected) {
+        if (number.isSelected) {
+            // Renk değişimini göster
+            delay(800)
+            visible = false
+        }
+    }
+    
+    // Sayı kabarcığının arka plan rengini belirle
+    val backgroundColor = when {
+        number.isSelected && number.isMatchingRule -> Color.Green.copy(alpha = 0.8f)
+        number.isSelected && !number.isMatchingRule -> Color.Red.copy(alpha = 0.8f)
+        !isGameActive -> Color.Gray.copy(alpha = 0.4f)
+        else -> PrimaryBlue.copy(alpha = 0.7f)
+    }
+    
+    // Daha belirgin girdi/çıkış animasyonları
+    AnimatedVisibility(
+        visible = visible && animationStarted,
+        enter = fadeIn(animationSpec = tween(300)) + 
+                scaleIn(initialScale = 0.5f, animationSpec = tween(300)),
+        exit = fadeOut(animationSpec = tween(300)) + 
+               scaleOut(targetScale = 1.5f, animationSpec = tween(300))
+    ) {
+        Box(
+                modifier = Modifier
+                .offset(
+                    x = xPos.dp,
+                    y = yPos.dp
+                )
+                .size(balloonSize.dp)
+                .clip(CircleShape)
+                .background(backgroundColor)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = CircleShape
+                )
+                .rotate(number.angle)
+                .scale(scale)
+                .clickable(enabled = isGameActive && !number.isSelected) { onClick() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = number.value.toString(),
+                color = Color.White,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+} 
+
+@Composable
+fun NumberHuntGameCompletedScreen(
+    score: Int,
+    stars: Int,
+    onNextLevel: () -> Unit,
+    onRestart: () -> Unit,
+    onHome: () -> Unit
+) {
+    var showConfetti by remember { mutableStateOf(false) }
+    
+    // Animasyon için state'ler
+    var iconScale by remember { mutableStateOf(0f) }
+    var titleScale by remember { mutableStateOf(0.8f) }
+    
+    // Animasyonları başlat
+    LaunchedEffect(key1 = Unit) {
+        showConfetti = true
+        delay(100)
+        iconScale = 1.2f
+        delay(200)
+        titleScale = 1f
+    }
+    
+    // Yıldız sayısına göre başlık metni
+    val titleText = when (stars) {
+        3 -> "Harika İş!"
+        2 -> "Tebrikler!"
+        1 -> "İyi İş!"
+        else -> "Oyun Tamamlandı!"
+    }
+    
+    // Determine level color based on stars (mimic the level colors of NumberHunt)
+    val gameCompleteColor = when (stars) {
+        3 -> Color(0xFF4CAF50) // Green for 3 stars (like level 1)
+        2 -> Color(0xFFFFA000) // Orange for 2 stars (like level 2)
+        1 -> Color(0xFFFF5722) // Deep Orange for 1 star (like level 3)
+        else -> Color(0xFF3F51B5) // Indigo for 0 stars (like level 5)
+    }
+    
+    // Gradient background for the game completion screen
+    val gradientColors = listOf(
+        gameCompleteColor.copy(alpha = 0.9f),
+        gameCompleteColor.copy(alpha = 0.6f)
+    )
+    
+    Dialog(onDismissRequest = { /* Do nothing on outside click */ }) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 8.dp
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = gradientColors
+                        )
+                    )
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Trophy or Star Icon with scale animation
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_star),
+                        contentDescription = "Yıldız",
+                        modifier = Modifier
+                            .size(64.dp)
+                            .scale(animateFloatAsState(targetValue = iconScale, animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessLow
+                            ), label = "star_scale").value),
+                        tint = Color(0xFFFFD700) // Gold color
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Title with animation
+                    Text(
+                        text = titleText,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.scale(animateFloatAsState(targetValue = titleScale, animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ), label = "title_scale").value)
+                    )
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    // Score
+                    Text(
+                        text = "Puanın: $score",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Medium
+                    )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Stars Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        for (i in 1..3) {
+                            // Her yıldız için bir gecikme ekleyelim
+                            val delayedScale = remember { androidx.compose.animation.core.Animatable(0.5f) }
+                            
+                            LaunchedEffect(key1 = i) {
+                                delay(300L + i * 150L) // Her yıldız için kademeli gecikme
+                                delayedScale.animateTo(
+                                    targetValue = if (i <= stars) 1.1f else 0.8f,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                )
+                            }
+                            
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_star),
+                                contentDescription = "Yıldız $i",
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .padding(horizontal = 4.dp)
+                                    .scale(delayedScale.value),
+                                tint = if (i <= stars) Color(0xFFFFD700) else Color.White.copy(alpha = 0.3f)
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    // Buttons Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        // Home Button
+                        Button(
+                            onClick = onHome,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = gameCompleteColor
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Home,
+                                    contentDescription = "Ana Menü",
+                                    tint = gameCompleteColor
+                                )
+                                Text(
+                                    text = "Ana Menü",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Restart Button
+                        Button(
+                            onClick = onRestart,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White,
+                                contentColor = gameCompleteColor
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Refresh,
+                                    contentDescription = "Yeniden Oyna",
+                                    tint = gameCompleteColor
+                                )
+                                Text(
+                                    text = "Yeniden Oyna",
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Next Level Button with animation
+                    val buttonScale = remember { androidx.compose.animation.core.Animatable(0.9f) }
+                    
+                    LaunchedEffect(key1 = Unit) {
+                        delay(800)
+                        buttonScale.animateTo(
+                            targetValue = 1f, 
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        )
+                    }
+                    
+                    Button(
+                        onClick = onNextLevel,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .scale(buttonScale.value),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFFFD700), // Gold color
+                            contentColor = Color(0xFF333333) // Dark text for contrast
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "Sonraki Seviye",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = "İleri"
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

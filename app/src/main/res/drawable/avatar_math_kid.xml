@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Face -->
+    <path
+        android:fillColor="#FAE8CC"
+        android:pathData="M100,100 a32.5,37.5 0 1,0 0.1,0 Z" />
+
+    <!-- Hair -->
+    <path
+        android:fillColor="#663311"
+        android:pathData="M70,90 L70,70 L80,55 L100,50 L120,55 L130,70 L130,90 Q100,70 70,90 Z" />
+
+    <!-- Eyes -->
+    <path
+        android:fillColor="#3399CC"
+        android:pathData="M85,95 a6,6 0 1,0 0.1,0 Z" />
+
+    <path
+        android:fillColor="#3399CC"
+        android:pathData="M115,95 a6,6 0 1,0 0.1,0 Z" />
+
+    <!-- Smile -->
+    <path
+        android:strokeColor="#333333"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M80,110 Q100,125 120,110" />
+
+    <!-- Math Star Symbol -->
+    <path
+        android:strokeColor="#FF6633"
+        android:strokeWidth="3"
+        android:pathData="M100,40 L104,50 L115,50 L106,57 L109,67 L100,60 L91,67 L94,57 L85,50 L96,50 Z" />
+
+    <!-- Floating Numbers -->
+    <path
+        android:fillColor="#3399CC"
+        android:pathData="M150,60 L160,60 L160,70 L150,70 Z" />
+</vector> 

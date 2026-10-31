@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Gövde -->
+    <path
+        android:fillColor="#1976D2"
+        android:pathData="M24,2L14,38L34,38L24,2Z" />
+    <!-- Kanatlar -->
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M10,30L4,44L22,44L10,30Z" />
+    <path
+        android:fillColor="#64B5F6"
+        android:pathData="M38,30L44,44L26,44L38,30Z" />
+    <!-- Motor ışıkları -->
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M18,38L16,46L22,46L20,38Z" />
+    <path
+        android:fillColor="#FF5722"
+        android:pathData="M30,38L28,46L34,46L32,38Z" />
+    <!-- Kokpit -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,12m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector> 

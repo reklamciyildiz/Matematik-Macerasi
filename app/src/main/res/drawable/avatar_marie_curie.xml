@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#8E44AD"
+        android:pathData="M60,60m-56,0a56,56 0,1 1,112 0a56,56 0,1 1,-112 0" />
+
+    <!-- Hair -->
+    <path
+        android:fillColor="#4E342E"
+        android:pathData="M60,40m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0" />
+
+    <!-- Face -->
+    <path
+        android:fillColor="#F5E6CA"
+        android:pathData="M60,45m-20,0a20,20 0,1 1,40 0a20,20 0,1 1,-40 0" />
+
+    <!-- Hairline -->
+    <path
+        android:fillColor="#4E342E"
+        android:pathData="M40,35L45,28L50,25L55,23L60,22L65,23L70,25L75,28L80,35L80,40L75,33L70,30L65,28L60,27L55,28L50,30L45,33L40,40z" />
+
+    <!-- Left Eye -->
+    <path
+        android:fillColor="#3E2723"
+        android:pathData="M50,42m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+
+    <!-- Right Eye -->
+    <path
+        android:fillColor="#3E2723"
+        android:pathData="M70,42m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+
+    <!-- Mouth -->
+    <path
+        android:strokeColor="#3E2723"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:pathData="M52,52C52,52 56,56 60,56C64,56 68,52 68,52" />
+
+    <!-- Glasses -->
+    <path
+        android:strokeColor="#3E2723"
+        android:strokeWidth="1.5"
+        android:pathData="M45,42m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path
+        android:strokeColor="#3E2723"
+        android:strokeWidth="1.5"
+        android:pathData="M75,42m-7,0a7,7 0,1 1,14 0a7,7 0,1 1,-14 0" />
+    <path
+        android:strokeColor="#3E2723"
+        android:strokeWidth="1.5"
+        android:pathData="M52,42L68,42" />
+
+    <!-- Laboratory Flask -->
+    <path
+        android:fillColor="#D1C4E9"
+        android:pathData="M40,85L50,75L70,75L80,85L80,95C80,97.8 77.8,100 75,100L45,100C42.2,100 40,97.8 40,95L40,85z" />
+    <path
+        android:fillColor="#B39DDB"
+        android:pathData="M45,95C45,92.2 47.2,90 50,90L70,90C72.8,90 75,92.2 75,95L45,95z" />
+    <path
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2"
+        android:pathData="M50,75L50,65" />
+    <path
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2"
+        android:pathData="M70,75L70,65" />
+    <path
+        android:strokeColor="#7E57C2"
+        android:strokeWidth="2"
+        android:pathData="M50,65L70,65" />
+
+    <!-- Bubbles in Flask -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,85m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M65,90m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M60,82m-1.5,0a1.5,1.5 0,1 1,3 0a1.5,1.5 0,1 1,-3 0" />
+</vector> 

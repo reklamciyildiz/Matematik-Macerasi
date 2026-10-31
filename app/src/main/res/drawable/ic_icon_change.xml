@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Dış çerçeve -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10s10,-4.48 10,-10S17.52,2 12,2zM12,20c-4.41,0 -8,-3.59 -8,-8s3.59,-8 8,-8s8,3.59 8,8S16.41,20 12,20z" />
+    
+    <!-- Değiştirme okları -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M15.5,8C15.5,8 16.5,9 16.5,10C16.5,11 15.5,12 15.5,12L13,12L13,8L15.5,8Z" />
+    <path
+        android:fillColor="#000000"
+        android:pathData="M8.5,16C8.5,16 7.5,15 7.5,14C7.5,13 8.5,12 8.5,12L11,12L11,16L8.5,16Z" />
+    
+    <!-- Yıldız -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M12,7.5L12.8,9.1L14.5,9.4L13.3,10.6L13.6,12.3L12,11.5L10.4,12.3L10.7,10.6L9.5,9.4L11.2,9.1L12,7.5Z" />
+</vector> 

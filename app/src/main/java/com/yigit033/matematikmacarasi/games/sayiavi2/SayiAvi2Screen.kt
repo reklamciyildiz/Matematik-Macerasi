@@ -34,7 +34,8 @@ enum class SayiAviMissionStage {
     STAGE_B_VAULT,
     STAGE_C_ROUTE,
     STAGE_TRANSFER_SEAL,
-    REWARD_SUMMARY
+    REWARD_SUMMARY,
+    TEMPLE
 }
 
 /**
@@ -78,6 +79,7 @@ fun SayiAvi2Screen(
     }
 
     var showExitDialog by remember { mutableStateOf(false) }
+    var templeTier by remember { mutableStateOf(LearningTier.GELISEN) }
 
     // Oyun Verileri
     var runSeed by remember { mutableLongStateOf(storage.getRunSeed()) }
@@ -190,7 +192,7 @@ fun SayiAvi2Screen(
         )
     }
 
-    when (currentStage) {
+    when (currentStage) {\n        SayiAviMissionStage.TEMPLE -> TempleAdventureScreen(\n            tier = templeTier, onExit = { currentStage = SayiAviMissionStage.WELCOME })
         SayiAviMissionStage.WELCOME -> {
             SayiAviWelcomeScreen(
                 isCompletedBefore = storage.isMissionCompleted(),
@@ -204,7 +206,7 @@ fun SayiAvi2Screen(
                         skillProgress = adaptiveStore.progress(AdventureSkill.THREE_COUNTING)
                     }
                 },
-                onStartRegion2 = {
+                onStartTemple = {\n                    templeTier = adaptiveStore.progress(AdventureSkill.THREE_COUNTING).currentTier\n                    currentStage = SayiAviMissionStage.TEMPLE\n                },\n                templeCompleted = context.getSharedPreferences("temple_adventure_v1", Context.MODE_PRIVATE).getInt("runs", 0) > 0,\n                onStartRegion2 = {
                     forestLauncher.launch(Intent(context, ForestAdventureActivity::class.java))
                 },
                 onStartRegion1 = {

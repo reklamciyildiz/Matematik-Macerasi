@@ -1,6 +1,5 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.util.Log

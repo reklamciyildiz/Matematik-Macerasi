@@ -40,9 +40,6 @@ import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsService
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import android.util.Log
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
 import com.yigit033.matematikmacarasi.services.StarManager
 import android.app.Activity

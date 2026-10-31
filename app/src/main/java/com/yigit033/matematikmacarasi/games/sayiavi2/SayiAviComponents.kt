@@ -54,13 +54,13 @@ import com.yigit033.matematikmacarasi.R
 
 /**
  * Sayı Avı 2.0 Üst Başlık Çubuğu.
- * Geri butonu, aşama rozeti (1/3, 2/3, 3/3), harita parçası göstergesi ve yıldız sayacı.
+ * Geri butonu, aşama rozeti (1/5 .. 5/5), harita parçası göstergesi ve yıldız sayacı.
  */
 @Composable
 fun SayiAviTopBar(
     title: String,
     stageSubtitle: String?,
-    currentStageNumber: Int, // 1, 2, 3 (veya 0 karşılama)
+    currentStageNumber: Int, // 1..5 (veya 0 karşılama)
     mapPiecesCollected: Int, // 0, 1, 2
     starsCount: Int,
     onBackClick: () -> Unit,
@@ -125,7 +125,7 @@ fun SayiAviTopBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Harita Parçaları Sayacı (Stage 1..3 için)
-                if (currentStageNumber in 1..3) {
+                if (currentStageNumber in 1..5) {
                     Surface(
                         color = SayiAviColors.OceanNavy.copy(alpha = 0.85f),
                         shape = RoundedCornerShape(14.dp),

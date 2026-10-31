@@ -94,7 +94,7 @@ fun SayiAviRewardScreen(
             SayiAviTopBar(
                 title = "Görev Tamamlandı!",
                 stageSubtitle = "Kumsal Koyu Keşfedildi",
-                currentStageNumber = 3,
+                currentStageNumber = 5,
                 mapPiecesCollected = 2,
                 starsCount = starsCount,
                 onBackClick = onReturnToGamesClick
@@ -234,16 +234,33 @@ fun SayiAviRewardScreen(
                         MetricItem(title = "Çalışılan Konu", value = "3'ün Katları")
                         if (learningSummary?.complete == true) {
                             MetricItem(title = "Doğru Hamle Oranı", value = "${learningSummary.actionAccuracyPercent}%")
+                            if (learningSummary.counters.groupAttempts > 0)
+                                MetricItem(title = "Kabuk Kümeleri", value = "${learningSummary.counters.groupAttempts} deneme")
                             MetricItem(title = "Sayı Tahtası", value = "${learningSummary.counters.aAttempts} kontrol")
                             MetricItem(title = "Şifre Kasası", value = "${learningSummary.counters.bAttempts} deneme")
                             MetricItem(title = "Hazine Rotası", value = "${learningSummary.counters.cAttempts} hamle")
+                            if (learningSummary.counters.transferAttempts > 0)
+                                MetricItem(title = "Hazine Mührü", value = "${learningSummary.counters.transferAttempts} deneme")
                             MetricItem(title = "Yanlış Hamleler", value = "${learningSummary.errors}")
                             MetricItem(title = "Gösterilen İpuçları", value = "${learningSummary.counters.hintsShown}")
-                            MetricItem(title = "İlk Denemede", value = "${learningSummary.firstTryStages}/3 aşama")
+                            MetricItem(title = "İlk Denemede", value = "${learningSummary.firstTryStages}/${learningSummary.playedStages} aşama")
                         } else {
                             MetricItem(title = "Hamle Verileri", value = "Eksik oturum")
                         }
                         MetricItem(title = "Geçen Süre", value = "$timeSpentSeconds sn")
+                        if (learningSummary?.complete == true) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Surface(color = SayiAviColors.SkyLightBlue.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = "🧭 Sıradaki öneri: ${learningSummary.practiceRecommendation}",
+                                    modifier = Modifier.padding(12.dp),
+                                    fontSize = 12.sp, fontWeight = FontWeight.Medium,
+                                    color = SayiAviColors.TextNavy
+                                )
+                            }
+                        }
                         Text(
                             text = "Bu oran yalnızca oyun içi hamleleri gösterir; öğrenmeyi kanıtlamaz. Oyun araları süreye dahil olabilir.",
                             fontSize = 11.sp, color = SayiAviColors.TextNavyMuted,

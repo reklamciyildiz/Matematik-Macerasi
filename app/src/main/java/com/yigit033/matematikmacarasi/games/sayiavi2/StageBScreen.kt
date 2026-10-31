@@ -103,9 +103,9 @@ fun StageBScreen(
         ) {
             // Üst Çubuk
             SayiAviTopBar(
-                title = "Aşama 2: Şifre Kasası",
-                stageSubtitle = "Kumsal Koyu (2/3)",
-                currentStageNumber = 2,
+                title = "Aşama 3: Şifre Kasası",
+                stageSubtitle = "Kumsal Koyu (3/5)",
+                currentStageNumber = 3,
                 mapPiecesCollected = if (isChestOpen) 2 else 1,
                 starsCount = starsCount,
                 onBackClick = onBackClick

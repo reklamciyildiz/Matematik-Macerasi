@@ -112,9 +112,9 @@ fun StageCScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             // Üst Çubuk
             SayiAviTopBar(
-                title = "Aşama 3: Hazine Rotası",
-                stageSubtitle = "Kumsal Koyu (3/3)",
-                currentStageNumber = 3,
+                title = "Aşama 4: Hazine Rotası",
+                stageSubtitle = "Kumsal Koyu (4/5)",
+                currentStageNumber = 4,
                 mapPiecesCollected = 2,
                 starsCount = starsCount,
                 onBackClick = onBackClick
@@ -345,7 +345,7 @@ fun StageCScreen(
                         .padding(16.dp)
                 ) {
                     AdventureActionButton(
-                        text = "🏆 Hazine Sandığını Aç ▶",
+                        text = "🔑 Hazine Mührüne Geç ▶",
                         onClick = onStageCCompleted,
                         gradient = SayiAviColors.OrangeButtonGradient
                     )

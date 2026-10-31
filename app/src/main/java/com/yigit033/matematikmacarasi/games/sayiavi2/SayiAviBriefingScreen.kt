@@ -175,7 +175,7 @@ fun SayiAviBriefingScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "1. Aşama Görevi: Kumsaldaki 4x4 sihirli sayı tahtasından 3'ün katı olan tam 5 taşı seç!",
+                            text = "1. Aşama: Kabukları üçerli kümelere ayır. Sonra sayı tahtası, kasa şifresi, hazine rotası ve son mühür seni bekliyor!",
                             fontSize = 13.sp,
                             color = SayiAviColors.TextNavyMuted,
                             lineHeight = 19.sp

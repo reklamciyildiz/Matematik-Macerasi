@@ -143,7 +143,7 @@ fun SayiAviWelcomeScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "Gizemli adanın hazinesini bulmak için 3 aşamalı görevi tamamla: Sayı Avı tahtasından 3'ün katlarını bul, Şifre Kasasını aç ve Hazine Rotasını keşfet!",
+                            text = "Gizemli adanın hazinesini bulmak için 5 farklı görevi tamamla: Kabukları üçerli grupla, Sayı Tahtasını çöz, Şifre Kasasını aç, Hazine Rotasını keşfet ve Hazine Mührünü tamamla!",
                             fontSize = 13.sp,
                             color = Color(0xFFE2E8F0),
                             lineHeight = 18.sp

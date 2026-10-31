@@ -5,6 +5,14 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
@@ -91,6 +99,46 @@ private class TempleCheckpoint(context: Context) {
     }
 }
 
+/**
+ * Native Android vector artwork: bundled in drawable, scales without network or image decoder.
+ * Continuous pulse is limited to the small energy badge, not the entire illustration.
+ */
+@Composable
+private fun TempleArtwork(drawableId: Int, description: String, compact: Boolean = false) {
+    val loop = rememberInfiniteTransition(label = "Temple magic")
+    val shine by loop.animateFloat(
+        initialValue = 0.5f, targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1500), repeatMode = RepeatMode.Reverse),
+        label = "Crystal shimmer"
+    )
+    Box(
+        Modifier.fillMaxWidth().height(if (compact) 164.dp else 206.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .border(2.dp, Color(0xFFCFA45C), RoundedCornerShape(22.dp))
+    ) {
+        Image(
+            painter = painterResource(drawableId),
+            contentDescription = description,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+        Box(Modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(
+                Color(0xFF071B31).copy(alpha = 0.04f),
+                Color(0xFF071B31).copy(alpha = 0.07f),
+                Color(0xFF071B31).copy(alpha = 0.46f)
+            ))
+        ))
+        Box(
+            Modifier.align(Alignment.BottomEnd).padding(13.dp).size(30.dp)
+                .graphicsLayer { alpha = shine; scaleX = 0.9f + 0.1f * shine; scaleY = 0.9f + 0.1f * shine }
+                .background(Color(0xFF54F6E3), CircleShape)
+                .border(2.dp, Color.White.copy(alpha = 0.75f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) { Text("✦", color = Color(0xFF0C3846), fontSize = 18.sp) }
+    }
+}
+
 @Composable
 private fun TempleArray(rows: Int, columns: Int) {
     Column(
@@ -155,7 +203,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         OutlinedButton(onClick = onExit) { Text("← Macera haritası") }
-        Image(painter = painterResource(R.drawable.temple_node), contentDescription = "Antik Tapınak", modifier = Modifier.fillMaxWidth().height(140.dp), contentScale = ContentScale.Fit)
+        TempleArtwork(R.drawable.temple_art_hero, "Turkuaz ışıklı antik tapınak girişi")
         Text("✦ ANTİK TAPINAK ✦", fontSize = 27.sp, fontWeight = FontWeight.Black, color = Color(0xFFFFD77C))
         Text("Çarpmanın Sırları · " + runTier.title,
             color = Color(0xFFEAF4FA), fontSize = 15.sp)
@@ -186,6 +234,13 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
         } else {
             Text(names[stage], color = Color(0xFFFFD77C),
                 fontWeight = FontWeight.Bold, fontSize = 23.sp)
+            val roomArt = when (stage) {
+                0 -> R.drawable.temple_art_mosaic
+                1 -> R.drawable.temple_art_pillars
+                2 -> R.drawable.temple_art_gate
+                else -> R.drawable.temple_art_mirror
+            }
+            TempleArtwork(roomArt, names[stage] + " ortamı", compact = true)
             Surface(color = Color(0xFF18394E), shape = RoundedCornerShape(20.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x88FFD77C)), modifier = Modifier.fillMaxWidth()) {
                 Text(listOf("Kadim mozaikleri taş taş inşa et.", "Sütunların dengeli düzenini açığa çıkar.", "Kayıp çarpanı eş gruplarla keşfet.", "Aynada ters işlemin sırrını çöz.")[stage], Modifier.padding(15.dp), color = Color.White)
             }
@@ -218,6 +273,9 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         }
                     }
                     Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
+                    Button(enabled = placed < q.tiles, onClick = {
+                        placed = (placed + q.columns).coerceAtMost(q.tiles)
+                    }) { Text("Bir sırayı yerleştir") }
                     Button(enabled = placed == q.tiles, onClick = { if (record(true)) advance() }) {
                         Text("Mozaik tamamlandı")
                     }
@@ -239,26 +297,52 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
                     }
                     Button(enabled = rotated && TempleEngine.isBalanced(q),
-                        onClick = { record(true); advance() }) { Text("Dengeyi doğrula") }
+                        onClick = { if (record(true)) advance() }) { Text("Dengeyi doğrula") }
                 }
                 2 -> {
                     val q = quest.gate
                     Text(q.total.toString() + " taşı " + q.groups +
                         " eş gruba paylaştır. Her grupta kaç taş olur?", color = Color.White)
                     Text("Taşları eş gruplara sırayla dağıt.", color = Color(0xFF9FE9DA))
-                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        repeat(q.groups) { group ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Grup " + (group + 1), color = Color.White, fontSize = 11.sp)
-                                val count = distributed / q.groups + if (group < distributed % q.groups) 1 else 0
-                                Text("$count taş", color = Color(0xFFFFD77C), fontSize = 12.sp)
+                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        repeat((q.groups + 2) / 3) { groupRow ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                repeat(3) { offset ->
+                                    val group = groupRow * 3 + offset
+                                    if (group < q.groups) {
+                                        val count = distributed / q.groups +
+                                            if (group < distributed % q.groups) 1 else 0
+                                        Surface(Modifier.weight(1f),
+                                            shape = RoundedCornerShape(13.dp),
+                                            color = Color(0xFF214B60),
+                                            border = androidx.compose.foundation.BorderStroke(
+                                                1.dp, Color(0xFF6DDBD5))) {
+                                            Column(
+                                                Modifier.padding(vertical = 11.dp, horizontal = 4.dp),
+                                                horizontalAlignment = Alignment.CenterHorizontally
+                                            ) {
+                                                Text("✦", color = Color(0xFFFFD77C), fontSize = 20.sp)
+                                                Text("Grup " + (group + 1), color = Color.White,
+                                                    fontSize = 11.sp)
+                                                Text("$count taş", color = Color(0xFFFFD77C),
+                                                    fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    } else {
+                                        Spacer(Modifier.weight(1f))
+                                    }
+                                }
                             }
                         }
                     }
-                    Button(enabled = distributed < q.total, onClick = { distributed++ }) {
-                        Text("Sıradaki gruba taş koy: $distributed / ${q.total}")
+                    Button(enabled = distributed < q.total,
+                        onClick = { distributed = (distributed + q.groups).coerceAtMost(q.total) }) {
+                        Text("Her gruba birer taş dağıt: $distributed / ${q.total}")
                     }
-                    Button(enabled = distributed > 0, onClick = { distributed-- }) { Text("Son taşı geri al") }
+                    Button(enabled = distributed > 0,
+                        onClick = { distributed = (distributed - q.groups).coerceAtLeast(0) }) {
+                        Text("Son dağıtımı geri al")
+                    }
                     if (distributed == q.total) {
                         TempleArray(q.groups, q.itemsPerGroup)
                         Text("${q.groups} × ${q.itemsPerGroup} = ${q.total}", color = Color(0xFF9FE9DA))

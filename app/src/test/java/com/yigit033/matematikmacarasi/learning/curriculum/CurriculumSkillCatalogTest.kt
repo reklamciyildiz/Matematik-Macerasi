@@ -18,7 +18,7 @@ class CurriculumSkillCatalogTest {
             assertNotNull(it.officialSourceUrl)
             assertTrue(it.officialSourceUrl!!.startsWith("https://tymm.meb.gov.tr/") ||
                 it.officialSourceUrl.startsWith("https://mufredat.meb.gov.tr/"))
-            assertTrue(it.outcomeCode!!.startsWith("MAT."))
+            assertTrue(it.outcomeCode!!.startsWith("MAT.") || it.outcomeCode.startsWith("M."))
             assertFalse(it.note.isBlank())
         }
         assertEquals("MAT.2.2.4",

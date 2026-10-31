@@ -115,17 +115,17 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     Text("Bir mozaik oluştur: " + q.rows + " sıra, her sırada " +
                         q.columns + " taş.", color = Color.White)
                     repeat(q.rows) { r ->
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                             repeat(q.columns) { c ->
                                 val index = r * q.columns + c
                                 Box(
-                                    Modifier.size(39.dp)
+                                    Modifier.size(28.dp)
                                         .background(if (index < placed) Color(0xFFFFC75D)
                                             else Color(0xFF355B70), RoundedCornerShape(6.dp))
                                         .border(1.dp, Color.White.copy(alpha = .4f),
                                             RoundedCornerShape(6.dp))
                                         .clickable {
-                                            if (placed < q.tiles) placed =
+                                            if (index == placed && placed < q.tiles) placed =
                                                 TempleEngine.placeMosaicTile(placed, q.tiles)
                                         }
                                         .semantics {

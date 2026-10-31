@@ -41,3 +41,20 @@ git pull origin main
 9. En az bir küçük ekran ve TalkBack ile okunabilirlik/dokunma testleri; offline modda yeniden çalıştır.
 
 **Kabul durumu:** GitHub'a kod ve görsel dosyaları yazıldı; Android SDK ortamında Gradle derlemesi ve gerçek cihaz testi bu sohbet içinde çalıştırılmadı. Bu testler geçmeden sürüm “sorunsuz” veya “release-ready” olarak kabul edilmemelidir.
+
+## S2.6 ekran yerleşimi kabulü (2026-11-01)
+
+- **Giriş / tamamlama**: Genel `temple_art_hero` yalnızca bu iki ekranda görünür.
+- **Oyun içinde**: Tek bir oda görseli gösterilir; eski üst hero tekrar edilmez.
+- **İlk ekran alanı**: Haritaya dön butonu, seviye, ritüel/ilerleme, oda başlığı ve tek oda görseli kompakt düzendedir; matematik görevi gereksiz kaplamaların arkasında kalmaz.
+- **Erişilebilir kontrast**: Geri, ipucu ve cevap seçenekleri varsayılan mor renk yerine tapınak için açık renk kullanır.
+- **Navigasyon**: Ritüel değişiminde / yeniden oynamada liste başa kayar.
+- **Regresyon**: Ustalık seviyesinde büyük çarpan dizilimleri, 3-9 grup ekranı ve 3 cevaplı Ayna ekranı küçük telefonda kontrol edilmeli.
+- **Gerçek cihaz geçiş koşulu**: Her ritüel başlamadan oyun içindeki yalnızca bir görselin ve matematik kontrolünün görünür olduğunu doğrula. Android derlemesi ve TalkBack/gerçek cihaz kabulü hâlâ yerelde yapılmalıdır.
+
+## Öncelikli devam planı
+
+1. **S2.6 Kabul**: Derleme + telefonlarda ritüel 1-4, geri dönüş, yeniden başlatma, offline, yön değiştirme, küçük ekran.
+2. **S2.7 Öğrenme kalitesi**: Tek hamlede ilerleme yerine cevap kalitesini ölçme, yanlış öğrenilene kısa tekrar, beceri bazlı geribildirim ve çocuk/öğretmen pilotu.
+3. **S2.8 Rapor ürünleştirmesi**: Öğrenci profili, ebeveyn/öğretmen için oturum ve kazanım ilişkilendirmesi; ölçülmeyen kazanımlar hakkında iddia yok.
+4. **S2.9 Yayın kalitesi / gelir**: Paket ve mağaza politikaları, erişilebilirlik, performans, satın alma/test.

@@ -23,9 +23,11 @@ import kotlinx.coroutines.delay
 enum class SayiAviMissionStage {
     WELCOME,
     BRIEFING,
+    STAGE_GROUP_SHELLS,
     STAGE_A_GRID,
     STAGE_B_VAULT,
     STAGE_C_ROUTE,
+    STAGE_TRANSFER_SEAL,
     REWARD_SUMMARY
 }
 
@@ -47,9 +49,11 @@ fun SayiAvi2Screen(
     var currentStage by remember {
         val lastStage = storage.getLastStage()
         val initialStage = when (lastStage) {
+            "STAGE_GROUP" -> SayiAviMissionStage.STAGE_GROUP_SHELLS
             "STAGE_A" -> SayiAviMissionStage.STAGE_A_GRID
             "STAGE_B" -> SayiAviMissionStage.STAGE_B_VAULT
             "STAGE_C" -> SayiAviMissionStage.STAGE_C_ROUTE
+            "STAGE_SEAL" -> SayiAviMissionStage.STAGE_TRANSFER_SEAL
             else -> SayiAviMissionStage.WELCOME
         }
         mutableStateOf(initialStage)
@@ -59,6 +63,8 @@ fun SayiAvi2Screen(
 
     // Oyun Verileri
     var runSeed by remember { mutableLongStateOf(storage.getRunSeed()) }
+    val shellGrouping = remember(runSeed) { SayiAviEngine.generateShellGrouping(runSeed + 17L) }
+    val transferChallenges = remember(runSeed) { SayiAviEngine.generateTransferChallenges(runSeed + 55L) }
     val stageAGridData = remember(runSeed) { SayiAviEngine.generateStageAGrid(if (runSeed == 0L) null else runSeed + 101) }
     val stageBVaultData = remember(runSeed) { SayiAviEngine.generateStageBVault(if (runSeed == 0L) null else runSeed + 202) }
     val stageCRouteData = remember(runSeed) { SayiAviEngine.generateStageCRoute(if (runSeed == 0L) null else runSeed + 303) }
@@ -69,6 +75,7 @@ fun SayiAvi2Screen(
     var isFirstCompletionResult by remember { mutableStateOf(false) }
     var counters by remember { mutableStateOf(storage.getRunCounters()) }
     var lastSummary by remember { mutableStateOf<SayiAviLearningSummary?>(null) }
+    var completionHandled by remember(runSeed) { mutableStateOf(false) }
 
     fun attempt(stage: Int, correct: Boolean) {
         counters = counters.attempt(stage, correct)
@@ -85,6 +92,7 @@ fun SayiAvi2Screen(
         missionStartTime = now
         counters = SayiAviRunCounters()
         lastSummary = null
+        completionHandled = false
     }
 
     // Ses Çalarlar (Güvenli Başlatma)
@@ -170,10 +178,26 @@ fun SayiAvi2Screen(
             SayiAviBriefingScreen(
                 starsCount = currentStars,
                 onStartStageA = {
-                    currentStage = SayiAviMissionStage.STAGE_A_GRID
-                    storage.saveLastStage("STAGE_A")
+                    currentStage = SayiAviMissionStage.STAGE_GROUP_SHELLS
+                    storage.saveLastStage("STAGE_GROUP")
                 },
                 onBackClick = { currentStage = SayiAviMissionStage.WELCOME },
+                modifier = modifier
+            )
+        }
+
+        SayiAviMissionStage.STAGE_GROUP_SHELLS -> {
+            ShellGroupingScreen(
+                data = shellGrouping,
+                starsCount = currentStars,
+                onAttemptRecorded = { correct -> attempt(4, correct) },
+                onHintShown = { hint() },
+                onCompleted = {
+                    playCorrectSound()
+                    storage.saveLastStage("STAGE_A")
+                    currentStage = SayiAviMissionStage.STAGE_A_GRID
+                },
+                onBackClick = { showExitDialog = true },
                 modifier = modifier
             )
         }
@@ -223,14 +247,32 @@ fun SayiAvi2Screen(
                 onHintShown = { hint() },
                 onStageCCompleted = {
                     playSuccessSound()
-                    totalTimeSeconds = ((System.currentTimeMillis() - missionStartTime) / 1000).coerceAtLeast(1)
-                    val summary = SayiAviLearningSummary(counters, totalTimeSeconds)
-                    lastSummary = summary
-                    val isFirstTime = storage.recordMissionCompletion(totalTimeSeconds, summary)
-                    isFirstCompletionResult = isFirstTime
-                    onRewardEarned(isFirstTime, summary)
+                    storage.saveLastStage("STAGE_SEAL")
+                    currentStage = SayiAviMissionStage.STAGE_TRANSFER_SEAL
+                },
+                onBackClick = { showExitDialog = true },
+                modifier = modifier
+            )
+        }
 
-                    currentStage = SayiAviMissionStage.REWARD_SUMMARY
+        SayiAviMissionStage.STAGE_TRANSFER_SEAL -> {
+            TreasureSealScreen(
+                challenges = transferChallenges,
+                starsCount = currentStars,
+                onAttemptRecorded = { correct -> attempt(5, correct) },
+                onHintShown = { hint() },
+                onCompleted = {
+                    if (!completionHandled) {
+                        completionHandled = true
+                        playSuccessSound()
+                        totalTimeSeconds = ((System.currentTimeMillis() - missionStartTime) / 1000).coerceAtLeast(1)
+                        val summary = SayiAviLearningSummary(counters, totalTimeSeconds)
+                        lastSummary = summary
+                        val firstCompletion = storage.recordMissionCompletion(totalTimeSeconds, summary)
+                        isFirstCompletionResult = firstCompletion
+                        currentStage = SayiAviMissionStage.REWARD_SUMMARY
+                        onRewardEarned(firstCompletion, summary)
+                    }
                 },
                 onBackClick = { showExitDialog = true },
                 modifier = modifier
@@ -246,7 +288,7 @@ fun SayiAvi2Screen(
                 starsCount = currentStars,
                 onReplayClick = {
                     newRun()
-                    currentStage = SayiAviMissionStage.STAGE_A_GRID
+                    currentStage = SayiAviMissionStage.STAGE_GROUP_SHELLS
                 },
                 onReturnToGamesClick = onExitGame,
                 modifier = modifier

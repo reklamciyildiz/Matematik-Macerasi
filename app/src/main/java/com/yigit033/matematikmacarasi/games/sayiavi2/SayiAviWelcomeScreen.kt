@@ -90,7 +90,7 @@ fun SayiAviWelcomeScreen(
         ) {
             // Üst Çubuk
             SayiAviTopBar(
-                title = "Sayı Avı 2.0",
+                title = "Sayı Avcıları",
                 stageSubtitle = "Bölge Seçimi",
                 currentStageNumber = 0,
                 mapPiecesCollected = if (isCompletedBefore) 2 else 0,

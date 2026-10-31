@@ -71,8 +71,8 @@ fun RecommendedSection(
     val (recommendedTitle, recommendedSubtitle, recommendedActivity, recommendedImage) = when {
         grade <= 1 -> listOf("Toplama Oyunu", "10 içinde toplama denemeleri", "addition", "addition")
         grade in 3..4 -> listOf("Çarpma Oyunu", "Eşit grupları keşfet", "multiply", "multiply")
-        grade >= 5 -> listOf("Sayı Avı", "Temel sayı bilgini tekrar et", "number", "number")
-        else -> listOf("Sayı Avı", "Üçer ritmik saymayı uygula", "number", "number")
+        grade >= 5 -> listOf("Sayı Avcıları", "Temel sayı bilgini tekrar et", "number", "number")
+        else -> listOf("Sayı Avcıları", "Üçer ritmik saymayı uygula", "number", "number")
     }
     val selectedActivity = when (recommendedActivity) {
         "addition" -> AdditionGameActivity::class.java

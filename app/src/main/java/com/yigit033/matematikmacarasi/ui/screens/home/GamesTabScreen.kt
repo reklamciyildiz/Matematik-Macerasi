@@ -116,8 +116,8 @@ fun GamesTabScreen(
             activityClass = BalloonPopGameActivity::class.java
         ),
         GameCatalogItem(
-            title = "Sayı Avı",
-            description = "3'ün katlarını bul, şifre kasasını aç ve kayıp hazineye ulaş.",
+            title = "Sayı Avcıları",
+            description = "Kabukları grupla, beş farklı görevde matematikle hazineyi keşfet.",
             category = "Macera & Eğlence",
             iconRes = R.drawable.ic_comparison_task,
             gradientColors = listOf(Color(0xFF0F766E), Color(0xFF14B8A6)),

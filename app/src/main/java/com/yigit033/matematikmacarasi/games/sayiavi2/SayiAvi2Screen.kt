@@ -190,7 +190,10 @@ fun SayiAvi2Screen(
             ShellGroupingScreen(
                 data = shellGrouping,
                 starsCount = currentStars,
-                onAttemptRecorded = { correct -> attempt(4, correct) },
+                onAttemptRecorded = { correct ->
+                    attempt(4, correct)
+                    if (correct) playCorrectSound() else playWrongSound()
+                },
                 onHintShown = { hint() },
                 initialFinishedGroups = storage.getFinishedGroups(),
                 initialPartialShells = storage.getPartialShells(),
@@ -262,7 +265,10 @@ fun SayiAvi2Screen(
             TreasureSealScreen(
                 challenges = transferChallenges,
                 starsCount = currentStars,
-                onAttemptRecorded = { correct -> attempt(5, correct) },
+                onAttemptRecorded = { correct ->
+                    attempt(5, correct)
+                    if (correct) playCorrectSound() else playWrongSound()
+                },
                 onHintShown = { hint() },
                 initialQuestionIndex = storage.getSealQuestionIndex(),
                 onQuestionProgress = { storage.saveSealQuestionIndex(it) },

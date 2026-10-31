@@ -30,6 +30,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,7 +67,7 @@ fun SayiAviTopBar(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .statusBarsPadding()
@@ -177,6 +178,15 @@ fun SayiAviTopBar(
                     }
                 }
             }
+        }
+        if (currentStageNumber in 1..5) {
+            Spacer(modifier = Modifier.height(6.dp))
+            LinearProgressIndicator(
+                progress = { currentStageNumber / 5f },
+                modifier = Modifier.fillMaxWidth().height(4.dp),
+                color = SayiAviColors.GoldBright,
+                trackColor = SayiAviColors.OceanBlue.copy(alpha = 0.4f)
+            )
         }
     }
 }

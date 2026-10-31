@@ -1,6 +1,7 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
 import android.content.Context
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.learning.Lesson
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
 
 /** Eski yıldız ve Premium anahtarlarını değiştirmeyen ayrı ders kaydı. */
 private class PilotProgress(context: Context) {
@@ -106,6 +108,7 @@ fun LearningPracticeSection(userClass: String) {
 
 @Composable
 private fun PracticeLesson(lesson: Lesson, onBack: () -> Unit, onFinish: (Int, Int) -> Unit) {
+    val context = LocalContext.current
     val seed = remember(lesson.id) { System.nanoTime() }
     var index by remember(lesson.id) { mutableIntStateOf(0) }
     var wrong by remember(lesson.id) { mutableIntStateOf(0) }
@@ -131,6 +134,13 @@ private fun PracticeLesson(lesson: Lesson, onBack: () -> Unit, onFinish: (Int, I
             Text("Doğru hamle oranı: $percentage%", color = HomeColors.TextPrimary)
             Text("Bu sonuç sadece oturumdaki hamleleri gösterir.",
                 color = HomeColors.TextSecondary, fontSize = 11.sp)
+            if (lesson.id == "count_3") {
+                Button(
+                    onClick = { context.startActivity(Intent(context, SayiAvi2Activity::class.java)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E))
+                ) { Text("Sayı Avcıları'nda Uygula ▶", color = Color.White) }
+            }
             Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Patikaya Dön") }
         } else {
             Text(lesson.teaching, color = HomeColors.TextPrimary, fontSize = 14.sp)

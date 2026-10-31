@@ -74,6 +74,13 @@ private class TempleCheckpoint(context: Context) {
     val hints: Int get() = prefs.getInt("hints", 0)
     fun stageAttempts(index: Int): Int = prefs.getInt("ritual_${index}_attempts", 0)
     fun stageErrors(index: Int): Int = prefs.getInt("ritual_${index}_errors", 0)
+    fun stageHints(index: Int): Int = prefs.getInt("ritual_${index}_hints", 0)
+    fun stageProgress(index: Int): Int = prefs.getInt("ritual_${index}_progress", if (index == 3) -1 else 0)
+    fun saveStageProgress(index: Int, value: Int) {
+        if (index in 0..3 && value >= -1 && seed > 0L) {
+            prefs.edit().putInt("ritual_${index}_progress", value).apply()
+        }
+    }
     @Synchronized fun record(correct: Boolean, hint: Boolean = false): Boolean {
         if (seed <= 0L || stage == 4) return false
         return prefs.edit()
@@ -82,6 +89,7 @@ private class TempleCheckpoint(context: Context) {
             .putInt("hints", hints + if (hint) 1 else 0)
             .putInt("ritual_${stage}_attempts", stageAttempts(stage) + if (hint) 0 else 1)
             .putInt("ritual_${stage}_errors", stageErrors(stage) + if (!correct && !hint) 1 else 0)
+            .putInt("ritual_${stage}_hints", stageHints(stage) + if (hint) 1 else 0)
             .commit()
     }
     @Synchronized fun start(seed: Long, tier: LearningTier): Boolean {
@@ -91,6 +99,8 @@ private class TempleCheckpoint(context: Context) {
         repeat(4) { i ->
             editor.putInt("ritual_${i}_attempts", 0)
             editor.putInt("ritual_${i}_errors", 0)
+            editor.putInt("ritual_${i}_hints", 0)
+            editor.putInt("ritual_${i}_progress", if (i == 3) -1 else 0)
         }
         return editor.commit()
     }
@@ -190,16 +200,16 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     var seed by remember { mutableLongStateOf(checkpoint.seed) }
     var stage by remember { mutableIntStateOf(checkpoint.stage) }
     var runTier by remember { mutableStateOf(checkpoint.tier) }
-    var placed by remember(seed, stage) { mutableIntStateOf(0) }
-    var rotated by remember(seed, stage) { mutableStateOf(false) }
+    var placed by remember(seed, stage) { mutableIntStateOf(checkpoint.stageProgress(0)) }
+    var rotated by remember(seed, stage) { mutableStateOf(checkpoint.stageProgress(1) == 1) }
     val rotateScale by animateFloatAsState(
         targetValue = if (rotated) 1f else .8f,
         animationSpec = tween(440), label = "Pillars rotate reveal"
     )
-    var distributed by remember(seed, stage) { mutableIntStateOf(0) }
-    var selected by remember(seed, stage) { mutableIntStateOf(-1) }
+    var distributed by remember(seed, stage) { mutableIntStateOf(checkpoint.stageProgress(2)) }
+    var selected by remember(seed, stage) { mutableIntStateOf(checkpoint.stageProgress(3)) }
     var message by remember(seed, stage) { mutableStateOf("") }
-    var hintSeen by remember(seed, stage) { mutableStateOf(false) }
+    var hintSeen by remember(seed, stage) { mutableStateOf(checkpoint.stageHints(stage) > 0) }
     var attemptCount by remember(seed, stage) { mutableIntStateOf(checkpoint.attempts) }
     var errorCount by remember(seed, stage) { mutableIntStateOf(checkpoint.errors) }
     var hintCount by remember(seed, stage) { mutableIntStateOf(checkpoint.hints) }
@@ -289,8 +299,10 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                                         .border(1.dp, Color.White.copy(alpha = .4f),
                                             RoundedCornerShape(6.dp))
                                         .clickable {
-                                            if (index == placed && placed < q.tiles) placed =
-                                                TempleEngine.placeMosaicTile(placed, q.tiles)
+                                            if (index == placed && placed < q.tiles) {
+                                                placed = TempleEngine.placeMosaicTile(placed, q.tiles)
+                                                checkpoint.saveStageProgress(0, placed)
+                                            }
                                         }
                                         .semantics {
                                             contentDescription = "Mozaik taşı " + (index + 1) +
@@ -304,6 +316,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
                     TempleButton(enabled = placed < q.tiles, onClick = {
                         placed = (placed + q.columns).coerceAtMost(q.tiles)
+                        checkpoint.saveStageProgress(0, placed)
                     }) { Text("Bir sırayı yerleştir") }
                     TempleButton(enabled = placed == q.tiles, onClick = { if (record(true)) advance() }) {
                         Text("Mozaik tamamlandı")
@@ -325,7 +338,10 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                             scaleY = rotateScale
                         }) { TempleArray(q.rightRows, q.rightColumns) }
                     }
-                    TempleButton(onClick = { rotated = !rotated }) {
+                    TempleButton(onClick = {
+                        rotated = !rotated
+                        checkpoint.saveStageProgress(1, if (rotated) 1 else 0)
+                    }) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
                     }
                     TempleButton(enabled = rotated && TempleEngine.isBalanced(q),
@@ -368,11 +384,17 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         }
                     }
                     TempleButton(enabled = distributed < q.total,
-                        onClick = { distributed = (distributed + q.groups).coerceAtMost(q.total) }) {
+                        onClick = {
+                            distributed = (distributed + q.groups).coerceAtMost(q.total)
+                            checkpoint.saveStageProgress(2, distributed)
+                        }) {
                         Text("Her gruba birer taş dağıt: $distributed / ${q.total}")
                     }
                     TempleButton(enabled = distributed > 0,
-                        onClick = { distributed = (distributed - q.groups).coerceAtLeast(0) }) {
+                        onClick = {
+                            distributed = (distributed - q.groups).coerceAtLeast(0)
+                            checkpoint.saveStageProgress(2, distributed)
+                        }) {
                         Text("Son dağıtımı geri al")
                     }
                     if (distributed == q.total) {
@@ -396,7 +418,10 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                             (q.resultAfterDivision - 1).coerceAtLeast(1))
                             .distinct().forEach { value ->
                                 OutlinedButton(onClick = {
-                                    if (record(value == q.resultAfterDivision)) selected = value
+                                    if (selected != q.resultAfterDivision && record(value == q.resultAfterDivision)) {
+                                        selected = value
+                                        checkpoint.saveStageProgress(3, selected)
+                                    }
                                     message = if (value == q.resultAfterDivision)
                                         "Ters işlem bağlantısını buldun."
                                     else "Çarpma dizilimine tekrar bak."

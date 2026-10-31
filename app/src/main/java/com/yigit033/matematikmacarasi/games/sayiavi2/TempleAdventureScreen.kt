@@ -234,31 +234,75 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     }
 
     BackHandler(onBack = onExit)
+    val isLanding = seed == 0L || stage == 4
     Column(
-        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF1E5464), Color(0xFF102C42), Color(0xFF081B30))))
-            .verticalScroll(rememberScrollState()).padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        Modifier.fillMaxSize()
+            .background(Brush.verticalGradient(listOf(
+                Color(0xFF1E5464), Color(0xFF102C42), Color(0xFF081B30)
+            )))
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
-        OutlinedButton(onClick = onExit) { Text("← Macera haritası") }
-        TempleArtwork(R.drawable.temple_art_hero, "Turkuaz ışıklı antik tapınak girişi")
-        Text("✦ ANTİK TAPINAK ✦", fontSize = 27.sp, fontWeight = FontWeight.Black, color = Color(0xFFFFD77C))
-        Text("Çarpmanın Sırları · " + runTier.title,
-            color = Color(0xFFEAF4FA), fontSize = 15.sp)
-        Text("Ritüeller: " + stage + "/4", color = Color(0xFF9FE9DA), fontSize = 14.sp)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-            repeat(4) { index -> Box(Modifier.weight(1f).height(9.dp).background(if (index < stage) Color(0xFFFFD77C) else Color(0xFF456A78), CircleShape)) }
+        // Keep actions high-contrast; the theme's default outlined button was purple on blue.
+        OutlinedButton(
+            onClick = onExit,
+            modifier = Modifier.heightIn(min = 48.dp),
+            shape = RoundedCornerShape(15.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF83E7DB)),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEBFFF9))
+        ) { Text("← Haritaya dön", fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
+
+        if (isLanding) {
+            Text("ANTİK TAPINAK", fontSize = 14.sp, fontWeight = FontWeight.Black,
+                color = Color(0xFFFFD77C), letterSpacing = 1.sp)
+            Text("Çarpmanın Sırları", fontSize = 25.sp, fontWeight = FontWeight.Black,
+                color = Color(0xFFFFE4A2))
+            // Entrance artwork is deliberately only shown on the introduction / completion.
+            TempleArtwork(R.drawable.temple_art_hero, "Turkuaz ışıklı antik tapınak girişi")
+            Text("Seviye: " + runTier.title, fontSize = 13.sp, color = Color(0xFFDCEFF3))
+        } else {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("ANTİK TAPINAK", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.7.sp, color = Color(0xFFFFD77C))
+                Spacer(Modifier.weight(1f))
+                Text(runTier.title, fontSize = 13.sp, color = Color(0xFFB6EFE3))
+            }
         }
-        if (seed == 0L || stage == 4) {
-            Text(if (stage == 4) "Tapınak aydınlandı! Dört ritüel tamamlandı."
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (seed == 0L) "4 farklı matematik ritüeli"
+                else if (stage == 4) "Dört ritüel tamamlandı"
+                else "Ritüel ${stage + 1} / 4",
+                color = Color(0xFFB0EEE2), fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(Modifier.weight(1f))
+            Text("${stage.coerceIn(0, 4)} / 4",
+                color = Color(0xFFFFD77C), fontSize = 13.sp)
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            repeat(4) { index ->
+                Box(
+                    Modifier.weight(1f).height(8.dp).clip(CircleShape)
+                        .background(if (index < stage) Color(0xFFFFD77C) else Color(0xFF456A78))
+                )
+            }
+        }
+        if (isLanding) {
+            Text(if (stage == 4) "Tapınağın ışığı yeniden parlıyor!"
                 else "Dört odada matematiksel düzenekleri çalıştır.",
-                color = Color.White, fontSize = 20.sp)
+                color = Color.White, fontSize = 18.sp)
             Text("Tamamlanan keşifler: " + checkpoint.runs, color = Color.White)
             if (stage == 4) {
-                Text("Bu tur: $attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFF9FE9DA))
+                Text("Bu tur: $attemptCount deneme · $errorCount yanlış · $hintCount ipucu",
+                    color = Color(0xFF9FE9DA))
                 names.forEachIndexed { index, title ->
-                    Text("$title: ${checkpoint.stageAttempts(index)} hamle, ${checkpoint.stageErrors(index)} yanlış", color = Color.White, fontSize = 12.sp)
+                    Text("$title: ${checkpoint.stageAttempts(index)} hamle, ${checkpoint.stageErrors(index)} yanlış",
+                        color = Color.White, fontSize = 12.sp)
                 }
-                Text("Bu veriler oyun içi gözlemdir; kalıcı öğrenme veya MEB kazanımı tamamlandı anlamına gelmez.", color = Color(0xFFB7DBE6), fontSize = 11.sp)
+                Text("Bu veriler oyun içi gözlemdir; kalıcı öğrenme veya MEB kazanımı tamamlandı anlamına gelmez.",
+                    color = Color(0xFFB7DBE6), fontSize = 11.sp)
             }
             TempleButton(onClick = {
                 val now = System.currentTimeMillis().coerceAtLeast(seed + 1L).coerceAtLeast(1L)
@@ -270,19 +314,27 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
             }) { Text(if (stage == 4) "Yeni keşif" else "Tapınağa gir") }
         } else {
             Text(names[stage], color = Color(0xFFFFD77C),
-                fontWeight = FontWeight.Bold, fontSize = 23.sp)
+                fontWeight = FontWeight.Black, fontSize = 24.sp)
             val roomArt = when (stage) {
                 0 -> R.drawable.temple_art_mosaic
                 1 -> R.drawable.temple_art_pillars
                 2 -> R.drawable.temple_art_gate
                 else -> R.drawable.temple_art_mirror
             }
-            Crossfade(targetState = roomArt, animationSpec = tween(340), label = "Ritual scene") { art ->
+            // Exactly one scene image during gameplay; no duplicated hero banner.
+            Crossfade(targetState = roomArt, animationSpec = tween(340),
+                label = "Ritual scene") { art ->
                 TempleArtwork(art, names[stage] + " ortamı", compact = true)
             }
-            Surface(color = Color(0xFF18394E), shape = RoundedCornerShape(20.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x88FFD77C)), modifier = Modifier.fillMaxWidth()) {
-                Text(listOf("Kadim mozaikleri taş taş inşa et.", "Sütunların dengeli düzenini açığa çıkar.", "Kayıp çarpanı eş gruplarla keşfet.", "Aynada ters işlemin sırrını çöz.")[stage], Modifier.padding(15.dp), color = Color.White)
-            }
+            Text(
+                listOf(
+                    "Kadim mozaikleri taş taş inşa et.",
+                    "Sütunların eşdeğer düzenini keşfet.",
+                    "Taşları eşit gruplara ayırıp kapıyı aç.",
+                    "Çarpma ve bölmenin bağlantısını çöz."
+                )[stage],
+                color = Color(0xFFB6EFE3), fontSize = 13.sp, lineHeight = 18.sp
+            )
             when (stage) {
                 0 -> {
                     val q = quest.mosaic

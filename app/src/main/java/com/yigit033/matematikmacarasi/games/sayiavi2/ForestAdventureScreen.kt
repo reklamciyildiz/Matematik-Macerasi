@@ -54,6 +54,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.learning.adaptive.AdaptiveLearningStore
+import com.yigit033.matematikmacarasi.learning.adaptive.AdventureSkill
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 private object ForestPalette {
     val Night = Color(0xFF061C1A)
@@ -105,6 +108,8 @@ fun ForestAdventureScreen(
     onExit: () -> Unit
 ) {
     val context = LocalContext.current
+    val adaptiveStore = remember { AdaptiveLearningStore(context) }
+    var skillProgress by remember { mutableStateOf(adaptiveStore.progress(AdventureSkill.FOUR_COUNTING)) }
     val haptics = LocalHapticFeedback.current
     var lastActionPositive by remember { mutableStateOf(true) }
     var run by remember { mutableStateOf(store.load()) }
@@ -233,8 +238,19 @@ fun ForestAdventureScreen(
                             if (store.hasCompleted()) Text(
                                 "Daha önce ${store.completedRuns()} kez tamamlandı. En iyi hamle oranı: ${store.bestAccuracy()}%",
                                 fontSize = 12.sp, color = ForestPalette.Emerald)
+                            AdventureTierSelector(
+                                progress = skillProgress,
+                                gradeLabel = adaptiveStore.gradeLabel(),
+                                onChange = { tier ->
+                                    if (adaptiveStore.selectTier(AdventureSkill.FOUR_COUNTING, tier)) {
+                                        skillProgress = adaptiveStore.progress(AdventureSkill.FOUR_COUNTING)
+                                    }
+                                }
+                            )
                             ForestButton("Maceraya Başla ▶") {
-                                val next = store.startNew()
+                                val next = store.startNew(
+                                    adaptiveStore.progress(AdventureSkill.FOUR_COUNTING).currentTier
+                                )
                                 run = next
                                 message = ""
                             }
@@ -332,7 +348,7 @@ fun ForestAdventureScreen(
                         }
                     }
                     ForestStage.LEAVES -> {
-                        val q = ForestEngine.leafRounds(run.seed)[run.leafRound.coerceIn(0, 2)]
+                        val q = ForestEngine.leafRounds(run.seed, run.tier)[run.leafRound.coerceIn(0, 2)]
                         ForestPanel {
                             ForestHeading("🍃", "Şifreli Yapraklar",
                                 "Bir yaprak yanlış sayı taşıyor. Dörder artma kuralını kontrol et.")
@@ -382,7 +398,7 @@ fun ForestAdventureScreen(
                         }
                     }
                     ForestStage.TRAIL -> {
-                        val q = ForestEngine.trailSteps(run.seed)[run.trailStep.coerceIn(0, 3)]
+                        val q = ForestEngine.trailSteps(run.seed, run.tier)[run.trailStep.coerceIn(0, 3)]
                         ForestPanel {
                             ForestHeading("✨", "Işıklı Patika",
                                 "Her doğru dörderlik sıçrama orman yolunda yeni bir ışık yakar.")
@@ -441,7 +457,7 @@ fun ForestAdventureScreen(
                         }
                     }
                     ForestStage.ROOTS -> {
-                        val questions = ForestEngine.rootChallenges(run.seed)
+                        val questions = ForestEngine.rootChallenges(run.seed, run.tier)
                         ForestPanel {
                             ForestHeading("🌳", "Kadim Ağacın Sırrı",
                                 "Artık öğrendiğin bilgiyi yeni durumlarda kullanma zamanı.")
@@ -508,6 +524,7 @@ fun ForestAdventureScreen(
                             Text("Görevler tamamlandı: 4 / 4",
                                 fontWeight = FontWeight.Bold, color = ForestPalette.Emerald,
                                 fontSize = 16.sp)
+                            ForestStat("Oynanan beceri düzeyi", run.tier.title)
                             ForestStat("Doğru hamle oranı", "${run.accuracy}%")
                             ForestStat("Toplam hamle", "${run.attempts}")
                             ForestStat("Yanlış hamle", "${run.errors}")
@@ -521,7 +538,8 @@ fun ForestAdventureScreen(
                                 else "Öneri: Yeni örüntüler ve zihinden işlemlerle ilerle.",
                                 fontSize = 13.sp, color = ForestPalette.Ink)
                             ForestButton("🔁 Yeniden Oyna") {
-                                run = store.startNew()
+                                skillProgress = adaptiveStore.progress(AdventureSkill.FOUR_COUNTING)
+                                run = store.startNew(skillProgress.currentTier)
                                 message = ""
                             }
                             TextButton(onClick = onExit, modifier = Modifier.fillMaxWidth()) {

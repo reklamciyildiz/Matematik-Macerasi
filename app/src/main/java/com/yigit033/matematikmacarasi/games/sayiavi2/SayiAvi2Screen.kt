@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.yigit033.matematikmacarasi.R
 import kotlinx.coroutines.delay
+import com.yigit033.matematikmacarasi.learning.adaptive.AdaptiveLearningStore
+import com.yigit033.matematikmacarasi.learning.adaptive.AdventureSkill
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /**
  * Sayı Avı 2.0 Oyun Aşamaları State Machine
@@ -48,6 +51,8 @@ fun SayiAvi2Screen(
 ) {
     val context = LocalContext.current
     val storage = remember { SayiAviStorage.getInstance(context) }
+    val adaptiveStore = remember { AdaptiveLearningStore(context) }
+    var skillProgress by remember { mutableStateOf(adaptiveStore.progress(AdventureSkill.THREE_COUNTING)) }
     val forestStorage = remember { ForestProgressStore(context) }
     var forestRevision by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     val forestCompleted = remember(forestRevision) { forestStorage.hasCompleted() }
@@ -76,11 +81,22 @@ fun SayiAvi2Screen(
 
     // Oyun Verileri
     var runSeed by remember { mutableLongStateOf(storage.getRunSeed()) }
-    val shellGrouping = remember(runSeed) { SayiAviEngine.generateShellGrouping(runSeed + 17L) }
-    val transferChallenges = remember(runSeed) { SayiAviEngine.generateTransferChallenges(runSeed + 55L) }
-    val stageAGridData = remember(runSeed) { SayiAviEngine.generateStageAGrid(if (runSeed == 0L) 0L else runSeed + 101) }
-    val stageBVaultData = remember(runSeed) { SayiAviEngine.generateStageBVault(if (runSeed == 0L) 0L else runSeed + 202) }
-    val stageCRouteData = remember(runSeed) { SayiAviEngine.generateStageCRoute(if (runSeed == 0L) 0L else runSeed + 303) }
+    var runTier by remember { mutableStateOf(storage.getRunTier()) }
+    val shellGrouping = remember(runSeed, runTier) {
+        SayiAviEngine.generateShellGrouping(runSeed + 17L, runTier)
+    }
+    val transferChallenges = remember(runSeed, runTier) {
+        SayiAviEngine.generateTransferChallenges(runSeed + 55L, runTier)
+    }
+    val stageAGridData = remember(runSeed, runTier) {
+        SayiAviEngine.generateStageAGrid(if (runSeed == 0L) 0L else runSeed + 101, runTier)
+    }
+    val stageBVaultData = remember(runSeed, runTier) {
+        SayiAviEngine.generateStageBVault(if (runSeed == 0L) 0L else runSeed + 202, runTier)
+    }
+    val stageCRouteData = remember(runSeed, runTier) {
+        SayiAviEngine.generateStageCRoute(if (runSeed == 0L) 0L else runSeed + 303, runTier)
+    }
 
     // Süre Sayacı
     var missionStartTime by remember { mutableLongStateOf(storage.getRunStart()) }
@@ -100,7 +116,9 @@ fun SayiAvi2Screen(
     }
     fun newRun() {
         val now = System.currentTimeMillis()
-        storage.beginRun(now, now)
+        val selected = adaptiveStore.progress(AdventureSkill.THREE_COUNTING).currentTier
+        storage.beginRun(now, now, selected)
+        runTier = selected
         runSeed = now
         missionStartTime = now
         counters = SayiAviRunCounters()
@@ -179,6 +197,13 @@ fun SayiAvi2Screen(
                 totalCompletions = storage.getTotalCompletions(),
                 forestCompleted = forestCompleted,
                 starsCount = currentStars,
+                adaptiveProgress = skillProgress,
+                gradeLabel = adaptiveStore.gradeLabel(),
+                onSelectTier = { chosen ->
+                    if (adaptiveStore.selectTier(AdventureSkill.THREE_COUNTING, chosen)) {
+                        skillProgress = adaptiveStore.progress(AdventureSkill.THREE_COUNTING)
+                    }
+                },
                 onStartRegion2 = {
                     forestLauncher.launch(Intent(context, ForestAdventureActivity::class.java))
                 },
@@ -299,6 +324,13 @@ fun SayiAvi2Screen(
                         val firstCompletion = storage.recordMissionCompletion(totalTimeSeconds, summary)
                         isFirstCompletionResult = firstCompletion
                         currentStage = SayiAviMissionStage.REWARD_SUMMARY
+                        if (storage.getLastStage() == "COMPLETED") {
+                            adaptiveStore.recordCompletion(
+                                AdventureSkill.THREE_COUNTING, runSeed, runTier,
+                                summary.attempts, summary.errors, counters.hintsShown
+                            )
+                            skillProgress = adaptiveStore.progress(AdventureSkill.THREE_COUNTING)
+                        }
                         onRewardEarned(firstCompletion, summary)
                     }
                 },

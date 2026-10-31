@@ -12,6 +12,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.yigit033.matematikmacarasi.GameType
+import com.yigit033.matematikmacarasi.learning.adaptive.AdaptiveLearningStore
+import com.yigit033.matematikmacarasi.learning.adaptive.AdventureSkill
 import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsHelper
 import com.yigit033.matematikmacarasi.services.StarManager
@@ -55,6 +57,10 @@ class ForestAdventureActivity : ComponentActivity() {
                             val latest = stars.getDisplayStars()
                             starCount = latest
                             if (awardedNow) EventBus.updateStars(latest)
+                            AdaptiveLearningStore(this).recordCompletion(
+                                AdventureSkill.FOUR_COUNTING, session.seed, session.tier,
+                                session.attempts, session.errors, session.hints
+                            )
                             statistics.recordGameCompletion(
                                 gameType = GameType.NUMBER_HUNT_GAME,
                                 level = 2,

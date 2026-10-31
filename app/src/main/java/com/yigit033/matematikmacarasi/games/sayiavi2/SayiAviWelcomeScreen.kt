@@ -61,6 +61,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.learning.adaptive.AdaptiveProgress
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /**
  * S2.3 Macera Atlası: yalnızca ilk iki bölge oynanabilir.
@@ -72,6 +74,9 @@ fun SayiAviWelcomeScreen(
     totalCompletions: Int,
     forestCompleted: Boolean,
     starsCount: Int,
+    adaptiveProgress: AdaptiveProgress,
+    gradeLabel: String,
+    onSelectTier: (LearningTier?) -> Unit,
     onStartRegion1: () -> Unit,
     onStartRegion2: () -> Unit,
     onBackClick: () -> Unit,
@@ -152,6 +157,12 @@ fun SayiAviWelcomeScreen(
                     Text("2 BÖLGE AÇIK", fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold, color = Color(0xFFBEE6DA))
                 }
+
+                AdventureTierSelector(
+                    progress = adaptiveProgress,
+                    gradeLabel = gradeLabel,
+                    onChange = onSelectTier
+                )
 
                 AdventureWorldMap(
                     beachCompleted = isCompletedBefore,

@@ -73,16 +73,18 @@ fun SayiAviWelcomeScreen(
     isCompletedBefore: Boolean,
     totalCompletions: Int,
     forestCompleted: Boolean,
+    templeCompleted: Boolean,
     starsCount: Int,
     adaptiveProgress: AdaptiveProgress,
     gradeLabel: String,
     onSelectTier: (LearningTier?) -> Unit,
     onStartRegion1: () -> Unit,
     onStartRegion2: () -> Unit,
+    onStartTemple: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val completedRegions = listOf(isCompletedBefore, forestCompleted).count { it }
+    val completedRegions = listOf(isCompletedBefore, forestCompleted, templeCompleted).count { it }
     Box(modifier = modifier.fillMaxSize().background(AdventureTokens.Night)) {
         Image(
             painter = painterResource(R.drawable.island_explorer_hero),
@@ -141,7 +143,7 @@ fun SayiAviWelcomeScreen(
                         AdventureSectionProgress(
                             label = "Tamamlanan bölgeler",
                             completed = completedRegions,
-                            total = 2,
+                            total = 3,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }
@@ -154,7 +156,7 @@ fun SayiAviWelcomeScreen(
                 ) {
                     Text("KEŞİF HARİTASI", fontSize = 12.sp, letterSpacing = 1.2.sp,
                         fontWeight = FontWeight.ExtraBold, color = AdventureTokens.Gold)
-                    Text("2 BÖLGE AÇIK", fontSize = 11.sp,
+                    Text("3 BÖLGE AÇIK", fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold, color = Color(0xFFBEE6DA))
                 }
 
@@ -167,6 +169,8 @@ fun SayiAviWelcomeScreen(
                 AdventureWorldMap(
                     beachCompleted = isCompletedBefore,
                     forestCompleted = forestCompleted,
+                    templeCompleted = templeCompleted,
+                    onTempleClick = onStartTemple,
                     onBeachClick = onStartRegion1,
                     onForestClick = onStartRegion2
                 )
@@ -197,7 +201,8 @@ fun SayiAviWelcomeScreen(
                                 text = when {
                                     !isCompletedBefore -> "Kumsal Koyu · 5 oyun görevi"
                                     !forestCompleted -> "Gizemli Orman · 4 oyun görevi"
-                                    else -> "İki bölge tamamlandı · Tekrar keşfet"
+                                    !templeCompleted -> "Antik Tapınak · 4 ritüel"
+                                    else -> "Üç bölge tamamlandı · Tekrar keşfet"
                                 },
                                 fontSize = 13.sp, color = AdventureTokens.Cream,
                                 fontWeight = FontWeight.Medium
@@ -210,7 +215,7 @@ fun SayiAviWelcomeScreen(
                     }
                 }
                 Text(
-                    "Antik Tapınak geliştirme aşamasında. Kilitli olması bir satın alma şartı değildir.",
+                    "Antik Tapınak, çarpmanın anlamını dört farklı düzenekle keşfettiğin yeni bölgedir.",
                     modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
                     textAlign = TextAlign.Center,
                     fontSize = 11.sp, lineHeight = 15.sp,
@@ -225,6 +230,8 @@ fun SayiAviWelcomeScreen(
 private fun AdventureWorldMap(
     beachCompleted: Boolean,
     forestCompleted: Boolean,
+    templeCompleted: Boolean,
+    onTempleClick: () -> Unit,
     onBeachClick: () -> Unit,
     onForestClick: () -> Unit
 ) {
@@ -286,9 +293,9 @@ private fun AdventureWorldMap(
             modifier = Modifier.offset(xForest, 227.dp).width(size)
         )
         AdventureMapNode(
-            number = 3, title = "Antik Tapınak", topic = "Geliştirme aşamasında",
-            art = R.drawable.temple_node, enabled = false,
-            finished = false, onClick = {},
+            number = 3, title = "Antik Tapınak", topic = "Çarpmanın Sırları · 4 ritüel",
+            art = R.drawable.temple_node, enabled = true,
+            finished = templeCompleted, onClick = onTempleClick,
             modifier = Modifier.offset(xTemple, 436.dp).width(size)
         )
     }

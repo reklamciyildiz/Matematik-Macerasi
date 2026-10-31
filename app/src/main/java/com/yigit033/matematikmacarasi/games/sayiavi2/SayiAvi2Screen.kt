@@ -65,9 +65,9 @@ fun SayiAvi2Screen(
     var runSeed by remember { mutableLongStateOf(storage.getRunSeed()) }
     val shellGrouping = remember(runSeed) { SayiAviEngine.generateShellGrouping(runSeed + 17L) }
     val transferChallenges = remember(runSeed) { SayiAviEngine.generateTransferChallenges(runSeed + 55L) }
-    val stageAGridData = remember(runSeed) { SayiAviEngine.generateStageAGrid(if (runSeed == 0L) null else runSeed + 101) }
-    val stageBVaultData = remember(runSeed) { SayiAviEngine.generateStageBVault(if (runSeed == 0L) null else runSeed + 202) }
-    val stageCRouteData = remember(runSeed) { SayiAviEngine.generateStageCRoute(if (runSeed == 0L) null else runSeed + 303) }
+    val stageAGridData = remember(runSeed) { SayiAviEngine.generateStageAGrid(if (runSeed == 0L) 0L else runSeed + 101) }
+    val stageBVaultData = remember(runSeed) { SayiAviEngine.generateStageBVault(if (runSeed == 0L) 0L else runSeed + 202) }
+    val stageCRouteData = remember(runSeed) { SayiAviEngine.generateStageCRoute(if (runSeed == 0L) 0L else runSeed + 303) }
 
     // Süre Sayacı
     var missionStartTime by remember { mutableLongStateOf(storage.getRunStart()) }

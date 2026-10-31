@@ -53,6 +53,11 @@ class SayiAviStorage private constructor(context: Context) {
      */
     fun isStarAwarded(): Boolean = prefs.getBoolean(KEY_STAR_AWARDED, false)
 
+    /** StarManager para kaydını doğruladıktan sonra işaretlenir; yarım kalmış ödül sonraki açılışta telafi edilir. */
+    fun markStarAwarded() {
+        if (isMissionCompleted()) prefs.edit().putBoolean(KEY_STAR_AWARDED, true).apply()
+    }
+
     /**
      * Toplam tamamlama sayısı
      */
@@ -150,13 +155,10 @@ class SayiAviStorage private constructor(context: Context) {
             editor.putLong(KEY_BEST_TIME_SEC, timeSpentSeconds)
         }
 
-        val isFirstTime = !alreadyAwarded
-        if (isFirstTime) {
-            editor.putBoolean(KEY_STAR_AWARDED, true)
-        }
-
+        // Ödül hakkını burada tüketme: StarManager.addStars başarısız olabilir.
+        // Aktivite ödül başarıyla kaydedildiğinde markStarAwarded() çağırır.
         editor.apply()
-        return isFirstTime
+        return !alreadyAwarded
     }
 
     /**

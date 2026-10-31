@@ -43,8 +43,19 @@ class SayiAvi2Activity : ComponentActivity() {
             dailyTaskManager = DailyTaskManager.getInstance(this)
             gameStatisticsHelper = GameStatisticsHelper(this)
             dailyTaskId = intent.getIntExtra("daily_task_id", -1)
+            // İşlem ortasında kapanan eski koşulardaki tek seferlik yıldız kaybını onar.
+            val storage = SayiAviStorage.getInstance(this)
+            if (storage.isMissionCompleted() && !storage.isStarAwarded()) {
+                if (starManager.addStars("sayi_avi_2_stage1", 1)) {
+                    storage.markStarAwarded()
+                } else {
+                    Log.w(TAG, "Bekleyen tek seferlik yıldız sonraki açılışta yeniden denenecek")
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Servisler başlatılırken hata: ${e.message}", e)
+            finish()
+            return
         }
 
         setContent {
@@ -80,13 +91,20 @@ class SayiAvi2Activity : ComponentActivity() {
         try {
             if (isFirstTime) {
                 // 1 Yıldız ekle (Idempotent: addStars("sayi_avi_2_stage1", 1) tekil anahtarla korur)
-                starManager.addStars("sayi_avi_2_stage1", 1)
-                val newTotal = starManager.getDisplayStars()
-                EventBus.updateStars(newTotal)
-                onStarsUpdated(newTotal)
-
-                Toast.makeText(this, "+1 Yıldız profilinize eklendi!", Toast.LENGTH_SHORT).show()
-                Log.d(TAG, "İlk tamamlama ödülü: 1 yıldız verildi. Yeni toplam: $newTotal")
+                val awarded = starManager.addStars("sayi_avi_2_stage1", 1)
+                if (awarded) {
+                    SayiAviStorage.getInstance(this).markStarAwarded()
+                    val newTotal = starManager.getDisplayStars()
+                    EventBus.updateStars(newTotal)
+                    onStarsUpdated(newTotal)
+                    Toast.makeText(this, "+1 Yıldız profilinize eklendi!", Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, "İlk tamamlama ödülü kaydedildi. Yeni toplam: $newTotal")
+                } else {
+                    Toast.makeText(this,
+                        "Yıldız henüz kaydedilemedi; oyunu yeniden açtığında tekrar denenecek.",
+                        Toast.LENGTH_LONG).show()
+                    Log.e(TAG, "Yıldız kaydı başarısız; tek seferlik ödül hakkı saklandı")
+                }
             } else {
                 Log.d(TAG, "Replay: Yıldız verilmedi (idempotency korundu).")
             }

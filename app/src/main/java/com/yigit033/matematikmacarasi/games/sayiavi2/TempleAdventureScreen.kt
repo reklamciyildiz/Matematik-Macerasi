@@ -464,20 +464,36 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     Text(q.total.toString() + " ÷ " + q.divisor + " = ?",
                         color = Color(0xFFFFD77C), fontSize = 27.sp)
                     TempleArray(q.leftFactor, q.rightFactor)
-                    Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         listOf(q.resultAfterDivision,
                             q.resultAfterDivision + 1,
                             (q.resultAfterDivision - 1).coerceAtLeast(1))
                             .distinct().forEach { value ->
-                                OutlinedButton(onClick = {
-                                    if (selected != q.resultAfterDivision && record(value == q.resultAfterDivision)) {
-                                        selected = value
-                                        checkpoint.saveStageProgress(3, selected)
+                                val chosen = selected == value
+                                OutlinedButton(
+                                    modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                                    shape = RoundedCornerShape(14.dp),
+                                    border = androidx.compose.foundation.BorderStroke(
+                                        1.dp, if (chosen) Color(0xFFFFD77C) else Color(0xFF83E7DB)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = if (chosen) Color(0xFFFFD77C)
+                                            else Color(0xFF214B60),
+                                        contentColor = if (chosen) Color(0xFF0E2C40) else Color.White
+                                    ),
+                                    onClick = {
+                                        if (selected != q.resultAfterDivision &&
+                                            record(value == q.resultAfterDivision)) {
+                                            selected = value
+                                            checkpoint.saveStageProgress(3, selected)
+                                            message = if (value == q.resultAfterDivision)
+                                                "Ters işlem bağlantısını buldun."
+                                            else "Çarpma dizilimine tekrar bak."
+                                        }
                                     }
-                                    message = if (value == q.resultAfterDivision)
-                                        "Ters işlem bağlantısını buldun."
-                                    else "Çarpma dizilimine tekrar bak."
-                                }) { Text(value.toString()) }
+                                ) { Text(value.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp) }
                             }
                     }
                     TempleButton(enabled = selected == q.resultAfterDivision,
@@ -485,9 +501,19 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                 }
             }
             if (stage >= 2) {
-                OutlinedButton(onClick = {
-                    if (!hintSeen && record(false, hint = true)) hintSeen = true
-                }) { Text(if (hintSeen) "İpucu gösterildi" else "İpucu al") }
+                OutlinedButton(
+                    onClick = {
+                        if (!hintSeen && record(false, hint = true)) hintSeen = true
+                    },
+                    enabled = !hintSeen,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF83E7DB)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = Color(0xFFEFFFFB),
+                        disabledContentColor = Color(0xFFB5D4D4)
+                    )
+                ) { Text(if (hintSeen) "İpucu gösterildi" else "İpucu al") }
                 if (hintSeen) Text(if (stage == 2) "Toplam taşı eş grup sayısına böl." else "Çarpımdan bir çarpana bölersen diğerini bulursun.", color = Color(0xFF9FE9DA))
             }
             Text("$attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFFB7DBE6))

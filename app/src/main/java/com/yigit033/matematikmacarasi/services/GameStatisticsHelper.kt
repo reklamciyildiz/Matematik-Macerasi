@@ -71,14 +71,8 @@ class GameStatisticsHelper(private val context: Context) {
             )
             Log.d(TAG, "GameStatisticsService.recordGameCompletion çağrıldı: ID=$gameId, Skor=$score, Yıldız=$stars, Süre=${validGameTimeSeconds}s")
             
-            // 5. Günlük görev ilerlemesini güncelle
-            dailyTaskManager?.updateTaskProgressByGameType(gameType)
-            
-            // 6. Belirli görev ID'si varsa onu da güncelle
-            if (taskId > 0) {
-                dailyTaskManager?.updateTaskProgress(taskId)
-                Log.d(TAG, "Belirli görev güncellendi (ID: $taskId)")
-            }
+            // Bir tamamlanma yalnızca bir kez sayılmalı.
+            dailyTaskManager?.recordCompletedGameTask(gameType, taskId)
             
         } catch (e: Exception) {
             Log.e(TAG, "Oyun istatistikleri kaydedilirken hata: ${e.message}", e)

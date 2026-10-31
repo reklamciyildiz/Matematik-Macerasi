@@ -85,21 +85,22 @@ class SayiAvi2Activity : ComponentActivity() {
                 EventBus.updateStars(newTotal)
                 onStarsUpdated(newTotal)
 
-                // İstatistikleri ve günlük görevleri kaydet
-                gameStatisticsHelper.recordGameCompletion(
-                    gameType = GameType.NUMBER_HUNT_GAME,
-                    level = 1,
-                    score = if (summary.complete) summary.actionAccuracyPercent else 0,
-                    stars = 1,
-                    gameStartTime = System.currentTimeMillis() - summary.elapsedSeconds.coerceIn(1L, 3600L) * 1000L,
-                    taskId = dailyTaskId
-                )
-
                 Toast.makeText(this, "+1 Yıldız profilinize eklendi!", Toast.LENGTH_SHORT).show()
                 Log.d(TAG, "İlk tamamlama ödülü: 1 yıldız verildi. Yeni toplam: $newTotal")
             } else {
                 Log.d(TAG, "Replay: Yıldız verilmedi (idempotency korundu).")
             }
+
+            // Tek seferlik yıldız ödülünü korurken bütün tamamlamaları kaydet.
+            gameStatisticsHelper.recordGameCompletion(
+                gameType = GameType.NUMBER_HUNT_GAME,
+                level = 1,
+                score = if (summary.complete) summary.actionAccuracyPercent else 0,
+                stars = if (isFirstTime) 1 else 0,
+                gameStartTime = System.currentTimeMillis() -
+                    summary.elapsedSeconds.coerceIn(1L, 3600L) * 1000L,
+                taskId = dailyTaskId
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Ödül işleme sırasında hata: ${e.message}", e)
         }

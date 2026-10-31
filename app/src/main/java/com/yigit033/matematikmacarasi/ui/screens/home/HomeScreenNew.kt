@@ -134,7 +134,7 @@ fun HomeScreenNew(
 
             // Yıldız senkronizasyonunu EventBus üzerinden garanti et
             val currentDisplayStars = starManager.getDisplayStars()
-            if (userStars != currentDisplayStars && currentDisplayStars > 0) {
+            if (userStars != currentDisplayStars) {
                 EventBus.updateStars(currentDisplayStars)
             }
         } catch (e: Exception) {
@@ -218,7 +218,7 @@ fun HomeScreenNew(
     // Görev tıklama aksiyonu
     val launchTaskGame: (DailyTask) -> Unit = { task ->
         val intent = getGameIntentForType(context, task.gameType)
-        intent.putExtra("daily_task_id", task.id.toString())
+        intent.putExtra("daily_task_id", task.id)
         context.startActivity(intent)
     }
 
@@ -376,10 +376,10 @@ fun HomeScreenNew(
         if (showDailyTasksDialog) {
             DailyTasksDialog(
                 onDismiss = { showDailyTasksDialog = false },
-                onTaskClick = { taskId ->
+                onTaskClick = { task ->
                     showDailyTasksDialog = false
-                    val intent = getGameIntentForTaskId(context, taskId)
-                    intent.putExtra("daily_task_id", taskId)
+                    val intent = getGameIntentForType(context, task.gameType)
+                    intent.putExtra("daily_task_id", task.id)
                     context.startActivity(intent)
                 },
                 dailyTasks = dailyTasks
@@ -429,24 +429,4 @@ private fun getGameIntentForType(context: Context, gameType: GameType): Intent {
     }
 }
 
-/**
- * TaskId string değerini gerçek oyun Activity Intent'ine dönüştürür.
- */
-private fun getGameIntentForTaskId(context: Context, taskId: String): Intent {
-    return when (taskId) {
-        "addition" -> Intent(context, AdditionGameActivity::class.java)
-        "subtraction" -> Intent(context, SubtractionGameActivity::class.java)
-        "multiplication" -> Intent(context, MultiplicationGameActivity::class.java)
-        "division" -> Intent(context, DivisionGameActivity::class.java)
-        "balloon_pop" -> Intent(context, BalloonPopGameActivity::class.java)
-        "number_hunt" -> Intent(context, SayiAvi2Activity::class.java)
-        "math_maze" -> Intent(context, MathMazeGameActivity::class.java)
-        "space_math_adventure" -> Intent(context, SpaceMathAdventureActivity::class.java)
-        "shape_recognition" -> Intent(context, ComingSoonActivity::class.java).apply {
-            putExtra("game_name", "Şekiller & Geometri")
-            putExtra("is_category", true)
-        }
-        "market_simulator" -> Intent(context, MarketSimulatorActivity::class.java)
-        else -> Intent(context, AdditionGameActivity::class.java)
-    }
-}
+// Günlük görev tıklamaları artık getGameIntentForType() ile yönlendirilir.

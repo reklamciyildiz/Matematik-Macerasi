@@ -985,21 +985,20 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
     if (showDailyTasks) {
         DailyTasksDialog(
             onDismiss = { showDailyTasks = false },
-            onTaskClick = { taskId ->
-                val intent = when (taskId) {
-                    "addition" -> Intent(context, AdditionGameActivity::class.java)
-                    "subtraction" -> Intent(context, SubtractionGameActivity::class.java)
-                    "multiplication" -> Intent(context, MultiplicationGameActivity::class.java)
-                    "division" -> Intent(context, DivisionGameActivity::class.java)
-                    "balloon_pop" -> Intent(context, BalloonPopGameActivity::class.java)
-                    "number_hunt" -> Intent(context, NumberHuntGameActivity::class.java)
-                    "math_maze" -> Intent(context, MathMazeGameActivity::class.java)
-                    "space_math_adventure" -> Intent(context, SpaceMathAdventureActivity::class.java)
-                    "shape_recognition" -> Intent(context, GameSelectionActivity::class.java)
-                    "market_simulator" -> Intent(context, GameSelectionActivity::class.java)
-                    else -> Intent(context, GameSelectionActivity::class.java)
+            onTaskClick = { task ->
+                val intent = when (task.gameType) {
+                    GameType.ADDITION_GAME -> Intent(context, AdditionGameActivity::class.java)
+                    GameType.SUBTRACTION_GAME -> Intent(context, SubtractionGameActivity::class.java)
+                    GameType.MULTIPLICATION_GAME -> Intent(context, MultiplicationGameActivity::class.java)
+                    GameType.DIVISION_GAME -> Intent(context, DivisionGameActivity::class.java)
+                    GameType.BALLOON_POP_GAME -> Intent(context, BalloonPopGameActivity::class.java)
+                    GameType.NUMBER_HUNT_GAME -> Intent(context, com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity::class.java)
+                    GameType.MATH_MAZE_GAME -> Intent(context, MathMazeGameActivity::class.java)
+                    GameType.SPACE_MATH_ADVENTURE -> Intent(context, SpaceMathAdventureActivity::class.java)
+                    GameType.SHAPE_RECOGNITION -> Intent(context, GameSelectionActivity::class.java)
+                    GameType.MARKET_SIMULATOR -> Intent(context, GameSelectionActivity::class.java)
                 }
-                intent.putExtra("daily_task_id", taskId)
+                intent.putExtra("daily_task_id", task.id)
                 context.startActivity(intent)
             },
             dailyTasks = dailyTasks
@@ -1868,7 +1867,7 @@ fun HomeScreenPreview() {
 @Composable
 fun DailyTasksDialog(
     onDismiss: () -> Unit,
-    onTaskClick: (taskId: String) -> Unit,
+    onTaskClick: (task: DailyTask) -> Unit,
     dailyTasks: List<DailyTask>
 ) {
     var currentTasks by remember { mutableStateOf(dailyTasks) }
@@ -1961,20 +1960,8 @@ fun DailyTasksDialog(
                             task = task,
                             onClick = { 
                                 if (!task.isCompleted) {
-                                    // Görev ID'sine göre değil, oyun türüne göre yönlendirme yap
-                                    val taskIdForNavigation = when (task.gameType) {
-                                        GameType.ADDITION_GAME -> "addition"
-                                        GameType.SUBTRACTION_GAME -> "subtraction"
-                                        GameType.MULTIPLICATION_GAME -> "multiplication"
-                                        GameType.DIVISION_GAME -> "division"
-                                        GameType.BALLOON_POP_GAME -> "balloon_pop"
-                                        GameType.NUMBER_HUNT_GAME -> "number_hunt"
-                                        GameType.MATH_MAZE_GAME -> "math_maze"
-                                        GameType.SPACE_MATH_ADVENTURE -> "space_math_adventure"
-                                        GameType.SHAPE_RECOGNITION -> "shape_recognition"
-                                        GameType.MARKET_SIMULATOR -> "market_simulator"
-                                    }
-                                    onTaskClick(taskIdForNavigation)
+                                    // Oyun türü ve gerçek görev ID'si birlikte taşınır.
+                                    onTaskClick(task)
                                 }
                             }
                         )

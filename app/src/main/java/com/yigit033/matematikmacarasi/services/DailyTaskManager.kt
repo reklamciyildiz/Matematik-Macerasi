@@ -92,7 +92,11 @@ class DailyTaskManager private constructor(private val context: Context) {
         if (taskIndex != -1) {
             val task = tasks[taskIndex]
             if (task.currentCount < task.targetCount) {
-                tasks[taskIndex] = task.copy(currentCount = task.currentCount + 1)
+                val newCount = task.currentCount + 1
+                tasks[taskIndex] = task.copy(
+                    currentCount = newCount,
+                    isCompleted = newCount >= task.targetCount
+                )
                 saveTodayTasks(tasks)
                 EventBus.updateDailyTasks(tasks.toList())
                 Log.d(TAG, "Görev ilerleme güncellendi: ID=$taskId, Yeni İlerleme=${task.currentCount + 1}/${task.targetCount}")
@@ -102,6 +106,19 @@ class DailyTaskManager private constructor(private val context: Context) {
         }
     }
     
+    /**
+     * Tek oyun bitişinde tek ilerleme kaydı: ID eşleşiyorsa o görev,
+     * yoksa mevcut davranışla oyun türünün açık görevleri ilerletilir.
+     */
+    fun recordCompletedGameTask(gameType: GameType, taskId: Int = -1) {
+        val matching = getTodayTasks().firstOrNull {
+            it.id == taskId && it.gameType == gameType &&
+                !it.isCompleted && it.currentCount < it.targetCount
+        }
+        if (matching != null) updateTaskProgress(matching.id)
+        else updateTaskProgressByGameType(gameType)
+    }
+
     /**
      * Belirli bir oyun türü için ilerlemeyi güncelle
      * Bu fonksiyon, bir oyun bittiğinde ilgili oyun türüne ait görevlerin ilerlemesini günceller.

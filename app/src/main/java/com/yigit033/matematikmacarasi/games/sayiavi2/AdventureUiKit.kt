@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics

@@ -32,6 +32,7 @@ object CurriculumSkillCatalog {
     private const val G1_OPERATIONS = "https://tymm.meb.gov.tr/ilkokul-matematik-dersi/unite/99"
     private const val G2_OPERATIONS = "https://tymm.meb.gov.tr/ilkokul-matematik-dersi/unite/164"
     private const val G3_OPERATIONS = "https://tymm.meb.gov.tr/ilkokul-matematik-dersi/unite/264"
+    private const val G4_LEGACY = "https://mufredat.meb.gov.tr/Dosyalar/201813017165445-MATEMAT%C4%B0K%20%C3%96%C4%9ERET%C4%B0M%20PROGRAMI%202018v.pdf"
     private const val SCOPE = "https://menderes.meb.gov.tr/www/20262027-egitim-ve-ogretim-yili-turkiye-yuzyili-maarif-modeli-temel-egitim-taslak-cerceve-planlari-yayimlandi/icerik/1760/"
 
     fun programForGrade(grade: Int?): CurriculumProgram = when (grade) {
@@ -86,7 +87,17 @@ object CurriculumSkillCatalog {
             CurriculumProgram.TYMM_2026_27, "MAT.2.2.4",
             "Önceki sınıf: çarpma ve bölmeyi toplama ve çıkarmaya dayalı çözümleme",
             CurriculumMatch.REVIEW_FROM_PREVIOUS_GRADE, G2_OPERATIONS,
-            "Üçüncü sınıfta önceki yılın becerisini tekrar ettirir; üçüncü sınıf kazanımı diye sunulmaz.")
+            "Üçüncü sınıfta önceki yılın becerisini tekrar ettirir; üçüncü sınıf kazanımı diye sunulmaz."),
+        CurriculumSkillLink("count_3", "Artan sayı örüntüsü tekrarı", 4,
+            CurriculumProgram.LEGACY_2026_27, "M.4.1.1.6",
+            "Belli kurala göre artan veya azalan örüntü oluşturma ve kuralını açıklama",
+            CurriculumMatch.PRACTICE_RELATED, G4_LEGACY,
+            "Oyun yalnızca üçerli artış örüntülerini tanıma/izlemeyi çalışır; örüntü kurmayı ve açıklamayı tam değerlendirmez."),
+        CurriculumSkillLink("count_4", "Artan sayı örüntüsü tekrarı", 4,
+            CurriculumProgram.LEGACY_2026_27, "M.4.1.1.6",
+            "Belli kurala göre artan veya azalan örüntü oluşturma ve kuralını açıklama",
+            CurriculumMatch.PRACTICE_RELATED, G4_LEGACY,
+            "Oyun yalnızca dörder artış örüntülerini tanıma/izlemeyi çalışır; örüntü kurmayı ve açıklamayı tam değerlendirmez.")
     )
 
     fun forGradeAndSkill(grade: Int?, skill: String): CurriculumSkillLink? =

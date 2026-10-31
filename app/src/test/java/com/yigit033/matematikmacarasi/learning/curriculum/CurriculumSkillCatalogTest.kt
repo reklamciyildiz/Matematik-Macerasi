@@ -14,9 +14,10 @@ class CurriculumSkillCatalogTest {
         val map = CurriculumSkillCatalog.mapping
         assertTrue(map.isNotEmpty())
         map.forEach {
-            assertTrue(it.schoolGrade in 1..3)
+            assertTrue(it.schoolGrade in 1..4)
             assertNotNull(it.officialSourceUrl)
-            assertTrue(it.officialSourceUrl!!.startsWith("https://tymm.meb.gov.tr/"))
+            assertTrue(it.officialSourceUrl!!.startsWith("https://tymm.meb.gov.tr/") ||
+                it.officialSourceUrl.startsWith("https://mufredat.meb.gov.tr/"))
             assertTrue(it.outcomeCode!!.startsWith("MAT."))
             assertFalse(it.note.isBlank())
         }
@@ -25,6 +26,8 @@ class CurriculumSkillCatalogTest {
         assertEquals(CurriculumMatch.REVIEW_FROM_PREVIOUS_GRADE,
             CurriculumSkillCatalog.forGradeAndSkill(3, "count_4")?.relation)
         assertNull(CurriculumSkillCatalog.forGradeAndSkill(4, "multiply"))
+        assertEquals("M.4.1.1.6",
+            CurriculumSkillCatalog.forGradeAndSkill(4, "count_4")?.outcomeCode)
     }
     @Test fun neverClaimsCompleteCurriculumOrUnverifiedGrade() {
         assertTrue(CurriculumSkillCatalog.displayStatus(4, "multiply").contains("yapılmadı"))

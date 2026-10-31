@@ -3,6 +3,12 @@ package com.yigit033.matematikmacarasi.ui.screens.home
 import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.yigit033.matematikmacarasi.learning.adaptive.GradePolicy
+import com.yigit033.matematikmacarasi.learning.curriculum.CurriculumSkillCatalog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -58,6 +64,14 @@ fun LearningPracticeSection(userClass: String) {
     val lessons = remember(userClass) { LearningPathCatalog.forGrade(userClass) }
     var selectedId by remember(userClass) { mutableStateOf<String?>(null) }
     var version by remember { mutableIntStateOf(0) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) version++
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     val selected = lessons.firstOrNull { it.id == selectedId }
     if (selected != null) {
         BackHandler { selectedId = null }
@@ -96,12 +110,15 @@ fun LearningPracticeSection(userClass: String) {
                     Text(if (done) "Tamamlandı" else "Başla", color = HomeColors.MagicCyan, fontSize = 12.sp)
                 }
                 Text(lesson.teaching, color = HomeColors.TextSecondary, fontSize = 12.sp)
+                Text(CurriculumSkillCatalog.displayStatus(GradePolicy.parse(userClass), lesson.id),
+                    color = HomeColors.MagicCyan, fontSize = 10.sp)
                 if (done) {
                     Text("En iyi doğru hamle: ${store.best(lesson.id)}% · ${store.runs(lesson.id)} oturum",
                         color = HomeColors.MagicCyan, fontSize = 11.sp)
                 }
             }
         }
+        AdventureLearningReport(userClass, version)
         Text("Her ders 4 soruluk bir başlangıç çalışmasıdır. Oturum puanı öğrenme düzeyini kanıtlamaz. Yıldız ve ücretli hak verilmez.",
             color = HomeColors.TextSecondary, fontSize = 11.sp)
     }

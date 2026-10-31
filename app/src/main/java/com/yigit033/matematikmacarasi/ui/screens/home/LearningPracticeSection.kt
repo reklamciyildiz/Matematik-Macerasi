@@ -6,7 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import com.yigit033.matematikmacarasi.learning.adaptive.GradePolicy
 import com.yigit033.matematikmacarasi.learning.curriculum.CurriculumSkillCatalog
 import androidx.compose.foundation.background

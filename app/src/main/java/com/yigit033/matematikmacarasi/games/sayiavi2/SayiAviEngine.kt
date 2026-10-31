@@ -13,6 +13,67 @@ import kotlin.random.Random
  */
 object SayiAviEngine {
 
+
+    /** Fiziksel üçerli grup oluşturma; her koşuda değişen 2–4 grup. */
+    data class ShellGrouping(val groups: Int, val shellsPerGroup: Int, val choices: List<Int>) {
+        val total: Int get() = groups * shellsPerGroup
+        init {
+            require(groups in 2..4 && shellsPerGroup == 3)
+            require(choices.size == 4 && choices.distinct().size == 4 && total in choices)
+        }
+    }
+
+    fun generateShellGrouping(seed: Long): ShellGrouping {
+        val rng = Random(seed xor 0x2E42L)
+        val groups = rng.nextInt(2, 5)
+        val total = groups * 3
+        return ShellGrouping(groups, 3,
+            listOf(total, total - 3, total + 3, total + 1).shuffled(rng))
+    }
+
+    enum class TransferKind { TOTAL, EQUAL_GROUPS, ADD_ONE_GROUP }
+    data class TransferChallenge(
+        val kind: TransferKind,
+        val prompt: String,
+        val correct: Int,
+        val choices: List<Int>,
+        val hint: String,
+        val explanation: String
+    ) {
+        init { require(correct > 0 && choices.size == 4 && choices.distinct().size == 4 && correct in choices) }
+    }
+
+    /** Nesne gruplamasını kasa, malzeme ve ikmal problemlerine aktarır. */
+    fun generateTransferChallenges(seed: Long): List<TransferChallenge> {
+        val rng = Random(seed xor 0x37F21L)
+        val bagCount = rng.nextInt(2, 5)
+        val shellCount = rng.nextInt(3, 6)
+        val lanternCount = rng.nextInt(2, 5)
+        fun choices(correct: Int): List<Int> {
+            val alternatives = linkedSetOf(correct, correct + 3, correct + 1, maxOf(1, correct - 3))
+            var next = correct + 2
+            while (alternatives.size < 4) alternatives.add(next++)
+            return alternatives.toList().shuffled(rng)
+        }
+        return listOf(
+            TransferChallenge(TransferKind.TOTAL,
+                "Her kesede 3 pusula var. $bagCount kese kaç pusula eder?",
+                bagCount * 3, choices(bagCount * 3),
+                "Her kesenin 3 pusulasını birlikte say: 3, 6, 9...",
+                "$bagCount kese × 3 pusula = ${bagCount * 3} pusula."),
+            TransferChallenge(TransferKind.EQUAL_GROUPS,
+                "$shellCount üçerli paket için kaç kabuk gerekir?",
+                shellCount * 3, choices(shellCount * 3),
+                "Bir pakette 3 kabuk var. Her paket için 3 daha ekle.",
+                "$shellCount paket için ${shellCount * 3} kabuk gerekir."),
+            TransferChallenge(TransferKind.ADD_ONE_GROUP,
+                "$lanternCount kutuda üçer fener var. Bir kutu daha gelirse toplam kaç fener olur?",
+                (lanternCount + 1) * 3, choices((lanternCount + 1) * 3),
+                "Önce kutu sayısına 1 ekle. Sonra üçer say.",
+                "${lanternCount + 1} kutunun her birinde 3 fener: ${(lanternCount + 1) * 3}.")
+        )
+    }
+
     val CANONICAL_STAGE_A_NUMBERS = listOf(7, 12, 4, 15, 8, 11, 6, 17, 13, 18, 10, 5, 9, 14, 16, 19)
     val CANONICAL_STAGE_A_TARGETS = listOf(6, 9, 12, 15, 18)
 

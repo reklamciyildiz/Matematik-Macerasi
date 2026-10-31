@@ -97,7 +97,7 @@ class SayiAviStorage private constructor(context: Context) {
     fun beginRun(seed: Long, start: Long) {
         prefs.edit()
             .putLong(RUN_SEED, seed).putLong(RUN_START, start)
-            .putString(KEY_LAST_STAGE, "STAGE_A")
+            .putString(KEY_LAST_STAGE, "STAGE_GROUP")
             .putBoolean(KEY_MAP_PIECE_1, false).putBoolean(KEY_MAP_PIECE_2, false)
             .putString(RUN_COUNTERS, SayiAviRunCounters().encode())
             .putInt(ROUTE_STEP, 0)
@@ -132,6 +132,8 @@ class SayiAviStorage private constructor(context: Context) {
      * - Replay ise false döndürür (0 yıldız)
      */
     fun recordMissionCompletion(timeSpentSeconds: Long, summary: SayiAviLearningSummary): Boolean {
+        // Aynı koşunun tamamlanması tekrar sayılmamalı.
+        if (getLastStage() == "COMPLETED") return false
         val alreadyAwarded = isStarAwarded()
         val currentCount = getTotalCompletions()
         val bestTime = prefs.getLong(KEY_BEST_TIME_SEC, Long.MAX_VALUE)

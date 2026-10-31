@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -28,12 +29,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -44,6 +47,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -140,6 +144,25 @@ private fun TempleArtwork(drawableId: Int, description: String, compact: Boolean
 }
 
 @Composable
+private fun TempleButton(
+    onClick: () -> Unit, enabled: Boolean = true,
+    content: @Composable RowScope.() -> Unit
+) {
+    Button(
+        onClick = onClick, enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color(0xFFF2CB7F),
+            contentColor = Color(0xFF102E43),
+            disabledContainerColor = Color(0xFF465965),
+            disabledContentColor = Color(0xFF9BB0BE)
+        ),
+        content = content
+    )
+}
+
+@Composable
 private fun TempleArray(rows: Int, columns: Int) {
     Column(
         Modifier.fillMaxWidth(),
@@ -169,6 +192,10 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     var runTier by remember { mutableStateOf(checkpoint.tier) }
     var placed by remember(seed, stage) { mutableIntStateOf(0) }
     var rotated by remember(seed, stage) { mutableStateOf(false) }
+    val rotateScale by animateFloatAsState(
+        targetValue = if (rotated) 1f else .8f,
+        animationSpec = tween(440), label = "Pillars rotate reveal"
+    )
     var distributed by remember(seed, stage) { mutableIntStateOf(0) }
     var selected by remember(seed, stage) { mutableIntStateOf(-1) }
     var message by remember(seed, stage) { mutableStateOf("") }
@@ -223,7 +250,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                 }
                 Text("Bu veriler oyun içi gözlemdir; kalıcı öğrenme veya MEB kazanımı tamamlandı anlamına gelmez.", color = Color(0xFFB7DBE6), fontSize = 11.sp)
             }
-            Button(onClick = {
+            TempleButton(onClick = {
                 val now = System.currentTimeMillis().coerceAtLeast(seed + 1L).coerceAtLeast(1L)
                 if (checkpoint.start(now, tier)) {
                     seed = now
@@ -240,7 +267,9 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                 2 -> R.drawable.temple_art_gate
                 else -> R.drawable.temple_art_mirror
             }
-            TempleArtwork(roomArt, names[stage] + " ortamı", compact = true)
+            Crossfade(targetState = roomArt, animationSpec = tween(340), label = "Ritual scene") { art ->
+                TempleArtwork(art, names[stage] + " ortamı", compact = true)
+            }
             Surface(color = Color(0xFF18394E), shape = RoundedCornerShape(20.dp), border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x88FFD77C)), modifier = Modifier.fillMaxWidth()) {
                 Text(listOf("Kadim mozaikleri taş taş inşa et.", "Sütunların dengeli düzenini açığa çıkar.", "Kayıp çarpanı eş gruplarla keşfet.", "Aynada ters işlemin sırrını çöz.")[stage], Modifier.padding(15.dp), color = Color.White)
             }
@@ -273,10 +302,10 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         }
                     }
                     Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
-                    Button(enabled = placed < q.tiles, onClick = {
+                    TempleButton(enabled = placed < q.tiles, onClick = {
                         placed = (placed + q.columns).coerceAtMost(q.tiles)
                     }) { Text("Bir sırayı yerleştir") }
-                    Button(enabled = placed == q.tiles, onClick = { if (record(true)) advance() }) {
+                    TempleButton(enabled = placed == q.tiles, onClick = { if (record(true)) advance() }) {
                         Text("Mozaik tamamlandı")
                     }
                 }
@@ -291,12 +320,15 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     TempleArray(q.leftRows, q.leftColumns)
                     if (rotated) {
                         Text("Döndürülmüş eşdeğer dizilim", color = Color(0xFF9FE9DA))
-                        TempleArray(q.rightRows, q.rightColumns)
+                        Box(Modifier.fillMaxWidth().graphicsLayer {
+                            scaleX = rotateScale
+                            scaleY = rotateScale
+                        }) { TempleArray(q.rightRows, q.rightColumns) }
                     }
-                    Button(onClick = { rotated = !rotated }) {
+                    TempleButton(onClick = { rotated = !rotated }) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
                     }
-                    Button(enabled = rotated && TempleEngine.isBalanced(q),
+                    TempleButton(enabled = rotated && TempleEngine.isBalanced(q),
                         onClick = { if (record(true)) advance() }) { Text("Dengeyi doğrula") }
                 }
                 2 -> {
@@ -335,11 +367,11 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                             }
                         }
                     }
-                    Button(enabled = distributed < q.total,
+                    TempleButton(enabled = distributed < q.total,
                         onClick = { distributed = (distributed + q.groups).coerceAtMost(q.total) }) {
                         Text("Her gruba birer taş dağıt: $distributed / ${q.total}")
                     }
-                    Button(enabled = distributed > 0,
+                    TempleButton(enabled = distributed > 0,
                         onClick = { distributed = (distributed - q.groups).coerceAtLeast(0) }) {
                         Text("Son dağıtımı geri al")
                     }
@@ -347,7 +379,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         TempleArray(q.groups, q.itemsPerGroup)
                         Text("${q.groups} × ${q.itemsPerGroup} = ${q.total}", color = Color(0xFF9FE9DA))
                     }
-                    Button(enabled = distributed == q.total,
+                    TempleButton(enabled = distributed == q.total,
                         onClick = { if (record(true)) advance() }) { Text("Kapıyı aç") }
                 }
                 3 -> {
@@ -371,7 +403,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                                 }) { Text(value.toString()) }
                             }
                     }
-                    Button(enabled = selected == q.resultAfterDivision,
+                    TempleButton(enabled = selected == q.resultAfterDivision,
                         onClick = { advance() }) { Text("Tapınağı aydınlat") }
                 }
             }

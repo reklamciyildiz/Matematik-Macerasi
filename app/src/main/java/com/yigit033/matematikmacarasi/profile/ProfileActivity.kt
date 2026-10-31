@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,14 +57,18 @@ class ProfileActivity : ComponentActivity() {
     private lateinit var gameStatisticsService: GameStatisticsService
     private lateinit var starManager: StarManager
     
-    // Avatar güncelleme takibi için değişken
-    private var avatarChanged = false
-    
-    // Avatar mağazası aktivitesi için request code
-    private val AVATAR_STORE_REQUEST_CODE = 1001
-    
-    // Coroutine Scope
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+    private val avatarStoreLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            try {
+                EventBus.syncProfileToHomePage(this)
+                EventBus.updateAvatarId(avatarService.getCurrentAvatar().id)
+            } catch (e: Exception) {
+                Log.e("ProfileActivity", "Avatar dönüşünde senkronizasyon hatası: ${e.message}", e)
+            }
+        }
+    }
 
     // Add these properties at the class level
     private var userName: String = ""
@@ -118,7 +123,7 @@ class ProfileActivity : ComponentActivity() {
                     onAvatarStoreClick = {
                         try {
                             val intent = Intent(this, AvatarStoreActivity::class.java)
-                            startActivityForResult(intent, AVATAR_STORE_REQUEST_CODE)
+                            avatarStoreLauncher.launch(intent)
                         } catch (e: Exception) {
                             Log.e("ProfileActivity", "Avatar mağazası açılamadı: ${e.message}", e)
                         }
@@ -128,87 +133,6 @@ class ProfileActivity : ComponentActivity() {
         }
     }
     
-    override fun onResume() {
-        super.onResume()
-        
-        // Aktivite yeniden görünür olduğunda, avatar değişmiş olabilir
-        // Bu nedenle avatarService'den güncel veriyi alıyoruz
-        if (avatarChanged) {
-            Log.d("ProfileActivity", "Avatar değişikliği algılandı, UI yenileniyor")
-            avatarChanged = false
-            // Avatar bilgisi değiştiğinde UI yenilenir
-            setContent {
-                MatematikMacerasiTheme {
-                    ProfileScreen(
-                        name = sharedPreferences.getString("user_name", "") ?: "",
-                        currentClass = sharedPreferences.getString("user_class", "1. Sınıf") ?: "1. Sınıf",
-                        avatarService = avatarService,
-                        gameStatisticsService = gameStatisticsService,
-                        onNameChange = { newName ->
-                            sharedPreferences.edit().putString("user_name", newName).apply()
-                        },
-                        onClassChange = { newClass ->
-                            sharedPreferences.edit().putString("user_class", newClass).apply()
-                        },
-                        onSaveClick = {
-                            try {
-                                // EventBus'a profil güncellemesini bildir
-                                val currentUserName = sharedPreferences.getString("user_name", "") ?: ""
-                                EventBus.updateProfileData(currentUserName, System.currentTimeMillis())
-                                Log.d("ProfileActivity", "Profil bilgileri kaydedildi ve EventBus'a bildirildi: $currentUserName")
-                                
-                                // Profil ve ana sayfa arasında yıldız ve avatar bilgilerini senkronize et
-                                EventBus.syncProfileToHomePage(this)
-                                Log.d("ProfileActivity", "Ana sayfaya dönmeden önce yıldız ve avatar verileri senkronize edildi")
-                            } catch (e: Exception) {
-                                Log.e("ProfileActivity", "Profil bildirimi yapılırken hata: ${e.message}", e)
-                            }
-                            
-                            // Aktiviteyi kapat
-                            setResult(RESULT_OK)
-                            finish()
-                        },
-                        onAvatarStoreClick = {
-                            try {
-                                val intent = Intent(this, AvatarStoreActivity::class.java)
-                                startActivityForResult(intent, AVATAR_STORE_REQUEST_CODE)
-                            } catch (e: Exception) {
-                                Log.e("ProfileActivity", "Avatar mağazası açılamadı: ${e.message}", e)
-                            }
-                        }
-                    )
-                }
-            }
-        }
-    }
-    
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        
-        if (requestCode == AVATAR_STORE_REQUEST_CODE && resultCode == RESULT_OK) {
-            // Avatar mağazasından döndük, avatar değişmiş olabilir
-            avatarChanged = true
-            Log.d("ProfileActivity", "Avatar mağazasından döndü, avatar değişikliği işaretlendi")
-            
-            // Avatar değişikliğini ve yıldız sayısını hemen yansıt
-            coroutineScope.launch {
-                try {
-                    // Profil ve ana sayfa arasında yıldız ve avatar bilgilerini senkronize et
-                    EventBus.syncProfileToHomePage(this@ProfileActivity)
-                    Log.d("ProfileActivity", "Avatar mağazasından dönüşte yıldız ve avatar verileri senkronize edildi")
-                    
-                    // Güncel avatar ID'sini al
-                    val currentAvatarId = avatarService.getCurrentAvatar().id
-                    // Zorunlu bildirim yap (throttling olmadan)
-                    EventBus.forceAvatarNotification(currentAvatarId)
-                    Log.d("ProfileActivity", "Avatar değişikliği zorunlu olarak bildirildi: $currentAvatarId")
-                } catch (e: Exception) {
-                    Log.e("ProfileActivity", "Avatar ve yıldız senkronizasyonu sırasında hata: ${e.message}", e)
-                }
-            }
-        }
-    }
-
     /**
      * Kullanıcı bilgilerini SharedPreferences'ten yükler
      */
@@ -300,7 +224,7 @@ fun ProfileScreen(
     val currentAvatarId = EventBus.currentAvatarId.collectAsState()
     
     // Avatar ID'sine göre avatarı al
-    var currentAvatar by remember { mutableStateOf(avatarService.getCurrentAvatar()) }
+    val currentAvatar = remember(currentAvatarId.value) { avatarService.getCurrentAvatar() }
     
     var userName by remember { mutableStateOf(name) }
     var selectedClass by remember { mutableStateOf(currentClass) }

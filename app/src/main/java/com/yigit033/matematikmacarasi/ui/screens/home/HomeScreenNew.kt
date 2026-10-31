@@ -37,6 +37,7 @@ import com.yigit033.matematikmacarasi.DailyTask
 import com.yigit033.matematikmacarasi.DailyTasksDialog
 import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.MainActivity
 import com.yigit033.matematikmacarasi.games.ComingSoonActivity
 import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
 import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
@@ -211,8 +212,11 @@ fun HomeScreenNew(
 
     // Profil ekranına yönlendirme fonksiyonu
     val navigateToProfile: () -> Unit = {
-        val intent = Intent(context, ProfileActivity::class.java)
-        (context as? Activity)?.startActivityForResult(intent, 1001) ?: context.startActivity(intent)
+        if (context is MainActivity) {
+            context.openProfileEditor()
+        } else {
+            context.startActivity(Intent(context, ProfileActivity::class.java))
+        }
     }
 
     // Görev tıklama aksiyonu

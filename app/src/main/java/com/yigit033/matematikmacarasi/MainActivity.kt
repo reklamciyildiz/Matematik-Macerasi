@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
@@ -51,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
@@ -138,7 +140,27 @@ import com.yigit033.matematikmacarasi.ui.components.CompactBannerAdComponent
 import com.yigit033.matematikmacarasi.ui.screens.home.HomeScreenNew
 
 class MainActivity : ComponentActivity() {
-    private var lastResumeTime = 0L
+    // Observable state: oyun ve profil dönüşünde ana sayfa yenilenmeli.
+    private var lastResumeTime by mutableLongStateOf(0L)
+
+    private val profileEditorLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            lastResumeTime = System.currentTimeMillis()
+            try {
+                val currentAvatarId = AvatarService.getInstance(this).getCurrentAvatar().id
+                EventBus.updateAvatarId(currentAvatarId)
+                EventBus.updateProfileData(getUserName(), lastResumeTime)
+            } catch (e: Exception) {
+                Log.e(TAG, "Profil dönüşü senkronizasyon hatası: ${e.message}", e)
+            }
+        }
+    }
+
+    fun openProfileEditor() {
+        profileEditorLauncher.launch(Intent(this, ProfileActivity::class.java))
+    }
     private var audioService: AudioService? = null
     private lateinit var dailyTaskManager: DailyTaskManager
     private lateinit var sharedPreferences: SharedPreferences
@@ -383,26 +405,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1001 && resultCode == RESULT_OK) {
-            // Profil sayfasından dönüldüğünde lastResumeTime'ı güncelle
-            lastResumeTime = System.currentTimeMillis()
-            
-            // Avatar'ı da manuel olarak güncelle (EventBus ile birlikte çalışması için ek güvence)
-            try {
-                val avatarService = AvatarService(this)
-                val currentAvatarId = avatarService.getCurrentAvatar().id
-                Log.d("MainActivity", "Profil sayfasından dönüşte avatar güncelleniyor: $currentAvatarId")
-                
-                // Avatar ID'sini EventBus'a bildir
-                EventBus.updateAvatarId(currentAvatarId)
-            } catch (e: Exception) {
-                Log.e("MainActivity", "Profil dönüşünde avatar güncellenirken hata: ${e.message}", e)
-            }
-        }
-    }
-    
+    // Profil sonucu profileEditorLauncher üzerinden işlenir.
+
     // Kullanıcı adını getir
     fun getUserName(): String {
         return try {
@@ -838,8 +842,7 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
                         userStars = userStars,
                         dailyTasks = dailyTasks,
                         onProfileClick = {
-                            val intent = Intent(context, ProfileActivity::class.java)
-                            (context as MainActivity).startActivityForResult(intent, 1001)
+                            (context as MainActivity).openProfileEditor()
                         },
                         onDailyTasksClick = { showDailyTasks = true },
                         isLargeScreen = true
@@ -881,8 +884,7 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
                     userStars = userStars,
                     dailyTasks = dailyTasks,
                     onProfileClick = {
-                        val intent = Intent(context, ProfileActivity::class.java)
-                        (context as MainActivity).startActivityForResult(intent, 1001)
+                        (context as MainActivity).openProfileEditor()
                     },
                     onDailyTasksClick = { showDailyTasks = true },
                     isLargeScreen = false

@@ -81,6 +81,27 @@ private class TempleCheckpoint(context: Context) {
 }
 
 @Composable
+private fun TempleArray(rows: Int, columns: Int) {
+    Column(
+        Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        repeat(rows) {
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                repeat(columns) {
+                    Box(
+                        Modifier.size(22.dp).background(Color(0xFFFFD77C), RoundedCornerShape(5.dp))
+                            .border(1.dp, Color(0xFFEFFFFB), RoundedCornerShape(5.dp)),
+                        contentAlignment = Alignment.Center
+                    ) { Text("◆", color = Color(0xFF123148), fontSize = 11.sp) }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     val context = LocalContext.current
     val checkpoint = remember(context) { TempleCheckpoint(context) }
@@ -192,6 +213,11 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         "    =    " + (if (rotated) q.rightRows.toString() +
                         " × " + q.rightColumns.toString() else "? × ?"),
                         color = Color(0xFFFFD77C), fontSize = 24.sp)
+                    TempleArray(q.leftRows, q.leftColumns)
+                    if (rotated) {
+                        Text("Döndürülmüş eşdeğer dizilim", color = Color(0xFF9FE9DA))
+                        TempleArray(q.rightRows, q.rightColumns)
+                    }
                     Button(onClick = { rotated = !rotated }) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
                     }
@@ -216,7 +242,10 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         Text("Sıradaki gruba taş koy: $distributed / ${q.total}")
                     }
                     Button(enabled = distributed > 0, onClick = { distributed-- }) { Text("Son taşı geri al") }
-                    if (distributed == q.total) Text("${q.groups} × ${q.itemsPerGroup} = ${q.total}", color = Color(0xFF9FE9DA))
+                    if (distributed == q.total) {
+                        TempleArray(q.groups, q.itemsPerGroup)
+                        Text("${q.groups} × ${q.itemsPerGroup} = ${q.total}", color = Color(0xFF9FE9DA))
+                    }
                     Button(enabled = distributed == q.total,
                         onClick = { if (record(true)) advance() }) { Text("Kapıyı aç") }
                 }
@@ -227,6 +256,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         color = Color.White)
                     Text(q.total.toString() + " ÷ " + q.divisor + " = ?",
                         color = Color(0xFFFFD77C), fontSize = 27.sp)
+                    TempleArray(q.leftFactor, q.rightFactor)
                     Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                         listOf(q.resultAfterDivision,
                             q.resultAfterDivision + 1,

@@ -50,9 +50,20 @@ private class TempleCheckpoint(context: Context) {
     val stage: Int get() = prefs.getInt("stage", 0).coerceIn(0, 4)
     val tier: LearningTier get() = LearningTier.fromSaved(prefs.getString("tier", null))
     val runs: Int get() = prefs.getInt("runs", 0)
-    fun start(seed: Long, tier: LearningTier) {
-        prefs.edit().putLong("seed", seed).putString("tier", tier.name).putInt("stage", 0).commit()
+    val attempts: Int get() = prefs.getInt("attempts", 0)
+    val errors: Int get() = prefs.getInt("errors", 0)
+    val hints: Int get() = prefs.getInt("hints", 0)
+    fun record(correct: Boolean, hint: Boolean = false): Boolean {
+        if (seed <= 0L || stage == 4) return false
+        return prefs.edit()
+            .putInt("attempts", attempts + if (hint) 0 else 1)
+            .putInt("errors", errors + if (!correct && !hint) 1 else 0)
+            .putInt("hints", hints + if (hint) 1 else 0).commit()
     }
+    fun start(seed: Long, tier: LearningTier): Boolean =
+        prefs.edit().putLong("seed", seed).putString("tier", tier.name)
+            .putInt("stage", 0).putInt("attempts", 0).putInt("errors", 0)
+            .putInt("hints", 0).commit()
     fun advance(next: Int): Boolean {
         val previous = stage
         if (next != previous + 1 || next !in 1..4) return false
@@ -73,6 +84,17 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     var rotated by remember(seed, stage) { mutableStateOf(false) }
     var selected by remember(seed, stage) { mutableIntStateOf(0) }
     var message by remember(seed, stage) { mutableStateOf("") }
+    var hintSeen by remember(seed, stage) { mutableStateOf(false) }
+    var attemptCount by remember(seed, stage) { mutableIntStateOf(checkpoint.attempts) }
+    var errorCount by remember(seed, stage) { mutableIntStateOf(checkpoint.errors) }
+    var hintCount by remember(seed, stage) { mutableIntStateOf(checkpoint.hints) }
+    fun record(correct: Boolean, hint: Boolean = false) {
+        if (checkpoint.record(correct, hint)) {
+            attemptCount = checkpoint.attempts
+            errorCount = checkpoint.errors
+            hintCount = checkpoint.hints
+        } else message = "İlerleme kaydedilemedi."
+    }
     val quest = remember(seed, runTier) { TempleEngine.create(seed, runTier) }
     val names = listOf("Mozaik Odası", "Denge Sütunları", "Kayıp Çarpan Kapısı", "Ayna Mekanizması")
 
@@ -99,12 +121,14 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                 else "Dört odada matematiksel düzenekleri çalıştır.",
                 color = Color.White, fontSize = 20.sp)
             Text("Tamamlanan keşifler: " + checkpoint.runs, color = Color.White)
+            if (stage == 4) Text("Bu tur: $attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFF9FE9DA))
             Button(onClick = {
                 val now = System.currentTimeMillis().coerceAtLeast(1L)
-                checkpoint.start(now, tier)
-                seed = now
-                runTier = tier
-                stage = 0
+                if (checkpoint.start(now, tier)) {
+                    seed = now
+                    runTier = tier
+                    stage = 0
+                } else message = "Yeni oturum kaydedilemedi."
             }) { Text(if (stage == 4) "Yeni keşif" else "Tapınağa gir") }
         } else {
             Text(names[stage], color = Color(0xFFFFD77C),
@@ -138,7 +162,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         }
                     }
                     Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
-                    Button(enabled = placed == q.tiles, onClick = { advance() }) {
+                    Button(enabled = placed == q.tiles, onClick = { record(true); advance() }) {
                         Text("Mozaik tamamlandı")
                     }
                 }
@@ -154,7 +178,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
                     }
                     Button(enabled = rotated && TempleEngine.isBalanced(q),
-                        onClick = { advance() }) { Text("Dengeyi doğrula") }
+                        onClick = { record(true); advance() }) { Text("Dengeyi doğrula") }
                 }
                 2 -> {
                     val q = quest.gate
@@ -164,6 +188,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         q.options.forEach { value ->
                             OutlinedButton(onClick = {
                                 selected = value
+                                record(value == q.itemsPerGroup)
                                 message = if (value == q.itemsPerGroup)
                                     "Doğru! Her grup aynı sayıda taş aldı."
                                 else "Grupları yeniden saymayı dene."
@@ -187,6 +212,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                             .distinct().forEach { value ->
                                 OutlinedButton(onClick = {
                                     selected = value
+                                    record(value == q.resultAfterDivision)
                                     message = if (value == q.resultAfterDivision)
                                         "Ters işlem bağlantısını buldun."
                                     else "Çarpma dizilimine tekrar bak."
@@ -197,6 +223,13 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         onClick = { advance() }) { Text("Tapınağı aydınlat") }
                 }
             }
+            if (stage >= 2) {
+                OutlinedButton(onClick = {
+                    if (!hintSeen) { record(false, hint = true); hintSeen = true }
+                }) { Text(if (hintSeen) "İpucu gösterildi" else "İpucu al") }
+                if (hintSeen) Text(if (stage == 2) "Toplam taşı eş grup sayısına böl." else "Çarpımdan bir çarpana bölersen diğerini bulursun.", color = Color(0xFF9FE9DA))
+            }
+            Text("$attemptCount deneme · $errorCount yanlış · $hintCount ipucu", color = Color(0xFFB7DBE6))
             if (message.isNotEmpty()) Text(message, color = Color(0xFFFFD77C))
         }
         Spacer(Modifier.height(12.dp))

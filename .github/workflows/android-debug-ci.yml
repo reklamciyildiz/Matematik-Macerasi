@@ -80,8 +80,16 @@ jobs:
 
       # gradle.properties is intentionally gitignored (can contain local signing keys).
       # CI needs only the AndroidX flag; never put developer credentials here.
-      - name: Configure AndroidX for CI
-        run: echo "android.useAndroidX=true" >> gradle.properties
+      - name: Configure AndroidX and CI JVM memory
+        shell: bash
+        run: |
+          # Developer's local gradle.properties stays private and unchanged.
+          cat >> gradle.properties <<'PROPS'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
+          org.gradle.workers.max=2
+          kotlin.daemon.jvmargs=-Xmx1024m
+          PROPS
 
       - name: Unit tests and Android debug compilation
         shell: bash

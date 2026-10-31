@@ -192,7 +192,9 @@ fun SayiAvi2Screen(
         )
     }
 
-    when (currentStage) {\n        SayiAviMissionStage.TEMPLE -> TempleAdventureScreen(\n            tier = templeTier, onExit = { currentStage = SayiAviMissionStage.WELCOME })
+    when (currentStage) {
+        SayiAviMissionStage.TEMPLE -> TempleAdventureScreen(
+            tier = templeTier, onExit = { currentStage = SayiAviMissionStage.WELCOME })
         SayiAviMissionStage.WELCOME -> {
             SayiAviWelcomeScreen(
                 isCompletedBefore = storage.isMissionCompleted(),
@@ -206,7 +208,12 @@ fun SayiAvi2Screen(
                         skillProgress = adaptiveStore.progress(AdventureSkill.THREE_COUNTING)
                     }
                 },
-                onStartTemple = {\n                    templeTier = adaptiveStore.progress(AdventureSkill.THREE_COUNTING).currentTier\n                    currentStage = SayiAviMissionStage.TEMPLE\n                },\n                templeCompleted = context.getSharedPreferences("temple_adventure_v1", Context.MODE_PRIVATE).getInt("runs", 0) > 0,\n                onStartRegion2 = {
+                onStartTemple = {
+                    templeTier = adaptiveStore.progress(AdventureSkill.THREE_COUNTING).currentTier
+                    currentStage = SayiAviMissionStage.TEMPLE
+                },
+                templeCompleted = context.getSharedPreferences("temple_adventure_v1", Context.MODE_PRIVATE).getInt("runs", 0) > 0,
+                onStartRegion2 = {
                     forestLauncher.launch(Intent(context, ForestAdventureActivity::class.java))
                 },
                 onStartRegion1 = {

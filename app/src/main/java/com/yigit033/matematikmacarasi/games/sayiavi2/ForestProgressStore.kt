@@ -1,5 +1,7 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
+
 import android.content.Context
 
 /** Bölge 2 verileri ayrı alanda. Bölge 1, Premium ve yıldız anahtarlarına dokunmaz. */
@@ -22,7 +24,8 @@ class ForestProgressStore(context: Context) {
             rootRound = prefs.getInt("roots", 0),
             attempts = prefs.getInt("attempts", 0),
             errors = prefs.getInt("errors", 0),
-            hints = prefs.getInt("hints", 0)
+            hints = prefs.getInt("hints", 0),
+            tier = LearningTier.fromSaved(prefs.getString("run_tier", null))
         )
         return if (candidate.valid()) candidate else ForestSession()
     }
@@ -39,15 +42,16 @@ class ForestProgressStore(context: Context) {
         .putInt("attempts", session.attempts)
         .putInt("errors", session.errors)
         .putInt("hints", session.hints)
+        .putString("run_tier", session.tier.name)
         .commit()
 
     fun save(session: ForestSession): Boolean = synchronized(lock) {
         session.valid() && commit(session)
     }
 
-    fun startNew(): ForestSession = synchronized(lock) {
+    fun startNew(tier: LearningTier = LearningTier.GELISEN): ForestSession = synchronized(lock) {
         val now = System.currentTimeMillis().coerceAtLeast(1L)
-        val next = ForestSession(stage = ForestStage.BRIDGE, seed = now, startedAt = now)
+        val next = ForestSession(stage = ForestStage.BRIDGE, seed = now, startedAt = now, tier = tier)
         if (commit(next)) next else load()
     }
 

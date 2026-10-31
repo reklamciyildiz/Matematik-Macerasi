@@ -2,6 +2,7 @@ package com.yigit033.matematikmacarasi.games.sayiavi2
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /**
  * Sayı Avı 2.0 İlerleme ve Veri Saklama Servisi.
@@ -25,6 +26,7 @@ class SayiAviStorage private constructor(context: Context) {
         private const val KEY_LAST_STAGE = "mission_1_last_stage"
         private const val KEY_BEST_TIME_SEC = "mission_1_best_time_sec"
         private const val RUN_SEED = "g2_run_seed"
+        private const val RUN_TIER = "g4_run_learning_tier"
         private const val RUN_START = "g2_run_start"
         private const val RUN_COUNTERS = "g2_run_counters"
         private const val ROUTE_STEP = "g2_route_step"
@@ -99,12 +101,16 @@ class SayiAviStorage private constructor(context: Context) {
 
     fun getLastStage(): String? = prefs.getString(KEY_LAST_STAGE, null)
 
+    /** Eski sürümde seviye kaydı yoktur; mevcut sorular GELISEN ayarındaydı. */
+    fun getRunTier(): LearningTier =
+        LearningTier.fromSaved(prefs.getString(RUN_TIER, null))
     fun getRunSeed(): Long = prefs.getLong(RUN_SEED, 0L)
     fun getRunStart(): Long = prefs.getLong(RUN_START, System.currentTimeMillis())
 
-    fun beginRun(seed: Long, start: Long) {
+    fun beginRun(seed: Long, start: Long, tier: LearningTier = LearningTier.GELISEN) {
         prefs.edit()
             .putLong(RUN_SEED, seed).putLong(RUN_START, start)
+            .putString(RUN_TIER, tier.name)
             .putString(KEY_LAST_STAGE, "STAGE_GROUP")
             .putBoolean(KEY_MAP_PIECE_1, false).putBoolean(KEY_MAP_PIECE_2, false)
             .putString(RUN_COUNTERS, SayiAviRunCounters().encode())
@@ -122,10 +128,10 @@ class SayiAviStorage private constructor(context: Context) {
     }
 
     /** Yeni bölümlerde ara kayıt: kabuklar ile mühür sorusu kalınan yerden açılır. */
-    fun getFinishedGroups(): Int = prefs.getInt(GROUP_DONE, 0).coerceIn(0, 4)
+    fun getFinishedGroups(): Int = prefs.getInt(GROUP_DONE, 0).coerceIn(0, 6)
     fun getPartialShells(): Int = prefs.getInt(GROUP_PARTIAL, 0).coerceIn(0, 2)
     fun saveGroupingProgress(groups: Int, partial: Int) {
-        prefs.edit().putInt(GROUP_DONE, groups.coerceIn(0, 4))
+        prefs.edit().putInt(GROUP_DONE, groups.coerceIn(0, 6))
             .putInt(GROUP_PARTIAL, partial.coerceIn(0, 2)).apply()
     }
     fun getSealQuestionIndex(): Int = prefs.getInt(SEAL_INDEX, 0).coerceIn(0, 2)

@@ -1,6 +1,7 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
 import kotlin.random.Random
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /**
  * Sayı Avı 2.0 Matematik ve Seviye Motoru.
@@ -18,14 +19,18 @@ object SayiAviEngine {
     data class ShellGrouping(val groups: Int, val shellsPerGroup: Int, val choices: List<Int>) {
         val total: Int get() = groups * shellsPerGroup
         init {
-            require(groups in 2..4 && shellsPerGroup == 3)
+            require(groups in 2..6 && shellsPerGroup == 3)
             require(choices.size == 4 && choices.distinct().size == 4 && total in choices)
         }
     }
 
-    fun generateShellGrouping(seed: Long): ShellGrouping {
+    fun generateShellGrouping(seed: Long, tier: LearningTier = LearningTier.GELISEN): ShellGrouping {
         val rng = Random(seed xor 0x2E42L)
-        val groups = rng.nextInt(2, 5)
+        val groups = when (tier) {
+            LearningTier.TEMEL -> 2
+            LearningTier.GELISEN -> rng.nextInt(2, 5)
+            LearningTier.USTALIK -> rng.nextInt(4, 7)
+        }
         val total = groups * 3
         return ShellGrouping(groups, 3,
             listOf(total, total - 3, total + 3, total + 1).shuffled(rng))
@@ -44,16 +49,50 @@ object SayiAviEngine {
     }
 
     /** Nesne gruplamasını kasa, malzeme ve ikmal problemlerine aktarır. */
-    fun generateTransferChallenges(seed: Long): List<TransferChallenge> {
+    fun generateTransferChallenges(seed: Long, tier: LearningTier = LearningTier.GELISEN): List<TransferChallenge> {
         val rng = Random(seed xor 0x37F21L)
-        val bagCount = rng.nextInt(2, 5)
-        val shellCount = rng.nextInt(3, 6)
-        val lanternCount = rng.nextInt(2, 5)
+        val bagCount = when (tier) {
+            LearningTier.TEMEL -> rng.nextInt(2, 4)
+            LearningTier.GELISEN -> rng.nextInt(2, 5)
+            LearningTier.USTALIK -> rng.nextInt(5, 9)
+        }
+        val shellCount = when (tier) {
+            LearningTier.TEMEL -> 3
+            LearningTier.GELISEN -> rng.nextInt(3, 6)
+            LearningTier.USTALIK -> rng.nextInt(6, 10)
+        }
+        val lanternCount = when (tier) {
+            LearningTier.TEMEL -> 2
+            LearningTier.GELISEN -> rng.nextInt(2, 5)
+            LearningTier.USTALIK -> rng.nextInt(5, 9)
+        }
         fun choices(correct: Int): List<Int> {
             val alternatives = linkedSetOf(correct, correct + 3, correct + 1, maxOf(1, correct - 3))
             var next = correct + 2
             while (alternatives.size < 4) alternatives.add(next++)
             return alternatives.toList().shuffled(rng)
+        }
+        if (tier == LearningTier.USTALIK) {
+            val remaining = (shellCount - 2) * 3
+            val total = (bagCount + 2) * 3
+            val lanternTotal = (lanternCount + 2 - 1) * 3
+            return listOf(
+                TransferChallenge(TransferKind.TOTAL,
+                    "Her kesede 3 pusula var. $bagCount keseye 2 kese daha ekleniyor. Kaç pusula olur?",
+                    total, choices(total),
+                    "Önce kese sayısını bul, sonra üçerli say.",
+                    "$bagCount + 2 = ${bagCount + 2} kese; toplam $total pusula."),
+                TransferChallenge(TransferKind.EQUAL_GROUPS,
+                    "$shellCount üçerli kabuk paketinden 2 paket kullanıldı. Kaç kabuk kaldı?",
+                    remaining, choices(remaining),
+                    "Önce kalan paketleri hesapla. Sonra her biri için 3 say.",
+                    "$shellCount - 2 = ${shellCount - 2} paket; $remaining kabuk."),
+                TransferChallenge(TransferKind.ADD_ONE_GROUP,
+                    "$lanternCount üçerli fener kutusuna 2 kutu geldi ve 1 kutu dağıtıldı. Kaç fener var?",
+                    lanternTotal, choices(lanternTotal),
+                    "Kutu sayısı önce 2 artıyor, sonra 1 azalıyor.",
+                    "Kalan ${lanternCount + 1} kutuda $lanternTotal fener var.")
+            )
         }
         return listOf(
             TransferChallenge(TransferKind.TOTAL,
@@ -167,7 +206,9 @@ object SayiAviEngine {
      * - seed verilirse deterministik üretir.
      * - seed == 0L ise GDD'de belirtilen kanonik listeyi döndürür.
      */
-    fun generateStageAGrid(seed: Long? = null): StageAGridData {
+    fun generateStageAGrid(
+        seed: Long? = null, tier: LearningTier = LearningTier.GELISEN
+    ): StageAGridData {
         if (seed == 0L) {
             val targets = CANONICAL_STAGE_A_TARGETS
             val distractors = CANONICAL_STAGE_A_NUMBERS.filter { it % 3 != 0 }
@@ -181,11 +222,21 @@ object SayiAviEngine {
         val rng = if (seed != null) Random(seed) else Random.Default
 
         // 3'ün katı havuzu: 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36
-        val targetPool = (1..12).map { it * 3 }.shuffled(rng)
+        val maxMultiplier = when (tier) {
+            LearningTier.TEMEL -> 5
+            LearningTier.GELISEN -> 12
+            LearningTier.USTALIK -> 20
+        }
+        val targetPool = (1..maxMultiplier).map { it * 3 }.shuffled(rng)
         val selectedTargets = targetPool.take(5).sorted()
 
         // Çeldirici havuzu: 1..35 arası ve 3'e bölünmeyen sayılar
-        val distractorPool = (1..35).filter { it % 3 != 0 }.shuffled(rng)
+        val maxDistractor = when (tier) {
+            LearningTier.TEMEL -> 22
+            LearningTier.GELISEN -> 35
+            LearningTier.USTALIK -> 65
+        }
+        val distractorPool = (1..maxDistractor).filter { it % 3 != 0 }.shuffled(rng)
         val selectedDistractors = distractorPool.take(11)
 
         val combinedNumbers = (selectedTargets + selectedDistractors).shuffled(rng)
@@ -243,7 +294,9 @@ object SayiAviEngine {
      * - Örüntü: start, start+3, start+6, [?]
      * - Default (seed == null veya 0): 6, 9, 12, ? -> 15.
      */
-    fun generateStageBVault(seed: Long? = null): StageBVaultData {
+    fun generateStageBVault(
+        seed: Long? = null, tier: LearningTier = LearningTier.GELISEN
+    ): StageBVaultData {
         if (seed == null || seed == 0L) {
             return StageBVaultData(
                 sequence = listOf(6, 9, 12),
@@ -255,7 +308,11 @@ object SayiAviEngine {
 
         val rng = Random(seed)
         // Başlangıç sayısı: 3'ün katı olan bir sayı (3, 6, 9)
-        val startMultiplier = rng.nextInt(1, 9) // 1..8, her seferinde +3
+        val startMultiplier = when (tier) {
+            LearningTier.TEMEL -> rng.nextInt(1, 4)
+            LearningTier.GELISEN -> rng.nextInt(1, 9)
+            LearningTier.USTALIK -> rng.nextInt(10, 21)
+        }
         val start = startMultiplier * 3
         val seq = listOf(start, start + 3, start + 6)
         val correct = start + 9
@@ -302,9 +359,15 @@ object SayiAviEngine {
      * - Distraktör taşlar: 8, 10, 14, 17.
      * - Doğal konumlandırma koordinatları (xPercent, yPercent).
      */
-    fun generateStageCRoute(seed: Long? = null): StageCRouteData {
+    fun generateStageCRoute(
+        seed: Long? = null, tier: LearningTier = LearningTier.GELISEN
+    ): StageCRouteData {
         val rng = if (seed != null) Random(seed) else Random.Default
-        val start = if (seed == null || seed == 0L) 6 else listOf(3, 6, 9, 12, 15).random(rng)
+        val start = if (seed == null || seed == 0L) 6 else when (tier) {
+            LearningTier.TEMEL -> listOf(3, 6).random(rng)
+            LearningTier.GELISEN -> listOf(3, 6, 9, 12, 15).random(rng)
+            LearningTier.USTALIK -> listOf(18, 21, 24, 27, 30).random(rng)
+        }
         val targets = (0..3).map { start + 3 * it }
         val distractors = if (seed == null || seed == 0L) listOf(8, 10, 14, 17)
             else (2..(start + 20)).filter { it !in targets }.shuffled(rng).take(4)

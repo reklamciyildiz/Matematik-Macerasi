@@ -1,6 +1,7 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
 import kotlin.random.Random
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /** Gizemli Orman matematik motoru: Android/Compose'dan bağımsız, seed ile sınanabilir. */
 object ForestEngine {
@@ -29,10 +30,14 @@ object ForestEngine {
                 .all { values[it] == values[0] + 4 * it })
         }
     }
-    fun leafRounds(seed: Long): List<LeafRound> {
+    fun leafRounds(seed: Long, tier: LearningTier = LearningTier.GELISEN): List<LeafRound> {
         val r = Random(seed xor 0x6215L)
         return (0 until LEAF_ROUNDS).map {
-            val start = 4 * r.nextInt(1, 6)
+            val start = 4 * when (tier) {
+                LearningTier.TEMEL -> r.nextInt(1, 3)
+                LearningTier.GELISEN -> r.nextInt(1, 6)
+                LearningTier.USTALIK -> r.nextInt(7, 15)
+            }
             val incorrect = r.nextInt(2, 5)
             val answer = start + 4 * incorrect
             val values = (0 until 5).map { i ->
@@ -50,9 +55,13 @@ object ForestEngine {
             require(target in choices && target - from == 4)
         }
     }
-    fun trailSteps(seed: Long): List<TrailStep> {
+    fun trailSteps(seed: Long, tier: LearningTier = LearningTier.GELISEN): List<TrailStep> {
         val r = Random(seed xor 0x4A27L)
-        val start = r.nextInt(1, 5) * 4
+        val start = when (tier) {
+            LearningTier.TEMEL -> r.nextInt(1, 3)
+            LearningTier.GELISEN -> r.nextInt(1, 5)
+            LearningTier.USTALIK -> r.nextInt(7, 14)
+        } * 4
         return (0 until TRAIL_STEPS).map { i ->
             val from = start + 4 * i
             TrailStep(from, listOf(from + 2, from + 4, from + 6).shuffled(r), from + 4)
@@ -66,11 +75,23 @@ object ForestEngine {
             require(options.size == 4 && options.distinct().size == 4 && correct in options)
         }
     }
-    fun rootChallenges(seed: Long): List<RootChallenge> {
+    fun rootChallenges(seed: Long, tier: LearningTier = LearningTier.GELISEN): List<RootChallenge> {
         val r = Random(seed xor 0x22ABL)
-        val groupCount = r.nextInt(3, 6)
-        val starting = r.nextInt(5, 10) * 4
-        val found = r.nextInt(3, 6)
+        val groupCount = when (tier) {
+            LearningTier.TEMEL -> r.nextInt(2, 4)
+            LearningTier.GELISEN -> r.nextInt(3, 6)
+            LearningTier.USTALIK -> r.nextInt(6, 10)
+        }
+        val starting = when (tier) {
+            LearningTier.TEMEL -> r.nextInt(4, 7)
+            LearningTier.GELISEN -> r.nextInt(5, 10)
+            LearningTier.USTALIK -> r.nextInt(12, 20)
+        } * 4
+        val found = when (tier) {
+            LearningTier.TEMEL -> r.nextInt(2, 4)
+            LearningTier.GELISEN -> r.nextInt(3, 6)
+            LearningTier.USTALIK -> r.nextInt(7, 12)
+        }
         fun options(correct: Int): List<Int> {
             val all = linkedSetOf(correct, correct + 4, correct + 2, correct + 1)
             return all.toList().shuffled(r)
@@ -109,7 +130,8 @@ data class ForestSession(
     val rootRound: Int = 0,
     val attempts: Int = 0,
     val errors: Int = 0,
-    val hints: Int = 0
+    val hints: Int = 0,
+    val tier: LearningTier = LearningTier.GELISEN
 ) {
     val accuracy: Int get() = if (attempts == 0) 0 else ((attempts - errors) * 100 / attempts)
     fun answer(correct: Boolean): ForestSession = copy(attempts = attempts + 1,

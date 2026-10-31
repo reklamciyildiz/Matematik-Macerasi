@@ -38,6 +38,7 @@ class MarketSimulatorActivity : BaseGameActivity() {
     // Seviye seçimi için dialog durumu
     private var showLevelSelectDialog by mutableStateOf(true)
     private var selectedLevelIndex by mutableStateOf(0)
+    private val completionGate = com.yigit033.matematikmacarasi.services.GameRunCompletionGate()
     
     // İlk kez oynama takibi
     private val prefKey = "MARKET_SIMULATOR_FIRST_TIME"
@@ -190,6 +191,7 @@ class MarketSimulatorActivity : BaseGameActivity() {
      * @param levelIndex Seviye indeksi
      */
     private fun initGame(levelIndex: Int) {
+        completionGate.reset()
         try {
             // Seviye oluşturma
             val level = try {
@@ -415,8 +417,8 @@ class MarketSimulatorActivity : BaseGameActivity() {
             val estimatedPlayTimeMinutes = 5
             gameStatisticsService.addPlayTime(estimatedPlayTimeMinutes)
             
-            // Tamamlanan oyun sayısını artır
-            gameStatisticsService.incrementCompletedGames()
+            // recordGameStatistics() zaten tamamlanan oyun sayısını kaydeder.
+            // Ek bir incrementCompletedGames() aynı tamamlama için çift sayım üretirdi.
             
             // Günlük görev ilerlemesini güncelle
             updateDailyTaskProgress()
@@ -460,6 +462,7 @@ class MarketSimulatorActivity : BaseGameActivity() {
      */
     private fun processPayment(amount: Double) {
         try {
+            if (gameState.phase != MarketGamePhase.CHECKOUT) return
             val totalCost = gameState.shoppingCart.getTotalPrice()
             
             // Para yeterli mi?
@@ -474,6 +477,9 @@ class MarketSimulatorActivity : BaseGameActivity() {
                 return
             }
             
+            // Aynı ödeme aksiyonunun çift tıklama veya yeniden girişte ikinci kez kaydedilmesini engelle.
+            if (!completionGate.tryFinish()) return
+
             // Para üstü hesapla
             val change = amount - totalCost
             
@@ -563,6 +569,7 @@ class MarketSimulatorActivity : BaseGameActivity() {
      */
     private fun failGame(reason: String) {
         try {
+            if (!completionGate.tryFinish()) return
             gameState = gameState.copy(
                 phase = MarketGamePhase.FAILED,
                 failReason = reason
@@ -571,8 +578,9 @@ class MarketSimulatorActivity : BaseGameActivity() {
             // Zamanlayıcıyı durdur
             gameTimerTask?.let { handler.removeCallbacks(it) }
             
-            // Oyunu bitir
-            super.endGame()
+            // Başarısızlık, BaseGameActivity.endGame() üzerinden ödül/görev kaydı oluşturmaz.
+            isGameRunning = false
+            audioService.pauseBackgroundMusic()
         } catch (e: Exception) {
             e.printStackTrace()
             finish() // Hata durumunda doğrudan çık

@@ -96,6 +96,7 @@ import androidx.compose.animation.AnimatedVisibility
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.yigit033.matematikmacarasi.services.payments.AdManager
+import com.yigit033.matematikmacarasi.services.GameRunCompletionGate
 import android.util.Log
 import com.yigit033.matematikmacarasi.utils.NetworkUtils
 
@@ -117,6 +118,7 @@ class SpaceMathAdventureActivity : ComponentActivity() {
     // AdManager ekleyelim
     private lateinit var adManager: AdManager
     
+    private val completionGate = GameRunCompletionGate()
     private val handler = Handler(Looper.getMainLooper())
     private val gameTimer = object : Runnable {
         override fun run() {
@@ -227,6 +229,8 @@ class SpaceMathAdventureActivity : ComponentActivity() {
                             LevelSelectDialog(
                                 defaultLevel = selectedLevelIndex,
                                 onLevelSelected = { levelIndex ->
+                                    completionGate.reset()
+                                    gameStartTime = System.currentTimeMillis()
                                     selectedLevelIndex = levelIndex
                                     showLevelSelectDialog = false
                                     
@@ -1822,12 +1826,13 @@ class SpaceMathAdventureActivity : ComponentActivity() {
     }
     
     private fun endGame(completed: Boolean) {
+        if (!completionGate.tryFinish()) return
         try {
             // Zamanlayıcıyı durdur
             handler.removeCallbacks(gameTimer)
             
             // Yıldızları hesapla - tek bir kez hesaplıyoruz
-            val stars = SpaceMathHelper.calculateStars(gameState)
+            val stars = if (completed) SpaceMathHelper.calculateStars(gameState) else 0
             
             // Oyun durumunu güncelle
             gameState = gameState.copy(
@@ -1836,28 +1841,9 @@ class SpaceMathAdventureActivity : ComponentActivity() {
                 stars = stars
             )
             
-            // Günlük görev ilerlemesini güncelle
-            if (completed) {
-                try {
-                    // İki farklı yöntemle görev ilerlemesini güncelle
-                    
-                    // 1. Spesifik görev ID'si varsa onunla güncelle
-                    if (dailyTaskId > 0) {
-                        dailyTaskManager.updateTaskProgress(dailyTaskId)
-                        android.util.Log.d("SpaceMathAdventureActivity", "Spesifik günlük görev güncellendi: $dailyTaskId")
-                    }
-                    
-                    // 2. GameType kullanarak ilgili görevleri güncelle
-                    dailyTaskManager.updateTaskProgressByGameType(gameType)
-                    android.util.Log.d("SpaceMathAdventureActivity", "Günlük görev güncellendi (gameType: $gameType)")
-                } catch (e: Exception) {
-                    android.util.Log.e("SpaceMathAdventureActivity", "Günlük görev güncellenirken hata: ${e.message}")
-                    e.printStackTrace()
-                }
-            }
-            
-            // Oyun istatistiklerini güncelle
-            try {
+            // Tamamlanmayan oturumdan ödül, görev veya tamamlama istatistiği yazılmaz.
+            // Tamamlanan oturumun tek görev çağrısı GameStatisticsHelper içindedir.
+            if (completed) try {
                 // GameStatisticsHelper ile oyun istatistiklerini kaydet
                 gameStatisticsHelper.recordGameCompletion(
                     gameType = gameType,
@@ -1950,6 +1936,8 @@ class SpaceMathAdventureActivity : ComponentActivity() {
     
     private fun restartGame() {
         try {
+            completionGate.reset()
+            gameStartTime = System.currentTimeMillis()
             // Mevcut seviyeyi yeniden başlat
             val currentLevelIndex = gameState.level.level - 1
             val currentLevel = SpaceLevels.levels[currentLevelIndex]
@@ -1976,6 +1964,8 @@ class SpaceMathAdventureActivity : ComponentActivity() {
     
     private fun startNextLevel() {
         try {
+            completionGate.reset()
+            gameStartTime = System.currentTimeMillis()
             // Bir sonraki seviyeyi kontrol et
             val nextLevelIndex = gameState.level.level
             

@@ -413,26 +413,13 @@ class StarManager private constructor(private val context: Context) {
             val currentDisplayStars = getDisplayStars()
             val currentTotalStars = sharedPreferences.getInt(KEY_TOTAL_STARS, 0)
             
-            // FIX: Aynı seviye için tekrarlanan yıldız kazanımını önle
-            // Eğer bu seviyeden daha önce yıldız kazanılmışsa, sadece farkı ekle
-            val newGameStars = stars // Yeni kazanılan yıldızlar
-            
-            // Eğer bu seviyeden daha önce yıldız kazanılmışsa ve yeni yıldız sayısı eskisinden küçük veya eşitse
-            // hiç yıldız ekleme - avatar için yıldız sayısını artırma
-            if (currentGameStars >= stars) {
-                Log.d("StarManager", "Bu seviye ($gameId) için zaten ${currentGameStars} yıldız kazanılmış. " +
-                        "Yeni kazanılan $stars yıldız için avatar yıldızı eklenmeyecek.")
-                
-                // Sadece oyun yıldızlarını güncelle (daha düşük veya eşit olsa bile)
-                val editor = sharedPreferences.edit()
-                editor.putInt("$KEY_GAME_STARS$gameId", stars)
-                val result = editor.commit()
-                
-                return result
+            // Başarı yıldızları high-water mark'tır; daha düşük tekrarlar kayıt düşürmez.
+            val award = GameStarAwardPolicy.evaluate(currentGameStars, stars)
+            if (award.additionalStars == 0) {
+                Log.d("StarManager", "$gameId için mevcut en iyi ${award.bestStars}; yeniden ödül verilmez")
+                return true
             }
-            
-            // Eğer yeni yıldız sayısı daha yüksekse, sadece farkı ekle
-            val additionalStars = stars - currentGameStars
+            val additionalStars = award.additionalStars
             
             Log.d("StarManager", "Yıldız Hesaplaması: Oyun($gameId)=" +
                 "Önceki=${currentGameStars}, " +
@@ -446,7 +433,7 @@ class StarManager private constructor(private val context: Context) {
             
             // Tüm değerleri tek bir transaction'da kaydet
             val editor = sharedPreferences.edit()
-            editor.putInt("$KEY_GAME_STARS$gameId", stars) // Yeni yıldız sayısını kaydet
+            editor.putInt("$KEY_GAME_STARS$gameId", award.bestStars) // En iyi yıldız değeri değişmez biçimde artar
             editor.putInt(KEY_DISPLAY_STARS, newDisplayStars)
             editor.putInt(KEY_TOTAL_STARS, newTotalStars)
             
@@ -465,7 +452,7 @@ class StarManager private constructor(private val context: Context) {
                 gameProgressPrefs.edit()
                     .putInt("total_stars", newTotalStars)
                     .putInt("display_stars", newDisplayStars)
-                    .putInt("$KEY_GAME_STARS$gameId", stars)
+                    .putInt("$KEY_GAME_STARS$gameId", award.bestStars)
                     .commit()
                 
                 // Yedek depolamayı güncelle
@@ -473,7 +460,7 @@ class StarManager private constructor(private val context: Context) {
                     .edit()
                     .putInt("total_stars", newTotalStars)
                     .putInt("display_stars", newDisplayStars)
-                    .putInt("$KEY_GAME_STARS$gameId", stars)
+                    .putInt("$KEY_GAME_STARS$gameId", award.bestStars)
                     .commit()
                 
                 Log.d("StarManager", "Tüm depolamalar güncellendi")

@@ -1023,16 +1023,18 @@ class MathMazeGameActivity : ComponentActivity() {
         Log.d("MathMazeGameActivity", "Oyun tamamlandı: Seviye=${gameState.level.levelIndex}, Skor=$score, Yıldız=$stars")
         
         try {
-            // GameStatisticsHelper ile oyun istatistiklerini kaydet
-            gameStatisticsHelper.recordGameCompletion(
-                gameType = gameType,
-                level = gameState.level.levelIndex,
-                score = score,
-                stars = stars,
-                gameStartTime = gameStartTime,
-                taskId = dailyTaskId
-            )
-            Log.d("MathMazeGameActivity", "Oyun istatistikleri kaydedildi")
+            // Başarısız koşular günlük görev ve tamamlanan oyun sayısını artırmamalı.
+            if (completed) {
+                gameStatisticsHelper.recordGameCompletion(
+                    gameType = gameType,
+                    level = gameState.level.levelIndex,
+                    score = score,
+                    stars = stars,
+                    gameStartTime = gameStartTime,
+                    taskId = dailyTaskId
+                )
+                Log.d("MathMazeGameActivity", "Başarılı oyun istatistikleri kaydedildi")
+            }
             
             // Oyun ilerlemesini ve yıldızları kaydet
             val gameProgressService = GameProgressService.getInstance(this)

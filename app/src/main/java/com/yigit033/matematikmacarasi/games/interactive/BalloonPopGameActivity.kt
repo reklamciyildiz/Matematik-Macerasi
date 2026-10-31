@@ -88,6 +88,7 @@ import com.yigit033.matematikmacarasi.models.QuestionType
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import com.yigit033.matematikmacarasi.services.GameProgressService
 import com.yigit033.matematikmacarasi.services.StarManager
+import com.yigit033.matematikmacarasi.services.GameRunCompletionGate
 import com.yigit033.matematikmacarasi.services.EventBus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -121,6 +122,7 @@ class BalloonPopGameActivity : BaseGameActivity() {
     private var balloons = mutableStateListOf<Balloon>()
     private var isGameOver by mutableStateOf(false)
     private var gameStarted by mutableStateOf(false)
+    private val completionGate = GameRunCompletionGate()
     private var correctAnswersCount by mutableStateOf(0)
     private var wrongAnswersCount by mutableStateOf(0)
     private var successRate by mutableStateOf(0f) // Başarı oranı için yeni state ekledim
@@ -149,7 +151,6 @@ class BalloonPopGameActivity : BaseGameActivity() {
     private val poppingBalloons = mutableStateMapOf<Long, Boolean>()
     private var lastPoppedBalloonId by mutableStateOf(0L)
     
-    private lateinit var gameStatisticsHelper: com.yigit033.matematikmacarasi.services.GameStatisticsHelper
     
     // Günlük görev ID'si (görev ekranından gelince kullanılacak)
     private var dailyTaskId: Int = -1
@@ -167,7 +168,6 @@ class BalloonPopGameActivity : BaseGameActivity() {
         gameStartTime = System.currentTimeMillis()
         Log.d(TAG, "onCreate: gameStartTime ilk kez atandı: $gameStartTime")
         
-        gameStatisticsHelper = com.yigit033.matematikmacarasi.services.GameStatisticsHelper(this)
     }
     
     @Composable
@@ -1624,6 +1624,7 @@ class BalloonPopGameActivity : BaseGameActivity() {
     }
     
     private fun resetGame() {
+        completionGate.reset()
         gameTimeRemaining = getLevelTime()  // Seviyeye göre süreyi ayarla
         score = 0
         balloons.clear()
@@ -1730,6 +1731,7 @@ class BalloonPopGameActivity : BaseGameActivity() {
      * Oyun bittiğinde çağrılır, sonuçları değerlendirir.
      */
     private fun finishGame() {
+        if (!completionGate.tryFinish()) return
         Log.d(TAG, "finishGame: Oyun bitti, değerlendirme yapılıyor.")
         gameStarted = false
         
@@ -1767,22 +1769,17 @@ class BalloonPopGameActivity : BaseGameActivity() {
         currentLevel = selectedOperationType + 1
         
         try {
-            // GameStatisticsHelper ile istatistikleri kaydedelim
-            gameStatisticsHelper.recordGameCompletion(
-                gameType = gameType,
-                level = selectedOperationType + 1,
-                score = score,
-                stars = stars,
-                gameStartTime = gameStartTime,
-                taskId = dailyTaskId
-            )
-            
-            // BaseGameActivity'nin endGame metodunu çağırarak diğer işlemleri yapalım
+            // Tek kayıt yolu: BaseGameActivity ilerleme, istatistik ve görevi birer kez işler.
             super.endGame()
+            if (stars > 0) {
+                // BaseGameActivity, StarManager bakiyesine ödül yazmaz.
+                // Aynı seviye için yalnızca önceki en iyi sonucuna göre fark eklenir.
+                starManager.addStars(getNormalizedGameId(), stars)
+            }
             
             // Kullanıcıya kazandığı yıldızları bildir
             Toast.makeText(this, 
-                "$stars yıldız kazandınız! Toplam yıldızlarınıza eklendi.", 
+                "Bu oyunda $stars yıldızlık performans gösterdin.", 
                 Toast.LENGTH_LONG
             ).show()
         } catch (e: Exception) {
@@ -1842,6 +1839,7 @@ class BalloonPopGameActivity : BaseGameActivity() {
     
     override fun startGame() {
         try {
+            completionGate.reset()
             score = 0
             stars = 0 // Yıldızları da sıfırla
             isGameOver = false

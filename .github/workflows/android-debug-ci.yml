@@ -78,6 +78,11 @@ jobs:
           JSON
           echo "::notice::Compile-only Firebase config; Firebase, billing and ads are NOT exercised."
 
+      # gradle.properties is intentionally gitignored (can contain local signing keys).
+      # CI needs only the AndroidX flag; never put developer credentials here.
+      - name: Configure AndroidX for CI
+        run: echo "android.useAndroidX=true" >> gradle.properties
+
       - name: Unit tests and Android debug compilation
         shell: bash
         run: |

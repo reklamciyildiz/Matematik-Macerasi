@@ -1,6 +1,7 @@
 package com.yigit033.matematikmacarasi.screens
 
 import android.os.Bundle
+import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
 import com.yigit033.matematikmacarasi.services.AudioService
 import com.yigit033.matematikmacarasi.services.GameProgressService
 import com.yigit033.matematikmacarasi.services.NotificationService
@@ -752,7 +754,7 @@ fun SettingsScreen(
                                     .padding(vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = "🎮 Matematik Kahramanlarının Abisi Burada! 🎮",
+                                    text = "Premium ile neler açılır?",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp,
                                     color = Color.DarkGray,
@@ -763,20 +765,13 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 
                                 Text(
-                                    text = "Selam küçük kahramanlar! 👋\n" +
-                                           "Sizler için hazırladığım bu özel dünyada, Premium'a geçerek matematik serüveninize süper güçler katabilirsiniz! 🚀\n\n" +
-                                           "Premium'la:\n\n" +
-                                           "🧙‍♂️ 7-15 arası tüm özel avatarların kilidini açın,\n\n" +
-                                           "📊 Detaylı oyun istatistikleri ve analiz raporları,\n\n" +
-                                           "🎁 Her gün otomatik 5 yıldız bonus kazanın,\n\n" +
-                                           "🎨 Uygulama ikonunuzu kişiselleştirin,\n\n" +
-                                           "🚫 Tüm reklamlardan kurtulun,\n\n" +
-                                           "🎮 Matematik Labirenti'nde sınırsız oyun hakkı,\n\n" +
-                                           "🧩 Özel aktivitelerle yeteneklerinizi geliştirin!\n\n" +
-                                           "Ve unutmayın:\n" +
-                                           "Desteğinizle ben de sizler için daha da harika uygulamalar geliştirebilirim!\n" +
-                                           "Bir abiniz olarak her zaman sizin iyiliğinizi düşünüyorum. 💬\n" +
-                                           "Haydi, birlikte büyüyelim ve başarıya ulaşalım! 🌟",
+                                    text = "Premium üyelik mevcut satın alma sistemiyle açılır.\\n" +
+                                           "• Pazar Simülatörü'nde 10 mağaza ve tezgâh işletme\\n" +
+                                           "• Özel avatarlar ve uygulama ikonları\\n" +
+                                           "• Reklamsız oyun deneyimi\\n" +
+                                           "• Mevcut Premium günlük bonusları\\n\\n" +
+                                           "Öğrenme raporunun temel görünümü tüm oyunculara açıktır. " +
+                                           "Premium erişimin varsa tekrar satın alma yapmana gerek yok.",
                                     fontSize = 14.sp,
                                     color = Color.DarkGray,
                                     style = MaterialTheme.typography.bodyMedium.copy(
@@ -989,6 +984,24 @@ fun SettingsScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Uygulama ikonları eskiden yalnız eski ana ekrandan erişilebiliyordu.
+            // Mevcut ikon seçicisini ve aynı Premium hak kontrolünü yeniden kullan.
+            SettingsCard(
+                title = "Uygulama İkonu",
+                description = "Matematik Macerası, Robot veya Uzay temasını seç",
+                containerColor = Color(0xFF2379A9)
+            ) {
+                Button(
+                    onClick = {
+                        context.startActivity(Intent(context, IconSelectorActivity::class.java))
+                    },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF103E65))
+                ) {
+                    Text("🎨 Uygulama İkonunu Değiştir", color = Color.White)
+                }
+            }
+
             // Uygulama Bilgileri Kartı
             SettingsCard(
                 title = "Uygulama Bilgileri",

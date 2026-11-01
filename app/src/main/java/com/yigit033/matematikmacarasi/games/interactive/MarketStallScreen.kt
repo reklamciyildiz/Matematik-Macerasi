@@ -143,11 +143,13 @@ fun MarketStallScreen(store:MarketStallStore,onClose:()->Unit) {
                 MarketStallEngine.prices(item).forEach { price ->
                     val fair=price<=item.fairPriceKurus
                     OutlinedButton(onClick={
-                        val next=MarketStallEngine.sell(state,item.id,price)
-                        apply(next,if(fair)
-                            "Satış tamam! Kâr: ${MarketAdventureEngine.format(
-                                price-item.wholesaleKurus)}"
-                            else "Müşteri fiyatı pahalı buldu; satış gerçekleşmedi.")
+                        if(!fair) {
+                            feedback="Müşteri bu fiyatı yüksek buldu. Daha uygun teklif seç."
+                        } else {
+                            val next=MarketStallEngine.sell(state,item.id,price)
+                            apply(next,"Satış tamam! Kâr: ${MarketAdventureEngine.format(
+                                price-item.wholesaleKurus)}")
+                        }
                     },enabled=MarketStallEngine.stock(state,item.id)>0,
                         modifier=Modifier.fillMaxWidth().heightIn(min=51.dp),
                         colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White),

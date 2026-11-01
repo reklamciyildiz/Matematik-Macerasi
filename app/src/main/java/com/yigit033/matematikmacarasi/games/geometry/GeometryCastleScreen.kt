@@ -262,6 +262,26 @@ fun GeometryCastleScreen(
                 else "Şeklin kenarlarını ve konumunu tekrar kontrol et."
         }
     }
+    fun placePiece(task: CastleTask) {
+        val chosen = run.selected ?: return
+        val index = run.placed.size
+        if(run.solved || task.mode != CastleMode.BUILD ||
+            index !in task.requiredPieces.indices) return
+        val correct = GeometryCastleEngine.isCorrectPiece(task,index,chosen)
+        val attempted = GeometryCastleEngine.answer(run,correct)
+        val next = if(correct) attempted.copy(
+            placed=run.placed+chosen,selected=null,
+            solved=index+1==task.requiredPieces.size
+        ) else attempted
+        if(persist(next)) {
+            if(!correct) store.noteWeakShape(task.requiredPieces[index])
+            feedbackPositive=correct
+            feedback=if(correct)
+                if(next.solved) "Tüm parçalar yerine oturdu! " + task.explanation
+                else "Harika! Şimdi sıradaki siluete uygun bir taş seç."
+            else "Bu taş yuvaya uymadı. Kenarların ve köşelerin düzenini karşılaştır."
+        }
+    }
     fun next() {
         if(!run.solved) return
         val next = GeometryCastleEngine.advance(run)
@@ -344,6 +364,8 @@ fun GeometryCastleScreen(
                 }
                 Text("4 oda · 12 etkileşimli görev · Çevrimdışı",
                     color=Mint,fontSize=13.sp)
+                Text("Bu seviyede ${GeometryCastleEngine.available(tier).size} farklı şekil var.",
+                    color=Pale,fontSize=13.sp)
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                     listOf("Avlu","Köprü","Ayna","Taç").forEachIndexed { index, name ->
                         Surface(Modifier.weight(1f),
@@ -418,32 +440,48 @@ fun GeometryCastleScreen(
                 when(task.mode) {
                     CastleMode.FIND,CastleMode.BUILD -> {
                         if(task.mode == CastleMode.BUILD) {
-                            Text("KÖPRÜ YUVASI — uygun şekli seç, ardından yuvaya yerleştir.",
-                                color=Mint,fontSize=12.sp)
-                            Surface(
-                                modifier=Modifier.fillMaxWidth().heightIn(min=104.dp)
-                                    .clickable(enabled=!run.solved && run.selected != null,role=Role.Button) {
-                                        submit(run.selected==task.target,run.selected)
-                                    }.semantics {
-                                        contentDescription = if(run.selected==null)
-                                            "Köprü yuvası, önce taş seç"
-                                            else "Köprü yuvası, seçili taşı yerleştir"
-                                    },
-                                color=Color(0xFF194C69),
-                                shape=RoundedCornerShape(18.dp),
-                                border=androidx.compose.foundation.BorderStroke(2.dp,Gold)
-                            ) {
-                                Row(Modifier.padding(12.dp),
-                                    verticalAlignment=Alignment.CenterVertically,
-                                    horizontalArrangement=Arrangement.Center) {
-                                    ShapeIcon(task.target,Gold,Modifier.size(72.dp),
-                                        outlineOnly=!run.solved)
-                                    Spacer(Modifier.size(10.dp))
-                                    Text(if(run.solved) "Köprü taşı yerleşti!"
-                                        else if(run.selected==null) "Bu siluete uyan taşı seç."
-                                        else "Seçtiğin taşı yuvaya yerleştir.",
-                                        color=Color.White,fontSize=13.sp,
-                                        fontWeight=FontWeight.Bold)
+                            val pieces=task.requiredPieces
+                            Text("KÖPRÜ ATÖLYESİ · ${run.placed.size}/${pieces.size} taş yerleştirildi",
+                                color=Mint,fontSize=13.sp,fontWeight=FontWeight.Bold)
+                            Text(if(pieces.size==1)
+                                "Siluete uygun şekli seç ve yuvaya dokun."
+                                else "Köprüdeki ${pieces.size} yuvayı sırayla doldur. Döndürülmüş şekilleri de tanı.",
+                                color=Pale,fontSize=12.sp)
+                            Row(Modifier.fillMaxWidth(),
+                                horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+                                pieces.forEachIndexed { slot,targetShape ->
+                                    val filled = slot < run.placed.size ||
+                                        (run.contentVersion==1 && run.solved)
+                                    val activeSlot = slot == run.placed.size && !run.solved
+                                    Surface(
+                                        modifier=Modifier.weight(1f).heightIn(min=114.dp)
+                                            .clickable(enabled=activeSlot && run.selected!=null,
+                                                role=Role.Button) { placePiece(task) }
+                                            .semantics {
+                                                contentDescription=when {
+                                                    filled -> "${slot+1}. köprü yuvası tamamlandı"
+                                                    activeSlot -> "${slot+1}. köprü yuvası, taşı seçip yerleştir"
+                                                    else -> "${slot+1}. köprü yuvası kilitli"
+                                                }
+                                            },
+                                        color=if(filled) Color(0xFF316D65)
+                                            else Color(0xFF194C69),
+                                        shape=RoundedCornerShape(17.dp),
+                                        border=androidx.compose.foundation.BorderStroke(
+                                            if(activeSlot) 2.dp else 1.dp,
+                                            if(activeSlot) Gold else Mint.copy(alpha=.55f))
+                                    ) {
+                                        Column(Modifier.padding(7.dp),
+                                            verticalArrangement=Arrangement.Center,
+                                            horizontalAlignment=Alignment.CenterHorizontally) {
+                                            ShapeIcon(targetShape,Gold,
+                                                Modifier.size(if(pieces.size==3) 55.dp else 66.dp),
+                                                outlineOnly=!filled)
+                                            Text(if(filled) "✓ ${slot+1}" else "${slot+1}. yuva",
+                                                color=if(filled) Mint else Color.White,
+                                                fontSize=12.sp,fontWeight=FontWeight.Bold)
+                                        }
+                                    }
                                 }
                             }
                         } else {
@@ -457,6 +495,10 @@ fun GeometryCastleScreen(
                                         ShapeChoice(shape,
                                             active=run.selected==shape,
                                             enabled=!run.solved,
+                                            rotationDegrees=if(run.contentVersion>=2 &&
+                                                run.tier!=LearningTier.TEMEL)
+                                                (((run.room*3+run.step)+shape.ordinal)%4)*45f
+                                                else 0f,
                                             onClick={
                                                 if(task.mode==CastleMode.FIND) submit(
                                                     shape==task.target,shape

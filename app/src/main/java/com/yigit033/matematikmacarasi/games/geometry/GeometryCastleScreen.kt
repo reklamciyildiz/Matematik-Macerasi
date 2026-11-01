@@ -375,6 +375,16 @@ fun GeometryCastleScreen(
                             color=Color.White,fontSize=13.sp)
                         Text("Tamamlanan keşifler: ${run.completedRuns}",
                             color=Mint,fontSize=13.sp)
+                        listOf(
+                            "Şekil tanıma" to "geometry_classify",
+                            "Şekillerle inşa" to "geometry_compose",
+                            "Simetriyi tanıma" to "geometry_symmetry_recognize",
+                            "Simetri oluşturma" to "geometry_symmetry_build"
+                        ).forEach { (title,skill) ->
+                            val (done,wrong,help) = store.skillEvidence(skill)
+                            if(done>0) Text("$title: $done görev · $wrong yanlış · $help ipucu",
+                                color=Pale,fontSize=12.sp)
+                        }
                         Text("Bu sonuç yalnızca oyun içi davranışları gösterir; resmî kazanımı kanıtlamaz.",
                             color=Pale,fontSize=11.sp)
                     }

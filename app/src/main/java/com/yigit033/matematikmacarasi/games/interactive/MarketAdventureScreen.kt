@@ -140,7 +140,7 @@ private val panel = Color(0xFF215775)
             Text(product.emoji,fontSize=38.sp)
             Text(product.name,color=Color.White,fontSize=15.sp,
                 fontWeight=FontWeight.Bold,maxLines=1)
-            Text(MarketAdventureEngine.format(product.priceKurus),
+            Text(MarketAdventureEngine.format(product.priceKurus)+" / "+product.unit,
                 color=orange,fontSize=13.sp,fontWeight=FontWeight.Bold)
             Row(Modifier.fillMaxWidth(),
                 verticalAlignment=Alignment.CenterVertically,
@@ -310,7 +310,7 @@ fun MarketAdventureScreen(
                         ) {Text(tier.title,fontSize=11.sp)}
                     }
                 }
-                Text("6 durak · 21 matematik kararı · Çevrimdışı · Zaman sınırı yok",
+                Text("6 durak · 24 matematik kararı · Çevrimdışı · Zaman sınırı yok",
                     color=cream,fontSize=12.sp)
                 MarketAction("Pazara Gir ▶") {start(chosenTier)}
             } else {
@@ -393,7 +393,7 @@ fun MarketAdventureScreen(
                             val current=run.basket.firstOrNull {
                                 it.productId==line.productId }?.quantity?:0
                             val completed=current==line.quantity
-                            Text("${if(completed)"✓" else "○"}  ${product.emoji} ${product.name} · ${line.quantity} adet",
+                            Text("${if(completed)"✓" else "○"}  ${product.emoji} ${product.name} · ${line.quantity} ${product.unit}",
                                 color=if(completed)turquoise else Color.White,
                                 fontSize=14.sp,fontWeight=FontWeight.Bold)
                         }
@@ -448,7 +448,7 @@ fun MarketAdventureScreen(
                             Row(Modifier.fillMaxWidth(),
                                 horizontalArrangement=Arrangement.SpaceBetween) {
                                 Text("${p.name} × ${line.quantity}",color=Color.White)
-                                Text("${MarketAdventureEngine.format(p.priceKurus)} / adet",
+                                Text("${MarketAdventureEngine.format(p.priceKurus)} / ${p.unit}",
                                     color=cream)
                             }
                         }
@@ -497,6 +497,9 @@ fun MarketAdventureScreen(
             } else if(stage==MarketAdventurePhase.BONUS && scene.bonus!=null) {
                 val bonus=scene.bonus
                 Text(when(bonus.kind) {
+                    MarketBonusKind.WEIGHT -> "⚖️ KİLOGRAM HESABI"
+                    MarketBonusKind.VOLUME -> "🥛 LİTRE HESABI"
+                    MarketBonusKind.SAVINGS -> "🐷 HARÇLIK VE BİRİKİM"
                     MarketBonusKind.DISCOUNT -> "🏷️ İNDİRİM HESABI"
                     MarketBonusKind.COMPARE -> "⚖️ FİYAT KARŞILAŞTIRMA"
                     MarketBonusKind.PROFIT -> "🏪 KENDİ TEZGÂHINI YÖNET"

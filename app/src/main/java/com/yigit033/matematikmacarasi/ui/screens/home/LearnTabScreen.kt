@@ -115,6 +115,9 @@ fun LearnTabScreen(
             }
         }
 
+        // S3.2: visible at the top, not buried under lesson preview cards.
+        AdventureLearningReport(userClass = userClass, refreshKey = 0)
+        Spacer(modifier = Modifier.height(16.dp))
         LearningPracticeSection(userClass = userClass)
         Spacer(modifier = Modifier.height(20.dp))
 

@@ -16,7 +16,7 @@ Durum: **Kod ve kaynaklar repoda; gerçek Android build/cihaz kabulü bu oturumd
 - Temel/Gelişen/Ustalık: fiyatlar, bazı miktarlar, ondalıklı kuruş, alışveriş listesi büyüklüğü uyarlanır. Sınıf seçimi otomatik ilk öneridir; üç seviye elle de seçilebilir.
 - Ölçülen bağımsız başarı: alışveriş listesi, toplam hesaplama ve para üstü olmak üzere 9 karar. Yanlış cevap ve kullanılan ipucu ile çözülen görev bağımsız başarıya yazılmaz.
 - Oyuncu kısmen doldurduğu sepeti ve mevcut aşamayı kapat-aç sonrasında geri alır. `market_adventure_premium_v1` yeni depolama alanıdır; eski yıldızlar ve legacy MarketLevels kayıtları değiştirilmez.
-- Tamamlama için `market_adventure_first_completion_v1` yıldızı **bir kez** verilir. Başka oyunların StarManager anahtarlarına dokunulmaz. Günlük görev mevcut `GameType.MARKET_SIMULATOR` üzerinden çalışır.
+- Tamamlama için `market_adventure_first_completion_v1` anahtarında ilk-denemede bağımsız doğru kararlara göre **1–3 yıldız high-water mark** kullanılır. İkinci tur daha iyiyse yalnız fark verilir; aynı başarıyı tekrar oynayarak yıldız biriktirmek mümkün değildir. Başka oyunların StarManager anahtarlarına dokunulmaz. Günlük görev mevcut `GameType.MARKET_SIMULATOR` üzerinden çalışır.
 - Öğrenme adaptasyonu: `AdventureSkill.MARKET` ayrı ilerleme alanı; geometri/sayı becerilerinden bağımsız.
 
 ## Dosya haritası
@@ -57,7 +57,7 @@ Geometri Kalesi ve ilk üç Sayı Avcıları dünya kayıtları ayrı kalır. Es
 4. Para üstünde verilen tutar eksi alışveriş tutarı matematiksel olarak doğru olmalı; yanlış cevapla ilerlenmemeli.
 5. Gelişen: bazı ürünlerden 2 adet gerekiyor. Ustalık: 3 hedef ürün ve 50 kuruşlu fiyatları dene. Tutarlar doğru toplanmalı.
 6. Sepeti kısmen doldur, Android geriyle çık, aç; aynı üründe miktar ve kaldığın aşama korunmalı. Toplam ve para üstü ekranlarında da çık-gir testi yap.
-7. 3 durağı bitir ve yeni tur başlat; **ikinci turda yeni yıldız kazanmamalı**, eski yıldızlar azalmamalı. Yeni fiyat/listeler gelmeli.
+7. 3 durağı bitir ve yeni tur başlat; **aynı başarıda yeni yıldız kazanmamalı, daha iyi başarıda yalnız fark kazanılmalı (en fazla 3)**, eski yıldızlar azalmamalı. Yeni fiyat/listeler gelmeli.
 8. İpucu kullan; bağımsız ilk-deneme puanı haksız artmamalı. 320dp küçük ekran, büyük font, TalkBack, offline ve düşük performanslı telefon kontrolleri.
 9. Önceki Geometri Kalesi ve Sayı Avcıları bölgelerinin çalışmasına kısa regresyon testi; reklam/ödeme kısmında sürpriz yönlendirme olmamalı.
 

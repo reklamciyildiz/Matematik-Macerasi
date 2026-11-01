@@ -47,6 +47,8 @@ import com.yigit033.matematikmacarasi.services.StarManager
 import android.app.Activity
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import com.yigit033.matematikmacarasi.components.StatisticsDetailPopup
 
@@ -78,6 +80,7 @@ class ProfileActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window,false)
         
         // Initialize services
         sharedPreferences = getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
@@ -90,6 +93,15 @@ class ProfileActivity : ComponentActivity() {
         
         setContent {
             MatematikMacerasiTheme {
+                val view=LocalView.current
+                SideEffect {
+                    window.statusBarColor=android.graphics.Color.TRANSPARENT
+                    window.navigationBarColor=android.graphics.Color.TRANSPARENT
+                    WindowCompat.getInsetsController(window,view)
+                        .isAppearanceLightStatusBars=false
+                    WindowCompat.getInsetsController(window,view)
+                        .isAppearanceLightNavigationBars=false
+                }
                 ProfileScreen(
                     name = sharedPreferences.getString("user_name", "") ?: "",
                     currentClass = sharedPreferences.getString("user_class", "1. Sınıf") ?: "1. Sınıf",
@@ -257,6 +269,8 @@ fun ProfileScreen(
 
     Box(
         modifier = Modifier.fillMaxSize()
+            .background(Color(0xFF0D395D))
+            .safeDrawingPadding()
     ) {
         // Gradyan arka plan
         Box(

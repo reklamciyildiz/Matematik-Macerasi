@@ -512,8 +512,8 @@ class GameSelectionActivity : ComponentActivity() {
                                     GameCard(
                                         icon = R.drawable.ic_shopping_cart,
                     iconTint = Color(0xFFFF5722),
-                                        title = "Market Alışverişi",
-                                        description = "Alışveriş yaparak matematik öğren",
+                                        title = "Pazar Macerası",
+                                        description = "Üç pazarda alışveriş, bütçe ve para üstü bulmacaları",
                                         modifier = Modifier.weight(1f),
                                         onClick = {
                                             startActivity(Intent(this@GameSelectionActivity, MarketSimulatorActivity::class.java))

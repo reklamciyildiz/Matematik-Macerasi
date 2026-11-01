@@ -61,7 +61,7 @@ object AdventureReviewEngine {
             val a = factor()
             val b = factor()
             val c = factor()
-            val d = (weakFocus ?: factor()).coerceIn(2, 9)
+            val d = (weakFocus ?: factor()).coerceIn(range.first, range.last)
             return listOf(
                 question("$a sıra, her sırada $b taş var. Toplam kaç taş?",
                     a * b, "$a × $b = ${a * b}",

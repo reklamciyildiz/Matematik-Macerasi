@@ -80,7 +80,7 @@ object AdventureReviewEngine {
         val step = if (kind == AdventureReviewKind.COUNT_THREE) 3 else 4
         val a = factor()
         val b = factor()
-        val groups = (weakFocus ?: factor()).coerceIn(2, 9)
+        val groups = (weakFocus ?: factor()).coerceIn(range.first, range.last)
         val start = a * step
         val middle = b * step
         return listOf(

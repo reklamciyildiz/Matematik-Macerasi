@@ -36,7 +36,7 @@ object MarketPremiumCatalog {
             x("Ekmek","🥖",13),x("Simit","🥨",12),x("Poğaça","🥐",16),
             x("Kurabiye","🍪",14),x("Kek","🧁",20),x("Sandviç","🥪",27),
             x("Açma","🥯",15),x("Tost","🥪",25),x("Börek","🥟",22),
-            x("Çörek","🍞",18),x("Kraker","🍘",9),x("Muffin","🧁",24))),
+            x("Çörek","🍞",18),x("Süt","🥛",17,"litre"),x("Su","💧",8,"litre"))),
         shop(2,"Oyuncak Atölyesi","🧸","Harçlık planlama",false,listOf(
             x("Oyuncak Top","⚽",28),x("Yapboz","🧩",34),x("Uçurtma","🪁",25),
             x("Boya Kalemi","🖍️",19),x("Kitap","📚",27),x("Robot","🤖",45),
@@ -156,7 +156,7 @@ object MarketPremiumCatalog {
             }
             1 -> {
                 kind=MarketBonusKind.VOLUME;title="Litre Dedektifi"
-                val unit=1700; correct=if(tier==LearningTier.USTALIK) 2550
+                correct=if(tier==LearningTier.USTALIK) 2550
                     else if(lower) 3400 else 5100
                 prompt="1 litre süt 17 TL. " +
                     if(tier==LearningTier.USTALIK)

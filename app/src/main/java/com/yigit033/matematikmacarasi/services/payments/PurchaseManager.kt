@@ -1,6 +1,14 @@
 package com.yigit033.matematikmacarasi.services.payments
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.os.SystemClock
+import android.text.InputType
+import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
+import android.widget.Toast
 import android.content.Context
 import android.util.Log
 import androidx.lifecycle.LiveData
@@ -60,6 +68,17 @@ class PurchaseManager private constructor(
     // Premium durumu için StateFlow
     private val _premiumState = MutableStateFlow(false)
     val premiumState: StateFlow<Boolean> = _premiumState.asStateFlow()
+    private val _restoreState=MutableStateFlow<RestoreState>(RestoreState.Idle)
+    val restoreState:StateFlow<RestoreState> = _restoreState.asStateFlow()
+    sealed class RestoreState {
+        object Idle:RestoreState()
+        object Loading:RestoreState()
+        data class Found(val googlePlay:Boolean,val code:Boolean):RestoreState()
+        object NotFound:RestoreState()
+        data class Error(val message:String):RestoreState()
+    }
+    private var adultGateShowing=false
+    private var billingConnecting=false
     
     // Satın alma durumu için LiveData
     private val _purchaseStatus = MutableLiveData<PurchaseStatus>()
@@ -137,14 +156,18 @@ class PurchaseManager private constructor(
      */
     private fun connectToBillingService() {
         if (billingClient.isReady) {
+            billingConnecting=false
             Log.d(TAG, "✅ BillingClient zaten bağlı")
             return
         }
         
         Log.d(TAG, "🔄 BillingClient bağlantısı başlatılıyor...")
         
+        if(billingConnecting) return
+        billingConnecting=true
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
+                billingConnecting=false
                 val responseCode = billingResult.responseCode
                 val debugMessage = billingResult.debugMessage
                 
@@ -193,6 +216,7 @@ class PurchaseManager private constructor(
             }
             
             override fun onBillingServiceDisconnected() {
+                billingConnecting=false
                 Log.w(TAG, "⚠️ Billing servisi bağlantısı kesildi")
                 Log.d(TAG, "🔄 5 saniye sonra yeniden bağlanma deneniyor...")
                 
@@ -225,7 +249,7 @@ class PurchaseManager private constructor(
     private fun handlePurchase(purchase: Purchase) {
         Log.d(TAG, "🔄 Satın alma işleniyor:")
         Log.d(TAG, "   - Ürün ID: ${purchase.products}")
-        Log.d(TAG, "   - Purchase Token: ${purchase.purchaseToken}")
+        // Never log payment credentials or purchase tokens.
         Log.d(TAG, "   - Purchase State: ${purchase.purchaseState}")
         Log.d(TAG, "   - Is Acknowledged: ${purchase.isAcknowledged}")
         
@@ -340,6 +364,54 @@ class PurchaseManager private constructor(
         }
     }
     
+    /** Explicit Play restore; errors do not erase cached rights. */
+    fun restorePurchases() {
+        if(_restoreState.value is RestoreState.Loading) return
+        _restoreState.value=RestoreState.Loading
+        scope.launch {
+            try {
+                if(!billingClient.isReady) connectToBillingService()
+                var tries=0
+                while(!billingClient.isReady && tries<25) {
+                    delay(120)
+                    tries++
+                }
+                if(!billingClient.isReady) {
+                    _restoreState.value=RestoreState.Error(
+                        "Google Play'e bağlanılamadı. İnternet açıkken tekrar dene.")
+                    return@launch
+                }
+                val params=QueryPurchasesParams.newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP).build()
+                val result=billingClient.queryPurchasesAsync(params)
+                if(result.billingResult.responseCode!=BillingClient.BillingResponseCode.OK) {
+                    _restoreState.value=RestoreState.Error(
+                        "Satın alma sorgusu tamamlanamadı. Tekrar deneyebilirsin.")
+                    return@launch
+                }
+                val purchased=result.purchasesList.filter { it.products.contains(PREMIUM_SKU) }
+                val play=purchased.any {it.purchaseState==Purchase.PurchaseState.PURCHASED}
+                val pending=purchased.any {it.purchaseState==Purchase.PurchaseState.PENDING}
+                purchased.filter {
+                    it.purchaseState==Purchase.PurchaseState.PURCHASED && !it.isAcknowledged
+                }.forEach {acknowledgePurchase(it)}
+                val code=codeValidator.isCodePremium()
+                savePremiumStatus(play)
+                _premiumState.value=play||code
+                _restoreState.value=when {
+                    play||code->RestoreState.Found(play,code)
+                    pending->RestoreState.Error(
+                        "Ödeme beklemede. Google Play onayından sonra yeniden dene.")
+                    else->RestoreState.NotFound
+                }
+            } catch(e:Exception) {
+                Log.e(TAG,"Restore failed; cached entitlement unchanged",e)
+                _restoreState.value=RestoreState.Error(
+                    "Satın alma bilgisi alınamadı; mevcut erişim değiştirilmedi.")
+            }
+        }
+    }
+
     /**
      * Premium durumunu SharedPreferences'a kaydeder.
      */
@@ -524,8 +596,65 @@ class PurchaseManager private constructor(
      * Premium sürümü satın alma işlemini başlatır.
      * Bu metod, kullanıcı arayüzünden kolayca çağrılabilir.
      */
-    fun buyPremium(activity: Activity) {
-        Log.d(TAG, "🚀 Premium satın alma isteği alındı")
+    fun buyPremium(activity:Activity) {
+        if(isPremiumSync()) {
+            _purchaseStatus.value=PurchaseStatus.AlreadyOwned
+            Toast.makeText(activity,"Premium erişimin zaten etkin.",Toast.LENGTH_SHORT).show()
+            return
+        }
+        if(adultGateShowing || activity.isFinishing || activity.isDestroyed) return
+        val question=AdultPurchaseChallenge.create(
+            (SystemClock.elapsedRealtime() xor System.nanoTime()).toInt())
+        val answer=EditText(activity).apply {
+            inputType=InputType.TYPE_CLASS_NUMBER
+            hint="İşlemin sonucu"
+        }
+        val consent=CheckBox(activity).apply {
+            text="Yetişkin olduğumu ve ödeme ekranına geçebileceğimi onaylıyorum."
+        }
+        val prompt=TextView(activity).apply {
+            text="Bu bölüm yetişkinler içindir.\\n\\n"+question.prompt
+            textSize=18f
+        }
+        val layout=LinearLayout(activity).apply {
+            orientation=LinearLayout.VERTICAL
+            val pad=(20*resources.displayMetrics.density).toInt()
+            setPadding(pad,pad,pad,pad)
+            addView(prompt);addView(answer);addView(consent)
+        }
+        adultGateShowing=true
+        val dialog=AlertDialog.Builder(activity)
+            .setTitle("Yetişkin Bölgesi")
+            .setMessage("Devam Et düğmesi Google Play ödeme ekranına yönlendirebilir.")
+            .setView(layout)
+            .setNegativeButton("Vazgeç"){_,_->}
+            .setPositiveButton("Devam Et",null)
+            .create()
+        dialog.setOnDismissListener { adultGateShowing=false }
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                if(AdultPurchaseChallenge.accepted(
+                        question,answer.text.toString(),consent.isChecked)) {
+                    dialog.dismiss()
+                    startPurchaseAfterAdultGate(activity)
+                } else {
+                    answer.error="Doğru işlem ve yetişkin onayı gerekli."
+                }
+            }
+        }
+        runCatching { dialog.show() }.onFailure {
+            adultGateShowing=false
+            Log.e(TAG,"Could not open adult purchase gate",it)
+        }
+    }
+
+    private fun startPurchaseAfterAdultGate(activity:Activity) {
+        if(activity.isFinishing || activity.isDestroyed) return
+        if(isPremiumSync()) {
+            _purchaseStatus.value=PurchaseStatus.AlreadyOwned
+            return
+        }
+        Log.d(TAG,"Adult purchase gate accepted")
         
         // Önce temel kontrolleri yap
         try {
@@ -665,7 +794,7 @@ class PurchaseManager private constructor(
     /**
      * Premium satın alma akışını başlatır.
      */
-    fun launchPurchaseFlow(activity: Activity) {
+    private fun launchPurchaseFlow(activity: Activity) {
         Log.d(TAG, "🚀 Premium satın alma akışı başlatılıyor...")
         
         if (!billingClient.isReady) {

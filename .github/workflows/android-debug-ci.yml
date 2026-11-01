@@ -103,6 +103,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_personalization_routes.py
 
+      - name: S3.3 release safety source preflight
+        shell: bash
+        run: python3 scripts/check_s3_3_release_preflight.py
+
       - name: Unit tests and Android debug compilation
         shell: bash
         run: |

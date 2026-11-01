@@ -214,6 +214,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     var attemptCount by remember(seed, stage) { mutableIntStateOf(checkpoint.attempts) }
     var errorCount by remember(seed, stage) { mutableIntStateOf(checkpoint.errors) }
     var hintCount by remember(seed, stage) { mutableIntStateOf(checkpoint.hints) }
+    var showReview by remember { mutableStateOf(false) }
     fun record(correct: Boolean, hint: Boolean = false): Boolean {
         if (checkpoint.record(correct, hint)) {
             attemptCount = checkpoint.attempts
@@ -234,6 +235,14 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
         } else message = "İlerleme kaydedilemedi. Tekrar dene."
     }
 
+    if (showReview) {
+        AdventureReviewScreen(
+            kind = AdventureReviewKind.MULTIPLICATION,
+            tier = runTier,
+            onExit = { showReview = false }
+        )
+        return
+    }
     BackHandler(onBack = onExit)
     val scrollState = rememberScrollState()
     LaunchedEffect(seed, stage) { scrollState.scrollTo(0) }
@@ -306,6 +315,9 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                 }
                 Text("Bu veriler oyun içi gözlemdir; kalıcı öğrenme veya MEB kazanımı tamamlandı anlamına gelmez.",
                     color = Color(0xFFB7DBE6), fontSize = 11.sp)
+            }
+            if (stage == 4) {
+                TempleButton(onClick = { showReview = true }) { Text("🧩 3 Soruluk Tekrar") }
             }
             TempleButton(onClick = {
                 val now = System.currentTimeMillis().coerceAtLeast(seed + 1L).coerceAtLeast(1L)

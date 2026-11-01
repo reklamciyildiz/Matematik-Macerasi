@@ -44,8 +44,9 @@ class MarketPremiumCatalogTest {
                 assertTrue(scenario.cashierPayKurus-scenario.requiredTotal() in
                     scenario.changeOptionsKurus)
                 assertTrue(scenario.budgetKurus>scenario.requiredTotal())
-                assertTrue(scenario.bonus!!.correctKurus in scenario.bonus.choicesKurus)
-                assertEquals(4,scenario.bonus.choicesKurus.distinct().size)
+                val bonus=scenario.bonus!!
+                assertTrue(bonus.correctKurus in bonus.choicesKurus)
+                assertEquals(4,bonus.choicesKurus.distinct().size)
             }
         }
     }

@@ -65,7 +65,8 @@ class LearningReportEngineTest {
     @Test fun hugeAttemptCountDoesNotOverflowPercentageAndKeepsAllSkills() {
         val report=LearningReportEngine.build(mapOf(
             AdventureSkill.MARKET to p(3,Int.MAX_VALUE,400,0)))
-        assertEquals(100,report.accuracyPercent)
+        // Truncation intentionally avoids advertising 100% when errors exist.
+        assertEquals(99,report.accuracyPercent)
         assertEquals(4,report.skills.size)
         assertTrue(report.skills.any{it.skill.id==AdventureSkill.MARKET &&
             it.skill.region=="Pazar Simülatörü"})

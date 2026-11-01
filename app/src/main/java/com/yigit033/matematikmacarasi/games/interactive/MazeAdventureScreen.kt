@@ -36,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +48,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -142,6 +146,7 @@ private fun MazeScene(region:MazeRegion) {
 
 @Composable
 private fun MazeMap(world:MazeWorld,run:MazeExpedition,onMove:(MazeDirection)->Unit) {
+    val latestMove by rememberUpdatedState(onMove)
     Canvas(Modifier.fillMaxWidth().aspectRatio(1f)
         .pointerInput(run.seed,run.cell,run.solvedMask,run.pendingCell) {
             detectTapGestures { offset ->
@@ -151,7 +156,7 @@ private fun MazeMap(world:MazeWorld,run:MazeExpedition,onMove:(MazeDirection)->U
                 val dx=col-run.cell%world.width
                 val dy=row-run.cell/world.width
                 MazeDirection.entries.firstOrNull{it.dx==dx&&it.dy==dy}
-                    ?.let(onMove)
+                    ?.let { latestMove(it) }
             }
         }) {
         val side=size.width/world.width
@@ -209,12 +214,16 @@ private fun MazeMap(world:MazeWorld,run:MazeExpedition,onMove:(MazeDirection)->U
 }
 
 @Composable
-private fun MazePad(onMove:(MazeDirection)->Unit,onGuide:()->Unit) {
+private fun MazePad(run:MazeExpedition,world:MazeWorld,
+    onMove:(MazeDirection)->Unit,onGuide:()->Unit) {
     Column(horizontalAlignment=Alignment.CenterHorizontally,
         verticalArrangement=Arrangement.spacedBy(9.dp)) {
-        OutlinedButton(onClick={onMove.curry(MazeDirection.UP)},
-            modifier=Modifier.size(width=115.dp,height=56.dp),
-            border=BorderStroke(1.dp,MazeColors.teal),
+        val canGoUp=MazeAdventureEngine.step(run,world,MazeDirection.UP)!=run
+        OutlinedButton(onClick={onMove(MazeDirection.UP)},
+            modifier=Modifier.size(width=115.dp,height=56.dp)
+                .testTag("maze_direction_UP"),
+            border=BorderStroke(1.dp,if(canGoUp)MazeColors.teal
+                else MazeColors.muted.copy(alpha=.35f)),
             colors=ButtonDefaults.outlinedButtonColors(contentColor=MazeColors.white)) {
             Text("↑ Yukarı",fontWeight=FontWeight.Bold)
         }
@@ -225,10 +234,13 @@ private fun MazePad(onMove:(MazeDirection)->Unit,onGuide:()->Unit) {
                     MazeDirection.DOWN -> "↓ Aşağı"
                     else -> "Sağ →"
                 }
-                OutlinedButton(onClick={onMove.curry(dir)},
-                    modifier=Modifier.weight(1f).heightIn(min=56.dp),
+                val canMove=MazeAdventureEngine.step(run,world,dir)!=run
+                OutlinedButton(onClick={onMove(dir)},
+                    modifier=Modifier.weight(1f).heightIn(min=56.dp)
+                        .testTag("maze_direction_"+dir.name),
                     contentPadding=PaddingValues(horizontal=2.dp),
-                    border=BorderStroke(1.dp,MazeColors.teal),
+                    border=BorderStroke(1.dp,if(canMove)MazeColors.teal
+                        else MazeColors.muted.copy(alpha=.35f)),
                     colors=ButtonDefaults.outlinedButtonColors(contentColor=MazeColors.white)
                 ) {Text(label,fontWeight=FontWeight.Bold,fontSize=13.sp)}
             }
@@ -236,9 +248,95 @@ private fun MazePad(onMove:(MazeDirection)->Unit,onGuide:()->Unit) {
         TextButton(onClick=onGuide) {
             Text("🧭 Bir sonraki adımı göster",color=MazeColors.gold,fontSize=12.sp)
         }
+        Text("Parlak çerçeveli yönler açık. Duvara basarsan nedenini görebilirsin.",
+            color=MazeColors.muted,fontSize=11.sp,textAlign=TextAlign.Center)
     }
 }
-private fun ((MazeDirection)->Unit).curry(d:MazeDirection):()->Unit = {this(d)}
+
+@Composable
+private fun MazeGateDialog(
+    question:MazeMathQuestion,
+    run:MazeExpedition,
+    feedback:String,
+    onAnswer:(Int)->Unit,
+    onHint:()->Unit
+) {
+    Dialog(
+        onDismissRequest={},
+        properties=DialogProperties(
+            dismissOnBackPress=false,
+            dismissOnClickOutside=false
+        )
+    ) {
+        Surface(
+            modifier=Modifier.fillMaxWidth().heightIn(max=540.dp)
+                .testTag("maze_gate_dialog"),
+            color=Color(0xFF11395D),
+            shape=RoundedCornerShape(23.dp),
+            border=BorderStroke(2.dp,MazeColors.gold)
+        ) {
+            Column(
+                modifier=Modifier.verticalScroll(rememberScrollState())
+                    .padding(18.dp),
+                verticalArrangement=Arrangement.spacedBy(12.dp)
+            ) {
+                Text("🔐 MATEMATİK KAPISI",
+                    color=MazeColors.gold,fontSize=15.sp,fontWeight=FontWeight.Black)
+                Text(question.prompt,color=MazeColors.white,
+                    fontSize=27.sp,fontWeight=FontWeight.Black)
+                Text("Doğru cevaba dokunarak kristal kapıyı aç.",
+                    color=MazeColors.muted,fontSize=13.sp)
+                question.choices.chunked(2).forEach {pair ->
+                    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                        pair.forEach {value ->
+                            Button(
+                                onClick={onAnswer(value)},
+                                modifier=Modifier.weight(1f).heightIn(min=62.dp)
+                                    .testTag("maze_gate_answer_"+value),
+                                shape=RoundedCornerShape(14.dp),
+                                colors=ButtonDefaults.buttonColors(
+                                    containerColor=Color(0xFF1D668D),
+                                    contentColor=Color.White)
+                            ) {
+                                Text(value.toString(),fontSize=22.sp,
+                                    fontWeight=FontWeight.ExtraBold)
+                            }
+                        }
+                    }
+                }
+                if(run.shownHint) {
+                    Text("💡 "+question.hint,color=MazeColors.teal,
+                        fontWeight=FontWeight.Bold,fontSize=13.sp)
+                }
+                if(run.errors>0) {
+                    Text("Yanlış denemeler: "+run.errors+
+                        ". Yeniden deneyebilirsin.",
+                        color=Color(0xFFFFCF94),fontSize=13.sp,
+                        modifier=Modifier.testTag("maze_gate_errors"))
+                }
+                if(feedback.startsWith("İlerleme kaydedilemedi") ||
+                    feedback.startsWith("İşlem gerçekleştirilemedi")) {
+                    Text(feedback,color=Color(0xFFFFCF94),
+                        fontWeight=FontWeight.Bold,fontSize=13.sp,
+                        modifier=Modifier.testTag("maze_gate_save_error"))
+                }
+                OutlinedButton(
+                    onClick=onHint,
+                    enabled=!run.shownHint,
+                    modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),
+                    border=BorderStroke(1.dp,MazeColors.teal)
+                ) {
+                    Text(if(run.shownHint)"💡 İpucu gösterildi"
+                        else "💡 İpucu al",color=MazeColors.white)
+                }
+                Text("Kapı açılmadan labirentte ilerleyemezsin.",
+                    color=MazeColors.muted,fontSize=11.sp,
+                    textAlign=TextAlign.Center,
+                    modifier=Modifier.fillMaxWidth())
+            }
+        }
+    }
+}
 
 @Composable
 fun MazeAdventureScreen(
@@ -295,33 +393,12 @@ fun MazeAdventureScreen(
     }
     val question=if(!lobby && run!=null && world!=null && run.pendingCell>=0)
         world.gates[run.pendingCell] else null
-    if(question!=null && run!=null) AlertDialog(
-        onDismissRequest={},
-        title={Text("🔐 Matematik Kapısı")},
-        text={
-            Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
-                Text(question.prompt,fontSize=24.sp,fontWeight=FontWeight.Black)
-                Text("Doğru cevabı seçerek kristal kapıyı aç.",
-                    fontSize=13.sp)
-                question.choices.forEach {value ->
-                    Button(onClick={onAnswer.curryAnswer(value)},
-                        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
-                        colors=ButtonDefaults.buttonColors(
-                            containerColor=Color(0xFF14577D))) {
-                        Text(value.toString(),fontSize=18.sp,color=Color.White)
-                    }
-                }
-                if(run.shownHint)
-                    Text("💡 ${question.hint}",color=Color(0xFF1D6F59),
-                        fontWeight=FontWeight.Bold)
-                if(run.errors>0)
-                    Text("Yanlış denemeler: ${run.errors}. Yeniden deneyebilirsin.",
-                        fontSize=12.sp,color=Color(0xFF925125))
-            }
-        },
-        confirmButton={TextButton(onClick=onHint,enabled=!run.shownHint) {
-            Text("💡 İpucu")}},
-        dismissButton={Text("Kapıyı açmak için bir cevap seç",fontSize=11.sp)}
+    if(question!=null && run!=null) MazeGateDialog(
+        question=question,
+        run=run,
+        feedback=feedback,
+        onAnswer=onAnswer,
+        onHint=onHint
     )
     Column(Modifier.fillMaxSize().background(
         Brush.verticalGradient(listOf(MazeColors.ocean,MazeColors.night)))
@@ -475,7 +552,7 @@ fun MazeAdventureScreen(
                 }
                 Text("🔵 Sen   🟡 Kilitli kapı / çıkış   🟢 Açılan kapı",
                     color=MazeColors.muted,fontSize=12.sp)
-                MazePad(onMove=onMove,onGuide={
+                MazePad(run=run,world=world,onMove=onMove,onGuide={
                     val dir=MazeAdventureEngine.guidance(run,world)
                     guidance=when(dir) {
                         MazeDirection.UP -> "🧭 Yukarı yönde ilerle."
@@ -501,4 +578,3 @@ fun MazeAdventureScreen(
         Spacer(Modifier.height(14.dp))
     }
 }
-private fun ((Int)->Unit).curryAnswer(value:Int):()->Unit = {this(value)}

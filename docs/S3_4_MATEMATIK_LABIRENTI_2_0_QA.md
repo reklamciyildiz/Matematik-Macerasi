@@ -40,3 +40,11 @@
 Fiziksel cihaz ve çocuk kullanıcı testi geçmeden yalnızca GitHub CI üzerinden 2.0'ın ticari açıdan kabul edilmiş bir premium oyun olduğu iddia edilmeyecek. Ardından Balon Patlatma veya Uzay Matematik Macerası için ayrı oyun tasarım ve teknik borç değerlendirmesi yapılabilir.
 
 **Play Store üretim sürümü** hâlâ S3.3 yayımlama kapılarından geçmelidir: imzalı release AAB, Play satın alma geri yükleme, gerçek Play Console Families/Data Safety ve ödeme doğrulama gereklilikleri. Bu sprint Play Store'a otomatik deploy yapmaz.
+
+## S3.4.1 — Dokunma ve kayıt regresyon onarımı (2026-11-01)
+- Yön kontrolleri doğrudan `onMove(direction)` callback'ini çağırır; harita yönünde `rememberUpdatedState` kullanılır.
+- Labirentte duvara basıldığında artık sessiz bir no-op yerine oyuncuya açık uyarı verilir. Açık yollar kontrast çerçeveyle gösterilir; kapıda beklerken çözüm zorunludur.
+- Matematik kapısı, dar ekranda taşma riski olan `AlertDialog` metin alanı yerine kaydırılabilir, iki sütunlu, en az 62dp dokunma hedefi sunan sabit `Dialog` ile gösterilir. Şıklar doğrudan `onAnswer(value)` ile iletilir.
+- Motor adımı/yanıtı kaydedilemezse veya exception alırsa, ilerleme kaybolmuş gibi davranılmaz: kullanıcıya hata verilir, Logcat'e kayıt düşülür. Doğru ve yanlış cevaplar mevcut yerel ilerleme/ödül kurallarını korur.
+- Android UI regresyon testi `MazeAdventureTouchTest`: yön tuşu `performClick()` ile hücre değiştirir; matematik kapısında yanlış/ doğru cevap dokunmaları state'i değiştirir.
+- Yerel cihaz veya emülatörde kabul: bütün okları dene (duvar = mesaj, geçilebilir yön = adım), ilk kapıda yanlış ardından doğru cevap, küçük ekran ve büyük fontta dört şıkkı dokunarak yanıtla, oturumu kapat/aç. Android instrumented test çalıştırılmadan fiziksel dokunma davranışı doğrulanmış sayılmaz.

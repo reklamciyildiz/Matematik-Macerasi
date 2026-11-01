@@ -8,7 +8,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
@@ -113,35 +112,70 @@ class MathMazeGameActivity:ComponentActivity() {
         return true
     }
 
-    private fun applyChange(action:(MazeExpedition)->MazeExpedition) {
-        val before=run?:return
-        if(before.completed)return
-        val next=runCatching {action(before)}.getOrNull()?:return
-        if(next==before)return
+    /** Persist before publishing a Compose state change; never swallow failures silently. */
+    private fun applyChange(action:(MazeExpedition)->MazeExpedition):Boolean {
+        val before=run?:return false
+        if(before.completed)return false
+        val next=runCatching {action(before)}.onFailure {
+            Log.e(TAG,"Maze interaction failed",it)
+            feedback="İşlem gerçekleştirilemedi. Tekrar dene."
+        }.getOrNull()?:return false
+        if(next==before)return false
         if(!store.save(next)) {
-            feedback="İlerleme kaydedilemedi, tekrar dene."
-            return
+            Log.e(TAG,"Maze interaction checkpoint rejected or could not be persisted")
+            feedback="İlerleme kaydedilemedi. Depolama alanını kontrol edip yeniden dene."
+            return false
         }
         run=next
         if(next.completed && !before.completed)deliverCompletion(next)
+        return true
     }
 
     private fun move(dir:MazeDirection) {
-        applyChange {before->
-            val world=MazeAdventureEngine.generate(before.seed,before.region,before.tier)
-            MazeAdventureEngine.step(before,world,dir)
+        val before=run?:return
+        if(before.completed)return
+        if(before.pendingCell>=0) {
+            feedback="Önce matematik kapısındaki soruyu cevapla."
+            return
+        }
+        val world=runCatching {
+            MazeAdventureEngine.generate(before.seed,before.region,before.tier)
+        }.onFailure {Log.e(TAG,"Could not load maze for movement",it)}
+            .getOrNull()?:let {
+                feedback="İşlem gerçekleştirilemedi. Tekrar dene."
+                return
+            }
+        val next=MazeAdventureEngine.step(before,world,dir)
+        if(next==before) {
+            feedback="Bu yönde duvar var. Açık yolu izle veya pusuladan yardım al."
+            return
+        }
+        if(applyChange { MazeAdventureEngine.step(it,world,dir) }) {
+            feedback=if(next.pendingCell>=0)
+                "🔐 Kapıya ulaştın. Soruyu çözerek ilerle."
+            else "Haritada ilerledin. Çıkışa doğru devam et."
         }
     }
 
     private fun answerGate(selected:Int) {
         val before=run?:return
         if(before.pendingCell<0)return
-        val world=MazeAdventureEngine.generate(before.seed,before.region,before.tier)
-        val active=world.gates[before.pendingCell]?:return
+        val world=runCatching {
+            MazeAdventureEngine.generate(before.seed,before.region,before.tier)
+        }.onFailure {Log.e(TAG,"Could not load maze for answer",it)}
+            .getOrNull()?:let {
+                feedback="İşlem gerçekleştirilemedi. Tekrar dene."
+                return
+            }
+        val active=world.gates[before.pendingCell]?:let {
+            Log.e(TAG,"Pending math gate not found for cell "+before.pendingCell)
+            feedback="İşlem gerçekleştirilemedi. Tekrar dene."
+            return
+        }
+        if(selected !in active.choices)return
         val correct=active.correct==selected
-        applyChange { MazeAdventureEngine.answer(it,world,selected) }
-        if(run!=before) {
-            feedback=if(correct) "✨ ${active.explanation}"
+        if(applyChange { MazeAdventureEngine.answer(it,world,selected) }) {
+            feedback=if(correct) "✨ "+active.explanation
                 else "Bu cevap olmadı. İpucu alabilir veya yeniden deneyebilirsin."
             runCatching {
                 if(correct)audio.playCorrectSound() else audio.playWrongSound()

@@ -391,7 +391,7 @@ private fun SpaceFlightArena(
     run:SpaceRun,puzzle:SpacePuzzle,
     onSteer:(Int)->Unit,onIntercept:()->Unit
 ) {
-    var paused by rememberSaveable(run.seed,run.stage){mutableStateOf(false)}
+    var paused by rememberSaveable(run.seed,run.stage){mutableStateOf(true)}
     var progress by remember(run.seed,run.wave,run.stage){mutableFloatStateOf(0f)}
     val owner=LocalLifecycleOwner.current
     DisposableEffect(owner){
@@ -443,7 +443,7 @@ private fun SpaceFlightArena(
                     border=BorderStroke(1.dp,GalaxyPaint.teal),
                     colors=ButtonDefaults.outlinedButtonColors(
                         contentColor=GalaxyPaint.bright)
-                ){Text(if(paused)"▶ Devam" else "Ⅱ Durdur",fontSize=11.sp)}
+                ){Text(if(paused)"▶ Uçuşu Başlat" else "Ⅱ Durdur",fontSize=11.sp)}
             }
             Box(
                 Modifier.fillMaxWidth().height(302.dp)
@@ -554,7 +554,7 @@ private fun SpaceFlightArena(
                     color=GalaxyPaint.night.copy(alpha=.94f),
                     shape=RoundedCornerShape(16.dp)
                 ){
-                    Text("⏸ Uçuş duraklatıldı",
+                    Text("▶ Hazırsan uçuşu başlat",
                         color=GalaxyPaint.bright,
                         modifier=Modifier.padding(14.dp),
                         fontWeight=FontWeight.Bold)

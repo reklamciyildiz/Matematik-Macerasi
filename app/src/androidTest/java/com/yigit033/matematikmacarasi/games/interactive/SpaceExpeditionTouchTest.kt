@@ -34,6 +34,7 @@ class SpaceExpeditionTouchTest {
         composeRule.onNodeWithTag("space_planet_AQUA").performScrollTo().performClick()
         composeRule.onNodeWithText("🚀 Okyanus Nebulası Keşfini Başlat")
             .performScrollTo().performClick()
+        composeRule.onNodeWithTag("space_pause").performScrollTo().performClick()
         composeRule.onNodeWithTag("space_lane_0").performScrollTo().performClick()
         composeRule.onNodeWithTag("space_pause").performScrollTo().performClick()
         composeRule.runOnIdle {

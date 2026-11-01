@@ -134,15 +134,28 @@ object MarketAdventureEngine {
         return actual==required && amount(run,scenario)<=scenario.budgetKurus
     }
 
-    fun valid(run: MarketAdventureRun): Boolean =
-        run.seed>=0 && run.visit in 0..VISITS && run.errors in 0..run.attempts &&
-            run.attempts>=0 && run.hints>=0 && run.perfectDecisions in 0..DECISIONS &&
-            run.paidKurus>=0 && run.completedRuns>=0 &&
-            run.basket.size<=4 && run.basket.map { it.productId }.distinct().size==run.basket.size &&
-            run.basket.all { it.productId>0 && it.quantity in 1..3 } &&
-            (run.seed>0 || (run.visit==0 && run.phase==MarketAdventurePhase.WELCOME)) &&
-            ((run.phase==MarketAdventurePhase.COMPLETE)==(run.visit==VISITS)) &&
-            (run.phase!=MarketAdventurePhase.WELCOME || run.visit==0)
+    fun valid(run: MarketAdventureRun): Boolean {
+        if(run.seed<0L || run.visit !in 0..VISITS ||
+            run.attempts<0 || run.errors !in 0..run.attempts ||
+            run.hints<0 || run.perfectDecisions !in 0..DECISIONS ||
+            run.paidKurus<0 || run.completedRuns<0 ||
+            run.basket.size>4 || run.basket.map { it.productId }.distinct().size!=run.basket.size ||
+            run.basket.any { it.productId<=0 || it.quantity !in 1..3 } ||
+            (run.seed==0L && (run.visit!=0 || run.phase!=MarketAdventurePhase.WELCOME)) ||
+            ((run.phase==MarketAdventurePhase.COMPLETE)!=(run.visit==VISITS)) ||
+            (run.phase==MarketAdventurePhase.WELCOME && run.visit!=0)) return false
+        if(run.seed==0L) return run.basket.isEmpty()
+        if(run.phase==MarketAdventurePhase.COMPLETE)
+            return run.basket.isEmpty() && run.paidKurus==0
+        val scene=scenario(run)?:return false
+        if(run.basket.any { line -> scene.products.none { it.id==line.productId } })
+            return false
+        if(run.phase==MarketAdventurePhase.SHOP)
+            return run.paidKurus==0
+        return basketExact(run,scene) &&
+            (run.phase!=MarketAdventurePhase.CHANGE ||
+                run.paidKurus==scene.cashierPayKurus)
+    }
 
     fun changeQuantity(run: MarketAdventureRun, productId: Int, delta: Int): MarketAdventureRun {
         if(!valid(run) || run.phase!=MarketAdventurePhase.SHOP) return run

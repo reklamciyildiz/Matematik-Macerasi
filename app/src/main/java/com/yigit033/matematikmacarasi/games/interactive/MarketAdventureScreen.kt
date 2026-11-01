@@ -25,6 +25,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -206,6 +207,9 @@ private val panel = Color(0xFF215775)
 @Composable
 fun MarketAdventureScreen(
     store:MarketAdventureStore,
+    stallStore:MarketStallStore,
+    hasPremium:Boolean,
+    onUpgrade:()->Unit,
     suggestedTier:LearningTier,
     onExit:()->Unit,
     onCompletion:(MarketAdventureRun)->Unit
@@ -215,6 +219,9 @@ fun MarketAdventureScreen(
     var message by remember { mutableStateOf("") }
     var isPositive by remember { mutableStateOf(true) }
     var showExit by remember { mutableStateOf(false) }
+    var showParentalGate by remember { mutableStateOf(false) }
+    var adultAnswer by remember { mutableStateOf("") }
+    var showStall by remember { mutableStateOf(false) }
     val scroll=rememberScrollState()
     LaunchedEffect(run.seed,run.visit,run.phase) { scroll.scrollTo(0) }
 
@@ -227,8 +234,8 @@ fun MarketAdventureScreen(
         run=next
         return true
     }
-    fun start(tier:LearningTier) {
-        val started=store.begin(tier)
+    fun start(tier:LearningTier,shopIndex:Int?=null) {
+        val started=store.begin(tier,hasPremium,shopIndex)
         if(started!=null) {
             run=started;message=""
         } else {isPositive=false;message="Oyun başlatılamadı. Depolamayı kontrol et."}
@@ -264,6 +271,31 @@ fun MarketAdventureScreen(
         }
     }
 
+    if(showStall && hasPremium) {
+        MarketStallScreen(stallStore,onClose={showStall=false})
+        return
+    }
+    if(showParentalGate) AlertDialog(
+        onDismissRequest={showParentalGate=false;adultAnswer=""},
+        title={Text("Yetişkin Bölgesi")},
+        text={
+            Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                Text("Premium satın alma ekranı yalnızca yetişkinler içindir. " +
+                    "Devam etmek için işlemi çöz.")
+                Text("17 × 8 = ?",fontWeight=FontWeight.Bold,fontSize=19.sp)
+                OutlinedTextField(value=adultAnswer,
+                    onValueChange={adultAnswer=it.take(5).filter(Char::isDigit)},
+                    label={Text("Sonuç")},singleLine=true)
+            }
+        },
+        confirmButton={
+            TextButton(onClick={showParentalGate=false;adultAnswer="";onUpgrade()},
+                enabled=adultAnswer=="136") {Text("Yetişkin olarak devam et")}
+        },
+        dismissButton={TextButton(onClick={showParentalGate=false;adultAnswer=""}) {
+            Text("Vazgeç")
+        }}
+    )
     BackHandler(enabled=run.seed>0L&&!run.finished) { showExit=true }
     if(showExit) AlertDialog(
         onDismissRequest={showExit=false},
@@ -296,9 +328,10 @@ fun MarketAdventureScreen(
             Text(if(stage==MarketAdventurePhase.WELCOME) chosenTier.title
                 else run.tier.title,fontSize=13.sp,color=turquoise)
         }
-        val completed=if(run.finished) MarketAdventureEngine.visitCount(run) else run.visit
+        val completed=if(run.finished) MarketAdventureEngine.visitCount(run)
+            else if(run.singleShop) 0 else run.visit
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-            repeat(if(run.seed==0L) MarketAdventureEngine.PREMIUM_VISITS else MarketAdventureEngine.visitCount(run)) { index ->
+            repeat(if(run.seed==0L) MarketPremiumCatalog.shops.size else MarketAdventureEngine.visitCount(run)) { index ->
                 Box(Modifier.weight(1f).height(8.dp).clip(CircleShape).background(
                     if(index<completed) orange else Color(0xFF5C8BA2)))
             }
@@ -308,18 +341,34 @@ fun MarketAdventureScreen(
                 "Renkli çizgi film pazarında meyve ve alışveriş tezgâhları",
                 big=true)
             if(!run.finished) {
-                MarketHeadline("Pazar Simülatörü 3.0",
+                MarketHeadline("Pazar Simülatörü 4.0",
                     "Alışveriş yap, bütçeni planla ve para üstünü hesapla.")
-                listOf("🍎 Güneşli Manav","🥖 Mahalle Fırını",
-                    "🧸 Oyuncak Atölyesi","📒 Renkli Kırtasiye",
-                    "👕 Giyim Sokağı","🏪 Benim Tezgâhım").forEachIndexed { i,name ->
-                    Surface(color=Color(0xFF245C79),
+                Text("${MarketPremiumCatalog.shops.size} mağaza · " +
+                    "${MarketPremiumCatalog.productCount} ürün · Tek mağaza veya tam macera",
+                    color=cream,fontSize=12.sp)
+                MarketPremiumCatalog.shops.forEachIndexed { index,shop ->
+                    Surface(color=if(shop.isPro&&!hasPremium)Color(0xFF344F68)
+                        else Color(0xFF245C79),
                         shape=RoundedCornerShape(14.dp),
-                        border=androidx.compose.foundation.BorderStroke(1.dp,turquoise)) {
-                        Row(Modifier.fillMaxWidth().padding(12.dp),
-                            verticalAlignment=Alignment.CenterVertically) {
-                            Text("${i+1}. $name",color=Color.White,
-                                fontWeight=FontWeight.Bold,fontSize=15.sp)
+                        border=androidx.compose.foundation.BorderStroke(1.dp,
+                            if(shop.isPro)orange else turquoise)) {
+                        Column(Modifier.fillMaxWidth().padding(11.dp),
+                            verticalArrangement=Arrangement.spacedBy(6.dp)) {
+                            Text("${shop.emoji}  ${index+1}. ${shop.title}  " +
+                                if(shop.isPro&&!hasPremium)"🔒 Premium" else "",
+                                color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)
+                            Text(shop.learning,color=cream,fontSize=12.sp)
+                            OutlinedButton(onClick={
+                                if(shop.isPro&&!hasPremium)showParentalGate=true
+                                else start(chosenTier,index)
+                            },modifier=Modifier.fillMaxWidth().heightIn(min=46.dp),
+                                colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White),
+                                border=androidx.compose.foundation.BorderStroke(
+                                    1.dp,if(shop.isPro)orange else turquoise)) {
+                                Text(if(shop.isPro&&!hasPremium)
+                                    "🔒 Premium ile Aç" else "Bu Mağazada Oyna",
+                                    fontWeight=FontWeight.Bold)
+                            }
                         }
                     }
                 }
@@ -341,9 +390,26 @@ fun MarketAdventureScreen(
                         ) {Text(tier.title,fontSize=11.sp)}
                     }
                 }
-                Text("6 durak · 24 matematik kararı · Çevrimdışı · Zaman sınırı yok",
+                Text(if(hasPremium) "Premium: 10 mağaza · 40 karar · Sınırsız tekrar" else
+                    "Free: 3 mağaza · 12 karar · Premium için 7 yeni mağaza",
                     color=cream,fontSize=12.sp)
-                MarketAction("Pazara Gir ▶") {start(chosenTier)}
+                MarketAction(if(hasPremium) "10 Mağazalık Maceraya Gir ▶"
+                    else "3 Mağazalık Ücretsiz Maceraya Gir ▶") {start(chosenTier)}
+                if(hasPremium) {
+                    OutlinedButton(onClick={showStall=true},
+                        modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),
+                        border=androidx.compose.foundation.BorderStroke(1.dp,orange),
+                        colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White)) {
+                        Text("🏪 Kendi Tezgâhını İşlet")
+                    }
+                } else {
+                    OutlinedButton(onClick={showParentalGate=true},
+                        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+                        border=androidx.compose.foundation.BorderStroke(1.dp,orange),
+                        colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White)) {
+                        Text("🔒 Premium Mağazaları Keşfet")
+                    }
+                }
             } else {
                 MarketHeadline("Pazar maceran tamamlandı!",
                     "Alışveriş, ödeme ve ekonomik kararları bitirdin.")
@@ -351,7 +417,7 @@ fun MarketAdventureScreen(
                     border=androidx.compose.foundation.BorderStroke(2.dp,orange)) {
                     Column(Modifier.fillMaxWidth().padding(18.dp),
                         verticalArrangement=Arrangement.spacedBy(9.dp)) {
-                        Text("✦   ${MarketAdventureEngine.visitCount(run)} durak tamamlandı",fontSize=23.sp,
+                        Text("✦   ${MarketAdventureEngine.visitCount(run)} mağaza tamamlandı",fontSize=23.sp,
                             fontWeight=FontWeight.ExtraBold,color=orange)
                         Text("★".repeat(MarketAdventureEngine.starsFor(run))+
                             "☆".repeat(3-MarketAdventureEngine.starsFor(run)),
@@ -370,11 +436,19 @@ fun MarketAdventureScreen(
                             color=cream,fontSize=11.sp)
                     }
                 }
+                if(hasPremium) {
+                    OutlinedButton(onClick={showStall=true},
+                        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+                        border=androidx.compose.foundation.BorderStroke(1.dp,orange),
+                        colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White)) {
+                        Text("🏪 Kendi Tezgâhını İşlet")
+                    }
+                }
                 MarketAction("Yeni Alışveriş Turu ↻") {start(run.tier)}
                 MarketAction("Haritaya Dön",onClick=onExit)
             }
         } else if(scene!=null) {
-            MarketHeadline("${run.visit+1}/${MarketAdventureEngine.visitCount(run)} · ${scene.location}",
+            MarketHeadline("${if(run.singleShop)1 else run.visit+1}/${MarketAdventureEngine.visitCount(run)} · ${scene.location}",
                 scene.hint)
             val art=when(run.visit) {
                 0 -> R.drawable.market_adventure_manav
@@ -382,6 +456,10 @@ fun MarketAdventureScreen(
                 2 -> R.drawable.market_adventure_toys
                 3 -> R.drawable.market_adventure_stationery
                 4 -> R.drawable.market_adventure_clothing
+                5 -> R.drawable.market_adventure_toys
+                6 -> R.drawable.market_adventure_manav
+                7 -> R.drawable.market_adventure_manav
+                8 -> R.drawable.market_adventure_firin
                 else -> R.drawable.market_adventure_stall
             }
             MarketScene(art,scene.location+" pazar tezgâhı")
@@ -535,6 +613,9 @@ fun MarketAdventureScreen(
                     MarketBonusKind.DISCOUNT -> "🏷️ İNDİRİM HESABI"
                     MarketBonusKind.COMPARE -> "⚖️ FİYAT KARŞILAŞTIRMA"
                     MarketBonusKind.PROFIT -> "🏪 KENDİ TEZGÂHINI YÖNET"
+                    MarketBonusKind.BUDGET -> "💰 BÜTÇE YÖNETİMİ"
+                    MarketBonusKind.UNIT_PRICE -> "📦 BİRİM FİYAT HESABI"
+                    MarketBonusKind.BUNDLE -> "🛒 ÇOKLU PAKET HESABI"
                 },color=orange,fontSize=17.sp,fontWeight=FontWeight.Black)
                 Surface(color=panel,shape=RoundedCornerShape(18.dp)) {
                     Column(Modifier.fillMaxWidth().padding(16.dp),

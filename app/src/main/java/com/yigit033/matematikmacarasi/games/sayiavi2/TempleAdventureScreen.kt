@@ -381,11 +381,35 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                         }
                     }
                     Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
+                    if (placed == q.tiles) {
+                        Text("Mozaikte toplam kaç taş var?", color = Color(0xFF9FE9DA), fontWeight = FontWeight.Bold)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(q.tiles, q.tiles + q.rows, q.tiles - q.columns)
+                                .shuffled(kotlin.random.Random(seed + 401L))
+                                .forEach { candidate ->
+                                    OutlinedButton(
+                                        modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                                        onClick = {
+                                            if (selected != q.tiles) {
+                                                selected = candidate
+                                                if (candidate != q.tiles) record(false)
+                                                message = if (candidate == q.tiles)
+                                                    "${q.rows} × ${q.columns} = ${q.tiles}. Doğru!"
+                                                else "Sıraları ve her sıradaki taşları yeniden say."
+                                            }
+                                        },
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF83E7DB)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                                    ) { Text("$candidate") }
+                                }
+                        }
+                    }
                     TempleButton(enabled = placed < q.tiles, onClick = {
                         placed = (placed + q.columns).coerceAtMost(q.tiles)
                         checkpoint.saveStageProgress(0, placed)
                     }) { Text("Bir sırayı yerleştir") }
-                    TempleButton(enabled = placed == q.tiles, onClick = { if (record(true)) advance() }) {
+                    TempleButton(enabled = placed == q.tiles && selected == q.tiles,
+                        onClick = { if (record(true)) advance() }) {
                         Text("Mozaik tamamlandı")
                     }
                 }
@@ -411,7 +435,32 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                     }) {
                         Text(if (rotated) "Dizilimi geri çevir" else "Sütunları döndür")
                     }
-                    TempleButton(enabled = rotated && TempleEngine.isBalanced(q),
+                    if (rotated) {
+                        Text("Her iki dizilimde kaç taş var?", color = Color(0xFF9FE9DA),
+                            fontWeight = FontWeight.Bold)
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            listOf(q.weight, q.weight + q.leftRows, q.weight - q.leftColumns)
+                                .shuffled(kotlin.random.Random(seed + 402L))
+                                .forEach { candidate ->
+                                    OutlinedButton(
+                                        modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                                        onClick = {
+                                            if (selected != q.weight) {
+                                                selected = candidate
+                                                if (candidate != q.weight) record(false)
+                                                message = if (candidate == q.weight)
+                                                    "Sıra ve sütunların yeri değişse de toplam aynı!"
+                                                else "Taşları sırayla say ve diğer dizilimle karşılaştır."
+                                            }
+                                        },
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF83E7DB)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                                    ) { Text("$candidate") }
+                                }
+                        }
+                    }
+                    TempleButton(enabled = rotated && selected == q.weight &&
+                        TempleEngine.isBalanced(q),
                         onClick = { if (record(true)) advance() }) { Text("Dengeyi doğrula") }
                 }
                 2 -> {

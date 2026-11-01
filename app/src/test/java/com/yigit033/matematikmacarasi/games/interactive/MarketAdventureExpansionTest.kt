@@ -132,6 +132,49 @@ class MarketAdventureExpansionTest {
         assertEquals("23,50 TL",MarketAdventureEngine.format(2350))
     }
 
+    @Test fun ageAppropriateProblemsAvoidPrematurePercentagesAndFractionalMass() {
+        val basic=MarketAdventureEngine.scenarios(47L,LearningTier.TEMEL,2)
+        val intermediate=MarketAdventureEngine.scenarios(47L,LearningTier.GELISEN,2)
+        val advanced=MarketAdventureEngine.scenarios(47L,LearningTier.USTALIK,2)
+        assertTrue(basic[0].bonus!!.prompt.contains("2 kg"))
+        assertFalse(basic[0].bonus!!.prompt.contains("500 gram"))
+        assertTrue(intermediate[0].bonus!!.prompt.contains("500 gram"))
+        assertTrue(advanced[0].bonus!!.prompt.contains("1 kg 500 gram"))
+        assertFalse(basic[3].bonus!!.prompt.contains("%10"))
+        assertFalse(intermediate[3].bonus!!.prompt.contains("%10"))
+        assertTrue(advanced[3].bonus!!.prompt.contains("%10"))
+        for(stages in listOf(basic,intermediate,advanced)) {
+            assertEquals(24,MarketAdventureEngine.decisionCount(
+                MarketAdventureRun(contentVersion=2)))
+            assertTrue(stages[2].bonus!!.correctKurus>0)
+            assertTrue(stages[4].bonus!!.correctKurus>0)
+            assertTrue(stages[5].bonus!!.correctKurus>0)
+        }
+    }
+
+    @Test fun cashierBonusRequiresAnActuallyValidatedPayment() {
+        val run=MarketAdventureRun(seed=110L,tier=LearningTier.GELISEN,
+            visit=3,phase=MarketAdventurePhase.SHOP,contentVersion=2)
+        val scene=MarketAdventureEngine.scenario(run)!!
+        var current=run
+        scene.needed.forEach { line ->
+            repeat(line.quantity) {
+                current=MarketAdventureEngine.changeQuantity(current,line.productId,1)
+            }
+        }
+        current=MarketAdventureEngine.checkBasket(current)
+        current=MarketAdventureEngine.choosePayment(current,scene.requiredTotal())
+        current=MarketAdventureEngine.chooseChange(current,
+            scene.cashierPayKurus-scene.requiredTotal())
+        assertEquals(MarketAdventurePhase.BONUS,current.phase)
+        assertTrue(MarketAdventureEngine.valid(current))
+        assertFalse(MarketAdventureEngine.valid(current.copy(paidKurus=0)))
+        assertFalse(MarketAdventureEngine.valid(current.copy(
+            paidKurus=scene.cashierPayKurus-100)))
+        assertFalse(MarketAdventureEngine.valid(current.copy(
+            phase=MarketAdventurePhase.PAYMENT)))
+    }
+
     @Test fun noBonusCanBeSkippedOrForged() {
         val run=MarketAdventureRun(seed=9L,tier=LearningTier.GELISEN,
             visit=5,phase=MarketAdventurePhase.SHOP,contentVersion=2)

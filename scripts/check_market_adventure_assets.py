@@ -11,7 +11,7 @@ DRAW = SRC / "res/drawable"
 SCREEN = SRC / "java/com/yigit033/matematikmacarasi/games/interactive/MarketAdventureScreen.kt"
 ACTIVITY = SRC / "java/com/yigit033/matematikmacarasi/games/interactive/MarketSimulatorActivity.kt"
 QUICK = SRC / "java/com/yigit033/matematikmacarasi/ui/screens/home/QuickAccessGamesSection.kt"
-NAMES = ["hero","manav","firin","toys","stationery","clothing","stall"]
+NAMES = ["hero","manav","firin","toys","stationery","clothing","stall","sports","pets","grocery","cafe"]
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 
 def main():
@@ -63,10 +63,26 @@ def main():
         errors.append("market analytics still normalized to legacy three-stop scores")
     if "MarketAdventureEngine.chooseBonus" not in screen:
         errors.append("fourth-step market puzzles are not connected to Compose")
+    premium=(SRC/"java/com/yigit033/matematikmacarasi/games/interactive/MarketPremiumCatalog.kt")
+    stall=(SRC/"java/com/yigit033/matematikmacarasi/games/interactive/MarketStallScreen.kt")
+    store=(SRC/"java/com/yigit033/matematikmacarasi/games/interactive/MarketAdventureStore.kt")
+    if not premium.exists() or not stall.exists() or not store.exists():
+        errors.append("premium market catalog or economy implementation missing")
+    else:
+        catalog=premium.read_text(encoding="utf-8")
+        if "shop(9," not in catalog or "FREE_SHOPS=3" not in catalog:
+            errors.append("ten-store Free/Pro catalog not present")
+        if "hasPremium" not in screen or "MarketStallScreen(" not in screen:
+            errors.append("market screen is not wired to Premium and stall economy")
+        if "purchaseManager.isPremiumSync()" not in activity or \\
+           "purchaseManager.buyPremium(this)" not in activity:
+            errors.append("existing PurchaseManager entitlement and billing not wired")
+        if "contentVersion=3" not in store or "singleShop" not in store:
+            errors.append("version-three stored progress and quick sessions missing")
     if errors:
         for error in errors:print("ERROR:",error,file=sys.stderr)
         return 1
-    print("PASS: seven vector scenes, six-stop educational game and legacy cleanup verified")
+    print("PASS: eleven scenes, 10-store catalog, premium gate, virtual economy, legacy cleanup")
     return 0
 
 if __name__=="__main__":

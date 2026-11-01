@@ -71,7 +71,7 @@ private fun MazeTitle(text:String,subtitle:String="") {
     }
 }
 @Composable
-private fun MazeAction(text:String,onClick:()->Unit,outlined:Boolean=false,enabled:Boolean=true) {
+private fun MazeAction(text:String,outlined:Boolean=false,enabled:Boolean=true,onClick:()->Unit) {
     if(outlined) OutlinedButton(onClick=onClick,enabled=enabled,
         modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),
         shape=RoundedCornerShape(15.dp),
@@ -113,8 +113,8 @@ private fun MazeScene(region:MazeRegion) {
             }
             drawPath(p,Color(0xFF255978))
             val hill=androidx.compose.ui.graphics.Path().apply {
-                moveTo(0f,h*.90f);quadraticTo(w*.25f,h*.55f,w*.5f,h*.87f)
-                quadraticTo(w*.75f,h*.62f,w,h*.83f)
+                moveTo(0f,h*.90f);quadraticBezierTo(w*.25f,h*.55f,w*.5f,h*.87f)
+                quadraticBezierTo(w*.75f,h*.62f,w,h*.83f)
                 lineTo(w,h);lineTo(0f,h);close()
             }
             drawPath(hill,Color(0xFF298279))

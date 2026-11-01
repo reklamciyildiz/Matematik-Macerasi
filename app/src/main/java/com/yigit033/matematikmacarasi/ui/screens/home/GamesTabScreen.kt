@@ -44,6 +44,7 @@ import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
 import com.yigit033.matematikmacarasi.games.basic.MultiplicationGameActivity
 import com.yigit033.matematikmacarasi.games.basic.SubtractionGameActivity
 import com.yigit033.matematikmacarasi.games.ComingSoonActivity
+import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
@@ -156,7 +157,7 @@ fun GamesTabScreen(
             category = "Kavramlar",
             iconRes = R.drawable.ic_shapes,
             gradientColors = listOf(Color(0xFF0369A1), Color(0xFF38BDF8)),
-            activityClass = ComingSoonActivity::class.java
+            activityClass = GeometryCastleActivity::class.java
         )
     )
 

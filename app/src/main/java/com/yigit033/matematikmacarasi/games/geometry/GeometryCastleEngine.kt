@@ -32,6 +32,7 @@ data class CastleRun(
     val step: Int = 0,
     val selected: CastleShape? = null,
     val solved: Boolean = false,
+    val focusShape: CastleShape? = null,
     val mirrorMask: Int = 0,
     val attempts: Int = 0,
     val errors: Int = 0,
@@ -54,7 +55,8 @@ object GeometryCastleEngine {
         LearningTier.USTALIK -> CastleShape.entries
     }
 
-    fun tasks(seed: Long, tier: LearningTier): List<CastleTask> {
+    fun tasks(seed: Long, tier: LearningTier,
+        weakShape: CastleShape? = null): List<CastleTask> {
         require(seed > 0)
         val rand = Random(seed xor 0x53631L)
         val shapes = available(tier)
@@ -62,8 +64,10 @@ object GeometryCastleEngine {
             val extras = shapes.filter { it != target }.shuffled(rand).take(3)
             return (extras + target).shuffled(rand)
         }
-        fun shapeTask(mode: CastleMode, index: Int): CastleTask {
-            val target = shapes[(index + rand.nextInt(shapes.size)) % shapes.size]
+        fun shapeTask(mode: CastleMode, index: Int,
+            forced: CastleShape? = null): CastleTask {
+            val target = forced?.takeIf { it in shapes } ?:
+                shapes[(index + rand.nextInt(shapes.size)) % shapes.size]
             val prompt = if(mode == CastleMode.FIND) when(target) {
                 CastleShape.CIRCLE -> "Köşesi olmayan yuvarlak şekli bul."
                 CastleShape.TRIANGLE -> "Üç kenarı olan şekli bul."
@@ -99,7 +103,8 @@ object GeometryCastleEngine {
                     else "geometry_symmetry_build",
                 "Her parça ayna çizgisine aynı uzaklıkta olmalı.")
         }
-        val courtyard = (0..2).map { shapeTask(CastleMode.FIND,it) }
+        val courtyard = (0..2).map { shapeTask(CastleMode.FIND,it,
+            if(it == 0) weakShape else null) }
         val bridge = (0..2).map { shapeTask(CastleMode.BUILD,it) }
         val mirror = (0..2).map { mirrorTask(it) }
         // Finale distinct tasks from three learned mechanics.
@@ -110,7 +115,7 @@ object GeometryCastleEngine {
 
     fun task(run: CastleRun): CastleTask? =
         if (run.seed <= 0 || run.room !in 0..3 || run.step !in 0..2) null
-        else tasks(run.seed, run.tier)[run.room * 3 + run.step]
+        else tasks(run.seed, run.tier, run.focusShape)[run.room * 3 + run.step]
 
     fun symmetricRightMask(left: Int, size: Int): Int {
         require(size in listOf(4,6))

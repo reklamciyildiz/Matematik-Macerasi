@@ -39,7 +39,40 @@ class GeometryCastleProgressStore(context: Context) {
 
     @Synchronized fun save(next: CastleRun): Boolean {
         if (!GeometryCastleEngine.valid(next)) return false
+        val previous = load()
+        val sameRun = previous.seed > 0 && previous.seed == next.seed
+        val previousTaskId = previous.room * 3 + previous.step
+        val nextTaskId = next.room * 3 + next.step
+        val completedTask = sameRun && previous.room < 4 && previous.solved &&
+            nextTaskId == previousTaskId + 1
+        val newRun = next.seed > 0 && next.seed != previous.seed && next.room == 0
         val editor = prefs.edit()
+        if (newRun) {
+            editor.putInt("counted_attempts",0).putInt("counted_errors",0)
+                .putInt("counted_hints",0)
+        }
+        if (completedTask) {
+            GeometryCastleEngine.task(previous)?.let { task ->
+                val skill = task.skill
+                val deltaAttempts = (previous.attempts -
+                    prefs.getInt("counted_attempts",0)).coerceAtLeast(0)
+                val deltaErrors = (previous.errors -
+                    prefs.getInt("counted_errors",0)).coerceAtLeast(0)
+                val deltaHints = (previous.hints -
+                    prefs.getInt("counted_hints",0)).coerceAtLeast(0)
+                editor.putInt(skill + "_attempts",
+                    prefs.getInt(skill + "_attempts",0) + deltaAttempts)
+                editor.putInt(skill + "_errors",
+                    prefs.getInt(skill + "_errors",0) + deltaErrors)
+                editor.putInt(skill + "_hints",
+                    prefs.getInt(skill + "_hints",0) + deltaHints)
+                editor.putInt(skill + "_completed",
+                    prefs.getInt(skill + "_completed",0) + 1)
+                editor.putInt("counted_attempts",previous.attempts)
+                    .putInt("counted_errors",previous.errors)
+                    .putInt("counted_hints",previous.hints)
+            }
+        }
             .putLong("seed", next.seed).putString("tier",next.tier.name)
             .putInt("room",next.room).putInt("step",next.step)
             .putBoolean("solved",next.solved)
@@ -62,6 +95,15 @@ class GeometryCastleProgressStore(context: Context) {
         val next = CastleRun(seed=seed,tier=tier,completedRuns=old.completedRuns,
             focusShape=weakShape())
         return if(save(next)) next else null
+    }
+
+    fun skillEvidence(skill: String): Triple<Int,Int,Int> {
+        val valid = setOf("geometry_classify","geometry_compose",
+            "geometry_symmetry_recognize","geometry_symmetry_build")
+        if(skill !in valid) return Triple(0,0,0)
+        return Triple(prefs.getInt(skill + "_completed",0),
+            prefs.getInt(skill + "_errors",0),
+            prefs.getInt(skill + "_hints",0))
     }
 
     fun weakShape(): CastleShape? = prefs.getString("weak_shape", null)?.let { name ->

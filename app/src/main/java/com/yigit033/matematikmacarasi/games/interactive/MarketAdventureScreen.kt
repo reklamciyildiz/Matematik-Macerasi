@@ -146,7 +146,9 @@ private val panel = Color(0xFF215775)
                 verticalAlignment=Alignment.CenterVertically,
                 horizontalArrangement=Arrangement.SpaceBetween) {
                 OutlinedButton(onClick=onMinus,enabled=quantity>0,
-                    modifier=Modifier.size(47.dp),
+                    modifier=Modifier.size(48.dp).semantics {
+                        contentDescription="${product.name} miktarını bir azalt"
+                    },
                     contentPadding=androidx.compose.foundation.layout.PaddingValues(0.dp),
                     shape=CircleShape,
                     colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White),
@@ -156,7 +158,9 @@ private val panel = Color(0xFF215775)
                 Text("$quantity",fontSize=19.sp,color=Color.White,
                     fontWeight=FontWeight.Bold)
                 OutlinedButton(onClick=onPlus,enabled=quantity<3,
-                    modifier=Modifier.size(47.dp),
+                    modifier=Modifier.size(48.dp).semantics {
+                        contentDescription="${product.name} miktarını bir artır"
+                    },
                     contentPadding=androidx.compose.foundation.layout.PaddingValues(0.dp),
                     shape=CircleShape,
                     colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White),

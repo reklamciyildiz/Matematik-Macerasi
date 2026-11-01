@@ -282,8 +282,22 @@ object MarketAdventureEngine {
         val correct=change==run.paidKurus-amount(run,scene)
         val checked=register(run,correct)
         if(!correct) return checked
-        val last=run.visit==VISITS-1
-        return checked.copy(
+        if(scene.bonus != null) return checked.copy(phase=MarketAdventurePhase.BONUS)
+        return nextVisit(checked)
+    }
+
+    fun chooseBonus(run: MarketAdventureRun, choice: Int): MarketAdventureRun {
+        if(!valid(run) || run.phase!=MarketAdventurePhase.BONUS) return run
+        val bonus=scenario(run)?.bonus ?: return run
+        if(choice !in bonus.choicesKurus) return run
+        val correct=choice==bonus.correctKurus
+        val checked=register(run,correct)
+        return if(correct) nextVisit(checked) else checked
+    }
+
+    private fun nextVisit(run: MarketAdventureRun): MarketAdventureRun {
+        val last=run.visit==visitCount(run)-1
+        return run.copy(
             visit=run.visit+1,
             phase=if(last) MarketAdventurePhase.COMPLETE else MarketAdventurePhase.SHOP,
             basket=emptyList(),paidKurus=0,
@@ -293,7 +307,8 @@ object MarketAdventureEngine {
 
     fun hint(run: MarketAdventureRun): MarketAdventureRun {
         if(!valid(run) || run.phase !in listOf(
-                MarketAdventurePhase.SHOP,MarketAdventurePhase.PAYMENT,MarketAdventurePhase.CHANGE)
+                MarketAdventurePhase.SHOP,MarketAdventurePhase.PAYMENT,
+                MarketAdventurePhase.CHANGE,MarketAdventurePhase.BONUS)
             || run.taskHadHint) return run
         return run.copy(hints=run.hints+1,taskHadHint=true)
     }

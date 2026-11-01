@@ -97,7 +97,6 @@
         <activity
             android:name=".games.geometry.GeometryCastleActivity"
             android:exported="false"
-            android:screenOrientation="portrait"
             android:theme="@style/Theme.MatematikMacerasi" />
         <activity
             android:name=".games.GameSelectionActivity"

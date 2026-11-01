@@ -139,9 +139,10 @@ private fun SkyIllustration(realm:BalloonRealm,compact:Boolean=false) {
 
 @Composable
 private fun RowScope.BalloonButton(
-    value:Int,index:Int,enabled:Boolean,
+    value:Int,index:Int,wrong:Boolean,revealed:Boolean,correct:Boolean,
     onClick:()->Unit
 ) {
+    val enabled=!wrong && !revealed
     val tint=BalloonPalette.balloon[index%BalloonPalette.balloon.size]
     val floaty=rememberInfiniteTransition(label="floating-balloon")
     val bob by floaty.animateFloat(
@@ -156,10 +157,17 @@ private fun RowScope.BalloonButton(
             .testTag("balloon_choice_"+value),
         onClick=onClick,
         enabled=enabled,
-        color=if(enabled)BalloonPalette.panel else Color(0xFF244164),
+        color=when {
+            correct -> Color(0xFF1B7669)
+            wrong -> Color(0xFF244164)
+            else -> BalloonPalette.panel
+        },
         shape=RoundedCornerShape(22.dp),
-        border=BorderStroke(1.dp,if(enabled)
-            tint.copy(alpha=.8f) else BalloonPalette.muted.copy(alpha=.25f))
+        border=BorderStroke(if(correct)3.dp else 1.dp,when {
+            correct -> BalloonPalette.gold
+            wrong -> BalloonPalette.muted.copy(alpha=.25f)
+            else -> tint.copy(alpha=.8f)
+        })
     ) {
         Box(Modifier.fillMaxWidth().padding(vertical=6.dp),
             contentAlignment=Alignment.Center) {
@@ -174,7 +182,7 @@ private fun RowScope.BalloonButton(
                     strokeWidth=2.5f
                 )
                 drawOval(
-                    color=if(enabled)tint else tint.copy(alpha=.25f),
+                    color=if(wrong)tint.copy(alpha=.25f) else tint,
                     topLeft=Offset(w*.11f,h*.02f),
                     size=Size(w*.78f,h*.78f)
                 )
@@ -184,9 +192,9 @@ private fun RowScope.BalloonButton(
                     lineTo(w*.58f,h*.85f)
                     close()
                 }
-                drawPath(knot,if(enabled)tint else tint.copy(alpha=.25f))
+                drawPath(knot,if(wrong)tint.copy(alpha=.25f) else tint)
                 drawOval(
-                    color=Color.White.copy(alpha=if(enabled).42f else .12f),
+                    color=Color.White.copy(alpha=if(wrong).12f else .42f),
                     topLeft=Offset(w*.27f,h*.13f),
                     size=Size(w*.18f,h*.23f)
                 )
@@ -197,12 +205,16 @@ private fun RowScope.BalloonButton(
                 )
             }
             Text(
-                text=if(enabled)value.toString() else "✕",
+                text=if(wrong)"✕" else value.toString(),
                 modifier=Modifier.offset(y=(-19).dp),
-                color=if(enabled)Color(0xFF13294C) else BalloonPalette.muted,
+                color=if(wrong)BalloonPalette.muted else Color(0xFF13294C),
                 fontSize=26.sp,fontWeight=FontWeight.Black,
                 textAlign=TextAlign.Center
             )
+            if(correct)Text("✓ DOĞRU",
+                color=BalloonPalette.gold,fontSize=11.sp,
+                fontWeight=FontWeight.Black,
+                modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=5.dp))
         }
     }
 }
@@ -455,9 +467,12 @@ fun BalloonAdventureScreen(
                         horizontalArrangement=Arrangement.spacedBy(10.dp)) {
                         pair.forEachIndexed {colIndex,value->
                             val optionIndex=rowIndex*2+colIndex
-                            val disabled=run.resolved ||
-                                run.wrongMask and (1 shl optionIndex)!=0
-                            BalloonButton(value,optionIndex,!disabled) {
+                            val wrong=run.wrongMask and (1 shl optionIndex)!=0
+                            BalloonButton(
+                                value=value,index=optionIndex,
+                                wrong=wrong,revealed=run.resolved,
+                                correct=run.resolved && value==q.answer
+                            ) {
                                 onChoose(value)
                             }
                         }

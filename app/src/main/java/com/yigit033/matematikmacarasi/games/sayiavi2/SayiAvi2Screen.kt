@@ -35,7 +35,8 @@ enum class SayiAviMissionStage {
     STAGE_C_ROUTE,
     STAGE_TRANSFER_SEAL,
     REWARD_SUMMARY,
-    TEMPLE
+    TEMPLE,
+    REINFORCEMENT
 }
 
 /**
@@ -193,6 +194,11 @@ fun SayiAvi2Screen(
     }
 
     when (currentStage) {
+        SayiAviMissionStage.REINFORCEMENT -> AdventureReviewScreen(
+            kind = AdventureReviewKind.COUNT_THREE,
+            tier = runTier,
+            onExit = { currentStage = SayiAviMissionStage.REWARD_SUMMARY }
+        )
         SayiAviMissionStage.TEMPLE -> TempleAdventureScreen(
             tier = templeTier, onExit = { currentStage = SayiAviMissionStage.WELCOME })
         SayiAviMissionStage.WELCOME -> {
@@ -355,6 +361,7 @@ fun SayiAvi2Screen(
                 learningSummary = lastSummary ?: storage.getLastSummary(),
                 timeSpentSeconds = totalTimeSeconds,
                 starsCount = currentStars,
+                onReviewClick = { currentStage = SayiAviMissionStage.REINFORCEMENT },
                 onReplayClick = {
                     newRun()
                     currentStage = SayiAviMissionStage.STAGE_GROUP_SHELLS

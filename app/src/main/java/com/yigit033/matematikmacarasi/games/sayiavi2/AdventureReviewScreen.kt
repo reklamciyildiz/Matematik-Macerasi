@@ -26,8 +26,9 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -117,18 +118,22 @@ fun AdventureReviewScreen(
 ) {
     val context = LocalContext.current
     val history = remember(context) { AdventureReviewHistory(context) }
-    val seed = remember(kind, tier) { System.currentTimeMillis().coerceAtLeast(1L) }
+    val seed by rememberSaveable(kind.name, tier.name) {
+        mutableStateOf(System.currentTimeMillis().coerceAtLeast(1L))
+    }
     val questions = remember(kind, tier, seed) {
         AdventureReviewEngine.create(kind, tier, seed, history.weakFocus(kind))
     }
-    var index by remember(kind, seed) { mutableIntStateOf(0) }
-    var attempts by remember(kind, seed) { mutableIntStateOf(0) }
-    var errors by remember(kind, seed) { mutableIntStateOf(0) }
-    var hints by remember(kind, seed) { mutableIntStateOf(0) }
-    var solved by remember(index, seed) { mutableStateOf(false) }
-    var hintShown by remember(index, seed) { mutableStateOf(false) }
-    var feedback by remember(index, seed) { mutableStateOf("") }
-    var saveFailed by remember { mutableStateOf(false) }
+    var index by rememberSaveable(kind.name, seed) { mutableStateOf(0) }
+    var attempts by rememberSaveable(kind.name, seed) { mutableStateOf(0) }
+    var errors by rememberSaveable(kind.name, seed) { mutableStateOf(0) }
+    var hints by rememberSaveable(kind.name, seed) { mutableStateOf(0) }
+    var solved by rememberSaveable(index, seed) { mutableStateOf(false) }
+    var hintShown by rememberSaveable(index, seed) { mutableStateOf(false) }
+    var feedback by rememberSaveable(index, seed) { mutableStateOf("") }
+    var saveFailed by rememberSaveable { mutableStateOf(false) }
+    val scrollState = rememberScrollState()
+    LaunchedEffect(index) { scrollState.scrollTo(0) }
     BackHandler(onBack = onExit)
 
     Column(
@@ -136,7 +141,7 @@ fun AdventureReviewScreen(
             .background(Brush.verticalGradient(listOf(
                 Color(0xFF1D5765), Color(0xFF0D2E43), Color(0xFF081C31)
             )))
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {

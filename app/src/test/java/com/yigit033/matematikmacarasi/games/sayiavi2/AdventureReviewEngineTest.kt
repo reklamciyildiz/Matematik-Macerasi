@@ -52,6 +52,32 @@ class AdventureReviewEngineTest {
         }
     }
 
+    @Test fun focusedRepeatIsTierBoundedForEveryKindAndEveryWeakFactor() {
+        val ranges = mapOf(
+            LearningTier.TEMEL to 2..4,
+            LearningTier.GELISEN to 3..6,
+            LearningTier.USTALIK to 5..9
+        )
+        for ((tier, range) in ranges) {
+            for (kind in AdventureReviewKind.entries) {
+                for (focus in 2..9) {
+                    for (seed in 1L..30L) {
+                        val review = AdventureReviewEngine.create(
+                            kind, tier, seed, weakFocus = focus
+                        )
+                        assertEquals(focus.coerceIn(range.first, range.last),
+                            review.last().focus)
+                        assertTrue(review.all { it.focus in range })
+                        assertTrue(review.all { it.groups in 2..9 && it.perGroup in 2..9 })
+                        assertTrue(review.all {
+                            it.correct in it.options && it.options.distinct().size == 4
+                        })
+                    }
+                }
+            }
+        }
+    }
+
     @Test fun allQuestionsAreMathematicallyCorrect() {
         for (tier in LearningTier.entries) {
             for (seed in 1L..100L) {

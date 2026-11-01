@@ -42,6 +42,22 @@ class GeometryCastleEngineTest {
         }
     }
 
+    @Test fun weakShapeReappearsOnlyWhenItIsAvailableAtTheCurrentTier() {
+        val reviewed = GeometryCastleEngine.tasks(
+            2381L,LearningTier.USTALIK,CastleShape.HEXAGON
+        )
+        assertEquals(CastleShape.HEXAGON,reviewed.first().target)
+        assertTrue(reviewed.first().options.contains(CastleShape.HEXAGON))
+        // A weak six-sided shape must not be imposed on a first-grade learner.
+        val basic = GeometryCastleEngine.tasks(
+            2381L,LearningTier.TEMEL,CastleShape.HEXAGON
+        )
+        assertTrue(basic.first().target in GeometryCastleEngine.available(LearningTier.TEMEL))
+        val resumed = CastleRun(seed=2381L,tier=LearningTier.USTALIK,
+            focusShape=CastleShape.HEXAGON)
+        assertEquals(CastleShape.HEXAGON,GeometryCastleEngine.task(resumed)?.target)
+    }
+
     @Test fun mirroredCellsUseActualReverseColumn() {
         assertEquals(2,GeometryCastleEngine.symmetricRightMask(1,4))
         assertEquals(1,GeometryCastleEngine.symmetricRightMask(2,4))

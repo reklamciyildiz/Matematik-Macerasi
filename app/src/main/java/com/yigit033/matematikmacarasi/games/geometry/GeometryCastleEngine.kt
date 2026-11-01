@@ -254,6 +254,11 @@ object GeometryCastleEngine {
         return mask xor (1 shl (row * (size/2) + rightCol))
     }
 
+    /** The build socket sequence is verified by geometry, never by answer labels. */
+    fun isCorrectPiece(task: CastleTask, slot: Int, shape: CastleShape?): Boolean =
+        task.mode == CastleMode.BUILD && slot in task.requiredPieces.indices &&
+            task.requiredPieces[slot] == shape
+
     fun isCorrect(task: CastleTask, shape: CastleShape?, mask: Int): Boolean =
         when(task.mode) {
             CastleMode.FIND,CastleMode.BUILD -> shape == task.target

@@ -312,9 +312,13 @@ object MarketAdventureEngine {
         if(run.phase==MarketAdventurePhase.SHOP)
             return run.paidKurus==0
         if(run.phase==MarketAdventurePhase.BONUS && scene.bonus==null) return false
-        return basketExact(run,scene) &&
-            (run.phase!=MarketAdventurePhase.CHANGE ||
-                run.paidKurus==scene.cashierPayKurus)
+        if(!basketExact(run,scene)) return false
+        return when(run.phase) {
+            MarketAdventurePhase.PAYMENT -> run.paidKurus==0
+            MarketAdventurePhase.CHANGE, MarketAdventurePhase.BONUS ->
+                run.paidKurus==scene.cashierPayKurus
+            else -> false
+        }
     }
 
     fun changeQuantity(run: MarketAdventureRun, productId: Int, delta: Int): MarketAdventureRun {

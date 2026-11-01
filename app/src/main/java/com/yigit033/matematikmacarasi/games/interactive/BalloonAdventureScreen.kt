@@ -318,7 +318,14 @@ fun BalloonAdventureScreen(
             Text("Çevrimdışı · hareketli balonlar · keşif veya meydan okuma · reklamsız",
                 color=BalloonPalette.muted,fontSize=11.sp)
         } else if(run!=null) {
-            SkyIllustration(run.realm,compact=true)
+            Row(Modifier.fillMaxWidth(),
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                Text(run.realm.icon,fontSize=21.sp)
+                Text(run.realm.title+" · "+run.pace.title,
+                    color=BalloonPalette.cyan,fontSize=14.sp,
+                    fontWeight=FontWeight.Bold)
+            }
             if(run.completed) {
                 Surface(
                     color=BalloonPalette.panel,

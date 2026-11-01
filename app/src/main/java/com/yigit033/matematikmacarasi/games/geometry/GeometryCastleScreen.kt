@@ -298,7 +298,20 @@ fun GeometryCastleScreen(
             CastleScene(scene,if(run.finished) "Tamamlanmış, ışıldayan Geometri Kalesi"
                 else "Büyülü geometri kalesi",big=true)
             if(!run.finished) {
-                Text("Kayıp Kristaller",color=Gold,fontSize=25.sp,fontWeight=FontWeight.Black)
+                Row(Modifier.fillMaxWidth(),
+                    verticalAlignment=Alignment.CenterVertically,
+                    horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Image(
+                        painter=painterResource(R.drawable.geometry_piko),
+                        contentDescription="Piko, güler yüzlü taş-golem kale rehberi",
+                        modifier=Modifier.size(68.dp)
+                    )
+                    Column(Modifier.weight(1f)) {
+                        Text("Kayıp Kristaller",color=Gold,fontSize=24.sp,
+                            fontWeight=FontWeight.Black)
+                        Text("Piko seni bekliyor!",color=Mint,fontSize=13.sp)
+                    }
+                }
                 Text("Piko'nun kalesini şekiller, köprüler ve simetrik vitraylarla onar.",
                     color=Pale,fontSize=15.sp,lineHeight=23.sp)
                 Text("Oyun seviyesini seç",color=Color.White,

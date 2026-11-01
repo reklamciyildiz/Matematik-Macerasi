@@ -60,18 +60,19 @@ class BalloonPopGameActivity:ComponentActivity() {
                         stars.getGameStars(rewardKey(realm))
                     },
                     feedback=feedback,
-                    onStart={realm,tier->start(realm,tier)},
+                    onStart={realm,tier,pace->start(realm,tier,pace)},
                     onChoose={choice->change { BalloonAdventureEngine.choose(it,choice) }},
                     onHint={change { BalloonAdventureEngine.hint(it) }},
+                    onEscape={change { BalloonAdventureEngine.escape(it) }},
                     onNext={change { BalloonAdventureEngine.continueAfterAnswer(it) }},
                     onExit={finish()}
                 )
             }
         }
     }
-    private fun start(realm:BalloonRealm,tier:LearningTier):Boolean {
+    private fun start(realm:BalloonRealm,tier:LearningTier,pace:BalloonPace):Boolean {
         val now=(System.currentTimeMillis()+ ++seedNonce).coerceAtLeast(1L)
-        val next=runCatching {BalloonAdventureEngine.begin(now,realm,tier)}
+        val next=runCatching {BalloonAdventureEngine.begin(now,realm,tier,pace)}
             .onFailure {Log.e(TAG,"Unable to create balloon game",it)}
             .getOrNull()?:return false
         if(!store.save(next)) {

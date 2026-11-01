@@ -17,6 +17,11 @@ class BalloonAdventureStore(context:Context) {
         val tier=LearningTier.fromSaved(prefs.getString("tier",null))
         val run=BalloonRun(
             seed=prefs.getLong("seed",0L),realm=realm,tier=tier,
+            pace=BalloonPace.entries.firstOrNull {
+                it.name==prefs.getString("pace",BalloonPace.RELAXED.name)
+            }?:BalloonPace.RELAXED,
+            escapes=prefs.getInt("escapes",0),
+            wave=prefs.getInt("wave",0),
             index=prefs.getInt("index",0),
             attempts=prefs.getInt("attempts",0),
             errors=prefs.getInt("errors",0),
@@ -39,6 +44,9 @@ class BalloonAdventureStore(context:Context) {
             .putLong("seed",run.seed)
             .putInt("realm",run.realm.ordinal)
             .putString("tier",run.tier.name)
+            .putString("pace",run.pace.name)
+            .putInt("escapes",run.escapes)
+            .putInt("wave",run.wave)
             .putInt("index",run.index)
             .putInt("attempts",run.attempts)
             .putInt("errors",run.errors)

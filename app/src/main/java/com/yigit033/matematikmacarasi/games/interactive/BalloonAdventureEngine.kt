@@ -21,10 +21,17 @@ data class BalloonQuestion(
     val hint:String,
     val explanation:String
 )
+enum class BalloonPace(val title:String,val description:String) {
+    RELAXED("Keşif","Balonlar yavaş uçar; kaçırınca ceza yok"),
+    CHALLENGE("Rüzgâr Yarışı","Daha hızlı balonlar; kaçırınca puan ve seri kaybı")
+}
 data class BalloonRun(
     val seed:Long,
     val realm:BalloonRealm,
     val tier:LearningTier,
+    val pace:BalloonPace=BalloonPace.RELAXED,
+    val escapes:Int=0,
+    val wave:Int=0,
     val index:Int=0,
     val attempts:Int=0,
     val errors:Int=0,
@@ -44,9 +51,10 @@ object BalloonAdventureEngine {
     const val QUESTIONS=10
     private const val BALLOON_COUNT=4
 
-    fun begin(seed:Long,realm:BalloonRealm,tier:LearningTier):BalloonRun {
+    fun begin(seed:Long,realm:BalloonRealm,tier:LearningTier,
+        pace:BalloonPace=BalloonPace.RELAXED):BalloonRun {
         require(seed>0L)
-        return BalloonRun(seed,realm,tier)
+        return BalloonRun(seed,realm,tier,pace)
     }
     fun question(run:BalloonRun):BalloonQuestion=question(
         run.seed,run.realm,run.tier,run.index.coerceIn(0,QUESTIONS-1)
@@ -104,7 +112,8 @@ object BalloonAdventureEngine {
         if(run.seed<=0 || run.index !in 0..QUESTIONS ||
             run.attempts<0 || run.errors<0 || run.hints<0 ||
             run.firstTry<0 || run.streak<0 || run.bestStreak<run.streak ||
-            run.wrongMask !in 0..15 || run.resolved && run.completed ||
+            run.wrongMask !in 0..15 || run.escapes<0 || run.wave<run.escapes ||
+            run.resolved && run.completed ||
             run.completed != (run.index==QUESTIONS))return false
         if(run.firstTry>run.solved || run.attempts!=run.solved+run.errors ||
             run.hints>run.solved+1 || run.bestStreak>run.firstTry ||
@@ -143,6 +152,18 @@ object BalloonAdventureEngine {
             hintVisible=false,resolved=true
         )
     }
+    /** Escape is one complete wave; replay the SAME math question, never skip it. */
+    fun escape(run:BalloonRun):BalloonRun {
+        if(!valid(run) || run.completed || run.resolved)return run
+        val challenge=run.pace==BalloonPace.CHALLENGE
+        return run.copy(
+            wave=run.wave+1,
+            escapes=run.escapes+(if(challenge)1 else 0),
+            wrongMask=0,
+            tainted=run.tainted || challenge,
+            streak=if(challenge)0 else run.streak
+        )
+    }
     fun hint(run:BalloonRun):BalloonRun=
         if(!valid(run) || run.completed || run.resolved || run.hintVisible)run
         else run.copy(hints=run.hints+1,hintVisible=true,tainted=true,streak=0)
@@ -154,12 +175,12 @@ object BalloonAdventureEngine {
             wrongMask=0,hintVisible=false,tainted=false)
     }
     fun stars(run:BalloonRun):Int=if(!run.completed)0 else when {
-        run.firstTry>=9 && run.hints==0->3
-        run.firstTry>=7->2
+        run.firstTry>=9 && run.hints==0 && run.escapes==0->3
+        run.firstTry>=7 && run.escapes<=2->2
         else->1
     }
     fun score(run:BalloonRun):Int=
         (run.firstTry*110+(run.solved-run.firstTry)*65+
-            run.bestStreak*15-run.hints*10+
+            run.bestStreak*15-run.hints*10-run.errors*20-run.escapes*30+
             (if(run.completed)180 else 0)).coerceAtLeast(0)
 }

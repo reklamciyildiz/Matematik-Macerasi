@@ -152,6 +152,18 @@ class MarketAdventureEngineTest {
         assertEquals(1,run.perfectDecisions)
     }
 
+    @Test fun starLevelsReflectIndependentDecisionsWithoutFarming() {
+        val base=MarketAdventureRun(seed=88L,
+            phase=MarketAdventurePhase.COMPLETE,visit=3,
+            completedRuns=1)
+        assertEquals(1,MarketAdventureEngine.starsFor(base.copy(perfectDecisions=0)))
+        assertEquals(1,MarketAdventureEngine.starsFor(base.copy(perfectDecisions=4)))
+        assertEquals(2,MarketAdventureEngine.starsFor(base.copy(perfectDecisions=5)))
+        assertEquals(3,MarketAdventureEngine.starsFor(base.copy(perfectDecisions=8)))
+        assertEquals(0,MarketAdventureEngine.starsFor(
+            base.copy(phase=MarketAdventurePhase.SHOP,visit=0)))
+    }
+
     @Test fun currencyFormatterNeverUsesFloatingPoint() {
         assertEquals("0 TL",MarketAdventureEngine.format(0))
         assertEquals("13 TL",MarketAdventureEngine.format(1300))

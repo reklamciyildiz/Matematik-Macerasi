@@ -454,16 +454,23 @@ fun MarketAdventureScreen(
         } else if(scene!=null) {
             MarketHeadline("${if(run.singleShop)1 else run.visit+1}/${MarketAdventureEngine.visitCount(run)} · ${scene.location}",
                 scene.hint)
-            val art=when(run.visit) {
+            val art=if(run.contentVersion<3) when(run.visit) {
                 0 -> R.drawable.market_adventure_manav
                 1 -> R.drawable.market_adventure_firin
                 2 -> R.drawable.market_adventure_toys
                 3 -> R.drawable.market_adventure_stationery
                 4 -> R.drawable.market_adventure_clothing
-                5 -> R.drawable.market_adventure_toys
-                6 -> R.drawable.market_adventure_manav
-                7 -> R.drawable.market_adventure_manav
-                8 -> R.drawable.market_adventure_firin
+                else -> R.drawable.market_adventure_stall
+            } else when(run.visit) {
+                0 -> R.drawable.market_adventure_manav
+                1 -> R.drawable.market_adventure_firin
+                2 -> R.drawable.market_adventure_toys
+                3 -> R.drawable.market_adventure_stationery
+                4 -> R.drawable.market_adventure_clothing
+                5 -> R.drawable.market_adventure_sports
+                6 -> R.drawable.market_adventure_pets
+                7 -> R.drawable.market_adventure_grocery
+                8 -> R.drawable.market_adventure_cafe
                 else -> R.drawable.market_adventure_stall
             }
             MarketScene(art,scene.location+" pazar tezgâhı")

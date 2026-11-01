@@ -102,8 +102,13 @@ object MarketAdventureEngine {
                 LearningTier.GELISEN -> 3000
                 LearningTier.USTALIK -> 5000
             })
-            val extra = if(tier==LearningTier.USTALIK) 5000 else 2000
-            val pay = total + extra
+            // Cash is a realistic rounded banknote amount, not total+an arbitrary margin.
+            val banknoteKurus = when(tier) {
+                LearningTier.TEMEL -> 5000
+                LearningTier.GELISEN -> 10000
+                LearningTier.USTALIK -> 20000
+            }
+            val pay = (total / banknoteKurus + 1) * banknoteKurus
             val choices = listOf(total-100, total-50, total, pay).filter { it>0 }
                 .distinct().toMutableList()
             var x=total+100

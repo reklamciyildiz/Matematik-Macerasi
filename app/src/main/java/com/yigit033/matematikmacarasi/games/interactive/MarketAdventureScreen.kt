@@ -386,9 +386,10 @@ fun MarketAdventureScreen(
                     color=if(remaining>=0)turquoise else orange,
                     fontWeight=FontWeight.Bold)
                 MarketAction("Kasaya Git →",enabled=run.basket.isNotEmpty()) {
+                    val originalPhase=run.phase
                     val updated=MarketAdventureEngine.checkBasket(run)
                     if(persist(updated)) {
-                        isPositive=updated.phase!=run.phase
+                        isPositive=updated.phase!=originalPhase
                         message=if(isPositive) "Sepetin doğru! Şimdi tutarı hesapla."
                             else if(total>scene.budgetKurus)
                                 "Sepetin bütçeyi aştı. Fazla ürünleri kaldır."

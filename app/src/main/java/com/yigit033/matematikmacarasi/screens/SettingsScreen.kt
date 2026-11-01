@@ -839,17 +839,17 @@ fun SettingsScreen(
                     verticalArrangement=Arrangement.spacedBy(8.dp)) {
                     Text("HERKES İÇİN ÜCRETSİZ",color=Color.White,
                         fontWeight=FontWeight.Bold)
-                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza ve 12 matematik kararı\\n" +
-                        "• Seçili temel matematik maceraları\\n" +
-                        "• Dört beceri için temel öğrenme raporu\\n" +
+                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza ve 12 matematik kararı\n" +
+                        "• Seçili temel matematik maceraları\n" +
+                        "• Dört beceri için temel öğrenme raporu\n" +
                         "• Ücretsiz avatarlar ve varsayılan uygulama ikonu",
                         color=Color.White,fontSize=13.sp)
                     Text("PREMIUM İLE EKLENENLER",color=Color.White,
                         fontWeight=FontWeight.Bold)
-                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza ve 40 karar\\n" +
-                        "• Stok, satış, kâr ve tezgâh geliştirme\\n" +
-                        "• Premium avatar ve alternatif uygulama ikonları\\n" +
-                        "• Labirentte sınırsız oynama ve ek istatistikler\\n" +
+                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza ve 40 karar\n" +
+                        "• Stok, satış, kâr ve tezgâh geliştirme\n" +
+                        "• Premium avatar ve alternatif uygulama ikonları\n" +
+                        "• Labirentte sınırsız oynama ve ek istatistikler\n" +
                         "• Premium günlük yıldız bonusu",
                         color=Color.White,fontSize=13.sp)
                     Text("Reklamlar çocuk güvenliği denetimi tamamlanana kadar " +

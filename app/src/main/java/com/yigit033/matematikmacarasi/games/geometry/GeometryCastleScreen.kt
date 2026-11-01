@@ -91,14 +91,15 @@ private fun CastleScene(drawableId: Int, description: String, big: Boolean = fal
 }
 
 @Composable
-private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Modifier) {
+private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Modifier,
+    outlineOnly: Boolean = false) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
         val p = Path()
         when(shape) {
             CastleShape.CIRCLE -> {
-                drawCircle(color, radius = minOf(w,h) * .35f)
+                if(!outlineOnly) drawCircle(color, radius = minOf(w,h) * .35f)
                 drawCircle(Color.White.copy(alpha=.8f), radius=minOf(w,h)*.35f,
                     style=Stroke(width=3.0f))
             }
@@ -132,8 +133,9 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
                     }
                     p.close()
                 }
-                drawPath(p,color)
-                drawPath(p,Color.White.copy(alpha=.88f),style=Stroke(width=3.2f))
+                if(!outlineOnly) drawPath(p,color)
+                drawPath(p,if(outlineOnly) Gold else Color.White.copy(alpha=.88f),
+                    style=Stroke(width=if(outlineOnly) 5f else 3.2f))
             }
         }
     }
@@ -389,12 +391,13 @@ fun GeometryCastleScreen(
                                 Row(Modifier.padding(12.dp),
                                     verticalAlignment=Alignment.CenterVertically,
                                     horizontalArrangement=Arrangement.Center) {
-                                    if(run.solved)
-                                        ShapeIcon(task.target,Gold,Modifier.size(72.dp))
-                                    else Text(if(run.selected==null)
-                                        "◇  Taş yuvası"
-                                        else "✦  Seçtiğin taşı yerleştir",
-                                        color=Color.White,fontSize=18.sp,
+                                    ShapeIcon(task.target,Gold,Modifier.size(72.dp),
+                                        outlineOnly=!run.solved)
+                                    Spacer(Modifier.size(10.dp))
+                                    Text(if(run.solved) "Köprü taşı yerleşti!"
+                                        else if(run.selected==null) "Bu siluete uyan taşı seç."
+                                        else "Seçtiğin taşı yuvaya yerleştir.",
+                                        color=Color.White,fontSize=13.sp,
                                         fontWeight=FontWeight.Bold)
                                 }
                             }

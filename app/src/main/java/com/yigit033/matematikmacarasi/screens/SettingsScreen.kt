@@ -355,9 +355,10 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
 
         SettingsSection("Görünüm ve İkon",
             "Robot, uzay veya klasik uygulama simgesi") {
-            SettingsAction("Uygulama İkonunu Değiştir") {
-                context.startActivity(Intent(context,IconSelectorActivity::class.java))
-            }
+            SettingsAction("Uygulama İkonunu Değiştir",
+                onClick={
+                    context.startActivity(Intent(context,IconSelectorActivity::class.java))
+                })
         }
 
         SettingsSection("Uygulama Hakkında","") {

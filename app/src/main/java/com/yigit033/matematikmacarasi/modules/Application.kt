@@ -34,7 +34,9 @@ class MatematikMacerasiApp : Application() {
         initializeServices()
         
         // AdMob'u başlat
-        initializeAdMob()
+        // Families release gate: no ad SDK initialization until certified
+        // child-directed ad stack and Play Console declarations are reviewed.
+        Log.i("MatematikMacerasiApp","AdMob initialization disabled for pre-release Families QA")
         
         // Bildirim servisini başlat
         initializeNotifications()

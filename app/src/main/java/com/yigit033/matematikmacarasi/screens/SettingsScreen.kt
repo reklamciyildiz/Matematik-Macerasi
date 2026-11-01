@@ -1,11 +1,10 @@
 package com.yigit033.matematikmacarasi.screens
 
-import android.os.Bundle
+import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,21 +25,27 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,1245 +56,372 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yigit033.matematikmacarasi.R
-import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
 import com.yigit033.matematikmacarasi.services.AudioService
-import com.yigit033.matematikmacarasi.services.GameProgressService
 import com.yigit033.matematikmacarasi.services.NotificationService
-import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
-import com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy
 import com.yigit033.matematikmacarasi.services.PremiumCodeValidator
-import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
+import com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
 import com.yigit033.matematikmacarasi.utils.AppVersionUtils
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.OutlinedTextField
 
 /**
- * Ayarlar kartı bileşeni
+ * S3.3.1 — a single design system for Settings.
+ * Every section paints its own contrasting surface: no white-on-white content.
  */
+private object SettingsPalette {
+    val deep = Color(0xFF071F38)
+    val ocean = Color(0xFF0D3556)
+    val panel = Color(0xFF133E5E)
+    val border = Color(0xFF316785)
+    val mint = Color(0xFF9CF3DC)
+    val gold = Color(0xFFFFD47B)
+    val text = Color(0xFFF3FAFF)
+    val secondary = Color(0xFFB5D2E3)
+}
+
 @Composable
-fun SettingsCard(
-    title: String,
-    description: String = "",
-    icon: Int? = null,
-    containerColor: Color = Color(0xFF42A5F5),
-    content: @Composable () -> Unit
+private fun SettingsSection(
+    title:String,
+    subtitle:String,
+    modifier:Modifier=Modifier,
+    content:@Composable ()->Unit
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        )
+    Surface(
+        modifier=modifier.fillMaxWidth(),
+        color=SettingsPalette.panel,
+        shape=RoundedCornerShape(22.dp),
+        border=BorderStroke(1.dp,SettingsPalette.border)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            // Başlık kısmı
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // İkon varsa göster - try-catch kullanmadan
-                if (icon != null) {
-                    // Basit text ile değiştir
-                    Text(
-                        text = "🔊",
-                        fontSize = 18.sp,
-                        color = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
-                
-                Column {
-                    Text(
-                        text = title,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    
-                    if (description.isNotEmpty()) {
-                        Text(
-                            text = description,
-                            fontSize = 12.sp,
-                            color = Color.White.copy(alpha = 0.7f)
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Kart içeriği
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                content()
-            }
+        Column(Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement=Arrangement.spacedBy(12.dp)) {
+            Text(title,color=SettingsPalette.text,fontSize=18.sp,
+                fontWeight=FontWeight.ExtraBold)
+            if(subtitle.isNotBlank()) Text(subtitle,color=SettingsPalette.secondary,
+                fontSize=12.sp,lineHeight=17.sp)
+            content()
         }
     }
 }
 
-/**
- * Ayarlar ekranı
- */
 @Composable
-fun SettingsScreen(
-    onBackClick: () -> Unit = {},
-    audioService: AudioService
+private fun SettingsAction(
+    label:String,
+    onClick:()->Unit,
+    modifier:Modifier=Modifier,
+    prominent:Boolean=false,
+    enabled:Boolean=true
 ) {
-    val context = LocalContext.current
-    
-    // Yükleme durumu
-    var isLoading by remember { mutableStateOf(true) }
-    
-    // Parçalı yükleme durumları
-    var isBasicSettingsLoaded by remember { mutableStateOf(false) }
-    var isAudioSettingsLoaded by remember { mutableStateOf(false) }
-    var isPremiumStateLoaded by remember { mutableStateOf(false) }
-    
-    // Yükleme durumu metni
-    var loadingText by remember { mutableStateOf("Temel ayarlar yükleniyor...") }
-    
-    // Ayarlar için state tanımlamaları
-    var isMusicEnabled by remember { mutableStateOf(true) }
-    var isSoundEnabled by remember { mutableStateOf(true) }
-    var isNotificationEnabled by remember { mutableStateOf(true) }
-    var isNightModeEnabled by remember { mutableStateOf(false) }
-    var isDataSavingEnabled by remember { mutableStateOf(false) }
-    var selectedLanguage by remember { mutableStateOf("Türkçe") }
-    
-    // Premium durumu
-    var isPremium by remember { mutableStateOf(false) }
-    var purchaseInProgress by remember { mutableStateOf(false) }
-    
-    // PurchaseManager
-    val purchaseManager = remember { PurchaseManager.getInstance(context) }
+    Button(onClick=onClick,enabled=enabled,
+        modifier=modifier.fillMaxWidth().heightIn(min=50.dp),
+        shape=RoundedCornerShape(15.dp),
+        colors=ButtonDefaults.buttonColors(
+            containerColor=if(prominent)SettingsPalette.gold else Color(0xFF245C7E),
+            contentColor=if(prominent)SettingsPalette.deep else Color.White,
+            disabledContainerColor=Color(0xFF3D6075),
+            disabledContentColor=Color(0xFFB6C6D4))
+    ) {
+        Text(label,fontWeight=FontWeight.Bold,fontSize=13.sp)
+    }
+}
+
+@Composable
+private fun FeatureLine(text:String,emphasized:Boolean=false) {
+    Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,
+        horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+        Icon(Icons.Default.CheckCircle,contentDescription=null,
+            tint=if(emphasized)SettingsPalette.gold else SettingsPalette.mint,
+            modifier=Modifier.size(17.dp))
+        Text(text,color=SettingsPalette.text,fontSize=13.sp,lineHeight=18.sp,
+            modifier=Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun SettingsToggle(
+    title:String,description:String,checked:Boolean,onChange:(Boolean)->Unit
+) {
+    Row(Modifier.fillMaxWidth().heightIn(min=64.dp),
+        verticalAlignment=Alignment.CenterVertically,
+        horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(3.dp)) {
+            Text(title,color=SettingsPalette.text,fontSize=15.sp,
+                fontWeight=FontWeight.Bold)
+            Text(description,color=SettingsPalette.secondary,fontSize=12.sp,
+                lineHeight=16.sp)
+        }
+        Switch(checked=checked,onCheckedChange=onChange,
+            colors=SwitchDefaults.colors(
+                checkedTrackColor=Color(0xFF2DAD96),
+                checkedThumbColor=Color.White,
+                uncheckedTrackColor=Color(0xFF49677C),
+                uncheckedThumbColor=Color.White))
+    }
+}
+
+@Composable
+fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
+    val context=LocalContext.current
+    val prefs=remember(context) {
+        context.getSharedPreferences("matematik_macerasi_ayarlar",Context.MODE_PRIVATE)
+    }
+    val purchaseManager=remember(context){PurchaseManager.getInstance(context)}
+    val premiumFlow by purchaseManager.premiumState.collectAsState()
     val restoration by purchaseManager.restoreState.collectAsState()
-    
-    // Premium kod dialog durumu
-    var showCodeDialog by remember { mutableStateOf(false) }
-    var codeInput by remember { mutableStateOf("") }
-    var codeValidationInProgress by remember { mutableStateOf(false) }
-    
-    // Servisleri lazy olarak başlat - Duplicate kaldırıldı, yukarıda zaten tanımlı
-    val codeValidator = remember {
-        try {
-            PremiumCodeValidator.getInstance(context)
-        } catch (e: Exception) {
-            Log.e("SettingsScreen", "CodeValidator başlatılamadı: ${e.message}", e)
-            null
-        }
+    val isPremium=premiumFlow || purchaseManager.isPremiumSync()
+    val codeValidator=remember(context){PremiumCodeValidator.getInstance(context)}
+    val notificationService=remember(context){NotificationService.getInstance(context)}
+    val scope=rememberCoroutineScope()
+    var music by remember { mutableStateOf(audioService.isMusicEnabled()) }
+    var effects by remember { mutableStateOf(audioService.isSoundEnabled()) }
+    var notifications by remember {
+        mutableStateOf(prefs.getBoolean("notifications_enabled",true))
     }
-    val notificationService = remember { 
-        try {
-            NotificationService.getInstance(context)
-        } catch (e: Exception) {
-            Log.e("SettingsScreen", "NotificationService başlatılamadı: ${e.message}", e)
-            null
-        }
-    }
-    val scope = rememberCoroutineScope()
-    
-    // Temel ayarları yükle - bağımsız ve hızlı işlemler
+    var codeDialog by remember {mutableStateOf(false)}
+    var code by remember {mutableStateOf("")}
+    var verifying by remember {mutableStateOf(false)}
+    var codeError by remember {mutableStateOf<String?>(null)}
+
     LaunchedEffect(Unit) {
-        scope.launch {
-        try {
-                loadingText = "Temel ayarlar yükleniyor..."
-            
-                withContext(Dispatchers.IO) {
-            val sharedPrefs = context.getSharedPreferences("matematik_macerasi_ayarlar", ComponentActivity.MODE_PRIVATE)
-                    
-                    // UI etkilemeyen ayarları arka planda yükle
-            isNotificationEnabled = sharedPrefs.getBoolean("notifications_enabled", true)
-            isNightModeEnabled = sharedPrefs.getBoolean("night_mode_enabled", false)
-            isDataSavingEnabled = sharedPrefs.getBoolean("data_saving_enabled", false)
-            selectedLanguage = sharedPrefs.getString("selected_language", "Türkçe") ?: "Türkçe"
-                }
-                
-                isBasicSettingsLoaded = true
-                
-                // Eğer tüm ayarlar yüklendiyse, yükleme durumunu kapat
-                if (isBasicSettingsLoaded && isAudioSettingsLoaded && isPremiumStateLoaded) {
-                    isLoading = false
-                }
-        } catch (e: Exception) {
-                Log.e("SettingsScreen", "Temel ayarlar yüklenirken hata: ${e.message}", e)
-                isBasicSettingsLoaded = true // Hata olsa bile ilerlemeye devam et
-                
-                // Eğer tüm ayarlar yüklendiyse, yükleme durumunu kapat
-                if (isBasicSettingsLoaded && isAudioSettingsLoaded && isPremiumStateLoaded) {
-                    isLoading = false
+        purchaseManager.checkPremiumStatusAsync()
+        runCatching {
+            withContext(Dispatchers.IO){codeValidator.checkAndSyncPremiumStatus()}
+        }
+        purchaseManager.refreshPremiumState()
+    }
+
+    Column(Modifier.fillMaxSize().background(
+        Brush.verticalGradient(listOf(
+            SettingsPalette.ocean,SettingsPalette.deep,Color(0xFF06182C))))
+        .verticalScroll(rememberScrollState())
+        .padding(horizontal=16.dp,vertical=15.dp),
+        verticalArrangement=Arrangement.spacedBy(14.dp)) {
+
+        Row(Modifier.fillMaxWidth().heightIn(min=54.dp),
+            verticalAlignment=Alignment.CenterVertically,
+            horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+            Surface(
+                modifier=Modifier.size(46.dp).clickable(onClick=onBackClick),
+                color=Color(0xFF215979),
+                shape=CircleShape,
+                border=BorderStroke(1.dp,SettingsPalette.border)) {
+                Box(contentAlignment=Alignment.Center){
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription="Profile dön",
+                        tint=Color.White,modifier=Modifier.size(24.dp))
                 }
             }
-        }
-    }
-    
-    // Ses ayarlarını yükle - ayrı bir LaunchedEffect ile
-    LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                loadingText = "Ses ayarları yükleniyor..."
-                
-                // Ses ayarlarını yükle (bu da hızlı çalışır)
-                isMusicEnabled = audioService.isMusicEnabled()
-                isSoundEnabled = audioService.isSoundEnabled()
-                
-                isAudioSettingsLoaded = true
-                
-                // Eğer tüm ayarlar yüklendiyse, yükleme durumunu kapat
-                if (isBasicSettingsLoaded && isAudioSettingsLoaded && isPremiumStateLoaded) {
-                    isLoading = false
-                }
-            } catch (e: Exception) {
-                Log.e("SettingsScreen", "Ses ayarları yüklenirken hata: ${e.message}", e)
-                isAudioSettingsLoaded = true // Hata olsa bile ilerlemeye devam et
-                
-                // Eğer tüm ayarlar yüklendiyse, yükleme durumunu kapat
-                if (isBasicSettingsLoaded && isAudioSettingsLoaded && isPremiumStateLoaded) {
-                    isLoading = false
-                }
+            Column(Modifier.weight(1f)) {
+                Text("Ayarlar",fontSize=27.sp,color=Color.White,
+                    fontWeight=FontWeight.ExtraBold)
+                Text("Macera deneyimini kişiselleştir",
+                    color=SettingsPalette.secondary,fontSize=12.sp)
             }
         }
-    }
-    
-    // Premium durumunu yükle - ayrı bir LaunchedEffect ile ve timeout eklenmiş halde
-    LaunchedEffect(Unit) {
-        scope.launch {
-            try {
-                loadingText = "Premium durum kontrol ediliyor..."
-                
-                // Önce Firebase'den senkronize et (uygulama silme-yükleme durumu için)
-                withContext(Dispatchers.IO) {
-                    val synced = codeValidator?.checkAndSyncPremiumStatus() ?: false
-                    if (synced) {
-                        Log.d("SettingsScreen", "✅ Firebase'den premium durumu senkronize edildi!")
-                    }
-                }
-                
-                // Sonra arka planda async kontrol yap
-                purchaseManager.checkPremiumStatusAsync()
-                
-                // StateFlow'dan sürekli dinle
-                launch {
-                    purchaseManager.premiumState.collect { premiumState ->
-                        Log.d("SettingsScreen", "🔄 Premium StateFlow değişti: $premiumState")
-                        isPremium = premiumState
-                    }
-                }
-                
-                // Yükleme işaretini kapat
-                isPremiumStateLoaded = true
-                
-                // Eğer tüm ayarlar yüklendiyse, yükleme durumunu kapat
-                if (isBasicSettingsLoaded && isAudioSettingsLoaded && isPremiumStateLoaded) {
-                    isLoading = false
-                }
-            } catch (e: Exception) {
-                Log.e("SettingsScreen", "Premium durum kontrolünde hata: ${e.message}", e)
-                isPremiumStateLoaded = true // Hata olsa bile ilerlemeye devam et
-                
-                // Eğer tüm ayarlar yüklendiyse, yükleme durumunu kapat
-                if (isBasicSettingsLoaded && isAudioSettingsLoaded && isPremiumStateLoaded) {
-                    isLoading = false
-                }
-            }
-        }
-    }
-    
-    // Global timeout - en kötü durumda bile 5 saniye sonra yükleme ekranını kapat
-    LaunchedEffect(Unit) {
-        delay(5000) // 5 saniye sonra yükleme durumunu kapat
-        isLoading = false
-    }
-    
-    // Satın alma durumunu sadece kullanıcı satın alma butonuna bastığında kontrol et
-    // Otomatik kontrol kaldırıldı - sadece manuel satın alma sırasında kontrol yapılacak
-    
-    // Ayarları kaydetme fonksiyonu
-    fun saveSettings(key: String, value: Any) {
-        scope.launch {
-        try {
-                // Ayar kaydetme işlemini arka planda yap
-                withContext(Dispatchers.IO) {
-            val sharedPrefs = context.getSharedPreferences("matematik_macerasi_ayarlar", ComponentActivity.MODE_PRIVATE)
-            with(sharedPrefs.edit()) {
-                when (value) {
-                    is Boolean -> putBoolean(key, value)
-                    is String -> putString(key, value)
-                    is Int -> putInt(key, value)
-                    is Float -> putFloat(key, value)
-                    is Long -> putLong(key, value)
-                }
-                apply()
-                    }
-                }
-                
-                // Bildirim ayarları değiştiyse, NotificationService'i güncelle
-                if (key == "notifications_enabled") {
-                    if (value as Boolean) {
-                        // Bildirimler açıldıysa, bildirim servisini aktifleştir
-                        notificationService?.createNotificationChannels()
-                        
-                        // Kullanıcıya bilgilendirme mesajı göster
-                        Toast.makeText(
-                            context, 
-                            "Günlük görev bildirimleri akşam 19:00'da gösterilecek", 
-                            Toast.LENGTH_LONG
-                        ).show()
-                        
-                        // Bildirim ayarlarını yükle
-                        withContext(Dispatchers.IO) {
-                            notificationService?.loadNotificationSettings()
+
+        Surface(color=Color(0xFF1D5274),shape=RoundedCornerShape(24.dp),
+            border=BorderStroke(1.dp,SettingsPalette.gold.copy(alpha=.65f))) {
+            Column(Modifier.fillMaxWidth().padding(18.dp),
+                verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment=Alignment.CenterVertically,
+                    horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                    Surface(color=SettingsPalette.gold,shape=CircleShape,
+                        modifier=Modifier.size(48.dp)) {
+                        Box(contentAlignment=Alignment.Center) {
+                            Icon(Icons.Default.Star,contentDescription=null,
+                                tint=SettingsPalette.deep,modifier=Modifier.size(27.dp))
                         }
-                    } else {
-                        // Bildirimler kapatıldıysa, bildirim zamanlamalarını iptal et
-                        withContext(Dispatchers.IO) {
-                            notificationService?.cancelAllNotifications()
-                        }
-                        
-                        Toast.makeText(
-                            context, 
-                            "Bildirimler kapatıldı", 
-                            Toast.LENGTH_SHORT
-                        ).show()
                     }
-            }
-        } catch (e: Exception) {
-            Log.e("SettingsScreen", "Ayarları kaydederken hata: ${e.message}", e)
-            Toast.makeText(context, "Ayarlar kaydedilemedi: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Column(Modifier.weight(1f)) {
+                        Text(if(isPremium)"Premium Aktif" else "Macera Premium",
+                            color=SettingsPalette.gold,fontSize=19.sp,
+                            fontWeight=FontWeight.Black)
+                        Text(if(isPremium)
+                            "Ek mağazalar ve kişiselleştirme erişimin açık"
+                            else "Daha fazla mağaza ve seçenek keşfet",
+                            color=SettingsPalette.text,fontSize=12.sp,
+                            lineHeight=16.sp)
+                    }
+                }
+                if(isPremium) {
+                    Text("✓ Mevcut üyeliğin korunuyor. Tekrar satın alma gerekmez.",
+                        color=SettingsPalette.mint,fontSize=12.sp)
+                } else {
+                    SettingsAction("Premium Özellikleri Aç",prominent=true,
+                        onClick={ (context as? ComponentActivity)?.let {
+                            purchaseManager.buyPremium(it)
+                        } })
+                    OutlinedButton(onClick={codeDialog=true},
+                        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+                        border=BorderStroke(1.dp,SettingsPalette.gold),
+                        colors=ButtonDefaults.outlinedButtonColors(
+                            contentColor=SettingsPalette.gold)) {
+                        Text("Premium Kodum Var")
+                    }
+                }
             }
         }
-    }
-    
-    // Normal ekran içeriği
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFCE93D8), // Açık mor (üst)
-                        Color(0xFFAB47BC), // Orta açık mor
-                        Color(0xFF8E24AA), // Orta koyu mor
-                        Color(0xFF6A1B9A)  // Koyu mor (alt)
-                    )
-                )
-            )
-            .padding(16.dp)
-    ) {
-        // İçerik alanı
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Başlık ve geri tuşu
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Geri tuşu
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.2f))
-                        .clickable { onBackClick() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Geri",
-                        tint = Color.White
-                    )
-                }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                // Başlık
-                Text(
-                    text = "Ayarlar",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+
+        SettingsSection("Free ve Premium","Nelerin ücretsiz olduğunu açıkça gör") {
+            Text("ÜCRETSİZ",color=SettingsPalette.mint,
+                fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
+            FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 matematik kararı")
+            FeatureLine("Temel oyunlar ve öğrenme raporu")
+            FeatureLine("Standart avatar ve uygulama ikonu")
+            HorizontalDivider(color=SettingsPalette.border)
+            Text("PREMIUM",color=SettingsPalette.gold,
+                fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
+            FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 matematik kararı",true)
+            FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
+            FeatureLine("Özel avatarlar ve alternatif uygulama ikonları",true)
+            FeatureLine("Labirentte sınırsız oyun ve mevcut günlük bonuslar",true)
+            Text("Çocuk güvenliği denetimi süresince reklamlar tüm oyuncular için kapalıdır.",
+                color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
+        }
+
+        SettingsSection("Satın Alma ve Geri Yükleme",
+            "Google Play satın alımını ücretsiz olarak yeniden kontrol et") {
+            SettingsAction(
+                if(restoration is PurchaseManager.RestoreState.Loading)
+                    "Satın Alma Kontrol Ediliyor…" else "Satın Alımları Geri Yükle",
+                enabled=restoration !is PurchaseManager.RestoreState.Loading,
+                onClick={purchaseManager.restorePurchases()})
+            val resultText=when(val state=restoration) {
+                is PurchaseManager.RestoreState.Idle ->
+                    "Mevcut Premium kodu hakların da korunur."
+                is PurchaseManager.RestoreState.Loading ->
+                    "Google Play hesabı kontrol ediliyor…"
+                is PurchaseManager.RestoreState.Found ->
+                    if(state.googlePlay)"Google Play Premium satın alımın bulundu."
+                    else "Premium kod hakkın etkin."
+                is PurchaseManager.RestoreState.NotFound ->
+                    "Bu Google Play hesabında aktif satın alım bulunamadı."
+                is PurchaseManager.RestoreState.Error -> state.message
             }
-            
-            // Yükleme göstergesi
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(
-                            color = Color.White,
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = loadingText,
-                            color = Color.White,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            } else {
-                // Premium sürüm kartı
-                SettingsCard(
-                    title = "Premium Sürüm",
-                    description = if (isPremium) "Premium erişimin etkin" else "Ek mağazalar, avatarlar ve kişiselleştirme",
-                    containerColor = Color(0xFFE91E63)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text(
-                                    text = if (isPremium) "Premium Üyelik Aktif" else "Premium Üyelik",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
-                                
-                                if (isPremium) {
-                                    Text(
-                                        text = "Tüm premium özelliklere erişebilirsiniz",
-                                        fontSize = 14.sp,
-                                        color = Color.Gray
-                                    )
-                                } else {
-                                    Text(
-                                        text = "Premium mağazalar ve oyun içi kişiselleştirme",
-                                        fontSize = 14.sp,
-                                        color = Color.Gray
-                                    )
-                                }
-                            }
-                            
-                            if (isPremium) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(48.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFF4CAF50)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                }
+            Text(resultText,color=SettingsPalette.secondary,fontSize=12.sp,
+                lineHeight=17.sp)
+        }
+
+        SettingsSection("Ses ve Müzik","Oynarken nasıl duymak istediğini seç") {
+            SettingsToggle("Müzik","Arka plan müziği",music) { enabled ->
+                audioService.setMusicEnabled(enabled)
+                music=enabled
+            }
+            HorizontalDivider(color=SettingsPalette.border)
+            SettingsToggle("Ses efektleri","Doğru, yanlış ve ödül sesleri",effects) {
+                audioService.setSoundEnabled(it)
+                effects=it
+            }
+        }
+
+        SettingsSection("Bildirimler","Günlük görev hatırlatıcılarını yönet") {
+            SettingsToggle("Bildirimler","Günlük görevler için hatırlatma",notifications) {
+                notifications=it
+                prefs.edit().putBoolean("notifications_enabled",it).apply()
+                scope.launch {
+                    try {
+                        withContext(Dispatchers.IO) {
+                            if(it) {
+                                notificationService.createNotificationChannels()
+                                notificationService.loadNotificationSettings()
                             } else {
-                                if (purchaseInProgress) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(32.dp),
-                                        color = Color(0xFFE91E63)
-                                    )
-                                }
+                                notificationService.cancelAllNotifications()
                             }
                         }
-                        
-                        if (!isPremium && !purchaseInProgress) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            
-                            // Büyük ve çekici premium satın alma butonu
-                            Button(
-                                onClick = {
-                                    try {
-                                        Log.d("SettingsScreen", "🛒 Premium butonu tıklandı")
-                                        
-                                        // Önce temel kontrolleri yap
-                                        if (purchaseManager == null) {
-                                            Log.e("SettingsScreen", "❌ PurchaseManager null")
-                                            Toast.makeText(
-                                                context, 
-                                                "Satın alma sistemi başlatılamadı. Lütfen uygulamayı yeniden başlatın.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        if (context !is ComponentActivity) {
-                                            Log.e("SettingsScreen", "❌ Context ComponentActivity değil: ${context.javaClass.simpleName}")
-                                            Toast.makeText(
-                                                context, 
-                                                "Satın alma ekranı açılamıyor. Lütfen ayarları yeniden açın.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // İnternet bağlantısı kontrolü
-                                        val connectivityManager = context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-                                        val activeNetwork = connectivityManager.activeNetworkInfo
-                                        val isConnected = activeNetwork?.isConnectedOrConnecting == true
-                                        
-                                        if (!isConnected) {
-                                            Log.e("SettingsScreen", "❌ İnternet bağlantısı yok")
-                                            Toast.makeText(
-                                                context, 
-                                                "İnternet bağlantınızı kontrol edin ve tekrar deneyin.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // Google Play Store kontrolü
-                                        try {
-                                            context.packageManager.getPackageInfo("com.android.vending", 0)
-                                            Log.d("SettingsScreen", "✅ Google Play Store mevcut")
-                                        } catch (e: Exception) {
-                                            Log.e("SettingsScreen", "❌ Google Play Store bulunamadı: ${e.message}")
-                                            Toast.makeText(
-                                                context, 
-                                                "Google Play Store bulunamadı. Lütfen Google Play Store'u güncelleyin.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // Google Play Services kontrolü
-                                        try {
-                                            val gmsPackage = context.packageManager.getPackageInfo("com.google.android.gms", 0)
-                                            Log.d("SettingsScreen", "✅ Google Play Services mevcut, versiyon: ${gmsPackage.versionName}")
-                                        } catch (e: Exception) {
-                                            Log.e("SettingsScreen", "❌ Google Play Services bulunamadı: ${e.message}")
-                                            Toast.makeText(
-                                                context, 
-                                                "Google Play Services bulunamadı. Lütfen Google Play Services'i güncelleyin.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        Log.d("SettingsScreen", "✅ Tüm kontroller başarılı, satın alma başlatılıyor...")
-                                        
-                                        // Satın alma işlemini başlat
-                                        purchaseManager.buyPremium(context as ComponentActivity)
-                                        purchaseInProgress = true
-                                        
-                                        // Sadece satın alma başlatıldığında durumu izle
-                                        purchaseManager.purchaseStatus.observe(context as ComponentActivity) { status ->
-                                            when (status) {
-                                                is PurchaseManager.PurchaseStatus.Success -> {
-                                                    Toast.makeText(context, "Premium sürüm başarıyla satın alındı!", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = false
-                                                    isPremium = true
-                                                }
-                                                is PurchaseManager.PurchaseStatus.Pending -> {
-                                                    Toast.makeText(context, "Satın alma işlemi beklemede...", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = true
-                                                }
-                                                is PurchaseManager.PurchaseStatus.Canceled -> {
-                                                    Toast.makeText(context, "Satın alma işlemi iptal edildi", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = false
-                                                }
-                                                is PurchaseManager.PurchaseStatus.AlreadyOwned -> {
-                                                    Toast.makeText(context, "Zaten premium sürüme sahipsiniz", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = false
-                                                    isPremium = true
-                                                }
-                                                is PurchaseManager.PurchaseStatus.ServiceUnavailable -> {
-                                                    Toast.makeText(context, "Google Play servisi şu anda kullanılamıyor", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = false
-                                                }
-                                                is PurchaseManager.PurchaseStatus.ProductNotFound -> {
-                                                    Toast.makeText(context, "Premium ürün bulunamadı", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = false
-                                                }
-                                                is PurchaseManager.PurchaseStatus.Failed -> {
-                                                    Toast.makeText(context, "Satın alma işlemi başarısız oldu: Kod ${status.code}", Toast.LENGTH_SHORT).show()
-                                                    purchaseInProgress = false
-                                                }
-                                            }
-                                        }
-                                        
-                                        Toast.makeText(
-                                            context, 
-                                            "Google Play Store açılıyor...", 
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        
-                                        Log.d("SettingsScreen", "🔄 Premium satın alma başlatıldı")
-                                        
-                                    } catch (e: Exception) {
-                                        Log.e("SettingsScreen", "❌ Premium butonu tıklama hatası: ${e.message}", e)
-                                        
-                                        // Hata türüne göre özel mesajlar
-                                        val errorMessage = when {
-                                            e.message?.contains("BILLING_UNAVAILABLE") == true -> 
-                                                "Bu cihazda satın alma özelliği desteklenmiyor."
-                                            e.message?.contains("SERVICE_UNAVAILABLE") == true -> 
-                                                "Google Play Store servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin."
-                                            e.message?.contains("DEVELOPER_ERROR") == true -> 
-                                                "Uygulama konfigürasyon hatası. Lütfen uygulamayı güncelleyin."
-                                            e.message?.contains("NETWORK") == true -> 
-                                                "İnternet bağlantı sorunu. Lütfen bağlantınızı kontrol edin."
-                                            else -> 
-                                                "Satın alma işlemi başlatılamadı: ${e.message}"
-                                        }
-                                        
-                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                                        purchaseInProgress = false
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFFF4081)
-                                ),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Star,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    
-                                    Text(
-                                        text = "Premium'a Yükselt",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(12.dp))
-                            
-                            // Premium Kod Giriş Butonu
-                            Button(
-                                onClick = {
-                                    showCodeDialog = true
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF4CAF50)
-                                ),
-                                shape = RoundedCornerShape(16.dp),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(52.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.CardGiftcard,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    
-                                    Text(
-                                        text = "Premium Kod Gir",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(12.dp))
-                            
-                            // Premium özellikleri listesi - Kişisel mesaj olarak değiştirildi
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "Premium ile neler açılır?",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    color = Color.DarkGray,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                
-                                Spacer(modifier = Modifier.height(8.dp))
-                                
-                                Text(
-                                    text = "Premium üyelik mevcut satın alma sistemiyle açılır.\\n" +
-                                           "• Pazar Simülatörü'nde 10 mağaza ve tezgâh işletme\\n" +
-                                           "• Özel avatarlar ve uygulama ikonları\\n" +
-                                           "• Reklamsız oyun deneyimi\\n" +
-                                           "• Mevcut Premium günlük bonusları\\n\\n" +
-                                           "Öğrenme raporunun temel görünümü tüm oyunculara açıktır. " +
-                                           "Premium erişimin varsa tekrar satın alma yapmana gerek yok.",
-                                    fontSize = 14.sp,
-                                    color = Color.DarkGray,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        lineHeight = 18.sp
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
+                    } catch(e:Exception) {
+                        Toast.makeText(context,"Bildirim ayarı güncellenemedi.",
+                            Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Restoring a Google Play purchase is free, repeatable and never opens checkout.
-            // Code-based Premium rights are preserved even if Play has no transaction.
-            SettingsCard(
-                title = "Satın Alma ve Geri Yükleme",
-                description = "Önceden aldığın Premium erişimini bu cihazda kontrol et",
-                containerColor = Color(0xFF197A92)
-            ) {
-                Column(modifier=Modifier.fillMaxWidth().padding(12.dp),
-                    verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Text("Google Play hesabında satın aldığın Premium ürünü yeniden kontrol edilir. " +
-                        "Bu işlem ücretli değildir.",
-                        color=Color.White,fontSize=13.sp)
-                    Button(
-                        onClick={purchaseManager.restorePurchases()},
-                        enabled=restoration !is PurchaseManager.RestoreState.Loading,
-                        modifier=Modifier.fillMaxWidth().height(52.dp),
-                        colors=ButtonDefaults.buttonColors(
-                            containerColor=Color(0xFF104366))
-                    ) {
-                        Text(if(restoration is PurchaseManager.RestoreState.Loading)
-                            "Google Play Kontrol Ediliyor…" else "Satın Alımları Geri Yükle",
-                            color=Color.White)
-                    }
-                    val restoreMessage=when(val result=restoration) {
-                        is PurchaseManager.RestoreState.Idle ->
-                            "Mevcut Premium kodları da korunur."
-                        is PurchaseManager.RestoreState.Loading ->
-                            "Google Play satın alma kayıtları kontrol ediliyor."
-                        is PurchaseManager.RestoreState.Found ->
-                            if(result.googlePlay)
-                                "Google Play Premium satın alımı bulundu; erişimin etkin."
-                            else "Premium kod erişimin etkin; Google Play satın alımı bulunmadı."
-                        is PurchaseManager.RestoreState.NotFound ->
-                            "Bu Google Play hesabında aktif ürün bulunamadı. " +
-                            "Doğru hesabı ve Premium kodunu kontrol et."
-                        is PurchaseManager.RestoreState.Error -> result.message
-                    }
-                    Text(restoreMessage,color=Color.White,fontSize=12.sp)
-                }
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,
+                verticalAlignment=Alignment.CenterVertically) {
+                Text("Hatırlatma saati",color=SettingsPalette.secondary,fontSize=12.sp)
+                Text("19.00",color=SettingsPalette.mint,
+                    fontWeight=FontWeight.Bold,fontSize=13.sp)
             }
-
-            SettingsCard(
-                title = "Free / Premium İçerikleri",
-                description = "Ücretsiz oynanabilen ve Premium ile açılan özellikler",
-                containerColor = Color(0xFF266B98)
-            ) {
-                Column(Modifier.fillMaxWidth().padding(12.dp),
-                    verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                    Text("HERKES İÇİN ÜCRETSİZ",color=Color.White,
-                        fontWeight=FontWeight.Bold)
-                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza ve 12 matematik kararı\n" +
-                        "• Seçili temel matematik maceraları\n" +
-                        "• Dört beceri için temel öğrenme raporu\n" +
-                        "• Ücretsiz avatarlar ve varsayılan uygulama ikonu",
-                        color=Color.White,fontSize=13.sp)
-                    Text("PREMIUM İLE EKLENENLER",color=Color.White,
-                        fontWeight=FontWeight.Bold)
-                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza ve 40 karar\n" +
-                        "• Stok, satış, kâr ve tezgâh geliştirme\n" +
-                        "• Premium avatar ve alternatif uygulama ikonları\n" +
-                        "• Labirentte sınırsız oynama ve ek istatistikler\n" +
-                        "• Premium günlük yıldız bonusu",
-                        color=Color.White,fontSize=13.sp)
-                    Text("Reklamlar çocuk güvenliği denetimi tamamlanana kadar " +
-                        "tüm oyuncular için kapalıdır.",
-                        color=Color.White,fontSize=12.sp)
-                }
-            }
-
-            // Ses Ayarları Kartı
-            SettingsCard(
-                title = "Ses Ayarları",
-                    description = "Müzik ve ses efektlerini ayarlayın",
-                    containerColor = Color(0xFF2196F3)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    // Müzik ayarı
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Müzik",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            
-                            Text(
-                                text = "Arka plan müziği",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-                        
-                        Switch(
-                            checked = isMusicEnabled,
-                            onCheckedChange = { isEnabled ->
-                                audioService.setMusicEnabled(isEnabled)
-                                isMusicEnabled = isEnabled
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color(0xFF2196F3),
-                                checkedTrackColor = Color(0xFF90CAF9)
-                            )
-                        )
-                    }
-                    
-                    Divider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = Color.LightGray.copy(alpha = 0.5f)
-                    )
-                    
-                    // Ses efektleri ayarı
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Ses Efektleri",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            
-                            Text(
-                                text = "Oyun ses efektleri",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-                        
-                        Switch(
-                            checked = isSoundEnabled,
-                            onCheckedChange = { isEnabled ->
-                                audioService.setSoundEnabled(isEnabled)
-                                isSoundEnabled = isEnabled
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color(0xFF2196F3),
-                                checkedTrackColor = Color(0xFF90CAF9)
-                            )
-                        )
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Bildirim Ayarları Kartı (Geri eklendi)
-            SettingsCard(
-                title = "Bildirim Ayarları",
-                description = "Bildirimlerinizi özelleştirin",
-                containerColor = Color(0xFFEC407A)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    // Bildirim ayarı
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                text = "Bildirimler",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            
-                            Text(
-                                text = "Günlük hatırlatıcılar ve ödüller",
-                                fontSize = 12.sp,
-                                color = Color.Gray
-                            )
-                        }
-                        
-                        Switch(
-                            checked = isNotificationEnabled,
-                            onCheckedChange = { isEnabled ->
-                                isNotificationEnabled = isEnabled
-                                saveSettings("notifications_enabled", isEnabled)
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color(0xFFE91E63),
-                                checkedTrackColor = Color(0xFFF8BBD0)
-                            )
-                        )
-                    }
-                    
-                    Divider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = Color.LightGray.copy(alpha = 0.5f)
-                    )
-                    
-                        // Bildirim zamanı seçimi
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                    text = "Bildirim Zamanı",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                            
-                                // Bildirim zamanı butonları (sadece bildirimler açıksa aktif)
-                    Row(
-                        modifier = Modifier
-                                        .alpha(if (isNotificationEnabled) 1f else 0.5f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                                    // Saat 19:00 seçili olduğunu gösteren küçük bir görsel
-                        Text(
-                                        text = "19:00",
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Medium,
-                                        color = Color(0xFFE91E63)
-                                    )
-
-                                    Icon(
-                                        imageVector = Icons.Default.Check,
-                                        contentDescription = null,
-                                        tint = Color(0xFFE91E63),
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.width(4.dp))
-
-
-                            Text(
-                                        text = "Telefonundan bildirimlere izin vermeyi unutma.",
-                                        fontSize = 12.sp,
-                                        color = Color.Gray
-                                    )
-
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    
-                                    
-                                }
-                        }
-                    }
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Uygulama ikonları eskiden yalnız eski ana ekrandan erişilebiliyordu.
-            // Mevcut ikon seçicisini ve aynı Premium hak kontrolünü yeniden kullan.
-            SettingsCard(
-                title = "Uygulama İkonu",
-                description = "Matematik Macerası, Robot veya Uzay temasını seç",
-                containerColor = Color(0xFF2379A9)
-            ) {
-                Button(
-                    onClick = {
-                        context.startActivity(Intent(context, IconSelectorActivity::class.java))
-                    },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF103E65))
-                ) {
-                    Text("🎨 Uygulama İkonunu Değiştir", color = Color.White)
-                }
-            }
-
-            // Uygulama Bilgileri Kartı
-            SettingsCard(
-                title = "Uygulama Bilgileri",
-                description = "Uygulama ve geliştirici bilgileri",
-                containerColor = Color(0xFF26A69A)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(
-                        text = "Uygulama Versiyonu: ${AppVersionUtils.getFullVersionInfo(context)}",
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    
-                    Divider(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        color = Color.LightGray.copy(alpha = 0.5f)
-                    )
-                    
-                    Text(
-                        text = "Geliştirici: YGT Studio",
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    
-                }
-            }
-            
-            // Alt boşluk
-            Spacer(modifier = Modifier.height(80.dp))
+            Text("Bildirim göndermek için telefon izinlerinin açık olması gerekir.",
+                color=SettingsPalette.secondary,fontSize=11.sp)
         }
-    }
-    
-    // Premium Kod Giriş Dialog
-    if (showCodeDialog) {
-        AlertDialog(
-            onDismissRequest = { 
-                if (!codeValidationInProgress) {
-                    showCodeDialog = false
-                    codeInput = ""
-                }
-            },
-            title = {
-                Text(
-                    text = "Premium Kod Gir",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Sihirli premium kodunu girin:",
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-                    
-                    OutlinedTextField(
-                        value = codeInput,
-                        onValueChange = { codeInput = it.uppercase() },
-                        label = { Text("Premium Kod") },
-                        singleLine = true,
-                        enabled = !codeValidationInProgress,
-                        modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("DERSHANEX-PREMIUM") }
-                    )
-                    
-                    if (codeValidationInProgress) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Kod doğrulanıyor...")
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (codeInput.isNotBlank() && !codeValidationInProgress) {
-                            codeValidationInProgress = true
-                            
-                            scope.launch {
-                                try {
-                                    val result = withContext(Dispatchers.IO) {
-                                        codeValidator?.validateAndActivateCode(codeInput)
-                                    }
-                                    
-                                    when (result) {
-                                        is PremiumCodeValidator.ValidationResult.Success -> {
-                                            Toast.makeText(
-                                                context,
-                                                "🎉 Premium kod başarıyla aktive edildi!",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            isPremium = true
-                                            showCodeDialog = false
-                                            codeInput = ""
-                                        }
-                                        is PremiumCodeValidator.ValidationResult.InvalidCode -> {
-                                            Toast.makeText(
-                                                context,
-                                                "❌ Geçersiz kod. Lütfen kontrol edin.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        is PremiumCodeValidator.ValidationResult.CodeExpired -> {
-                                            Toast.makeText(
-                                                context,
-                                                "⏰ Bu kodun süresi dolmuş.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        is PremiumCodeValidator.ValidationResult.CodeLimitReached -> {
-                                            Toast.makeText(
-                                                context,
-                                                "🚫 Bu kod kullanım limitine ulaşmış.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                        is PremiumCodeValidator.ValidationResult.AlreadyActivated -> {
-                                            Toast.makeText(
-                                                context,
-                                                "✅ Bu cihaz zaten premium kod ile aktive edilmiş.",
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            isPremium = true
-                                            showCodeDialog = false
-                                            codeInput = ""
-                                        }
-                                        is PremiumCodeValidator.ValidationResult.NetworkError -> {
-                                            Toast.makeText(
-                                                context,
-                                                "🌐 İnternet bağlantısı sorunu. Lütfen tekrar deneyin.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                            is PremiumCodeValidator.ValidationResult.Error -> {
-                                                val errorMsg = (result as PremiumCodeValidator.ValidationResult.Error).message
-                                                Toast.makeText(
-                                                    context,
-                                                    "❌ Hata: $errorMsg",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                                Log.e("SettingsScreen", "Kod aktivasyon hatası: $errorMsg")
-                                            }
-                                        else -> {
-                                            Toast.makeText(
-                                                context,
-                                                "❌ Bilinmeyen hata oluştu.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("SettingsScreen", "Kod doğrulama hatası: ${e.message}", e)
-                                    Toast.makeText(
-                                        context,
-                                        "❌ Bir hata oluştu: ${e.message}",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                } finally {
-                                    codeValidationInProgress = false
-                                }
-                            }
-                        }
-                    },
-                    enabled = codeInput.isNotBlank() && !codeValidationInProgress
-                ) {
-                    Text("Aktive Et")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { 
-                        showCodeDialog = false
-                        codeInput = ""
-                    },
-                    enabled = !codeValidationInProgress
-                ) {
-                    Text("İptal")
-                }
+
+        SettingsSection("Görünüm ve İkon",
+            "Robot, uzay veya klasik uygulama simgesi") {
+            SettingsAction("Uygulama İkonunu Değiştir") {
+                context.startActivity(Intent(context,IconSelectorActivity::class.java))
             }
+        }
+
+        SettingsSection("Uygulama Hakkında","") {
+            Text("Matematik Macerası  ·  ${AppVersionUtils.getFullVersionInfo(context)}",
+                color=SettingsPalette.text,fontSize=13.sp)
+            Text("Geliştirici: YGT Studio",color=SettingsPalette.secondary,fontSize=12.sp)
+        }
+        Spacer(Modifier.height(20.dp))
+    }
+
+    if(codeDialog) {
+        AlertDialog(
+            onDismissRequest={if(!verifying){codeDialog=false;code="";codeError=null}},
+            title={Text("Premium Kodunu Etkinleştir")},
+            text={
+                Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Text("Sana verilen Premium kodunu gir. Yeni satın alma yapılmaz.")
+                    OutlinedTextField(
+                        value=code,onValueChange={code=it.trim().take(64).uppercase();codeError=null},
+                        singleLine=true,enabled=!verifying,
+                        label={Text("Premium kod")},modifier=Modifier.fillMaxWidth())
+                    if(verifying) CircularProgressIndicator(modifier=Modifier.size(22.dp))
+                    codeError?.let {Text(it,color=Color(0xFFC42B39),fontSize=12.sp)}
+                }
+            },
+            confirmButton={
+                TextButton(onClick={
+                    verifying=true;codeError=null
+                    scope.launch {
+                        try {
+                            val result=withContext(Dispatchers.IO){
+                                codeValidator.validateAndActivateCode(code)
+                            }
+                            when(result){
+                                is PremiumCodeValidator.ValidationResult.Success,
+                                is PremiumCodeValidator.ValidationResult.AlreadyActivated -> {
+                                    purchaseManager.refreshPremiumState()
+                                    codeDialog=false;code=""
+                                    Toast.makeText(context,"Premium erişimin etkin.",
+                                        Toast.LENGTH_SHORT).show()
+                                }
+                                is PremiumCodeValidator.ValidationResult.InvalidCode ->
+                                    codeError="Kod geçersiz. Lütfen kontrol et."
+                                is PremiumCodeValidator.ValidationResult.CodeExpired ->
+                                    codeError="Kodun süresi dolmuş."
+                                is PremiumCodeValidator.ValidationResult.CodeLimitReached ->
+                                    codeError="Kod kullanım sınırına ulaşılmış."
+                                is PremiumCodeValidator.ValidationResult.NetworkError ->
+                                    codeError="İnternet bağlantısını kontrol et."
+                                is PremiumCodeValidator.ValidationResult.Error ->
+                                    codeError=result.message
+                                else -> codeError="Kod doğrulanamadı."
+                            }
+                        } catch(e:Exception) {
+                            codeError="Bağlantı veya doğrulama hatası. Tekrar dene."
+                        } finally {verifying=false}
+                    }
+                },enabled=!verifying&&code.isNotBlank()){
+                    Text("Kodu Doğrula")
+                }
+            },
+            dismissButton={TextButton(
+                onClick={codeDialog=false;code="";codeError=null},
+                enabled=!verifying){Text("Vazgeç")}}
         )
     }
 }
-
-/**
- * Premium özelliklerini görüntülemek için özel bir madde öğesi
- */
-@Composable
-private fun PremiumFeatureItem(text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Star,
-            contentDescription = null,
-            tint = Color(0xFFFFD700),
-            modifier = Modifier.size(16.dp)
-        )
-        
-        Spacer(modifier = Modifier.width(8.dp))
-        
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            color = Color.DarkGray
-        )
-    }
-} 

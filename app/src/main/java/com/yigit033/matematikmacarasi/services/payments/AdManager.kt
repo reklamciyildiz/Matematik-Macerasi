@@ -32,6 +32,12 @@ import java.util.concurrent.atomic.AtomicBoolean
  */
 class AdManager private constructor(context: Context) {
     private val TAG = "AdManager"
+    /**
+     * Pre-release child-safety gate. Keep every ad request and display disabled
+     * until certified SDK, target-audience disclosures and Families QA are verified.
+     * This switch must NOT be changed without re-running Play policy review.
+     */
+    private val CHILD_AD_DELIVERY_DISABLED = true
     
     // Application context kullan - memory leak önlemek ve lifecycle bağımlılığını kaldırmak için
     private val appContext: Context = context.applicationContext
@@ -115,50 +121,9 @@ class AdManager private constructor(context: Context) {
     }
     
     init {
-        Log.d(TAG, "AdManager başlatıldı, appContext: ${appContext.javaClass.simpleName}")
-        
-        try {
-            // Önce MobileAds'in durumunu kontrol et
-            val wasInitialized = try {
-                MobileAds.getInitializationStatus() != null
-            } catch (e: Exception) {
-                Log.e(TAG, "MobileAds durum kontrol hatası: ${e.message}", e)
-                false
-            }
-            
-            // Eğer zaten başlatılmışsa tekrar başlatma
-            if (wasInitialized) {
-                Log.d(TAG, "MobileAds zaten başlatılmış, tekrar başlatılmıyor")
-                // Yine de reklam yüklemeyi başlat
-                loadRewardedAd()
-                loadInterstitialAd() // Interstitial reklamları da önceden yükle
-            } else {
-                // MobileAds'i başlat
-                MobileAds.initialize(appContext) { initializationStatus ->
-                    val statusMap = initializationStatus.adapterStatusMap
-                    statusMap.forEach { (adapter, status) ->
-                        Log.d(TAG, "Adapter: $adapter, Durum: ${status.initializationState}, Açıklama: ${status.description}")
-                    }
-                    
-                    // Reklam yüklemeyi başlat
-                    loadRewardedAd()
-                    loadInterstitialAd() // Interstitial reklamları da önceden yükle
-                    
-                    Log.d(TAG, "AdMob başarıyla başlatıldı - state: ${initializationStatus.adapterStatusMap["com.google.android.gms.ads.MobileAds"]?.initializationState}")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "AdMob başlatma hatası: ${e.message}", e)
-            // Hataya rağmen reklam yüklemeyi dene
-            try {
-                loadRewardedAd()
-                loadInterstitialAd() // Interstitial reklamları da önceden yükle
-            } catch (e2: Exception) {
-                Log.e(TAG, "Reklam yükleme hatası: ${e2.message}", e2)
-            }
-        }
+        Log.i(TAG,"Families pre-release mode: advertising disabled; no ad requests started")
     }
-    
+
     /**
      * İnternet bağlantısının varlığını kontrol eder
      * @return İnternet bağlantısı varsa true, yoksa false
@@ -172,6 +137,7 @@ class AdManager private constructor(context: Context) {
      * Premium kullanıcılar için reklamlar gösterilmez.
      */
     fun shouldShowAds(): Boolean {
+        if(CHILD_AD_DELIVERY_DISABLED) return false
         val isPremium = try {
             purchaseManager?.isPremium() ?: false
         } catch (e: Exception) {
@@ -188,6 +154,7 @@ class AdManager private constructor(context: Context) {
      * Non-premium için agresif reklam stratejisi
      */
     fun shouldShowInterstitialAd(): Boolean {
+        if(CHILD_AD_DELIVERY_DISABLED) return false
         // Google Play Families: Çocuk akışını kesen otomatik geçiş reklamları kapalı
         if (!ENABLE_AUTOMATIC_INTERSTITIALS) {
             Log.d(TAG, "Families Politikası: Otomatik geçiş reklamları devre dışı")
@@ -461,6 +428,7 @@ class AdManager private constructor(context: Context) {
      * Bu metod premium kullanıcılar için de çalışır, çünkü ödüllü reklamlar isteğe bağlıdır.
      */
     fun loadRewardedAd() {
+        if(CHILD_AD_DELIVERY_DISABLED) return
         // İnternet bağlantısı kontrolü
         if (!isInternetAvailable()) {
             Log.d(TAG, "İnternet bağlantısı yok, ödüllü reklam yüklenemiyor")
@@ -524,6 +492,10 @@ class AdManager private constructor(context: Context) {
         onRewarded: (Int) -> Unit,
         onAdNotAvailable: (() -> Unit)? = null
     ) {
+        if(CHILD_AD_DELIVERY_DISABLED) {
+            onAdNotAvailable?.invoke()
+            return
+        }
         try {
             // Premium kullanıcılar da reklam izleyebilir (yeni sistem)
             val isPremium = purchaseManager?.isPremium() == true

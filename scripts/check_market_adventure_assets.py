@@ -36,7 +36,11 @@ def main():
         for p in paths:
             d=p.get(ANDROID+"pathData")
             color=p.get(ANDROID+"fillColor")
-            if not d or not color or not re.fullmatch(r"#[0-9a-fA-F]{8}|#[0-9a-fA-F]{6}",color):
+            stroke=p.get(ANDROID+"strokeColor")
+            valid_color=lambda value: value is None or re.fullmatch(
+                r"#[0-9a-fA-F]{8}|#[0-9a-fA-F]{6}",value)
+            if not d or (color is None and stroke is None) or \
+               not valid_color(color) or not valid_color(stroke):
                 errors.append(slug+": invalid path/color")
                 break
         if "R.drawable."+slug not in screen:

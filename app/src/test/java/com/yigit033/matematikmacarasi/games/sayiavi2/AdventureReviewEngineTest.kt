@@ -34,7 +34,7 @@ class AdventureReviewEngineTest {
     @Test fun focusedRepeatChangesLastTaskWithoutChangingTheSkill() {
         for (kind in AdventureReviewKind.entries) {
             val revised = AdventureReviewEngine.create(
-                kind, LearningTier.TEMEL, seed = 197L, weakFocus = 8
+                kind, LearningTier.USTALIK, seed = 197L, weakFocus = 8
             )
             assertEquals(8, revised.last().focus)
             if (kind == AdventureReviewKind.MULTIPLICATION) {
@@ -42,6 +42,13 @@ class AdventureReviewEngineTest {
             } else {
                 assertTrue(revised.last().prompt.contains("8 eş grupta"))
             }
+        }
+    }
+
+    @Test fun focusedPracticeNeverExceedsSelectedTier() {
+        for (kind in AdventureReviewKind.entries) {
+            val items = AdventureReviewEngine.create(kind, LearningTier.TEMEL, 15L, weakFocus = 9)
+            assertEquals(4, items.last().focus)
         }
     }
 

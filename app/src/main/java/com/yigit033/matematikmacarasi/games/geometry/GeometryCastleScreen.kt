@@ -96,6 +96,13 @@ private fun CastleScene(drawableId: Int, description: String, big: Boolean = fal
     }
 }
 
+private fun regularPolygon(sides: Int): List<Pair<Float,Float>> =
+    (0 until sides).map { i ->
+        val angle = -Math.PI / 2 + i * 2 * Math.PI / sides
+        Pair(.5f + (kotlin.math.cos(angle) * .38).toFloat(),
+            .5f + (kotlin.math.sin(angle) * .38).toFloat())
+    }
+
 @Composable
 private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Modifier,
     outlineOnly: Boolean = false) {
@@ -112,35 +119,32 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
                     radius=minOf(w,h)*.35f,style=Stroke(width=2.0f))
             }
             else -> {
-                val sides = when(shape) {
-                    CastleShape.TRIANGLE -> 3
-                    CastleShape.SQUARE,CastleShape.RECTANGLE -> 4
-                    CastleShape.PENTAGON -> 5
-                    CastleShape.HEXAGON -> 6
-                    else -> 4
+                // Normalized geometry keeps each new quadrilateral mathematically distinct.
+                // Rhombus: four equal sides, no right angles.
+                // Parallelogram: two parallel pairs, unequal adjacent sides, oblique angles.
+                // Trapezoid: exactly one parallel pair.
+                val vertices: List<Pair<Float,Float>> = when(shape) {
+                    CastleShape.SQUARE -> listOf(
+                        .22f to .22f, .78f to .22f, .78f to .78f, .22f to .78f)
+                    CastleShape.RECTANGLE -> listOf(
+                        .10f to .34f, .90f to .34f, .90f to .66f, .10f to .66f)
+                    CastleShape.RHOMBUS -> listOf(
+                        .50f to .10f, .85f to .50f, .50f to .90f, .15f to .50f)
+                    CastleShape.PARALLELOGRAM -> listOf(
+                        .26f to .28f, .88f to .28f, .74f to .72f, .12f to .72f)
+                    CastleShape.TRAPEZOID -> listOf(
+                        .34f to .22f, .66f to .22f, .90f to .78f, .10f to .78f)
+                    CastleShape.TRIANGLE -> regularPolygon(3)
+                    CastleShape.PENTAGON -> regularPolygon(5)
+                    CastleShape.HEXAGON -> regularPolygon(6)
+                    CastleShape.OCTAGON -> regularPolygon(8)
+                    CastleShape.CIRCLE -> emptyList()
                 }
-                val points = (0 until sides).map { i ->
-                    val angle = -Math.PI/2 + i * 2 * Math.PI / sides
-                    val radiusX = if(shape == CastleShape.RECTANGLE) w * .43 else w * .34
-                    val radiusY = if(shape == CastleShape.RECTANGLE) h * .22 else h * .34
-                    Pair(w/2 + (kotlin.math.cos(angle)*radiusX).toFloat(),
-                        h/2 + (kotlin.math.sin(angle)*radiusY).toFloat())
+                vertices.forEachIndexed { index, vertex ->
+                    if(index == 0) p.moveTo(vertex.first * w,vertex.second * h)
+                    else p.lineTo(vertex.first * w,vertex.second * h)
                 }
-                // For square and rectangle, aligned edges are easier for younger learners.
-                if(shape == CastleShape.SQUARE || shape == CastleShape.RECTANGLE) {
-                    val x = if(shape == CastleShape.SQUARE) w*.24f else w*.11f
-                    val y = if(shape == CastleShape.SQUARE) h*.24f else h*.34f
-                    val right = w-x
-                    val bottom = h-y
-                    p.moveTo(x,y);p.lineTo(right,y);p.lineTo(right,bottom)
-                    p.lineTo(x,bottom);p.close()
-                } else {
-                    points.forEachIndexed { index, pair ->
-                        if(index==0) p.moveTo(pair.first,pair.second)
-                        else p.lineTo(pair.first,pair.second)
-                    }
-                    p.close()
-                }
+                p.close()
                 if(!outlineOnly) drawPath(p,color)
                 drawPath(p,if(outlineOnly) Gold else Color.White.copy(alpha=.88f),
                     style=Stroke(width=if(outlineOnly) 5f else 3.2f))
@@ -151,7 +155,7 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
 
 @Composable
 private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Boolean = true,
-    onClick: () -> Unit
+    rotationDegrees: Float = 0f, onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
         targetValue=if(active) 1.035f else 1f,
@@ -172,7 +176,7 @@ private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Bo
             verticalArrangement=Arrangement.Center
         ) {
             ShapeIcon(shape, if(active) Gold else Color(0xFF70DDEA),
-                Modifier.size(72.dp))
+                Modifier.size(72.dp).graphicsLayer { rotationZ = rotationDegrees })
             // Names stay available to TalkBack but do not reveal a visual question's answer.
             Text("Seç", color=Color.White,fontSize=13.sp,
                 fontWeight=FontWeight.Bold)

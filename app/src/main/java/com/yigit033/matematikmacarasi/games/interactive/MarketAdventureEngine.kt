@@ -16,13 +16,19 @@ data class MarketScenario(
     val payOptionsKurus: List<Int>,
     val changeOptionsKurus: List<Int>,
     /** The fixed banknote amount handed to the cashier for the change task. */
-    val cashierPayKurus: Int
+    val cashierPayKurus: Int,
+    val bonus: MarketBonus? = null
 ) {
     fun requiredTotal(): Int = needed.sumOf { line ->
         (products.firstOrNull { it.id == line.productId }?.priceKurus ?: 0) * line.quantity
     }
 }
-enum class MarketAdventurePhase { WELCOME, SHOP, PAYMENT, CHANGE, COMPLETE }
+enum class MarketAdventurePhase { WELCOME, SHOP, PAYMENT, CHANGE, COMPLETE, BONUS }
+enum class MarketBonusKind { DISCOUNT, COMPARE, PROFIT }
+data class MarketBonus(
+    val kind: MarketBonusKind, val title: String, val prompt: String,
+    val explanation: String, val correctKurus: Int, val choicesKurus: List<Int>
+)
 data class MarketAdventureRun(
     val seed: Long = 0L,
     val tier: LearningTier = LearningTier.TEMEL,
@@ -36,7 +42,8 @@ data class MarketAdventureRun(
     val perfectDecisions: Int = 0,
     val taskHadError: Boolean = false,
     val taskHadHint: Boolean = false,
-    val completedRuns: Int = 0
+    val completedRuns: Int = 0,
+    val contentVersion: Int = 1
 ) {
     val finished get() = phase == MarketAdventurePhase.COMPLETE
 }
@@ -47,6 +54,12 @@ data class MarketAdventureRun(
 object MarketAdventureEngine {
     const val VISITS = 3
     const val DECISIONS = 9
+    const val PREMIUM_VISITS = 6
+    const val PREMIUM_DECISIONS = 21
+    fun visitCount(run: MarketAdventureRun) =
+        if(run.contentVersion>=2) PREMIUM_VISITS else VISITS
+    fun decisionCount(run: MarketAdventureRun) =
+        if(run.contentVersion>=2) PREMIUM_DECISIONS else DECISIONS
 
     private data class Template(val name: String, val hint: String,
         val goods: List<Triple<String,String,Int>>)
@@ -65,10 +78,68 @@ object MarketAdventureEngine {
                 Triple("Kitap","📚",15),Triple("Robot","🤖",20)))
     )
 
+    private val extraTemplates = listOf(
+        Template("Renkli Kırtasiye","Alışveriş yap, indirimli fiyatı hesapla.",
+            listOf(Triple("Defter","📒",15),Triple("Kalem","✏️",8),
+                Triple("Silgi","🧽",5),Triple("Cetvel","📏",12),
+                Triple("Boya","🖍️",20),Triple("Kitap","📗",25))),
+        Template("Giyim Sokağı","Aynı ürünün iki fiyatını karşılaştır.",
+            listOf(Triple("Tişört","👕",30),Triple("Şapka","🧢",25),
+                Triple("Çorap","🧦",12),Triple("Atkı","🧣",20),
+                Triple("Eldiven","🧤",18),Triple("Ayakkabı","👟",45))),
+        Template("Benim Tezgâhım","Kendi satışını yap, kârı hesapla.",
+            listOf(Triple("Elma Sepeti","🍎",22),Triple("Çiçek","💐",27),
+                Triple("Oyuncak","🧸",35),Triple("Meyve Suyu","🧃",13),
+                Triple("Kurabiye","🍪",18),Triple("Hediye","🎁",32)))
+    )
+
+    private fun bonusFor(visit: Int, goods: List<MarketGood>, random: Random): MarketBonus? {
+        if(visit<3) return null
+        val first=goods[0]
+        val kind=when(visit) {
+            3 -> MarketBonusKind.DISCOUNT
+            4 -> MarketBonusKind.COMPARE
+            else -> MarketBonusKind.PROFIT
+        }
+        val title:String
+        val prompt:String
+        val explanation:String
+        val correct:Int
+        when(kind) {
+            MarketBonusKind.DISCOUNT -> {
+                correct=first.priceKurus*9/10
+                title="Etiket İndirimi"
+                prompt="${first.name} normalde ${format(first.priceKurus)}. %10 indirimli fiyatı kaç TL?"
+                explanation="Önce fiyatın onda birini bul, sonra normal fiyattan çıkar."
+            }
+            MarketBonusKind.COMPARE -> {
+                correct=200
+                title="Akıllı Fiyat Karşılaştırma"
+                prompt="${first.name} A tezgâhında ${format(first.priceKurus)}, " +
+                    "B tezgâhında ${format(first.priceKurus-200)}. " +
+                    "Ucuz tezgâhtan alırsan kaç TL tasarruf edersin?"
+                explanation="Aynı ürünün iki fiyatını karşılaştır; büyük fiyattan küçüğü çıkar."
+            }
+            MarketBonusKind.PROFIT -> {
+                val cost=first.priceKurus
+                val sale=cost+500+random.nextInt(1,4)*100
+                correct=sale-cost
+                title="Kendi Tezgâhın"
+                prompt="${first.name} ürününü ${format(cost)} maliyetle aldın, " +
+                    "${format(sale)} fiyatla sattın. Kârın kaç TL?"
+                explanation="Kâr = satış fiyatı − maliyet. Para üstüyle karıştırma."
+            }
+        }
+        val choices=linkedSetOf(correct,correct+100,correct+200,
+            (correct-100).coerceAtLeast(0),correct+500)
+        return MarketBonus(kind,title,prompt,explanation,correct,
+            choices.take(4).shuffled(random))
+    }
+
     /** Only the best 1–3-star result is awarded by StarManager's high-water policy. */
     fun starsFor(run: MarketAdventureRun): Int = if(!run.finished) 0 else when {
-        run.perfectDecisions>=8 -> 3
-        run.perfectDecisions>=5 -> 2
+        run.perfectDecisions >= (if(run.contentVersion>=2) 18 else 8) -> 3
+        run.perfectDecisions >= (if(run.contentVersion>=2) 12 else 5) -> 2
         else -> 1
     }
 
@@ -79,10 +150,11 @@ object MarketAdventureEngine {
         return if(rest==0) "${lira} TL" else "${lira},${rest.toString().padStart(2,'0')} TL"
     }
 
-    fun scenarios(seed: Long, tier: LearningTier): List<MarketScenario> {
+    fun scenarios(seed: Long, tier: LearningTier, contentVersion: Int = 1): List<MarketScenario> {
         require(seed>0)
         val r = Random(seed xor 0x7315B4L)
-        return templates.mapIndexed { visit, template ->
+        val selected=if(contentVersion>=2) templates+extraTemplates else templates
+        return selected.mapIndexed { visit, template ->
             val multiplier = when(tier) {
                 LearningTier.TEMEL -> 1
                 LearningTier.GELISEN -> 2
@@ -127,13 +199,14 @@ object MarketAdventureEngine {
             }
             MarketScenario(template.name,template.hint,goods,needed,budget,
                 choices.take(4).shuffled(r),
-                wrongChange.take(4).shuffled(r),pay)
+                wrongChange.take(4).shuffled(r),pay,
+                if(contentVersion>=2) bonusFor(visit,goods,r) else null)
         }
     }
 
     fun scenario(run: MarketAdventureRun): MarketScenario? =
-        if(run.seed>0 && run.visit in 0 until VISITS)
-            scenarios(run.seed,run.tier)[run.visit] else null
+        if(run.seed>0 && run.visit in 0 until visitCount(run))
+            scenarios(run.seed,run.tier,run.contentVersion)[run.visit] else null
 
     fun amount(run: MarketAdventureRun, scenario: MarketScenario): Int =
         run.basket.sumOf { line ->
@@ -147,14 +220,14 @@ object MarketAdventureEngine {
     }
 
     fun valid(run: MarketAdventureRun): Boolean {
-        if(run.seed<0L || run.visit !in 0..VISITS ||
+        if(run.seed<0L || run.contentVersion !in 1..2 || run.visit !in 0..visitCount(run) ||
             run.attempts<0 || run.errors !in 0..run.attempts ||
-            run.hints<0 || run.perfectDecisions !in 0..DECISIONS ||
+            run.hints<0 || run.perfectDecisions !in 0..decisionCount(run) ||
             run.paidKurus<0 || run.completedRuns<0 ||
             run.basket.size>4 || run.basket.map { it.productId }.distinct().size!=run.basket.size ||
             run.basket.any { it.productId<=0 || it.quantity !in 1..3 } ||
             (run.seed==0L && (run.visit!=0 || run.phase!=MarketAdventurePhase.WELCOME)) ||
-            ((run.phase==MarketAdventurePhase.COMPLETE)!=(run.visit==VISITS)) ||
+            ((run.phase==MarketAdventurePhase.COMPLETE)!=(run.visit==visitCount(run))) ||
             (run.phase==MarketAdventurePhase.WELCOME && run.visit!=0)) return false
         if(run.seed==0L) return run.basket.isEmpty()
         if(run.phase==MarketAdventurePhase.COMPLETE)
@@ -164,6 +237,7 @@ object MarketAdventureEngine {
             return false
         if(run.phase==MarketAdventurePhase.SHOP)
             return run.paidKurus==0
+        if(run.phase==MarketAdventurePhase.BONUS && scene.bonus==null) return false
         return basketExact(run,scene) &&
             (run.phase!=MarketAdventurePhase.CHANGE ||
                 run.paidKurus==scene.cashierPayKurus)

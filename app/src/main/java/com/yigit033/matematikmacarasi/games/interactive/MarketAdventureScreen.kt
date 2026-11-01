@@ -217,7 +217,7 @@ fun MarketAdventureScreen(
     onCompletion:(MarketAdventureRun)->Unit
 ) {
     var run by remember { mutableStateOf(store.load()) }
-    var chosenTier by remember { mutableStateOf(suggestedTier) }
+    var chosenTier by rememberSaveable { mutableStateOf(suggestedTier) }
     var message by remember { mutableStateOf("") }
     var isPositive by remember { mutableStateOf(true) }
     // Every new Activity entry opens the map. In-process rotation keeps the page.

@@ -4,6 +4,13 @@ import android.content.Context
 import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /** Private v2 checkpoint. Never rewrites legacy maze, stars or daily-limit keys. */
+data class MazeRegionRecord(
+    val completed:Int=0,
+    val bestStars:Int=0,
+    val mistakes:Int=0,
+    val hints:Int=0
+)
+
 class MazeAdventureStore(context:Context) {
     private val prefs=context.applicationContext.getSharedPreferences(
         "math_maze_adventure_v2",Context.MODE_PRIVATE)
@@ -52,10 +59,30 @@ class MazeAdventureStore(context:Context) {
     }
 
     @Synchronized fun runsCompleted():Int=prefs.getInt("completed_runs",0)
-    @Synchronized fun recordUniqueCompletion(seed:Long):Boolean {
-        if(seed<=0L || prefs.getLong("counted_seed",0L)==seed)return false
+
+    @Synchronized fun regionRecord(region:MazeRegion):MazeRegionRecord {
+        val key="region_${region.ordinal}_"
+        return MazeRegionRecord(
+            completed=prefs.getInt(key+"completed",0).coerceAtLeast(0),
+            bestStars=prefs.getInt(key+"best_stars",0).coerceIn(0,3),
+            mistakes=prefs.getInt(key+"errors",0).coerceAtLeast(0),
+            hints=prefs.getInt(key+"hints",0).coerceAtLeast(0)
+        )
+    }
+
+    /** Regional practice evidence is local, cumulative and recorded once per run. */
+    @Synchronized fun recordUniqueCompletion(run:MazeExpedition):Boolean {
+        if(!run.completed || run.seed<=0L ||
+            prefs.getLong("counted_seed",0L)==run.seed)return false
+        val key="region_${run.region.ordinal}_"
+        val old=regionRecord(run.region)
         return prefs.edit()
-            .putLong("counted_seed",seed)
-            .putInt("completed_runs",runsCompleted()+1).commit()
+            .putLong("counted_seed",run.seed)
+            .putInt("completed_runs",runsCompleted()+1)
+            .putInt(key+"completed",old.completed+1)
+            .putInt(key+"best_stars",maxOf(old.bestStars,MazeAdventureEngine.stars(run)))
+            .putInt(key+"errors",old.mistakes+run.errors)
+            .putInt(key+"hints",old.hints+run.hints)
+            .commit()
     }
 }

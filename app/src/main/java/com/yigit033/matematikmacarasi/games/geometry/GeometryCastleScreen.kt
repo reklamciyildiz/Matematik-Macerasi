@@ -129,7 +129,7 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
                     CastleShape.RECTANGLE -> listOf(
                         .10f to .34f, .90f to .34f, .90f to .66f, .10f to .66f)
                     CastleShape.RHOMBUS -> listOf(
-                        .50f to .10f, .85f to .50f, .50f to .90f, .15f to .50f)
+                        .50f to .25f, .92f to .50f, .50f to .75f, .08f to .50f)
                     CastleShape.PARALLELOGRAM -> listOf(
                         .26f to .28f, .88f to .28f, .74f to .72f, .12f to .72f)
                     CastleShape.TRAPEZOID -> listOf(

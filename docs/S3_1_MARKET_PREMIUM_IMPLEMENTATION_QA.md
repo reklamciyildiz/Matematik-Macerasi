@@ -12,7 +12,7 @@ Durum: **Kod ve kaynaklar repoda; gerçek Android build/cihaz kabulü bu oturumd
 - Üç durak: Güneşli Manav (meyve), Mahalle Fırını (ekmek/atıştırmalık), Oyuncak Atölyesi (eşya/oyuncak). Hedef ürünler, miktarlar, fiyatlar ve yanlış şıklar tekrarda seed ile değişir.
 - Alışveriş: ihtiyaç listesine **tam miktarda** ürün eklenir. Liste dışı veya fazla ürünün kasadan geçişine izin verilmez; bütçe sınırı da kontrol edilir.
 - Toplam: kasadaki sepet tutarı sorusu sırasında üstteki tutar gizlenir. Çocuk fiyat×miktar işlemleriyle toplamı hesaplar.
-- Para üstü: kasiyere verilen gerçek tutar ve hesaplanan alışveriş toplamı üzerinden para üstü hesaplanır. Doğru/yanlış şıklar doğrulanır.
+- Para üstü: kasiyere verilen tutar, seviyeye göre 50/100/200 TL katına yuvarlanan gerçekçi bir ödeme olarak belirlenir; alışveriş toplamı çıkarılarak para üstü hesaplanır. Doğru/yanlış şıklar doğrulanır.
 - Temel/Gelişen/Ustalık: fiyatlar, bazı miktarlar, ondalıklı kuruş, alışveriş listesi büyüklüğü uyarlanır. Sınıf seçimi otomatik ilk öneridir; üç seviye elle de seçilebilir.
 - Ölçülen bağımsız başarı: alışveriş listesi, toplam hesaplama ve para üstü olmak üzere 9 karar. Yanlış cevap ve kullanılan ipucu ile çözülen görev bağımsız başarıya yazılmaz.
 - Oyuncu kısmen doldurduğu sepeti ve mevcut aşamayı kapat-aç sonrasında geri alır. `market_adventure_premium_v1` yeni depolama alanıdır; eski yıldızlar ve legacy MarketLevels kayıtları değiştirilmez.
@@ -25,7 +25,7 @@ Durum: **Kod ve kaynaklar repoda; gerçek Android build/cihaz kabulü bu oturumd
 |---|---|
 | `games/interactive/MarketAdventureEngine.kt` | Android bağımsız 3 ziyaret, ürün/miktar, Int kuruş, bütçe, toplam ve para üstü doğrulaması |
 | `games/interactive/MarketAdventureStore.kt` | Çevrimdışı checkpoint, sepet, aşama, hata/ipucu, tamamlanma, yıldız idempotensi |
-| `games/interactive/MarketAdventureScreen.kt` | Dört aşamalı Compose ekranı: giriş, alışveriş, toplam, para üstü, sonuç |
+| `games/interactive/MarketAdventureScreen.kt` | Beş ekranlık Compose akışı: giriş, alışveriş, toplam, para üstü, sonuç |
 | `games/interactive/MarketSimulatorActivity.kt` | Kanonik Activity; StarManager, DailyTaskManager, adaptif öğrenme ve istatistik köprüsü |
 | `res/drawable/market_adventure_hero.xml` | Yazısız/görsel kontrol içermeyen pazar giriş sahnesi |
 | `res/drawable/market_adventure_manav.xml` | Manav görseli |

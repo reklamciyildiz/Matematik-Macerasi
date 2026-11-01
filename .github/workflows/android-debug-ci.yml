@@ -95,6 +95,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_geometry_premium_assets.py
 
+      - name: Validate premium market vector assets
+        shell: bash
+        run: python3 scripts/check_market_adventure_assets.py
+
       - name: Unit tests and Android debug compilation
         shell: bash
         run: |

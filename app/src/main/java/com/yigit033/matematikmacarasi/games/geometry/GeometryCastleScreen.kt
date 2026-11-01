@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -145,8 +146,13 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
 private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    val scale by animateFloatAsState(
+        targetValue=if(active) 1.035f else 1f,
+        animationSpec=tween(170),label="selected geometry stone"
+    )
     Surface(
         modifier = Modifier.fillMaxWidth().heightIn(min = 118.dp)
+            .graphicsLayer { scaleX=scale; scaleY=scale }
             .clickable(enabled=enabled, onClick=onClick)
             .semantics { contentDescription = "${shape.display} taşı" },
         shape=RoundedCornerShape(18.dp),
@@ -336,6 +342,20 @@ fun GeometryCastleScreen(
                 }
                 Text("4 oda · 12 etkileşimli görev · Çevrimdışı",
                     color=Mint,fontSize=13.sp)
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                    listOf("Avlu","Köprü","Ayna","Taç").forEachIndexed { index, name ->
+                        Surface(Modifier.weight(1f),
+                            shape=RoundedCornerShape(11.dp),
+                            color=Color(0xFF1E5673),
+                            border=androidx.compose.foundation.BorderStroke(1.dp,Mint.copy(alpha=.62f))) {
+                            Column(Modifier.padding(vertical=8.dp,horizontal=3.dp),
+                                horizontalAlignment=Alignment.CenterHorizontally) {
+                                Text(listOf("◇","▰","✧","♛")[index],fontSize=21.sp,color=Gold)
+                                Text(name,fontSize=11.sp,color=Color.White)
+                            }
+                        }
+                    }
+                }
                 CastleAction("Kaleye Gir ▶") {
                     val started=store.begin(tier)
                     if(started!=null) {run=started;feedback=""}

@@ -31,6 +31,7 @@ class GeometryCastleActivity : ComponentActivity() {
             progress = GeometryCastleProgressStore(this)
             stars = StarManager.getInstance(this)
             recoverFirstReward()
+            if (progress.load().finished) deliverCompletion(progress.load())
         } catch (error: Exception) {
             Log.e(TAG,"Oyun başlatılamadı",error)
             finish()
@@ -44,38 +45,39 @@ class GeometryCastleActivity : ComponentActivity() {
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.GEOMETRY).currentTier,
                         onExit={finish()},
-                        onCompleted={run ->
-                            recoverFirstReward()
-                            // Once-only progression; no rewards for tapping the finish button twice.
-                            if(progress.markDailyDelivered(run.seed)) {
-                                runCatching {
-                                    DailyTaskManager.getInstance(this)
-                                        .recordCompletedGameTask(GameType.SHAPE_RECOGNITION,
-                                            intent.getIntExtra("daily_task_id",-1))
-                                }.onFailure { Log.w(TAG,"Günlük görev güncellenemedi",it) }
-                                runCatching {
-                                    GameStatisticsHelper(this).recordGameCompletion(
-                                        gameType=GameType.SHAPE_RECOGNITION,
-                                        level=3,
-                                        score=if(run.attempts==0) 0 else
-                                            ((run.attempts-run.errors)*100/run.attempts),
-                                        stars=if(progress.rewardRecorded()) 1 else 0,
-                                        gameStartTime=run.seed,
-                                        taskId=intent.getIntExtra("daily_task_id",-1)
-                                    )
-                                }.onFailure { Log.w(TAG,"İstatistik kaydı alınamadı",it) }
-                            }
-                            runCatching {
-                                AdaptiveLearningStore(this).recordCompletion(
-                                    AdventureSkill.GEOMETRY,run.seed,run.tier,
-                                    run.attempts,run.errors,run.hints
-                                )
-                            }.onFailure { Log.w(TAG,"Adaptif öğrenme kaydı alınamadı",it) }
-                        }
+                        onCompleted={run -> deliverCompletion(run)}
                     )
                 }
             }
         }
+    }
+
+    private fun deliverCompletion(run: CastleRun) {
+        if (!run.finished) return
+        recoverFirstReward()
+        if(progress.markDailyDelivered(run.seed)) {
+            runCatching {
+                DailyTaskManager.getInstance(this).recordCompletedGameTask(
+                    GameType.SHAPE_RECOGNITION,intent.getIntExtra("daily_task_id",-1))
+            }.onFailure { Log.w(TAG,"Günlük görev güncellenemedi",it) }
+            runCatching {
+                GameStatisticsHelper(this).recordGameCompletion(
+                    gameType=GameType.SHAPE_RECOGNITION,
+                    level=3,
+                    score=if(run.attempts==0) 0 else
+                        ((run.attempts-run.errors)*100/run.attempts),
+                    stars=if(progress.rewardRecorded()) 1 else 0,
+                    gameStartTime=run.seed,
+                    taskId=intent.getIntExtra("daily_task_id",-1)
+                )
+            }.onFailure { Log.w(TAG,"İstatistik kaydı alınamadı",it) }
+        }
+        runCatching {
+            AdaptiveLearningStore(this).recordCompletion(
+                AdventureSkill.GEOMETRY,run.seed,run.tier,
+                run.attempts,run.errors,run.hints
+            )
+        }.onFailure { Log.w(TAG,"Adaptif öğrenme kaydı alınamadı",it) }
     }
 
     private fun recoverFirstReward() {

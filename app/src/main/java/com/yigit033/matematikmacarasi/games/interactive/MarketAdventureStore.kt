@@ -34,7 +34,9 @@ class MarketAdventureStore(context: Context) {
             taskHadHint=prefs.getBoolean("task_hint",false),
             completedRuns=prefs.getInt("runs",0),
             contentVersion=prefs.getInt("content_version",1),
-            premiumJourney=prefs.getBoolean("premium_journey",false)
+            premiumJourney=prefs.getBoolean("premium_journey",false),
+            singleShop=prefs.getBoolean("single_shop",false),
+            startShop=prefs.getInt("start_shop",0)
         )
         return if(MarketAdventureEngine.valid(run)) run else
             MarketAdventureRun(completedRuns=prefs.getInt("runs",0).coerceAtLeast(0))
@@ -58,15 +60,24 @@ class MarketAdventureStore(context: Context) {
             .putInt("runs",next.completedRuns)
             .putInt("content_version",next.contentVersion)
             .putBoolean("premium_journey",next.premiumJourney)
+            .putBoolean("single_shop",next.singleShop)
+            .putInt("start_shop",next.startShop)
             .commit()
     }
 
-    @Synchronized fun begin(tier: LearningTier, premiumEntitlement: Boolean): MarketAdventureRun? {
+    @Synchronized fun begin(tier: LearningTier, premiumEntitlement: Boolean,
+        selectedShop: Int? = null): MarketAdventureRun? {
+        if(selectedShop!=null && (selectedShop !in 0 until
+            MarketPremiumCatalog.shops.size ||
+            (!premiumEntitlement && selectedShop>=MarketPremiumCatalog.FREE_SHOPS)))
+            return null
         val old=load()
         val seed=System.currentTimeMillis().coerceAtLeast(old.seed+1).coerceAtLeast(1L)
         val start=MarketAdventureRun(seed=seed,tier=tier,
             phase=MarketAdventurePhase.SHOP,completedRuns=old.completedRuns,
-            contentVersion=3,premiumJourney=premiumEntitlement)
+            contentVersion=3,premiumJourney=premiumEntitlement,
+            singleShop=selectedShop!=null,startShop=selectedShop?:0,
+            visit=selectedShop?:0)
         return if(save(start)) start else null
     }
 

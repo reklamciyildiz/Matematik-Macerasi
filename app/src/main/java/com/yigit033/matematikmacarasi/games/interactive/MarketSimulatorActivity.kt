@@ -55,12 +55,17 @@ class MarketSimulatorActivity : ComponentActivity() {
     }
 
     private fun recoverReward() {
-        if(!store.isFirstCompletion() || store.rewardRecorded()) return
+        if(!store.isFirstCompletion()) return
+        val run=store.load()
+        if(!run.finished) return
+        val earned=MarketAdventureEngine.starsFor(run)
+        if(earned<=store.bestAwardedStars()) return
         runCatching {
-            if(starManager.addStars(FIRST_REWARD,1) && store.markRewardRecorded()) {
+            if(starManager.addStars(FIRST_REWARD,earned) &&
+                store.markBestStars(earned)) {
                 EventBus.updateStars(starManager.getDisplayStars())
             }
-        }.onFailure { Log.e(TAG,"Market first star could not be recorded",it) }
+        }.onFailure { Log.e(TAG,"Market best stars could not be recorded",it) }
     }
 
     private fun recordCompleted(run: MarketAdventureRun) {
@@ -77,7 +82,7 @@ class MarketSimulatorActivity : ComponentActivity() {
                     gameType=GameType.MARKET_SIMULATOR,
                     level=3,
                     score=(run.perfectDecisions*100/MarketAdventureEngine.DECISIONS),
-                    stars=if(run.completedRuns==1 && store.rewardRecorded()) 1 else 0,
+                    stars=MarketAdventureEngine.starsFor(run),
                     gameStartTime=run.seed,
                     taskId=intent.getIntExtra("daily_task_id",-1)
                 )

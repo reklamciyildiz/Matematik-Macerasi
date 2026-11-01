@@ -511,7 +511,10 @@ fun MarketAdventureScreen(
                         Text("🏪 Kendi Tezgâhını İşlet")
                     }
                 }
-                MarketAction("Yeni Alışveriş Turu ↻") {requestStart(run.tier)}
+                MarketAction(if(run.singleShop) "Bu Mağazayı Tekrar Oyna ↻"
+                    else "Yeni Alışveriş Turu ↻") {
+                    requestStart(run.tier,if(run.singleShop) run.startShop else null)
+                }
                 OutlinedButton(onClick={showLobby=true},
                     modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
                     border=androidx.compose.foundation.BorderStroke(1.dp,turquoise),

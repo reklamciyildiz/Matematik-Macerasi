@@ -2,15 +2,12 @@ package com.yigit033.matematikmacarasi.modules
 
 import android.app.Application
 import android.util.Log
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 import com.yigit033.matematikmacarasi.services.NotificationService
 import com.yigit033.matematikmacarasi.settings.IconLauncherManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.util.Arrays
 
 /**
  * Uygulama sınıfı, uygulama başlatıldığında çalışan kodları içerir.
@@ -40,34 +37,6 @@ class MatematikMacerasiApp : Application() {
         
         // Bildirim servisini başlat
         initializeNotifications()
-    }
-    
-    /**
-     * AdMob'u başlatır ve test cihazlarını yapılandırır.
-     */
-    private fun initializeAdMob() {
-        try {
-            Log.d("MatematikMacerasiApp", "AdMob başlatılıyor...")
-            
-            // Test cihazları için yapılandırma (geliştirme sırasında)
-            val testDeviceIds = Arrays.asList("ABCDEF012345678901234567") // Test cihaz ID'nizi buraya ekleyin
-            val configuration = RequestConfiguration.Builder()
-                .setTestDeviceIds(testDeviceIds)
-                .setTagForChildDirectedTreatment(RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE)
-                .setTagForUnderAgeOfConsent(RequestConfiguration.TAG_FOR_UNDER_AGE_OF_CONSENT_TRUE)
-                .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
-                .build()
-            MobileAds.setRequestConfiguration(configuration)
-            
-            // AdMob'u başlat
-            MobileAds.initialize(this) { initializationStatus ->
-                Log.d("MatematikMacerasiApp", "AdMob başlatma durumu: $initializationStatus")
-            }
-            
-            Log.d("MatematikMacerasiApp", "AdMob başarıyla başlatıldı")
-        } catch (e: Exception) {
-            Log.e("MatematikMacerasiApp", "AdMob başlatma hatası", e)
-        }
     }
     
     /**

@@ -125,6 +125,37 @@ private val panel = Color(0xFF215775)
     }
 }
 
+/** Real denomination badges; never suggest a fictional 400 TL banknote. */
+@Composable private fun MarketCashStack(amount:Int,tier:LearningTier) {
+    val note=when(tier) {
+        LearningTier.TEMEL -> 5000
+        LearningTier.GELISEN -> 10000
+        LearningTier.USTALIK -> 20000
+    }
+    val noteCount=amount/note
+    Surface(color=Color(0xFF397763),shape=RoundedCornerShape(16.dp),
+        border=androidx.compose.foundation.BorderStroke(2.dp,orange)) {
+        Row(Modifier.fillMaxWidth().padding(12.dp),
+            verticalAlignment=Alignment.CenterVertically,
+            horizontalArrangement=Arrangement.spacedBy(11.dp)) {
+            Surface(shape=RoundedCornerShape(8.dp),color=Color(0xFFF7DDA1)) {
+                Column(Modifier.padding(horizontal=13.dp,vertical=8.dp),
+                    horizontalAlignment=Alignment.CenterHorizontally) {
+                    Text("₺",fontSize=25.sp,color=ink,fontWeight=FontWeight.Black)
+                    Text(MarketAdventureEngine.format(note),color=ink,
+                        fontSize=12.sp,fontWeight=FontWeight.Bold)
+                }
+            }
+            Column {
+                Text("${noteCount} adet banknot",color=Color.White,
+                    fontWeight=FontWeight.Bold,fontSize=14.sp)
+                Text("Toplam verilen: ${MarketAdventureEngine.format(amount)}",
+                    color=cream,fontSize=13.sp)
+            }
+        }
+    }
+}
+
 @Composable private fun ProductCard(
     product:MarketGood,quantity:Int,onPlus:()->Unit,onMinus:()->Unit
 ) {
@@ -477,6 +508,7 @@ fun MarketAdventureScreen(
                             color=Color.White,fontSize=14.sp)
                         MarketInfo("KASİYERE VERİLEN PARA",
                             MarketAdventureEngine.format(run.paidKurus))
+                        MarketCashStack(run.paidKurus,run.tier)
                         MarketInfo("ALIŞVERİŞ TOPLAMI",
                             MarketAdventureEngine.format(total))
                         Text("Kaç TL para üstü alırsın?",

@@ -111,8 +111,8 @@ jobs:
         shell: bash
         run: python3 scripts/check_settings_profile_premium_ui.py
 
-      - name: Unit tests and Android debug compilation
+      - name: Unit tests, Android debug compilation and UI-test APK compilation
         shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest

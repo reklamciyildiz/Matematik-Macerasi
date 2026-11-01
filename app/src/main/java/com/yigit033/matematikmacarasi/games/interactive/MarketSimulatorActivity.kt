@@ -81,7 +81,7 @@ class MarketSimulatorActivity : ComponentActivity() {
                 GameStatisticsHelper(this).recordGameCompletion(
                     gameType=GameType.MARKET_SIMULATOR,
                     level=3,
-                    score=(run.perfectDecisions*100/MarketAdventureEngine.DECISIONS),
+                    score=(run.perfectDecisions*100/MarketAdventureEngine.decisionCount(run)),
                     stars=MarketAdventureEngine.starsFor(run),
                     gameStartTime=run.seed,
                     taskId=intent.getIntExtra("daily_task_id",-1)

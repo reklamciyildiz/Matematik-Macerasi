@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
@@ -371,85 +372,33 @@ class GameSelectionActivity : ComponentActivity() {
     
     @Composable
     fun ShapesGamesContent() {
-        // Şekiller oyunları için gradient renkler
-        val shapesGradientColors = listOf(
-            Color(0xFFE0F2F1),  // Çok açık yeşil (turkuaz)
-            Color(0xFFB2DFDB),  // Açık yeşil (turkuaz)
-            Color(0xFF80CBC4),  // Orta yeşil (turkuaz)
-            Color(0xFF009688)   // Koyu yeşil (turkuaz - ana renk)
-        )
-        
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(
-                    Brush.verticalGradient(
-                        colors = shapesGradientColors
-                    )
-                )
-                .padding(16.dp)
+                .background(Brush.verticalGradient(
+                    listOf(Color(0xFFB7F2EC), Color(0xFF4DBDC9), Color(0xFF128FA4))
+                )).padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Şekil temalı oyunlar için boş sayfayı göster
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Şekil Tanıma
-                GameCard(
-                    icon = R.drawable.ic_shapes,
-                    iconTint = Color(0xFF009688),
-                    title = "Şekil Tanıma",
-                    description = "Şekilleri tanı ve özelliklerini öğren",
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        // Şekil tanıma oyunu buraya eklenecek
-                        // startActivity(Intent(this@GameSelectionActivity, ShapeRecognitionGameActivity::class.java))
-                        val intent = Intent(this@GameSelectionActivity, ComingSoonActivity::class.java)
-                        intent.putExtra("game_name", "Şekil Tanıma")
-                        intent.putExtra("color_code", 0xFF009688.toInt()) // turkuaz renk
-                        intent.putExtra("game_description", "geometrik şekilleri tanıma ve özellikleri öğrenme")
-                        startActivity(intent)
-                    }
-                )
-                
-                // Geometri Macerası
-                GameCard(
-                    icon = R.drawable.ic_shapes,
-                    iconTint = Color(0xFF009688),
-                    title = "Geometri Macerası",
-                    description = "Geometrik şekiller ve açılar",
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        // Geometri oyunu buraya eklenecek
-                        // startActivity(Intent(this@GameSelectionActivity, GeometryAdventureActivity::class.java))
-                        val intent = Intent(this@GameSelectionActivity, ComingSoonActivity::class.java)
-                        intent.putExtra("game_name", "Geometri Macerası")
-                        intent.putExtra("color_code", 0xFF009688.toInt()) // turkuaz renk
-                        intent.putExtra("game_description", "geometrik şekilleri ve açıları öğrenme")
-                        startActivity(intent)
-                    }
-                )
-            }
-            
-            // Gelecekteki şekil oyunları için mesaj
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 32.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Yukarıdaki oyunlar semboliktir, uygulamaya olan ilgi arttığı zaman çeşitli şekil oyunları eklenecektir :)",
-                    fontSize = 16.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text("Geometri Kalesi · Kayıp Kristaller",
+                fontWeight = FontWeight.ExtraBold, color = Color(0xFF10415A),
+                fontSize = 20.sp)
+            Text("Şekil Avlusu, Köprü Atölyesi, Ayna Kulesi ve Taç Salonu: dört oda, tek macera.",
+                color = Color(0xFF134658), fontSize = 14.sp)
+            GameCard(
+                icon = R.drawable.ic_shapes,
+                iconTint = Color(0xFF009688),
+                title = "Geometri Kalesi",
+                description = "12 görevde şekilleri keşfet ve kaleni yeniden inşa et.",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    startActivity(Intent(this@GameSelectionActivity,
+                        GeometryCastleActivity::class.java))
+                }
+            )
         }
     }
-    
+
     @Composable
     fun AlgorithmGamesContent() {
         // Algoritma oyunları için gradient renkler

@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.learning.adaptive.AdaptiveLearningStore
 import com.yigit033.matematikmacarasi.learning.adaptive.AdventureSkill
-import com.yigit033.matematikmacarasi.services.DailyTaskManager
 import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsHelper
 import com.yigit033.matematikmacarasi.services.StarManager
@@ -85,16 +84,11 @@ class MarketSimulatorActivity : ComponentActivity() {
         if(!run.singleShop) recoverReward()
         if(store.markDelivered(run.seed)) {
             runCatching {
-                DailyTaskManager.getInstance(this).recordCompletedGameTask(
-                    GameType.MARKET_SIMULATOR,
-                    intent.getIntExtra("daily_task_id",-1))
-            }.onFailure { Log.w(TAG,"Market daily task sync failed",it) }
-            runCatching {
                 GameStatisticsHelper(this).recordGameCompletion(
                     gameType=GameType.MARKET_SIMULATOR,
                     level=3,
                     score=(run.perfectDecisions*100/MarketAdventureEngine.decisionCount(run)),
-                    stars=MarketAdventureEngine.starsFor(run),
+                    stars=if(run.singleShop) 0 else MarketAdventureEngine.starsFor(run),
                     gameStartTime=run.seed,
                     taskId=intent.getIntExtra("daily_task_id",-1)
                 )

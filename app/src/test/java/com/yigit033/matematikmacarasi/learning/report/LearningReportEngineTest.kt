@@ -17,7 +17,7 @@ class LearningReportEngineTest {
 
     @Test fun emptyRecordsNeverClaimMasteryOrInventPercentages() {
         val overview=LearningReportEngine.build(emptyMap())
-        assertEquals(4,overview.skills.size)
+        assertEquals(5,overview.skills.size)
         assertEquals(0,overview.completedSessions)
         assertEquals(0,overview.practicedSkills)
         assertNull(overview.accuracyPercent)
@@ -41,7 +41,7 @@ class LearningReportEngineTest {
         assertEquals(3,overview.hints)
         assertEquals(75,overview.accuracyPercent)
         assertEquals(3,overview.practicedSkills)
-        assertEquals(4,overview.skills.size)
+        assertEquals(5,overview.skills.size)
         assertTrue(overview.skills.first {it.skill.id==AdventureSkill.GEOMETRY}
             .interpretation.contains("alıştırmalar"))
         assertTrue(overview.skills.any {it.skill.id==AdventureSkill.FOUR_COUNTING &&
@@ -67,8 +67,19 @@ class LearningReportEngineTest {
             AdventureSkill.MARKET to p(3,Int.MAX_VALUE,400,0)))
         // Truncation intentionally avoids advertising 100% when errors exist.
         assertEquals(99,report.accuracyPercent)
-        assertEquals(4,report.skills.size)
+        assertEquals(5,report.skills.size)
         assertTrue(report.skills.any{it.skill.id==AdventureSkill.MARKET &&
             it.skill.region=="Pazar Simülatörü"})
     }
+    @Test fun spaceMissionEvidenceIsRepresentedWithoutSyntheticProgress() {
+        val report=LearningReportEngine.build(mapOf(
+            AdventureSkill.SPACE to p(2,8,1,0)
+        ))
+        val space=report.skills.first{it.skill.id==AdventureSkill.SPACE}
+        assertEquals(2,space.sessions)
+        assertEquals("Galaksi Kaşifleri",space.skill.region)
+        assertEquals(87,space.accuracyPercent)
+        assertTrue(space.nextPractice.contains("Gemiyi"))
+    }
+
 }

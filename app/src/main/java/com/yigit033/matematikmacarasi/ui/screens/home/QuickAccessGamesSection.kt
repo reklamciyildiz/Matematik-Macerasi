@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.games.ComingSoonActivity
+import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
@@ -133,7 +134,7 @@ fun QuickAccessGamesSection(
             imageRes = R.drawable.card_four_operations,
             bgGradient = listOf(Color(0xFF0284C7), Color(0xFF0369A1)),
             borderColor = Color(0xFF38BDF8),
-            activityClass = ComingSoonActivity::class.java
+            activityClass = GeometryCastleActivity::class.java
         )
     )
 

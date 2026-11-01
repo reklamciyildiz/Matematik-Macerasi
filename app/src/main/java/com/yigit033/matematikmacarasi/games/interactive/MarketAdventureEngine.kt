@@ -94,7 +94,8 @@ object MarketAdventureEngine {
                 Triple("Kurabiye","🍪",18),Triple("Hediye","🎁",32)))
     )
 
-    private fun bonusFor(visit: Int, goods: List<MarketGood>, random: Random): MarketBonus? {
+    private fun bonusFor(visit: Int, goods: List<MarketGood>,
+        tier: LearningTier,random: Random): MarketBonus? {
         val first=goods[0]
         val kind=when(visit) {
             0 -> MarketBonusKind.WEIGHT
@@ -110,34 +111,83 @@ object MarketAdventureEngine {
         val correct:Int
         when(kind) {
             MarketBonusKind.WEIGHT -> {
-                correct=first.priceKurus*2
                 title="Kilogramla Alışveriş"
-                prompt="1 kg ${first.name} ${format(first.priceKurus)} ise 2 kg kaç TL tutar?"
-                explanation="Bir kilogramın fiyatını iki kez topla. 1 kilogram = 1000 gram."
+                when(tier) {
+                    LearningTier.TEMEL -> {
+                        correct=first.priceKurus*2
+                        prompt="1 kg ${first.name} ${format(first.priceKurus)} ise 2 kg kaç TL tutar?"
+                        explanation="Bir kilogramın fiyatını iki kez topla."
+                    }
+                    LearningTier.GELISEN -> {
+                        correct=first.priceKurus/2
+                        prompt="1 kg ${first.name} ${format(first.priceKurus)}. " +
+                            "500 gram (yarım kilo) kaç TL tutar?"
+                        explanation="500 gram, 1 kilogramın yarısıdır. Fiyatı ikiye böl."
+                    }
+                    LearningTier.USTALIK -> {
+                        correct=first.priceKurus*3/2
+                        prompt="1 kg ${first.name} ${format(first.priceKurus)}. " +
+                            "1 kg 500 gram kaç TL tutar?"
+                        explanation="1 kg 500 gram = 1,5 kg. Bir tam fiyatla yarım fiyatı topla."
+                    }
+                }
             }
             MarketBonusKind.VOLUME -> {
-                correct=3400
                 title="Litreyle Alışveriş"
-                prompt="1 litre süt 17 TL. 2 litre süt alırsan kaç TL ödersin?"
-                explanation="Litre sıvı ölçüsüdür. İki litrenin fiyatı, bir litre fiyatının iki katıdır."
+                when(tier) {
+                    LearningTier.TEMEL -> {
+                        correct=3400
+                        prompt="1 litre süt 17 TL. 2 litre süt alırsan kaç TL ödersin?"
+                    }
+                    LearningTier.GELISEN -> {
+                        correct=5100
+                        prompt="1 litre süt 17 TL. 3 litre süt alırsan kaç TL ödersin?"
+                    }
+                    LearningTier.USTALIK -> {
+                        correct=2550
+                        prompt="1 litre süt 17 TL. 1 litre 500 mililitre süt kaç TL tutar?"
+                    }
+                }
+                explanation="1 litre 1000 mililitredir. İstenen miktara göre birim fiyatı hesapla."
             }
             MarketBonusKind.SAVINGS -> {
-                correct=4000
                 title="Harçlık ve Tasarruf"
-                prompt="100 TL harçlığından 60 TL harcadın. Biriktirebildiğin kaç TL kaldı?"
-                explanation="Harçlığından harcadığın tutarı çıkar; kalan para birikimin olur."
+                val (allowance,spending)=when(tier) {
+                    LearningTier.TEMEL -> 10000 to 6000
+                    LearningTier.GELISEN -> 20000 to 12500
+                    LearningTier.USTALIK -> 25000 to 17550
+                }
+                correct=allowance-spending
+                prompt="${format(allowance)} harçlığından ${format(spending)} " +
+                    "harcarsan kaç TL biriktirirsin?"
+                explanation="Harçlık − harcama = birikim. Kalan para gelecek için saklanabilir."
             }
             MarketBonusKind.DISCOUNT -> {
-                correct=first.priceKurus*9/10
                 title="Etiket İndirimi"
-                prompt="${first.name} normalde ${format(first.priceKurus)}. %10 indirimli fiyatı kaç TL?"
-                explanation="Önce fiyatın onda birini bul, sonra normal fiyattan çıkar."
+                val discount=when(tier) {
+                    LearningTier.TEMEL -> 200
+                    LearningTier.GELISEN -> 500
+                    LearningTier.USTALIK -> first.priceKurus/10
+                }
+                correct=first.priceKurus-discount
+                prompt="${first.name} normalde ${format(first.priceKurus)}. " +
+                    if(tier==LearningTier.USTALIK)
+                        "%10 indirimli fiyatı kaç TL?"
+                    else "${format(discount)} indirimden sonra fiyat kaç TL?"
+                explanation=if(tier==LearningTier.USTALIK)
+                    "Fiyatın %10'unu hesaplayıp normal fiyattan çıkar."
+                else "Etiketteki indirim tutarını normal fiyattan çıkar."
             }
             MarketBonusKind.COMPARE -> {
-                correct=200
+                val saving=when(tier) {
+                    LearningTier.TEMEL -> 200
+                    LearningTier.GELISEN -> 500
+                    LearningTier.USTALIK -> 1250
+                }
+                correct=saving
                 title="Akıllı Fiyat Karşılaştırma"
                 prompt="${first.name} A tezgâhında ${format(first.priceKurus)}, " +
-                    "B tezgâhında ${format(first.priceKurus-200)}. " +
+                    "B tezgâhında ${format(first.priceKurus-saving)}. " +
                     "Ucuz tezgâhtan alırsan kaç TL tasarruf edersin?"
                 explanation="Aynı ürünün iki fiyatını karşılaştır; büyük fiyattan küçüğü çıkar."
             }
@@ -224,7 +274,7 @@ object MarketAdventureEngine {
             MarketScenario(template.name,template.hint,goods,needed,budget,
                 choices.take(4).shuffled(r),
                 wrongChange.take(4).shuffled(r),pay,
-                if(contentVersion>=2) bonusFor(visit,goods,r) else null)
+                if(contentVersion>=2) bonusFor(visit,goods,tier,r) else null)
         }
     }
 

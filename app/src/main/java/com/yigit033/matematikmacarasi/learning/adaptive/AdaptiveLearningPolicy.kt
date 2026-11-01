@@ -13,7 +13,8 @@ enum class AdventureSkill(val key: String) {
     THREE_COUNTING("count_3"),
     FOUR_COUNTING("count_4"),
     GEOMETRY("geometry_castle"),
-    MARKET("market_adventure")
+    MARKET("market_adventure"),
+    SPACE("space_expedition")
 }
 
 /** Öğrenci profilinin `user_class` değeri; Ana Sınıfı ve hatalı kayıtlar güvenle ayrıştırılır. */

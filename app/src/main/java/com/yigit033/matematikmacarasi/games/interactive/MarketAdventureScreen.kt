@@ -226,8 +226,9 @@ fun MarketAdventureScreen(
     var showParentalGate by remember { mutableStateOf(false) }
     var adultAnswer by remember { mutableStateOf("") }
     var showStall by remember { mutableStateOf(false) }
+    var showAllShops by rememberSaveable { mutableStateOf(false) }
     val scroll=rememberScrollState()
-    LaunchedEffect(run.seed,run.visit,run.phase) { scroll.scrollTo(0) }
+    LaunchedEffect(run.seed,run.visit,run.phase,showLobby) { scroll.scrollTo(0) }
 
     fun persist(next:MarketAdventureRun):Boolean {
         if(!store.save(next)) {
@@ -281,6 +282,7 @@ fun MarketAdventureScreen(
         }
     }
 
+    BackHandler(enabled=showStall) {showStall=false}
     if(showStall && hasPremium) {
         MarketStallScreen(stallStore,onClose={showStall=false})
         return
@@ -432,11 +434,13 @@ fun MarketAdventureScreen(
                         colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White)) {
                         Text("🔒 Premium Mağazaları Keşfet")
                     }
+                }
                 Text("Tek Mağazalık Hızlı Oyun",color=orange,
                     fontSize=17.sp,fontWeight=FontWeight.Black)
                 Text("Bir mağazayı seçip dört matematik görevi çözebilirsin.",
                     color=cream,fontSize=12.sp)
                 MarketPremiumCatalog.shops.forEachIndexed { index,shop ->
+                    if(!showAllShops && index>=3) return@forEachIndexed
                     Surface(color=if(shop.isPro&&!hasPremium)Color(0xFF344F68)
                         else Color(0xFF245C79),
                         shape=RoundedCornerShape(14.dp),
@@ -462,6 +466,14 @@ fun MarketAdventureScreen(
                         }
                     }
                 }
+                OutlinedButton(
+                    onClick={showAllShops=!showAllShops},
+                    modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+                    colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White),
+                    border=androidx.compose.foundation.BorderStroke(1.dp,turquoise)
+                ) {
+                    Text(if(showAllShops) "Daha Az Mağaza Göster"
+                        else "Tüm 10 Mağazayı Göster")
                 }
             } else {
                 MarketHeadline("Pazar maceran tamamlandı!",

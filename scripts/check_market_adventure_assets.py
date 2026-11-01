@@ -74,7 +74,7 @@ def main():
         errors.append("premium market catalog or economy implementation missing")
     else:
         catalog=premium.read_text(encoding="utf-8")
-        if "shop(9," not in catalog or "FREE_SHOPS=3" not in catalog:
+        if "shop(9," not in catalog or "PremiumFeaturePolicy.FREE_MARKET_SHOPS" not in catalog:
             errors.append("ten-store Free/Pro catalog not present")
         if "hasPremium" not in screen or "MarketStallScreen(" not in screen:
             errors.append("market screen is not wired to Premium and stall economy")

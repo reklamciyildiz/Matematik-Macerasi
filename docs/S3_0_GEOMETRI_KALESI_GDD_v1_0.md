@@ -58,7 +58,7 @@ Görsel tema: mevcut parlak mavi fantastik ada evreni ile tutarlı, altın mimar
 
 ### Zorluk
 - Yaş/sınıf ilk öneridir, kesin sınır değildir. Üç kademe: `TEMEL`, `GELISEN`, `USTALIK`.
-- 1. sınıf için başlangıç `TEMEL`; 2. sınıf için `GELISEN` ihtiyatlı öneri, öğretmen/ebeveyn manuel seçebilir; 3. sınıf için `USTALIK` ancak otomatik artış performansla doğrulanmalı.
+- Mevcut uygulamanın `GradePolicy` başlangıç davranışı korunur: 1–2. sınıfta `TEMEL`, 3. sınıfta `GELISEN`, daha üst sınıflarda `USTALIK` yalnızca önerilen tekrar seviyesi; 1–3. sınıfın dışına resmî yeterlilik iddiası taşınmaz. Öğretmen/ebeveyn elle seviye seçebilir. Otomatik yükseltme yalnızca gerçek oturum verilerine dayanır.
 - Her oda alt görevleri seviyesine göre değişir, yalnızca sayıları büyütmek **adaptif öğrenme sayılmaz**.
 - Uygun yaşta olmayan kavramı yükseltme uğruna zorunlu kılma. Daha küçük çocuk ve erişilebilirlik için yardım modu ayrı olabilir.
 

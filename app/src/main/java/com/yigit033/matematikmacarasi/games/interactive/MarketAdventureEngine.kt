@@ -4,7 +4,8 @@ import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 import kotlin.random.Random
 
 /** No floating point arithmetic is used for actual monetary transactions. */
-data class MarketGood(val id: Int, val name: String, val emoji: String, val priceKurus: Int)
+data class MarketGood(val id: Int, val name: String, val emoji: String,
+    val priceKurus: Int, val unit: String = "adet")
 data class MarketLine(val productId: Int, val quantity: Int)
 data class MarketScenario(
     val location: String,
@@ -24,7 +25,7 @@ data class MarketScenario(
     }
 }
 enum class MarketAdventurePhase { WELCOME, SHOP, PAYMENT, CHANGE, COMPLETE, BONUS }
-enum class MarketBonusKind { DISCOUNT, COMPARE, PROFIT }
+enum class MarketBonusKind { WEIGHT, VOLUME, SAVINGS, DISCOUNT, COMPARE, PROFIT }
 data class MarketBonus(
     val kind: MarketBonusKind, val title: String, val prompt: String,
     val explanation: String, val correctKurus: Int, val choicesKurus: List<Int>
@@ -55,7 +56,7 @@ object MarketAdventureEngine {
     const val VISITS = 3
     const val DECISIONS = 9
     const val PREMIUM_VISITS = 6
-    const val PREMIUM_DECISIONS = 21
+    const val PREMIUM_DECISIONS = 24
     fun visitCount(run: MarketAdventureRun) =
         if(run.contentVersion>=2) PREMIUM_VISITS else VISITS
     fun decisionCount(run: MarketAdventureRun) =
@@ -94,9 +95,11 @@ object MarketAdventureEngine {
     )
 
     private fun bonusFor(visit: Int, goods: List<MarketGood>, random: Random): MarketBonus? {
-        if(visit<3) return null
         val first=goods[0]
         val kind=when(visit) {
+            0 -> MarketBonusKind.WEIGHT
+            1 -> MarketBonusKind.VOLUME
+            2 -> MarketBonusKind.SAVINGS
             3 -> MarketBonusKind.DISCOUNT
             4 -> MarketBonusKind.COMPARE
             else -> MarketBonusKind.PROFIT
@@ -106,6 +109,24 @@ object MarketAdventureEngine {
         val explanation:String
         val correct:Int
         when(kind) {
+            MarketBonusKind.WEIGHT -> {
+                correct=first.priceKurus*2
+                title="Kilogramla Alışveriş"
+                prompt="1 kg ${first.name} ${format(first.priceKurus)} ise 2 kg kaç TL tutar?"
+                explanation="Bir kilogramın fiyatını iki kez topla. 1 kilogram = 1000 gram."
+            }
+            MarketBonusKind.VOLUME -> {
+                correct=3400
+                title="Litreyle Alışveriş"
+                prompt="1 litre süt 17 TL. 2 litre süt alırsan kaç TL ödersin?"
+                explanation="Litre sıvı ölçüsüdür. İki litrenin fiyatı, bir litre fiyatının iki katıdır."
+            }
+            MarketBonusKind.SAVINGS -> {
+                correct=4000
+                title="Harçlık ve Tasarruf"
+                prompt="100 TL harçlığından 60 TL harcadın. Biriktirebildiğin kaç TL kaldı?"
+                explanation="Harçlığından harcadığın tutarı çıkar; kalan para birikimin olur."
+            }
             MarketBonusKind.DISCOUNT -> {
                 correct=first.priceKurus*9/10
                 title="Etiket İndirimi"
@@ -138,8 +159,8 @@ object MarketAdventureEngine {
 
     /** Only the best 1–3-star result is awarded by StarManager's high-water policy. */
     fun starsFor(run: MarketAdventureRun): Int = if(!run.finished) 0 else when {
-        run.perfectDecisions >= (if(run.contentVersion>=2) 18 else 8) -> 3
-        run.perfectDecisions >= (if(run.contentVersion>=2) 12 else 5) -> 2
+        run.perfectDecisions >= (if(run.contentVersion>=2) 21 else 8) -> 3
+        run.perfectDecisions >= (if(run.contentVersion>=2) 14 else 5) -> 2
         else -> 1
     }
 
@@ -163,7 +184,10 @@ object MarketAdventureEngine {
             val goods = template.goods.shuffled(r).take(4).mapIndexed { index,g ->
                 val fractional = if(tier==LearningTier.USTALIK && (index+visit)%2==0) 50 else 0
                 MarketGood(visit*10+index+1,g.first,g.second,
-                    g.third*multiplier*100+fractional)
+                    g.third*multiplier*100+fractional,
+                    unit=if(contentVersion<=1) "adet"
+                        else if(visit==0 || (visit==5 && g.first=="Elma Sepeti")) "kg"
+                        else if(visit==5 && g.first=="Meyve Suyu") "litre" else "adet")
             }
             val required = when(tier) {
                 LearningTier.TEMEL -> 2

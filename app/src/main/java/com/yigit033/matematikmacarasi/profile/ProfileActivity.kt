@@ -250,9 +250,9 @@ fun ProfileScreen(
     
     // Gradyan arka plan renkleri
     val gradientColors = listOf(
-        Color(0xFF81D4FA), // Açık mavi
-        Color(0xFFB3E5FC), // Daha açık mavi
-        Color(0xFFE1F5FE)  // En açık mavi
+        Color(0xFF0D395D),
+        Color(0xFF0A2F51),
+        Color(0xFF061C35)
     )
 
     Box(
@@ -274,8 +274,8 @@ fun ProfileScreen(
             TopAppBar(
                 title = { 
                     Text(
-                        "Profil Düzenle",
-                        color = Color(0xFF1565C0),
+                        "Kaşif Profilim",
+                        color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 20.sp
                     ) 
@@ -287,7 +287,7 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Geri",
-                            tint = Color(0xFF1565C0)
+                            tint = Color.White
                         )
                     }
                 }
@@ -302,14 +302,15 @@ fun ProfileScreen(
                         .verticalScroll(scrollState),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Profil Kartı
+                    // Premium explorer identity card
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
-                        elevation = 2.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        backgroundColor = Color.White
+                        elevation = 5.dp,
+                        shape = RoundedCornerShape(24.dp),
+                        backgroundColor = Color(0xFF12476D),
+                        border = BorderStroke(1.dp, Color(0xFFFFD47B))
                     ) {
                         Column(
                             modifier = Modifier
@@ -323,11 +324,11 @@ fun ProfileScreen(
                                     modifier = Modifier
                                         .size(100.dp)
                                         .clip(CircleShape)
-                                        .background(Color(0xFFE3F2FD))
+                                        .background(Color(0xFF0B2B4B))
                                         .padding(8.dp)
                                         .border(
                                             width = 2.dp,
-                                            color = Color(0xFF2196F3),
+                                            color = Color(0xFFFFD47B),
                                             shape = CircleShape
                                         ),
                                     contentAlignment = Alignment.Center
@@ -347,7 +348,7 @@ fun ProfileScreen(
                                         .size(36.dp)
                                         .align(Alignment.BottomEnd)
                                         .offset(x = 4.dp, y = 4.dp),
-                                    backgroundColor = Color(0xFF2196F3),
+                                    backgroundColor = Color(0xFF087F9D),
                                     contentColor = Color.White
                                 ) {
                                     Icon(
@@ -360,6 +361,26 @@ fun ProfileScreen(
                             
                             Spacer(modifier = Modifier.height(16.dp))
                             
+                            Text(
+                                text = userName.ifBlank { "Matematik Gezgini" },
+                                color = Color.White,
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                text = selectedClass,
+                                color = Color(0xFFACE8F3),
+                                fontSize = 13.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = if(isPremium) "✦ PREMIUM KAŞİF" else "✦ MATEMATİK KAŞİFİ",
+                                color = Color(0xFFFFD47B),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+
                             // Yıldızlar
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -368,8 +389,8 @@ fun ProfileScreen(
                                     .background(
                                         Brush.horizontalGradient(
                                             colors = listOf(
-                                                Color(0xFFFFF9C4),
-                                                Color(0xFFFFF59D)
+                                                Color(0xFFFFE7A8),
+                                                Color(0xFFFFCE61)
                                             )
                                         )
                                     )
@@ -463,41 +484,49 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         elevation = 2.dp,
                         shape = RoundedCornerShape(16.dp),
-                        backgroundColor = Color.White
+                        backgroundColor = Color(0xFF12476D),
+                        border = BorderStroke(1.dp, Color(0xFF367D9D))
                     ) {
-                        Column(Modifier.fillMaxWidth().padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        Column(Modifier.fillMaxWidth().padding(17.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text("Kişiselleştirme ve Ayarlar",
-                                color = Color(0xFF1565C0),fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold)
-                            Text("Oyuncunu ve oyun deneyimini buradan düzenle.",
-                                fontSize = 12.sp,color = Color.DarkGray)
+                                color = Color(0xFFFFD47B),fontSize = 19.sp,
+                                fontWeight = FontWeight.ExtraBold)
+                            Text("Kaşifini ve oyun deneyimini buradan düzenle.",
+                                fontSize = 12.sp,color = Color(0xFFBDD9EC))
                             OutlinedButton(
                                 onClick = onAvatarStoreClick,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                border = BorderStroke(1.dp,Color(0xFF38BDF8)),
-                                shape = RoundedCornerShape(13.dp)
+                                border = BorderStroke(1.dp,Color(0xFF69C8DC)),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.White,
+                                    backgroundColor = Color(0xFF1C6083))
                             ) {
-                                Icon(Icons.Default.Face,"Avatar",tint = Color(0xFF1565C0))
+                                Icon(Icons.Default.Face,"Avatar",tint = Color.White)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Avatarımı Değiştir",color = Color(0xFF1565C0))
+                                Text("Avatarımı Değiştir",color = Color.White)
                             }
                             OutlinedButton(
                                 onClick = onAppIconClick,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                border = BorderStroke(1.dp,Color(0xFF38BDF8)),
-                                shape = RoundedCornerShape(13.dp)
+                                border = BorderStroke(1.dp,Color(0xFF69C8DC)),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = Color.White,
+                                    backgroundColor = Color(0xFF1C6083))
                             ) {
-                                Icon(Icons.Default.Palette,"Uygulama ikonu",tint = Color(0xFF1565C0))
+                                Icon(Icons.Default.Palette,"Uygulama ikonu",tint = Color.White)
                                 Spacer(Modifier.width(8.dp))
-                                Text("Uygulama İkonunu Değiştir",color = Color(0xFF1565C0))
+                                Text("Uygulama İkonunu Değiştir",color = Color.White)
                             }
                             Button(
                                 onClick = onSettingsClick,
                                 modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
                                 colors = ButtonDefaults.buttonColors(
-                                    backgroundColor = Color(0xFF1565C0),contentColor = Color.White),
-                                shape = RoundedCornerShape(13.dp)
+                                    backgroundColor = Color(0xFFFFD47B),
+                                    contentColor = Color(0xFF09263F)),
+                                shape = RoundedCornerShape(14.dp)
                             ) {
                                 Icon(Icons.Default.Settings,"Ayarlar")
                                 Spacer(Modifier.width(8.dp))
@@ -508,7 +537,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Kullanıcı Bilgileri Kartı
+                    // Light contrast reading surfaces for profile editing
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

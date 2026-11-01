@@ -44,6 +44,8 @@ data class PracticeEvidence(
             "Şekillerin kenar, köşe ve simetri özelliklerini karşılaştırın."
         AdventureSkill.MARKET ->
             "Ürün miktarı, toplam tutar ve para üstü hesabını oyunla çalışın."
+        AdventureSkill.SPACE ->
+            "Gemiyi yönlendirerek işlemleri, enerjiyi ve sayı örüntülerini çalışın."
     }
 }
 
@@ -70,7 +72,9 @@ object LearningReportEngine {
         PracticeSkill(AdventureSkill.GEOMETRY,
             "Geometrik şekiller ve simetri","Geometri Kalesi","Geometri"),
         PracticeSkill(AdventureSkill.MARKET,
-            "Alışveriş ve para hesabı","Pazar Simülatörü","Para ve ölçme")
+            "Alışveriş ve para hesabı","Pazar Simülatörü","Para ve ölçme"),
+        PracticeSkill(AdventureSkill.SPACE,
+            "Uzay matematiği","Galaksi Kaşifleri","İşlemler ve örüntüler")
     )
     fun build(progress: Map<AdventureSkill, AdaptiveProgress>): PracticeOverview =
         PracticeOverview(coveredSkills.map { skill ->

@@ -52,7 +52,7 @@ private object GalaxyPaint {
     )
 }
 @Composable
-private fun SpaceButton(text:String,onClick:()->Unit,enabled:Boolean=true) {
+private fun SpaceButton(text:String,enabled:Boolean=true,onClick:()->Unit) {
     Button(
         onClick=onClick,enabled=enabled,
         modifier=Modifier.fillMaxWidth().heightIn(min=52.dp),

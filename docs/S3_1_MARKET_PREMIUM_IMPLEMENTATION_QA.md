@@ -1,5 +1,7 @@
 # S3.1 — Pazar Simülatörü 2.0 | Ürün teslimatı ve telefon kabul listesi
 
+> **Arşiv sürüm notu:** Bu belge S3.1'deki 3 duraklı başlangıç sürümünü açıklar. Güncel 6 durak / 24 kararlı oyun ve 20 eski dosyanın temizlenmesi için [S3.1.1 güncel uygulama ve QA belgesini](S3_1_1_MARKET_EXPANSION_AND_LEGACY_CLEANUP.md) kullanın. Artık bu eski QA listesini mevcut sürümün kapsamı olarak değerlendirmeyin.
+
 Tarih: 2026-11-01 · Android Kotlin/Jetpack Compose · Branch: main
 Durum: **Kod ve kaynaklar repoda; gerçek Android build/cihaz kabulü bu oturumda yapılmadı.**
 

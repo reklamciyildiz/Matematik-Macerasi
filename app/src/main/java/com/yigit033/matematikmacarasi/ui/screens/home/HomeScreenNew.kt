@@ -320,7 +320,7 @@ fun HomeScreenNew(
                             userStars = userStars,
                             dailyTasksCompleted = completedCount,
                             dailyTasksTotal = dailyTasks.size,
-                            onViewDetailsClick = navigateToProfile
+                            onViewDetailsClick = { currentTab = HomeTab.LEARN }
                         )
 
                         // Alt navigasyon çubuğu boşluğu

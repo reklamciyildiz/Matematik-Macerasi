@@ -26,9 +26,10 @@ class MarketAdventureExpansionTest {
                 assertEquals(4,stage.changeOptionsKurus.distinct().size)
                 assertEquals(stage.requiredTotal(),
                     stage.payOptionsKurus.first { it==stage.requiredTotal() })
-                assertTrue(stage.bonus!!.correctKurus in stage.bonus.choicesKurus)
-                assertEquals(4,stage.bonus.choicesKurus.distinct().size)
-                assertTrue(stage.bonus.choicesKurus.all { it>=0 })
+                val bonus=stage.bonus!!
+                assertTrue(bonus.correctKurus in bonus.choicesKurus)
+                assertEquals(4,bonus.choicesKurus.distinct().size)
+                assertTrue(bonus.choicesKurus.all { it>=0 })
                 assertTrue(stage.cashierPayKurus>stage.requiredTotal())
             }
         }

@@ -20,6 +20,9 @@ class GeometryCastleProgressStore(context: Context) {
             step = prefs.getInt("step", 0),
             selected = selected,
             solved = prefs.getBoolean("solved", false),
+            focusShape = prefs.getString("focus", null)?.let { name ->
+                CastleShape.entries.firstOrNull { it.name == name }
+            },
             mirrorMask = prefs.getInt("mirror", 0),
             attempts = prefs.getInt("attempts", 0),
             errors = prefs.getInt("errors", 0),
@@ -46,6 +49,8 @@ class GeometryCastleProgressStore(context: Context) {
             .putBoolean("task_error",next.hasErrorInTask)
             .putBoolean("task_hint",next.hasHintInTask)
             .putInt("runs",next.completedRuns)
+        if(next.focusShape == null) editor.remove("focus")
+        else editor.putString("focus",next.focusShape.name)
         if(next.selected == null) editor.remove("selected")
         else editor.putString("selected",next.selected.name)
         return editor.commit()
@@ -54,9 +59,17 @@ class GeometryCastleProgressStore(context: Context) {
     @Synchronized fun begin(tier: LearningTier): CastleRun? {
         val old = load()
         val seed = System.currentTimeMillis().coerceAtLeast(old.seed + 1).coerceAtLeast(1)
-        val next = CastleRun(seed=seed,tier=tier,completedRuns=old.completedRuns)
+        val next = CastleRun(seed=seed,tier=tier,completedRuns=old.completedRuns,
+            focusShape=weakShape())
         return if(save(next)) next else null
     }
+
+    fun weakShape(): CastleShape? = prefs.getString("weak_shape", null)?.let { name ->
+        CastleShape.entries.firstOrNull { it.name == name }
+    }
+    fun noteWeakShape(shape: CastleShape): Boolean =
+        prefs.edit().putString("weak_shape",shape.name).commit()
+    fun clearWeakShape(): Boolean = prefs.edit().remove("weak_shape").commit()
 
     fun hasEverCompleted(): Boolean = prefs.getInt("runs", 0) > 0
     fun rewardRecorded(): Boolean = prefs.getBoolean("reward_recorded", false)

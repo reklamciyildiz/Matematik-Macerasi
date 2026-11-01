@@ -118,7 +118,6 @@ fun LearningPracticeSection(userClass: String) {
                 }
             }
         }
-        AdventureLearningReport(userClass, version)
         Text("Her ders 4 soruluk bir başlangıç çalışmasıdır. Oturum puanı öğrenme düzeyini kanıtlamaz. Yıldız ve ücretli hak verilmez.",
             color = HomeColors.TextSecondary, fontSize = 11.sp)
     }

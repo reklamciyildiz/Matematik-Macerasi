@@ -54,7 +54,7 @@ class MarketSimulatorActivity : ComponentActivity() {
                         store=store,
                         stallStore=stallStore,
                         hasPremium=premiumFlow || purchaseManager.isPremiumSync(),
-                        onUpgrade={purchaseManager.launchPurchaseFlow(this)},
+                        onUpgrade={purchaseManager.buyPremium(this)},
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.MARKET).currentTier,
                         onExit={finish()},

@@ -21,7 +21,19 @@ Tarih: 2026-11-01 · GitHub main geliştirme teslimatı
 | `res/drawable/geometry_castle_crown.xml` | Taç Salonu, final |
 | `res/drawable/geometry_piko.xml` | Taş-golem rehber Piko |
 
-Android VectorDrawable XML: yerel, offline, ölçeklenebilir; manuel asset taşıma veya WebP dönüştürme gerekmiyor. Bu görseller yüksek detaylı ImageGen/WebP sinematik illüstrasyonlar **değildir**. Gerçek Android ekranda sanatsal kabul ayrıca yapılmalıdır.
+**2026-11-01 Premium WebP yükseltmesi:** Yukarıdaki vektörler geri dönüş/saklı eski varlık olarak korundu. Oyun artık Android `drawable-nodpi` içine GitHub üzerinden **doğrudan eklenen 7 gerçek WebP** kullanıyor. Bunlar 2.5D sahneler ve Piko'nun şeffaf karakter çizimidir; harici asset kopyalama, manuel yükleme veya kod ajanına görsel üretme görevi yoktur. Matematiksel şekiller ve simetri tahtası, çözümün doğruluğu için Compose vektörü olarak kaldı.
+
+| Yeni WebP | Çözünürlük | Boyut |
+|---|---:|---:|
+| `geometry_castle_hero_premium.webp` | 720×405 | 35,572 B |
+| `geometry_castle_courtyard_premium.webp` | 608×342 | 37,144 B |
+| `geometry_castle_bridge_premium.webp` | 608×342 | 33,958 B |
+| `geometry_castle_mirror_premium.webp` | 608×342 | 41,492 B |
+| `geometry_castle_crown_premium.webp` | 608×342 | 37,086 B |
+| `geometry_castle_complete_premium.webp` | 720×405 | 45,012 B |
+| `geometry_piko_premium.webp` | 240×360 (alfa) | 13,280 B |
+
+Bu dosyalar topluca yaklaşık 244 KB olup GitHub'daki SHA eşleşmeleri ve WebP imzaları doğrulandı. Telefon üzerindeki görünürlük ve yaşa uygunluk için kullanıcı kabulü hâlâ gereklidir.
 
 ## Görünür oyun etkileşimleri
 
@@ -66,8 +78,8 @@ Projedeki gerçek `app/google-services.json` ve yerel geliştirme ayarları koru
 
 ## Kabul statüsü
 
-- **Yapıldı**: GitHub'da kod, vektör asset, bağlantılar ve JUnit test dosyaları; statik dosya, bağlantı, parantez ve XML kapama kontrolü.
-- **Bu ortamda yapılamadı**: Android SDK ile gerçek Gradle test/assemble, cihaz açılışı, görsel piksel kabulü, son kullanıcı testi. Bu aşamalar geçmeden `kusursuz` veya `Play Store'a hazır` denmez.
+- **Yapıldı**: GitHub'da kod, eski vektörler, yedi premium WebP, tüm oyun girişleri ve JUnit test dosyaları; statik referans, asset imzası/boyutu, bağlantı ve parantez kontrolü.
+- **Bu ortamda yapılamadı**: Son WebP/UX commit'lerinden sonra Android SDK ile Gradle test/assemble, fiziksel cihaz açılışı, görsel piksel kabulü, son kullanıcı testi. Kullanıcı önceki kod tabanında 64 testi ve dört odayı başarıyla denedi, ancak yeni görseller için telefon testi ayrı gereklidir. Bu aşamalar geçmeden `kusursuz` veya `Play Store'a hazır` denmez.
 - **Tasarım sınırı**: Başlangıç için dört mekanik ve temel tekrar katmanı geliştirildi; gerçek kullanıcı deneyiminden sonra daha zengin 2.5D art, sürükle-bırak ve farklı çok geçerli kompozisyonlar iyileştirme adayıdır.
 
 ## Bir sonraki karar kapısı

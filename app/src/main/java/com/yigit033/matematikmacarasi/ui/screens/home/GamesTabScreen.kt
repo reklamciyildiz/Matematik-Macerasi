@@ -145,7 +145,7 @@ fun GamesTabScreen(
     val conceptGames = listOf(
         GameCatalogItem(
             title = "Pazar Simülatörü",
-            description = "Alışveriş yap, para üstü hesapla ve gerçek hayatta matematiği kullan.",
+            description = "Üç pazarda doğru ürünleri seç, bütçeni koru ve para üstünü hesapla.",
             category = "Gerçek Hayat",
             iconRes = R.drawable.ic_market_game,
             gradientColors = listOf(Color(0xFF065F46), Color(0xFF10B981)),

@@ -30,7 +30,13 @@ class GeometryCastleProgressStore(context: Context) {
             firstTryCorrect = prefs.getInt("first_try", 0),
             hasErrorInTask = prefs.getBoolean("task_error", false),
             hasHintInTask = prefs.getBoolean("task_hint", false),
-            completedRuns = prefs.getInt("runs", 0)
+            completedRuns = prefs.getInt("runs", 0),
+            contentVersion = prefs.getInt("content_version", 1),
+            placed = prefs.getString("placed", "").orEmpty().split(",")
+                .filter { it.isNotBlank() }
+                .mapNotNull { value ->
+                    CastleShape.entries.firstOrNull { it.name == value }
+                }
         )
         return if (GeometryCastleEngine.valid(run)) run else CastleRun(
             completedRuns = prefs.getInt("runs", 0).coerceAtLeast(0)
@@ -82,6 +88,8 @@ class GeometryCastleProgressStore(context: Context) {
             .putBoolean("task_error",next.hasErrorInTask)
             .putBoolean("task_hint",next.hasHintInTask)
             .putInt("runs",next.completedRuns)
+            .putInt("content_version",next.contentVersion)
+            .putString("placed",next.placed.joinToString(",") { it.name })
         if(next.focusShape == null) editor.remove("focus")
         else editor.putString("focus",next.focusShape.name)
         if(next.selected == null) editor.remove("selected")
@@ -93,7 +101,7 @@ class GeometryCastleProgressStore(context: Context) {
         val old = load()
         val seed = System.currentTimeMillis().coerceAtLeast(old.seed + 1).coerceAtLeast(1)
         val next = CastleRun(seed=seed,tier=tier,completedRuns=old.completedRuns,
-            focusShape=weakShape())
+            focusShape=weakShape(),contentVersion=2)
         return if(save(next)) next else null
     }
 

@@ -26,7 +26,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -223,8 +222,6 @@ fun MarketAdventureScreen(
     // Every new Activity entry opens the map. In-process rotation keeps the page.
     var showLobby by rememberSaveable { mutableStateOf(true) }
     var pendingNewRun by remember { mutableStateOf<Pair<LearningTier,Int?>?>(null) }
-    var showParentalGate by remember { mutableStateOf(false) }
-    var adultAnswer by remember { mutableStateOf("") }
     var showStall by remember { mutableStateOf(false) }
     var showAllShops by rememberSaveable { mutableStateOf(false) }
     val scroll=rememberScrollState()
@@ -287,27 +284,6 @@ fun MarketAdventureScreen(
         MarketStallScreen(stallStore,onClose={showStall=false})
         return
     }
-    if(showParentalGate) AlertDialog(
-        onDismissRequest={showParentalGate=false;adultAnswer=""},
-        title={Text("Yetişkin Bölgesi")},
-        text={
-            Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
-                Text("Premium satın alma ekranı yalnızca yetişkinler içindir. " +
-                    "Devam etmek için işlemi çöz.")
-                Text("17 × 8 = ?",fontWeight=FontWeight.Bold,fontSize=19.sp)
-                OutlinedTextField(value=adultAnswer,
-                    onValueChange={adultAnswer=it.take(5).filter(Char::isDigit)},
-                    label={Text("Sonuç")},singleLine=true)
-            }
-        },
-        confirmButton={
-            TextButton(onClick={showParentalGate=false;adultAnswer="";onUpgrade()},
-                enabled=adultAnswer=="136") {Text("Yetişkin olarak devam et")}
-        },
-        dismissButton={TextButton(onClick={showParentalGate=false;adultAnswer=""}) {
-            Text("Vazgeç")
-        }}
-    )
     BackHandler(enabled=!showLobby) { showLobby=true;message="" }
     val replacing=pendingNewRun
     if(replacing!=null) AlertDialog(
@@ -428,7 +404,7 @@ fun MarketAdventureScreen(
                         Text("🏪 Kendi Tezgâhını İşlet")
                     }
                 } else {
-                    OutlinedButton(onClick={showParentalGate=true},
+                    OutlinedButton(onClick=onUpgrade,
                         modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
                         border=androidx.compose.foundation.BorderStroke(1.dp,orange),
                         colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White)) {
@@ -453,7 +429,7 @@ fun MarketAdventureScreen(
                                 color=Color.White,fontWeight=FontWeight.Bold,fontSize=14.sp)
                             Text(shop.learning,color=cream,fontSize=12.sp)
                             OutlinedButton(onClick={
-                                if(shop.isPro&&!hasPremium)showParentalGate=true
+                                if(shop.isPro&&!hasPremium)onUpgrade()
                                 else requestStart(chosenTier,index)
                             },modifier=Modifier.fillMaxWidth().heightIn(min=46.dp),
                                 colors=ButtonDefaults.outlinedButtonColors(contentColor=Color.White),

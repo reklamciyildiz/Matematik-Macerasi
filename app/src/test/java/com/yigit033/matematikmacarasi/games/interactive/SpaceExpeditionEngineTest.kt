@@ -73,9 +73,8 @@ class SpaceExpeditionEngineTest {
         run=SpaceExpeditionEngine.intercept(run)
         assertTrue(run.solved)
         assertEquals(0,run.firstTry)
-        assertEquals(3,run.attempts)
-        assertEquals(1,run.errors) // 2 attempts: miss and success
-        assertEquals(2,run.attempts)
+        assertEquals(2,run.attempts) // one missed wave, then successful catch
+        assertEquals(1,run.errors)
         assertEquals(run,SpaceExpeditionEngine.intercept(run))
         assertTrue(SpaceExpeditionEngine.valid(run))
     }

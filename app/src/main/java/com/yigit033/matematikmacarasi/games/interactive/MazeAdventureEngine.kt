@@ -234,7 +234,7 @@ object MazeAdventureEngine {
             pendingCell=-1,shownHint=false,attempts=run.attempts+1)
     }
     fun hint(run:MazeExpedition):MazeExpedition =
-        if(run.pendingCell<0 || run.shownHint)return run
+        if(run.pendingCell<0 || run.shownHint)run
         else run.copy(shownHint=true,hints=run.hints+1)
     fun stars(run:MazeExpedition):Int = if(!run.completed)0 else when {
         run.errors==0 && run.hints==0 -> 3

@@ -312,6 +312,13 @@ fun MarketAdventureScreen(
                         verticalArrangement=Arrangement.spacedBy(9.dp)) {
                         Text("✦   3 durak tamamlandı",fontSize=23.sp,
                             fontWeight=FontWeight.ExtraBold,color=orange)
+                        Text("★".repeat(MarketAdventureEngine.starsFor(run))+
+                            "☆".repeat(3-MarketAdventureEngine.starsFor(run)),
+                            color=orange,fontSize=31.sp,fontWeight=FontWeight.Black)
+                        Text("En iyi ödül: ${store.bestAwardedStars()}/3 yıldız",
+                            color=turquoise,fontSize=13.sp)
+                        Text("Tekrar oynayarak en iyi sonucunu yükseltebilirsin.",
+                            color=cream,fontSize=12.sp)
                         Text("İlk denemede bağımsız: ${run.perfectDecisions}/9",
                             color=Color.White,fontSize=15.sp)
                         Text("Toplam: ${run.attempts} deneme · ${run.errors} hata · ${run.hints} ipucu",

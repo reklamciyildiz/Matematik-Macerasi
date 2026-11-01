@@ -192,6 +192,7 @@ fun SettingsScreen(
     
     // PurchaseManager
     val purchaseManager = remember { PurchaseManager.getInstance(context) }
+    val restoration by purchaseManager.restoreState.collectAsState()
     
     // Premium kod dialog durumu
     var showCodeDialog by remember { mutableStateOf(false) }
@@ -787,6 +788,47 @@ fun SettingsScreen(
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Restoring a Google Play purchase is free, repeatable and never opens checkout.
+            // Code-based Premium rights are preserved even if Play has no transaction.
+            SettingsCard(
+                title = "Satın Alma ve Geri Yükleme",
+                description = "Önceden aldığın Premium erişimini bu cihazda kontrol et",
+                containerColor = Color(0xFF197A92)
+            ) {
+                Column(modifier=Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    Text("Google Play hesabında satın aldığın Premium ürünü yeniden kontrol edilir. " +
+                        "Bu işlem ücretli değildir.",
+                        color=Color.White,fontSize=13.sp)
+                    Button(
+                        onClick={purchaseManager.restorePurchases()},
+                        enabled=restoration !is PurchaseManager.RestoreState.Loading,
+                        modifier=Modifier.fillMaxWidth().height(52.dp),
+                        colors=ButtonDefaults.buttonColors(
+                            containerColor=Color(0xFF104366))
+                    ) {
+                        Text(if(restoration is PurchaseManager.RestoreState.Loading)
+                            "Google Play Kontrol Ediliyor…" else "Satın Alımları Geri Yükle",
+                            color=Color.White)
+                    }
+                    val restoreMessage=when(val result=restoration) {
+                        is PurchaseManager.RestoreState.Idle ->
+                            "Mevcut Premium kodları da korunur."
+                        is PurchaseManager.RestoreState.Loading ->
+                            "Google Play satın alma kayıtları kontrol ediliyor."
+                        is PurchaseManager.RestoreState.Found ->
+                            if(result.googlePlay)
+                                "Google Play Premium satın alımı bulundu; erişimin etkin."
+                            else "Premium kod erişimin etkin; Google Play satın alımı bulunmadı."
+                        is PurchaseManager.RestoreState.NotFound ->
+                            "Bu Google Play hesabında aktif ürün bulunamadı. " +
+                            "Doğru hesabı ve Premium kodunu kontrol et."
+                        is PurchaseManager.RestoreState.Error -> result.message
+                    }
+                    Text(restoreMessage,color=Color.White,fontSize=12.sp)
+                }
+            }
+
             // Ses Ayarları Kartı
             SettingsCard(
                 title = "Ses Ayarları",

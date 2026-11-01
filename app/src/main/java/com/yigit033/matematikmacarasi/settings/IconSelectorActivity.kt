@@ -72,6 +72,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.yigit033.matematikmacarasi.MainActivity
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import kotlinx.coroutines.flow.collect
 
@@ -161,17 +162,17 @@ class IconSelectorActivity : ComponentActivity() {
                             Icon(
                                 imageVector = Icons.Filled.ArrowBack, 
                                 contentDescription = "Geri",
-                                tint = Color(0xFF6200EA)
+                                tint = Color(0xFF075FA5)
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.White,
-                        titleContentColor = Color(0xFF6200EA)
+                        titleContentColor = Color(0xFF075FA5)
                     )
                 )
             },
-            containerColor = Color(0xFFF3E5F5) // Açık mor arka plan
+            containerColor = Color(0xFFE3F4FF) // Açık mor arka plan
         ) { paddingValues ->
             Box(
                 modifier = Modifier
@@ -180,8 +181,8 @@ class IconSelectorActivity : ComponentActivity() {
                     .background(
                         androidx.compose.ui.graphics.Brush.verticalGradient(
                             colors = listOf(
-                                Color(0xFFF3E5F5), // Açık mor
-                                Color(0xFFE1BEE7)  // Biraz daha koyu mor
+                                Color(0xFFE3F4FF), // Açık mor
+                                Color(0xFFB9E4FF)  // Biraz daha koyu mor
                             )
                         )
                     )
@@ -189,21 +190,22 @@ class IconSelectorActivity : ComponentActivity() {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp),
+                        .verticalScroll(rememberScrollState())
+                        .padding(18.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "İstediğin ikonu seç",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF6200EA),
+                        color = Color(0xFF075FA5),
                         modifier = Modifier.padding(bottom = 32.dp)
                     )
                     
                     // Yükleme göstergesi
                     if (isLoading) {
                         androidx.compose.material3.CircularProgressIndicator(
-                            color = Color(0xFF6200EA),
+                            color = Color(0xFF075FA5),
                             modifier = Modifier.padding(top = 32.dp)
                         )
                     } else {
@@ -396,13 +398,13 @@ class IconSelectorActivity : ComponentActivity() {
                             text = "Premium Özellik",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF6200EA)
+                            color = Color(0xFF075FA5)
                         )
                         
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
-                            text = "Bu uygulama ikonu sadece premium üyelere özeldir. Premium üyelik satın alarak tüm uygulama ikonlarına erişebilirsiniz.",
+                            text = "Bu ikon mevcut Premium üyeliğin parçasıdır. Erişimin varsa yeniden satın alma yapma; üyelik durumunu Ayarlar'dan kontrol et.",
                             fontSize = 16.sp,
                             color = Color(0xFF666666),
                             textAlign = TextAlign.Center
@@ -433,26 +435,20 @@ class IconSelectorActivity : ComponentActivity() {
                             
                             Button(
                                 onClick = {
+                                    // The icon picker never initiates purchases directly.
+                                    // Return to the canonical subscription/settings surface.
                                     showPremiumDialog = false
-                                    // Premium satın alma işlemi
-                                    try {
-                                        val activity = context as? Activity
-                                        if (activity != null && purchaseManager != null) {
-                                            purchaseManager.buyPremium(activity)
-                                        }
-                                    } catch (e: Exception) {
-                                        Log.e("IconSelector", "Premium satın alma başlatılamadı: ${e.message}")
-                                    }
+                                    context.startActivity(Intent(context,SettingsActivity::class.java))
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color(0xFFFFD700),
-                                    contentColor = Color(0xFF6200EA)
+                                    contentColor = Color(0xFF075FA5)
                                 ),
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text(
-                                    text = "Premium Al",
+                                    text = "Premium Bilgileri",
                                     fontWeight = FontWeight.Bold
                                 )
                             }

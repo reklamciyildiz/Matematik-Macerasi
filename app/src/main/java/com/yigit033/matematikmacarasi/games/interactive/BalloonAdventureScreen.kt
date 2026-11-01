@@ -1,11 +1,6 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -14,16 +9,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -138,88 +130,6 @@ private fun SkyIllustration(realm:BalloonRealm,compact:Boolean=false) {
 }
 
 @Composable
-private fun RowScope.BalloonButton(
-    value:Int,index:Int,wrong:Boolean,revealed:Boolean,correct:Boolean,
-    onClick:()->Unit
-) {
-    val enabled=!wrong && !revealed
-    val tint=BalloonPalette.balloon[index%BalloonPalette.balloon.size]
-    val floaty=rememberInfiniteTransition(label="floating-balloon")
-    val bob by floaty.animateFloat(
-        initialValue=0f,targetValue=5f,
-        animationSpec=infiniteRepeatable(
-            animation=tween(durationMillis=1700+index*220),
-            repeatMode=RepeatMode.Reverse
-        ),label="gentle-hover"
-    )
-    Surface(
-        modifier=Modifier.weight(1f).heightIn(min=144.dp)
-            .testTag("balloon_choice_"+value),
-        onClick=onClick,
-        enabled=enabled,
-        color=when {
-            correct -> Color(0xFF1B7669)
-            wrong -> Color(0xFF244164)
-            else -> BalloonPalette.panel
-        },
-        shape=RoundedCornerShape(22.dp),
-        border=BorderStroke(if(correct)3.dp else 1.dp,when {
-            correct -> BalloonPalette.gold
-            wrong -> BalloonPalette.muted.copy(alpha=.25f)
-            else -> tint.copy(alpha=.8f)
-        })
-    ) {
-        Box(Modifier.fillMaxWidth().padding(vertical=6.dp),
-            contentAlignment=Alignment.Center) {
-            Canvas(
-                Modifier.size(width=112.dp,height=126.dp)
-                    .offset(y=(-bob).dp)
-            ) {
-                val w=size.width;val h=size.height
-                drawLine(
-                    color=Color.White.copy(alpha=if(enabled).8f else .25f),
-                    start=Offset(w*.5f,h*.78f),end=Offset(w*.55f,h*.98f),
-                    strokeWidth=2.5f
-                )
-                drawOval(
-                    color=if(wrong)tint.copy(alpha=.25f) else tint,
-                    topLeft=Offset(w*.11f,h*.02f),
-                    size=Size(w*.78f,h*.78f)
-                )
-                val knot=Path().apply {
-                    moveTo(w*.50f,h*.75f)
-                    lineTo(w*.43f,h*.85f)
-                    lineTo(w*.58f,h*.85f)
-                    close()
-                }
-                drawPath(knot,if(wrong)tint.copy(alpha=.25f) else tint)
-                drawOval(
-                    color=Color.White.copy(alpha=if(wrong).12f else .42f),
-                    topLeft=Offset(w*.27f,h*.13f),
-                    size=Size(w*.18f,h*.23f)
-                )
-                drawOval(
-                    color=Color(0xFF12345B).copy(alpha=.14f),
-                    topLeft=Offset(w*.51f,h*.16f),
-                    size=Size(w*.25f,h*.48f)
-                )
-            }
-            Text(
-                text=if(wrong)"✕" else value.toString(),
-                modifier=Modifier.offset(y=(-19).dp),
-                color=if(wrong)BalloonPalette.muted else Color(0xFF13294C),
-                fontSize=26.sp,fontWeight=FontWeight.Black,
-                textAlign=TextAlign.Center
-            )
-            if(correct)Text("✓ DOĞRU",
-                color=BalloonPalette.gold,fontSize=11.sp,
-                fontWeight=FontWeight.Black,
-                modifier=Modifier.align(Alignment.BottomCenter).padding(bottom=5.dp))
-        }
-    }
-}
-
-@Composable
 private fun PrimaryButton(label:String,enabled:Boolean=true,onClick:()->Unit) {
     Button(onClick=onClick,enabled=enabled,
         modifier=Modifier.fillMaxWidth().heightIn(min=54.dp),
@@ -238,22 +148,25 @@ fun BalloonAdventureScreen(
     records:Map<BalloonRealm,BalloonRecord>,
     historicalStars:Map<BalloonRealm,Int>,
     feedback:String,
-    onStart:(BalloonRealm,LearningTier)->Boolean,
+    onStart:(BalloonRealm,LearningTier,BalloonPace)->Boolean,
     onChoose:(Int)->Unit,
     onHint:()->Unit,
+    onEscape:()->Unit,
     onNext:()->Unit,
     onExit:()->Unit
 ) {
     var lobby by rememberSaveable {mutableStateOf(true)}
     var selectedRealm by rememberSaveable {mutableIntStateOf(0)}
     var selectedTierName by rememberSaveable {mutableStateOf(suggestedTier.name)}
-    var replacing by remember {mutableStateOf<Pair<BalloonRealm,LearningTier>?>(null)}
+    var selectedPaceName by rememberSaveable {mutableStateOf(BalloonPace.RELAXED.name)}
+    var replacing by remember {mutableStateOf<Triple<BalloonRealm,LearningTier,BalloonPace>?>(null)}
     var startError by remember {mutableStateOf(false)}
     val selectedTier=LearningTier.fromSaved(selectedTierName,suggestedTier)
+    val selectedPace=BalloonPace.entries.firstOrNull {it.name==selectedPaceName}?:BalloonPace.RELAXED
     BackHandler(enabled=!lobby) {lobby=true}
-    fun start(realm:BalloonRealm,tier:LearningTier) {
-        if(run!=null && !run.completed)replacing=realm to tier
-        else if(onStart(realm,tier)) {lobby=false;startError=false}
+    fun start(realm:BalloonRealm,tier:LearningTier,pace:BalloonPace=selectedPace) {
+        if(run!=null && !run.completed)replacing=Triple(realm,tier,pace)
+        else if(onStart(realm,tier,pace)) {lobby=false;startError=false}
         else startError=true
     }
     if(replacing!=null)AlertDialog(
@@ -262,7 +175,7 @@ fun BalloonAdventureScreen(
         text={Text("Yarım kalan balon yolculuğu kaydı değiştirilecek. İstersen kaldığın yerden devam et.")},
         confirmButton={TextButton(onClick={
             val pair=replacing!!;replacing=null
-            if(onStart(pair.first,pair.second)){lobby=false;startError=false}
+            if(onStart(pair.first,pair.second,pair.third)){lobby=false;startError=false}
             else startError=true
         }){Text("Yeni oyuna geç")}},
         dismissButton={TextButton(onClick={replacing=null}){Text("Vazgeç")}}
@@ -334,6 +247,31 @@ fun BalloonAdventureScreen(
             Text("Profiline göre önerilen: "+suggestedTier.title+
                 ". Dilersen değiştirebilirsin.",
                 color=BalloonPalette.muted,fontSize=11.sp)
+            Text("Uçuş modunu seç",color=BalloonPalette.gold,
+                fontSize=17.sp,fontWeight=FontWeight.ExtraBold)
+            BalloonPace.entries.forEach {pace->
+                val chosen=pace==selectedPace
+                Surface(
+                    modifier=Modifier.fillMaxWidth()
+                        .testTag("balloon_pace_"+pace.name),
+                    onClick={selectedPaceName=pace.name},
+                    color=if(chosen)Color(0xFF23647C) else BalloonPalette.panel,
+                    shape=RoundedCornerShape(15.dp),
+                    border=BorderStroke(if(chosen)2.dp else 1.dp,
+                        if(chosen)BalloonPalette.gold else BalloonPalette.muted.copy(alpha=.3f))
+                ) {
+                    Row(Modifier.padding(12.dp),
+                        verticalAlignment=Alignment.CenterVertically,
+                        horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                        Text(if(pace==BalloonPace.RELAXED)"🪁" else "⚡",fontSize=24.sp)
+                        Column {
+                            Text(pace.title,color=BalloonPalette.white,
+                                fontWeight=FontWeight.Bold,fontSize=14.sp)
+                            Text(pace.description,color=BalloonPalette.muted,fontSize=11.sp)
+                        }
+                    }
+                }
+            }
             Text("Bir dünya seç",color=BalloonPalette.gold,
                 fontSize=17.sp,fontWeight=FontWeight.ExtraBold)
             BalloonRealm.entries.chunked(2).forEach {pair->
@@ -377,7 +315,7 @@ fun BalloonAdventureScreen(
             if(startError)Text(
                 if(feedback.isNotBlank())feedback else "Oyun kaydedilemedi, tekrar dene.",
                 color=BalloonPalette.gold,fontSize=12.sp)
-            Text("Çevrimdışı oynanır · Zorunlu süre yok · Reklamsız oyun alanı",
+            Text("Çevrimdışı · hareketli balonlar · keşif veya meydan okuma · reklamsız",
                 color=BalloonPalette.muted,fontSize=11.sp)
         } else if(run!=null) {
             SkyIllustration(run.realm,compact=true)
@@ -403,7 +341,7 @@ fun BalloonAdventureScreen(
                         Text("10 soru · "+run.firstTry+" ilk denemede doğru",
                             color=BalloonPalette.cyan,fontSize=14.sp)
                         Text(run.errors.toString()+" yanlış deneme · "+
-                            run.hints+" ipucu · en iyi seri "+run.bestStreak,
+                            run.hints+" ipucu · "+run.escapes+" kaçan dalga · en iyi seri "+run.bestStreak,
                             color=BalloonPalette.muted,fontSize=12.sp,
                             textAlign=TextAlign.Center)
                         val retry=when {
@@ -416,7 +354,7 @@ fun BalloonAdventureScreen(
                     }
                 }
                 PrimaryButton("🎈 Bu Dünyayı Yeniden Oyna"){
-                    start(run.realm,run.tier)
+                    start(run.realm,run.tier,run.pace)
                 }
                 OutlinedButton(onClick={lobby=true},
                     modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),
@@ -445,8 +383,12 @@ fun BalloonAdventureScreen(
                             trackColor=Color(0xFF305878)
                         )
                         Text(run.tier.title+" · "+run.realm.skill+" · "+
-                            BalloonAdventureEngine.score(run)+" puan",
+                            BalloonAdventureEngine.score(run)+" puan · "+run.pace.title,
                             color=BalloonPalette.muted,fontSize=12.sp)
+                        Text(if(run.pace==BalloonPace.CHALLENGE)
+                            "⚡ Kaçan dalga: "+run.escapes+" (−30 puan)"
+                            else "🪁 Rahat uçuş · dalgalar sınırsız",
+                            color=BalloonPalette.cyan,fontSize=11.sp)
                     }
                 }
                 val q=BalloonAdventureEngine.question(run)
@@ -462,22 +404,11 @@ fun BalloonAdventureScreen(
                     color=BalloonPalette.muted,fontSize=13.sp,
                     textAlign=TextAlign.Center,
                     modifier=Modifier.fillMaxWidth())
-                q.choices.chunked(2).forEachIndexed {rowIndex,pair->
-                    Row(Modifier.fillMaxWidth(),
-                        horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-                        pair.forEachIndexed {colIndex,value->
-                            val optionIndex=rowIndex*2+colIndex
-                            val wrong=run.wrongMask and (1 shl optionIndex)!=0
-                            BalloonButton(
-                                value=value,index=optionIndex,
-                                wrong=wrong,revealed=run.resolved,
-                                correct=run.resolved && value==q.answer
-                            ) {
-                                onChoose(value)
-                            }
-                        }
-                    }
-                }
+                BalloonSkyArena(
+                    run=run,question=q,
+                    onChoose=onChoose,
+                    onEscape=onEscape
+                )
                 if(run.resolved) {
                     Surface(color=Color(0xFF185F6B),
                         shape=RoundedCornerShape(18.dp),
@@ -521,7 +452,7 @@ fun BalloonAdventureScreen(
                 }
                 if(feedback.isNotBlank())Text(feedback,color=BalloonPalette.gold,
                     fontSize=13.sp,fontWeight=FontWeight.Bold)
-                Text("Yanlışlar yıldızları etkileyebilir; süre sınırı yok.",
+                Text("Balonları uçarken yakala · duraklatabilirsin · yanlışlar yıldızları etkiler.",
                     color=BalloonPalette.muted,fontSize=11.sp,
                     textAlign=TextAlign.Center,
                     modifier=Modifier.fillMaxWidth())

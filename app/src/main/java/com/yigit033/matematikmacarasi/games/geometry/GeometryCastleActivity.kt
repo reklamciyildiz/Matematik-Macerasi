@@ -55,6 +55,7 @@ class GeometryCastleActivity : ComponentActivity() {
     private fun deliverCompletion(run: CastleRun) {
         if (!run.finished) return
         recoverFirstReward()
+        if(run.errors==0 && run.hints==0) progress.clearWeakShape()
         if(progress.markDailyDelivered(run.seed)) {
             runCatching {
                 DailyTaskManager.getInstance(this).recordCompletedGameTask(

@@ -73,7 +73,7 @@ class GeometryCastleProgressStore(context: Context) {
                     .putInt("counted_hints",previous.hints)
             }
         }
-            .putLong("seed", next.seed).putString("tier",next.tier.name)
+        editor.putLong("seed", next.seed).putString("tier",next.tier.name)
             .putInt("room",next.room).putInt("step",next.step)
             .putBoolean("solved",next.solved)
             .putInt("mirror",next.mirrorMask)

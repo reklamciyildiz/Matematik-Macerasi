@@ -153,7 +153,7 @@ fun GamesTabScreen(
         ),
         GameCatalogItem(
             title = "Şekiller & Geometri",
-            description = "Geometrik şekilleri, köşe ve kenar sayılarını eğlenerek öğren.",
+            description = "Dört odada şekilleri keşfet, köprüyü inşa et ve simetriyle kaleyi onar.",
             category = "Kavramlar",
             iconRes = R.drawable.ic_shapes,
             gradientColors = listOf(Color(0xFF0369A1), Color(0xFF38BDF8)),

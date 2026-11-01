@@ -337,7 +337,22 @@ fun MarketAdventureScreen(
                     MarketInfo("BÜTÇE",MarketAdventureEngine.format(scene.budgetKurus))
                 }
                 Box(Modifier.weight(1f)) {
-                    MarketInfo("SEPET",MarketAdventureEngine.format(total))
+                    MarketInfo("SEPET",if(stage==MarketAdventurePhase.PAYMENT) "Sen hesapla" else MarketAdventureEngine.format(total))
+                }
+            }
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                listOf("1 · Alışveriş","2 · Toplam","3 · Para üstü").forEachIndexed { index,label ->
+                    val current=index==when(stage) {
+                        MarketAdventurePhase.SHOP -> 0
+                        MarketAdventurePhase.PAYMENT -> 1
+                        else -> 2
+                    }
+                    Surface(Modifier.weight(1f),shape=RoundedCornerShape(10.dp),
+                        color=if(current) orange else Color(0xFF235771)) {
+                        Text(label,Modifier.padding(horizontal=4.dp,vertical=9.dp),
+                            color=if(current) ink else cream,fontSize=10.sp,
+                            textAlign=TextAlign.Center,fontWeight=FontWeight.Bold)
+                    }
                 }
             }
             if(stage==MarketAdventurePhase.SHOP) {

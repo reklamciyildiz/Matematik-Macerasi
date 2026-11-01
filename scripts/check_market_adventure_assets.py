@@ -77,7 +77,8 @@ def main():
         if ("purchaseManager.isPremiumSync()" not in activity or
             "purchaseManager.buyPremium(this)" not in activity):
             errors.append("existing PurchaseManager entitlement and billing not wired")
-        if "contentVersion=3" not in store or "singleShop" not in store:
+        saved_source=store.read_text(encoding="utf-8")
+        if "contentVersion=3" not in saved_source or "singleShop" not in saved_source:
             errors.append("version-three stored progress and quick sessions missing")
     if errors:
         for error in errors:print("ERROR:",error,file=sys.stderr)

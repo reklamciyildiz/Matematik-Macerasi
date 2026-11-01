@@ -65,8 +65,14 @@ class MarketAdventureStore(context: Context) {
         return if(save(start)) start else null
     }
 
-    fun rewardRecorded()=prefs.getBoolean("reward",false)
-    fun markRewardRecorded(): Boolean=prefs.edit().putBoolean("reward",true).commit()
+    /** Best reward, not a count. Replays can improve it up to 3 stars. */
+    fun bestAwardedStars(): Int = prefs.getInt("best_stars",0).coerceIn(0,3)
+
+    @Synchronized fun markBestStars(value:Int): Boolean {
+        if(value !in 1..3) return false
+        return prefs.edit().putInt("best_stars",
+            maxOf(bestAwardedStars(),value)).commit()
+    }
 
     /**
      * Per-run delivery marker. Exactly once for each completed run; the

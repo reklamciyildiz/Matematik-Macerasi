@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +48,7 @@ fun MarketStallScreen(store:MarketStallStore,onClose:()->Unit) {
     }
     Column(Modifier.fillMaxSize().background(
         Brush.verticalGradient(listOf(Color(0xFF237DA0),Color(0xFF0E314E))))
+        .safeDrawingPadding()
         .verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement=Arrangement.spacedBy(12.dp)) {
         OutlinedButton(onClick=onClose,modifier=Modifier.heightIn(min=48.dp),

@@ -38,6 +38,7 @@ import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.MainActivity
 import com.yigit033.matematikmacarasi.games.ComingSoonActivity
+import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
 import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
 import com.yigit033.matematikmacarasi.games.basic.MultiplicationGameActivity
@@ -424,10 +425,7 @@ private fun getGameIntentForType(context: Context, gameType: GameType): Intent {
         GameType.NUMBER_HUNT_GAME -> Intent(context, SayiAvi2Activity::class.java)
         GameType.MATH_MAZE_GAME -> Intent(context, MathMazeGameActivity::class.java)
         GameType.SPACE_MATH_ADVENTURE -> Intent(context, SpaceMathAdventureActivity::class.java)
-        GameType.SHAPE_RECOGNITION -> Intent(context, ComingSoonActivity::class.java).apply {
-            putExtra("game_name", "Şekiller & Geometri")
-            putExtra("is_category", true)
-        }
+        GameType.SHAPE_RECOGNITION -> Intent(context, GeometryCastleActivity::class.java)
         GameType.MARKET_SIMULATOR -> Intent(context, MarketSimulatorActivity::class.java)
         else -> Intent(context, AdditionGameActivity::class.java)
     }

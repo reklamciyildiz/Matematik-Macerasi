@@ -998,7 +998,7 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
                     GameType.MATH_MAZE_GAME -> Intent(context, MathMazeGameActivity::class.java)
                     GameType.SPACE_MATH_ADVENTURE -> Intent(context, SpaceMathAdventureActivity::class.java)
                     GameType.SHAPE_RECOGNITION -> Intent(context, com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity::class.java)
-                    GameType.MARKET_SIMULATOR -> Intent(context, GameSelectionActivity::class.java)
+                    GameType.MARKET_SIMULATOR -> Intent(context, com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity::class.java)
                 }
                 intent.putExtra("daily_task_id", task.id)
                 context.startActivity(intent)

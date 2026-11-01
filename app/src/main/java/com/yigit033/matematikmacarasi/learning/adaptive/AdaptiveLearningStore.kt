@@ -53,6 +53,13 @@ class AdaptiveLearningStore(context: Context) {
         return e.commit()
     }
 
+    /**
+     * S3.2 reports must never create/reset adaptive state simply by being opened.
+     * Null means this device has no recorded events for the requested skill.
+     */
+    @Synchronized
+    fun snapshotForReport(skill: AdventureSkill): AdaptiveProgress? = loadRaw(skill)
+
     @Synchronized
     fun progress(skill: AdventureSkill): AdaptiveProgress {
         val old = loadRaw(skill)

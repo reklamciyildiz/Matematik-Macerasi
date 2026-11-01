@@ -66,6 +66,7 @@ import com.yigit033.matematikmacarasi.services.AudioService
 import com.yigit033.matematikmacarasi.services.GameProgressService
 import com.yigit033.matematikmacarasi.services.NotificationService
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy
 import com.yigit033.matematikmacarasi.services.PremiumCodeValidator
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import com.yigit033.matematikmacarasi.utils.AppVersionUtils
@@ -472,7 +473,7 @@ fun SettingsScreen(
                 // Premium sürüm kartı
                 SettingsCard(
                     title = "Premium Sürüm",
-                    description = if (isPremium) "Premium sürüm etkin" else "Tüm reklamları kaldırın, özel içeriklere erişin",
+                    description = if (isPremium) "Premium erişimin etkin" else "Ek mağazalar, avatarlar ve kişiselleştirme",
                     containerColor = Color(0xFFE91E63)
                 ) {
                     Column(
@@ -503,7 +504,7 @@ fun SettingsScreen(
                                     )
                                 } else {
                                     Text(
-                                        text = "Reklamsız deneyim ve ekstra özellikler",
+                                        text = "Premium mağazalar ve oyun içi kişiselleştirme",
                                         fontSize = 14.sp,
                                         color = Color.Gray
                                     )
@@ -826,6 +827,34 @@ fun SettingsScreen(
                         is PurchaseManager.RestoreState.Error -> result.message
                     }
                     Text(restoreMessage,color=Color.White,fontSize=12.sp)
+                }
+            }
+
+            SettingsCard(
+                title = "Free / Premium İçerikleri",
+                description = "Ücretsiz oynanabilen ve Premium ile açılan özellikler",
+                containerColor = Color(0xFF266B98)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(12.dp),
+                    verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                    Text("HERKES İÇİN ÜCRETSİZ",color=Color.White,
+                        fontWeight=FontWeight.Bold)
+                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza ve 12 matematik kararı\\n" +
+                        "• Seçili temel matematik maceraları\\n" +
+                        "• Dört beceri için temel öğrenme raporu\\n" +
+                        "• Ücretsiz avatarlar ve varsayılan uygulama ikonu",
+                        color=Color.White,fontSize=13.sp)
+                    Text("PREMIUM İLE EKLENENLER",color=Color.White,
+                        fontWeight=FontWeight.Bold)
+                    Text("• Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza ve 40 karar\\n" +
+                        "• Stok, satış, kâr ve tezgâh geliştirme\\n" +
+                        "• Premium avatar ve alternatif uygulama ikonları\\n" +
+                        "• Labirentte sınırsız oynama ve ek istatistikler\\n" +
+                        "• Premium günlük yıldız bonusu",
+                        color=Color.White,fontSize=13.sp)
+                    Text("Reklamlar çocuk güvenliği denetimi tamamlanana kadar " +
+                        "tüm oyuncular için kapalıdır.",
+                        color=Color.White,fontSize=12.sp)
                 }
             }
 

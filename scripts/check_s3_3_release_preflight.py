@@ -45,7 +45,7 @@ require("Purchase Token: ${purchase.purchaseToken}" not in purchase,
         "purchase token accidentally logged")
 settings=read("screens/SettingsScreen.kt")
 require("Satın Alımları Geri Yükle" in settings and
-        "Free / Premium İçerikleri" in settings,
+        "Free ve Premium" in settings,
         "parents cannot see restore and Free/Premium comparison in Settings")
 policy=read("services/payments/PremiumFeaturePolicy.kt")
 require("FREE_MARKET_SHOPS = 3" in policy and

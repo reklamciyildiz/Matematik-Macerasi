@@ -346,6 +346,8 @@ fun MarketAdventureScreen(
                 Text("${MarketPremiumCatalog.shops.size} mağaza · " +
                     "${MarketPremiumCatalog.productCount} ürün · Tek mağaza veya tam macera",
                     color=cream,fontSize=12.sp)
+                Text("Her mağazada 12 ürün var; raflara her turda altısı geliyor.",
+                    color=turquoise,fontSize=12.sp)
                 MarketPremiumCatalog.shops.forEachIndexed { index,shop ->
                     Surface(color=if(shop.isPro&&!hasPremium)Color(0xFF344F68)
                         else Color(0xFF245C79),
@@ -422,7 +424,9 @@ fun MarketAdventureScreen(
                         Text("★".repeat(MarketAdventureEngine.starsFor(run))+
                             "☆".repeat(3-MarketAdventureEngine.starsFor(run)),
                             color=orange,fontSize=31.sp,fontWeight=FontWeight.Black)
-                        Text("En iyi ödül: ${store.bestAwardedStars()}/3 yıldız",
+                        Text(if(run.singleShop)
+                            "Kısa oyun: alıştırma yıldızları hesaba eklenmez."
+                            else "En iyi ödül: ${store.bestAwardedStars()}/3 yıldız",
                             color=turquoise,fontSize=13.sp)
                         Text("Tekrar oynayarak en iyi sonucunu yükseltebilirsin.",
                             color=cream,fontSize=12.sp)

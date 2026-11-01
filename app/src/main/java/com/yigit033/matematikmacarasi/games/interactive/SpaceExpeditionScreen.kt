@@ -176,7 +176,7 @@ fun SpaceExpeditionScreen(
             verticalAlignment=Alignment.CenterVertically,
             horizontalArrangement=Arrangement.spacedBy(11.dp)) {
             OutlinedButton(
-                onClick={if(lobby)onExit else { {lobby=true} }},
+                onClick={if(lobby)onExit() else lobby=true},
                 modifier=Modifier.height(48.dp),
                 contentPadding=PaddingValues(horizontal=11.dp),
                 border=BorderStroke(1.dp,GalaxyPaint.teal),
@@ -448,7 +448,7 @@ private fun SpaceFlightArena(
             Box(
                 Modifier.fillMaxWidth().height(302.dp)
                     .clip(RoundedCornerShape(17.dp))
-                    .pointerInput(run.seed,run.stage,run.solved) {
+                    .pointerInput(run.seed,run.stage,run.solved,paused) {
                         detectDragGestures(
                             onDragStart={point->
                                 if(!paused && !run.solved)onSteer(
@@ -563,8 +563,7 @@ private fun SpaceFlightArena(
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
                 (0..2).forEach{lane->
                     OutlinedButton(
-                        onClick={if(!paused && !run.solved)
-                            {{onSteer(lane)}} else {{}},
+                        onClick={if(!paused && !run.solved)onSteer(lane)},
                         modifier=Modifier.weight(1f).heightIn(min=54.dp)
                             .testTag("space_lane_"+lane),
                         border=BorderStroke(if(run.lane==lane)2.dp else 1.dp,
@@ -632,7 +631,7 @@ private fun SpaceReactor(
                 textAlign=TextAlign.Center)
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
                 listOf(-5,-1,1,5).forEach{delta->
-                    OutlinedButton(onClick={onFuel.let{{it(delta)}}},
+                    OutlinedButton(onClick={onFuel(delta)},
                         enabled=!run.solved,
                         modifier=Modifier.weight(1f).heightIn(min=58.dp)
                             .testTag("space_fuel_"+delta),

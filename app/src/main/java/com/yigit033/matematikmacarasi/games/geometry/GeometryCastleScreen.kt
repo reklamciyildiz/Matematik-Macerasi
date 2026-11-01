@@ -44,6 +44,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -76,7 +78,10 @@ private fun CastleAction(text: String, enabled: Boolean = true, onClick: () -> U
 
 @Composable
 private fun CastleScene(drawableId: Int, description: String, big: Boolean = false) {
-    val imageHeight = if(big) 205.dp else 128.dp
+    // Shorter decorative scene on small phones: the actual puzzle stays above the fold.
+    val compact = LocalConfiguration.current.screenHeightDp < 700
+    val imageHeight = if (big) (if (compact) 158.dp else 205.dp)
+        else (if (compact) 100.dp else 124.dp)
     Box(
         Modifier.fillMaxWidth().height(imageHeight)
             .clip(RoundedCornerShape(20.dp))
@@ -100,9 +105,11 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
         val p = Path()
         when(shape) {
             CastleShape.CIRCLE -> {
-                if(!outlineOnly) drawCircle(color, radius = minOf(w,h) * .35f)
-                drawCircle(Color.White.copy(alpha=.8f), radius=minOf(w,h)*.35f,
-                    style=Stroke(width=3.0f))
+                // Çember is an outline, not a filled disk (daire).
+                drawCircle(if(outlineOnly) Gold else color,
+                    radius=minOf(w,h)*.35f,style=Stroke(width=if(outlineOnly) 6f else 7f))
+                if(!outlineOnly) drawCircle(Color.White.copy(alpha=.86f),
+                    radius=minOf(w,h)*.35f,style=Stroke(width=2.0f))
             }
             else -> {
                 val sides = when(shape) {
@@ -153,8 +160,8 @@ private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Bo
     Surface(
         modifier = Modifier.fillMaxWidth().heightIn(min = 118.dp)
             .graphicsLayer { scaleX=scale; scaleY=scale }
-            .clickable(enabled=enabled, onClick=onClick)
-            .semantics { contentDescription = "${shape.display} taşı" },
+            .clickable(enabled=enabled,role=Role.Button,onClick=onClick)
+            .semantics { contentDescription = "${shape.display} şekli, seçmek için dokun" },
         shape=RoundedCornerShape(18.dp),
         color=if(active) Color(0xFF397A77) else Color(0xFF245875),
         border=androidx.compose.foundation.BorderStroke(
@@ -166,7 +173,8 @@ private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Bo
         ) {
             ShapeIcon(shape, if(active) Gold else Color(0xFF70DDEA),
                 Modifier.size(72.dp))
-            Text(shape.display, color=Color.White,fontSize=13.sp,
+            // Names stay available to TalkBack but do not reveal a visual question's answer.
+            Text("Seç", color=Color.White,fontSize=13.sp,
                 fontWeight=FontWeight.Bold)
         }
     }
@@ -195,13 +203,13 @@ private fun CastleMirrorBoard(task: CastleTask, mask: Int, enabled: Boolean, onT
                         task.leftMask and (1 shl bitIndex) != 0
                     else mask and (1 shl bitIndex) != 0
                     Box(
-                        Modifier.weight(1f).height(if(size==6) 43.dp else 54.dp)
+                        Modifier.weight(1f).height(if(size==6) 48.dp else 54.dp)
                             .clip(RoundedCornerShape(7.dp))
                             .background(if(colored) (if(left) Gold else Mint)
                                 else if(left) Color(0xFF32566C) else Color(0xFF235A75))
                             .border(1.dp, if(colored) Color.White else Color(0xFF598EA2),
                                 RoundedCornerShape(7.dp))
-                            .clickable(enabled=!left && enabled) { onToggle(row,col-half) }
+                            .clickable(enabled=!left && enabled,role=Role.Button) { onToggle(row,col-half) }
                             .semantics {
                                 contentDescription=if(left)
                                     "Sol vitray ${row+1}. satır ${col+1}. sütun, " +
@@ -273,12 +281,12 @@ fun GeometryCastleScreen(
     val landing = run.seed == 0L || run.finished
     val room = if(run.room in 0..3) CastleRoom.entries[run.room] else CastleRoom.CROWN
     val scene = when {
-        landing && !run.finished -> R.drawable.geometry_castle_hero
-        landing -> R.drawable.geometry_castle_crown
-        run.room == 0 -> R.drawable.geometry_castle_courtyard
-        run.room == 1 -> R.drawable.geometry_castle_bridge
-        run.room == 2 -> R.drawable.geometry_castle_mirror
-        else -> R.drawable.geometry_castle_crown
+        landing && !run.finished -> R.drawable.geometry_castle_hero_premium
+        landing -> R.drawable.geometry_castle_complete_premium
+        run.room == 0 -> R.drawable.geometry_castle_courtyard_premium
+        run.room == 1 -> R.drawable.geometry_castle_bridge_premium
+        run.room == 2 -> R.drawable.geometry_castle_mirror_premium
+        else -> R.drawable.geometry_castle_crown_premium
     }
     Column(
         Modifier.fillMaxSize().background(Brush.verticalGradient(
@@ -309,20 +317,10 @@ fun GeometryCastleScreen(
             CastleScene(scene,if(run.finished) "Tamamlanmış, ışıldayan Geometri Kalesi"
                 else "Büyülü geometri kalesi",big=true)
             if(!run.finished) {
-                Row(Modifier.fillMaxWidth(),
-                    verticalAlignment=Alignment.CenterVertically,
-                    horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-                    Image(
-                        painter=painterResource(R.drawable.geometry_piko),
-                        contentDescription="Piko, güler yüzlü taş-golem kale rehberi",
-                        modifier=Modifier.size(68.dp)
-                    )
-                    Column(Modifier.weight(1f)) {
-                        Text("Kayıp Kristaller",color=Gold,fontSize=24.sp,
-                            fontWeight=FontWeight.Black)
-                        Text("Piko seni bekliyor!",color=Mint,fontSize=13.sp)
-                    }
-                }
+                // Piko already appears in the hero. Do not stack a second oversized portrait.
+                Text("Kayıp Kristaller",color=Gold,fontSize=24.sp,
+                    fontWeight=FontWeight.Black)
+                Text("Piko seni bekliyor!",color=Mint,fontSize=13.sp)
                 Text("Piko'nun kalesini şekiller, köprüler ve simetrik vitraylarla onar.",
                     color=Pale,fontSize=15.sp,lineHeight=23.sp)
                 Text("Oyun seviyesini seç",color=Color.White,
@@ -397,16 +395,22 @@ fun GeometryCastleScreen(
                 CastleAction("Haritaya Dön",onClick=onExit)
             }
         } else {
-            Text("${room.title} · Görev ${run.step+1}/3",
-                color=Gold,fontSize=23.sp,fontWeight=FontWeight.Black)
+            Text("${room.title} · Görev ${run.step+1}/3 · ${run.room*3+run.step+1}/12",
+                color=Gold,fontSize=21.sp,fontWeight=FontWeight.Black)
             Crossfade(targetState=scene,animationSpec=tween(260),
                 label="castle chamber") { art ->
                 CastleScene(art,room.title+" kale sahnesi")
             }
             val task=GeometryCastleEngine.task(run)
             if(task != null) {
-                Text(task.prompt,fontSize=18.sp,lineHeight=25.sp,
-                    fontWeight=FontWeight.Bold,color=Color.White)
+                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
+                    horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                    Image(painter=painterResource(R.drawable.geometry_piko_premium),
+                        contentDescription=null,modifier=Modifier.size(42.dp))
+                    Text(task.prompt,fontSize=18.sp,lineHeight=25.sp,
+                        fontWeight=FontWeight.Bold,color=Color.White,
+                        modifier=Modifier.weight(1f))
+                }
                 when(task.mode) {
                     CastleMode.FIND,CastleMode.BUILD -> {
                         if(task.mode == CastleMode.BUILD) {
@@ -414,8 +418,12 @@ fun GeometryCastleScreen(
                                 color=Mint,fontSize=12.sp)
                             Surface(
                                 modifier=Modifier.fillMaxWidth().heightIn(min=104.dp)
-                                    .clickable(enabled=!run.solved && run.selected != null) {
+                                    .clickable(enabled=!run.solved && run.selected != null,role=Role.Button) {
                                         submit(run.selected==task.target,run.selected)
+                                    }.semantics {
+                                        contentDescription = if(run.selected==null)
+                                            "Köprü yuvası, önce taş seç"
+                                            else "Köprü yuvası, seçili taşı yerleştir"
                                     },
                                 color=Color(0xFF194C69),
                                 shape=RoundedCornerShape(18.dp),
@@ -495,11 +503,13 @@ fun GeometryCastleScreen(
                         CastleMode.SYMMETRY -> "Her sol kareyi orta çizgiye göre sağa yansıt."
                     },color=Mint,fontSize=13.sp)
                 }
-                if(feedback.isNotBlank())
-                    Surface(color=if(feedbackPositive) Color(0xFF245E66)
+                val currentFeedback = if(run.solved && feedback.isBlank())
+                    task.explanation else feedback
+                if(currentFeedback.isNotBlank())
+                    Surface(color=if(run.solved || feedbackPositive) Color(0xFF245E66)
                         else Color(0xFF724C48),
                         shape=RoundedCornerShape(14.dp)) {
-                        Text(feedback,Modifier.padding(13.dp),color=Color.White,
+                        Text(currentFeedback,Modifier.padding(13.dp),color=Color.White,
                             fontSize=14.sp)
                     }
                 if(run.solved) {

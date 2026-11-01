@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
@@ -25,6 +28,8 @@ import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 class MarketSimulatorActivity : ComponentActivity() {
     private lateinit var store: MarketAdventureStore
     private lateinit var starManager: StarManager
+    private lateinit var purchaseManager: PurchaseManager
+    private lateinit var stallStore: MarketStallStore
 
     companion object {
         private const val TAG="MarketPremium"
@@ -35,15 +40,22 @@ class MarketSimulatorActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         store=MarketAdventureStore(this)
         starManager=StarManager.getInstance(this)
+        purchaseManager=PurchaseManager.getInstance(this)
+        stallStore=MarketStallStore(this)
+        purchaseManager.queryPurchases()
         recoverReward()
         val last=store.load()
         if(last.finished) recordCompleted(last)
 
         setContent {
+            val premiumFlow by purchaseManager.premiumState.collectAsState()
             MatematikMacerasiTheme {
                 Surface(Modifier.fillMaxSize()) {
                     MarketAdventureScreen(
                         store=store,
+                        stallStore=stallStore,
+                        hasPremium=premiumFlow || purchaseManager.isPremiumSync(),
+                        onUpgrade={purchaseManager.launchPurchaseFlow(this)},
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.MARKET).currentTier,
                         onExit={finish()},
@@ -57,7 +69,7 @@ class MarketSimulatorActivity : ComponentActivity() {
     private fun recoverReward() {
         if(!store.isFirstCompletion()) return
         val run=store.load()
-        if(!run.finished) return
+        if(!run.finished || run.singleShop) return
         val earned=MarketAdventureEngine.starsFor(run)
         if(earned<=store.bestAwardedStars()) return
         runCatching {
@@ -70,7 +82,7 @@ class MarketSimulatorActivity : ComponentActivity() {
 
     private fun recordCompleted(run: MarketAdventureRun) {
         if(!run.finished) return
-        recoverReward()
+        if(!run.singleShop) recoverReward()
         if(store.markDelivered(run.seed)) {
             runCatching {
                 DailyTaskManager.getInstance(this).recordCompletedGameTask(

@@ -25,7 +25,7 @@ data class MarketScenario(
     }
 }
 enum class MarketAdventurePhase { WELCOME, SHOP, PAYMENT, CHANGE, COMPLETE, BONUS }
-enum class MarketBonusKind { WEIGHT, VOLUME, SAVINGS, DISCOUNT, COMPARE, PROFIT }
+enum class MarketBonusKind { WEIGHT, VOLUME, SAVINGS, DISCOUNT, COMPARE, PROFIT, BUDGET, UNIT_PRICE, BUNDLE }
 data class MarketBonus(
     val kind: MarketBonusKind, val title: String, val prompt: String,
     val explanation: String, val correctKurus: Int, val choicesKurus: List<Int>
@@ -44,7 +44,8 @@ data class MarketAdventureRun(
     val taskHadError: Boolean = false,
     val taskHadHint: Boolean = false,
     val completedRuns: Int = 0,
-    val contentVersion: Int = 1
+    val contentVersion: Int = 1,
+    val premiumJourney: Boolean = false
 ) {
     val finished get() = phase == MarketAdventurePhase.COMPLETE
 }
@@ -57,10 +58,16 @@ object MarketAdventureEngine {
     const val DECISIONS = 9
     const val PREMIUM_VISITS = 6
     const val PREMIUM_DECISIONS = 24
-    fun visitCount(run: MarketAdventureRun) =
-        if(run.contentVersion>=2) PREMIUM_VISITS else VISITS
-    fun decisionCount(run: MarketAdventureRun) =
-        if(run.contentVersion>=2) PREMIUM_DECISIONS else DECISIONS
+    const val EXPANDED_VISITS = 10
+    const val FREE_VISITS = MarketPremiumCatalog.FREE_SHOPS
+    fun visitCount(run: MarketAdventureRun): Int = when {
+        run.contentVersion>=3 -> if(run.premiumJourney) EXPANDED_VISITS else FREE_VISITS
+        run.contentVersion>=2 -> PREMIUM_VISITS
+        else -> VISITS
+    }
+    fun decisionCount(run: MarketAdventureRun): Int =
+        if(run.contentVersion>=3) visitCount(run)*4
+        else if(run.contentVersion==2) PREMIUM_DECISIONS else DECISIONS
 
     private data class Template(val name: String, val hint: String,
         val goods: List<Triple<String,String,Int>>)
@@ -200,6 +207,7 @@ object MarketAdventureEngine {
                     "${format(sale)} fiyatla sattın. Kârın kaç TL?"
                 explanation="Kâr = satış fiyatı − maliyet. Para üstüyle karıştırma."
             }
+            else -> error("Unsupported bonus in legacy generator")
         }
         val choices=linkedSetOf(correct,correct+100,correct+200,
             (correct-100).coerceAtLeast(0),correct+500)
@@ -209,8 +217,16 @@ object MarketAdventureEngine {
 
     /** Only the best 1–3-star result is awarded by StarManager's high-water policy. */
     fun starsFor(run: MarketAdventureRun): Int = if(!run.finished) 0 else when {
-        run.perfectDecisions >= (if(run.contentVersion>=2) 21 else 8) -> 3
-        run.perfectDecisions >= (if(run.contentVersion>=2) 14 else 5) -> 2
+        run.perfectDecisions >= when {
+            run.contentVersion>=3 -> (decisionCount(run)*85+99)/100
+            run.contentVersion==2 -> 21
+            else -> 8
+        } -> 3
+        run.perfectDecisions >= when {
+            run.contentVersion>=3 -> (decisionCount(run)*55+99)/100
+            run.contentVersion==2 -> 14
+            else -> 5
+        } -> 2
         else -> 1
     }
 
@@ -223,6 +239,7 @@ object MarketAdventureEngine {
 
     fun scenarios(seed: Long, tier: LearningTier, contentVersion: Int = 1): List<MarketScenario> {
         require(seed>0)
+        if(contentVersion>=3) return MarketPremiumCatalog.scenarios(seed,tier)
         val r = Random(seed xor 0x7315B4L)
         val selected=if(contentVersion>=2) templates+extraTemplates else templates
         return selected.mapIndexed { visit, template ->
@@ -294,7 +311,7 @@ object MarketAdventureEngine {
     }
 
     fun valid(run: MarketAdventureRun): Boolean {
-        if(run.seed<0L || run.contentVersion !in 1..2 || run.visit !in 0..visitCount(run) ||
+        if(run.seed<0L || run.contentVersion !in 1..3 || (run.contentVersion<3 && run.premiumJourney) || run.visit !in 0..visitCount(run) ||
             run.attempts<0 || run.errors !in 0..run.attempts ||
             run.hints<0 || run.perfectDecisions !in 0..decisionCount(run) ||
             run.paidKurus<0 || run.completedRuns<0 ||

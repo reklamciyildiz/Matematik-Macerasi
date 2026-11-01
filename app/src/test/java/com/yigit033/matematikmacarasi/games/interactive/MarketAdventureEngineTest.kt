@@ -31,6 +31,13 @@ class MarketAdventureEngineTest {
                 assertTrue(visit.payOptionsKurus.all { it>0 })
                 assertTrue(visit.changeOptionsKurus.all { it>=0 })
                 assertTrue(visit.cashierPayKurus>=visit.requiredTotal())
+                val unit = when(tier) {
+                    LearningTier.TEMEL -> 5000
+                    LearningTier.GELISEN -> 10000
+                    LearningTier.USTALIK -> 20000
+                }
+                assertEquals(0,visit.cashierPayKurus % unit)
+                assertTrue(visit.cashierPayKurus>visit.requiredTotal())
                 assertTrue(visit.requiredTotal() % 50 == 0)
             }
         }

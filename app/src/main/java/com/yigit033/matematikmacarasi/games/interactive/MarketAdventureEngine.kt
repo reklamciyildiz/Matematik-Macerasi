@@ -45,7 +45,9 @@ data class MarketAdventureRun(
     val taskHadHint: Boolean = false,
     val completedRuns: Int = 0,
     val contentVersion: Int = 1,
-    val premiumJourney: Boolean = false
+    val premiumJourney: Boolean = false,
+    val singleShop: Boolean = false,
+    val startShop: Int = 0
 ) {
     val finished get() = phase == MarketAdventurePhase.COMPLETE
 }
@@ -61,10 +63,14 @@ object MarketAdventureEngine {
     const val EXPANDED_VISITS = 10
     const val FREE_VISITS = MarketPremiumCatalog.FREE_SHOPS
     fun visitCount(run: MarketAdventureRun): Int = when {
+        run.contentVersion>=3 && run.singleShop -> 1
         run.contentVersion>=3 -> if(run.premiumJourney) EXPANDED_VISITS else FREE_VISITS
         run.contentVersion>=2 -> PREMIUM_VISITS
         else -> VISITS
     }
+    fun finalVisit(run: MarketAdventureRun): Int =
+        if(run.contentVersion>=3 && run.singleShop) run.startShop+1
+        else visitCount(run)
     fun decisionCount(run: MarketAdventureRun): Int =
         if(run.contentVersion>=3) visitCount(run)*4
         else if(run.contentVersion==2) PREMIUM_DECISIONS else DECISIONS
@@ -296,7 +302,7 @@ object MarketAdventureEngine {
     }
 
     fun scenario(run: MarketAdventureRun): MarketScenario? =
-        if(run.seed>0 && run.visit in 0 until visitCount(run))
+        if(run.seed>0 && run.visit in run.startShop until finalVisit(run))
             scenarios(run.seed,run.tier,run.contentVersion)[run.visit] else null
 
     fun amount(run: MarketAdventureRun, scenario: MarketScenario): Int =
@@ -311,14 +317,17 @@ object MarketAdventureEngine {
     }
 
     fun valid(run: MarketAdventureRun): Boolean {
-        if(run.seed<0L || run.contentVersion !in 1..3 || (run.contentVersion<3 && run.premiumJourney) || run.visit !in 0..visitCount(run) ||
+        if(run.seed<0L || run.contentVersion !in 1..3 || (run.contentVersion<3 && run.premiumJourney) || run.visit !in run.startShop..finalVisit(run) ||
+            (run.contentVersion<3 && (run.singleShop || run.startShop!=0)) ||
+            (run.contentVersion>=3 && (run.startShop !in 0..9 ||
+                (run.singleShop && !run.premiumJourney && run.startShop>=FREE_VISITS))) ||
             run.attempts<0 || run.errors !in 0..run.attempts ||
             run.hints<0 || run.perfectDecisions !in 0..decisionCount(run) ||
             run.paidKurus<0 || run.completedRuns<0 ||
             run.basket.size>4 || run.basket.map { it.productId }.distinct().size!=run.basket.size ||
             run.basket.any { it.productId<=0 || it.quantity !in 1..3 } ||
             (run.seed==0L && (run.visit!=0 || run.phase!=MarketAdventurePhase.WELCOME)) ||
-            ((run.phase==MarketAdventurePhase.COMPLETE)!=(run.visit==visitCount(run))) ||
+            ((run.phase==MarketAdventurePhase.COMPLETE)!=(run.visit==finalVisit(run))) ||
             (run.phase==MarketAdventurePhase.WELCOME && run.visit!=0)) return false
         if(run.seed==0L) return run.basket.isEmpty()
         if(run.phase==MarketAdventurePhase.COMPLETE)
@@ -391,7 +400,7 @@ object MarketAdventureEngine {
     }
 
     private fun nextVisit(run: MarketAdventureRun): MarketAdventureRun {
-        val last=run.visit==visitCount(run)-1
+        val last=run.visit==finalVisit(run)-1
         return run.copy(
             visit=run.visit+1,
             phase=if(last) MarketAdventurePhase.COMPLETE else MarketAdventurePhase.SHOP,

@@ -84,6 +84,21 @@ def main():
         saved_source=store.read_text(encoding="utf-8")
         if "contentVersion=3" not in saved_source or "singleShop" not in saved_source:
             errors.append("version-three stored progress and quick sessions missing")
+    # UX acceptance: restored progress must not bypass the explicit entry map.
+    if "var showLobby by rememberSaveable" not in screen or \
+       "if(showLobby) MarketAdventurePhase.WELCOME" not in screen:
+        errors.append("market launch no longer begins at the explicit entry map")
+    if "Kaldığım Yerden Devam Et" not in screen:
+        errors.append("resume saved market run action missing")
+    if "pendingNewRun" not in screen or "Yeni oyuna başlansın mı?" not in screen:
+        errors.append("replacing an active market run has no confirmation")
+    if "safeDrawingPadding()" not in screen:
+        errors.append("market scene can overlap system status or navigation bars")
+    markers=['Zorluk seviyeni seç', '10 Mağazalık Maceraya Gir',
+             'Tek Mağazalık Hızlı Oyun']
+    if any(x not in screen for x in markers) or \
+       not all(screen.index(a)<screen.index(b) for a,b in zip(markers,markers[1:])):
+        errors.append("market landing screen has incorrect grade/start/quick-play order")
     if errors:
         for error in errors:print("ERROR:",error,file=sys.stderr)
         return 1

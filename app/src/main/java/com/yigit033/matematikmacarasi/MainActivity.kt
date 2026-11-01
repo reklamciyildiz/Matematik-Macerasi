@@ -997,7 +997,7 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
                     GameType.NUMBER_HUNT_GAME -> Intent(context, com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity::class.java)
                     GameType.MATH_MAZE_GAME -> Intent(context, MathMazeGameActivity::class.java)
                     GameType.SPACE_MATH_ADVENTURE -> Intent(context, SpaceMathAdventureActivity::class.java)
-                    GameType.SHAPE_RECOGNITION -> Intent(context, GameSelectionActivity::class.java)
+                    GameType.SHAPE_RECOGNITION -> Intent(context, com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity::class.java)
                     GameType.MARKET_SIMULATOR -> Intent(context, GameSelectionActivity::class.java)
                 }
                 intent.putExtra("daily_task_id", task.id)
@@ -1379,8 +1379,8 @@ fun GameContentSection(
                         color = Color(0xFF009688),
                         badgeCount = 0,
                         onClick = {
-                            val intent = Intent(context, ComingSoonActivity::class.java)
-                            intent.putExtra("game_name", "Şekiller & Matematik")
+                            val intent = Intent(context, com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity::class.java)
+                            // Canonical playable Geometry Castle
                             intent.putExtra("color_code", 0xFF009688.toInt())
                             intent.putExtra("game_description", "geometrik şekiller ve özelliklerini")
                             intent.putExtra("is_category", true)

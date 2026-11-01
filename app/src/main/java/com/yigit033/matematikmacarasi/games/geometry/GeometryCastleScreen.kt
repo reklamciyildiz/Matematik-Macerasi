@@ -201,6 +201,55 @@ private fun CastleMirrorBoard(task: CastleTask, mask: Int, enabled: Boolean, onT
     }
 }
 
+/** Age-banded reference sheet, not a button that solves the active puzzle. */
+private fun geometryFact(shape: CastleShape): String = when(shape) {
+    CastleShape.CIRCLE -> "Düz kenarı ve köşesi olmayan kapalı eğri."
+    CastleShape.TRIANGLE -> "3 düz kenar, 3 köşe."
+    CastleShape.SQUARE -> "4 eşit kenar ve 4 dik açı. Karenin açıları 90°."
+    CastleShape.RECTANGLE -> "4 dik açı; karşı kenarlar eşit uzunlukta."
+    CastleShape.PENTAGON -> "5 düz kenar, 5 köşe."
+    CastleShape.HEXAGON -> "6 düz kenar, 6 köşe."
+    CastleShape.RHOMBUS -> "4 eşit kenar; bu örneğin açıları dik değil."
+    CastleShape.PARALLELOGRAM -> "Karşılıklı iki kenar çifti paralel ve eşit."
+    CastleShape.TRAPEZOID -> "Bu örnekte yalnızca bir çift karşı kenar paralel."
+    CastleShape.OCTAGON -> "8 düz kenar, 8 köşe."
+}
+
+@Composable
+private fun CastleShapeCollection(tier: LearningTier, onClose: () -> Unit) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest=onClose,
+        title={ Text("Şekil Koleksiyonu",fontWeight=FontWeight.Bold) },
+        text={
+            Column(Modifier.heightIn(max=420.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement=Arrangement.spacedBy(12.dp)) {
+                Text("${tier.title} seviyesi · ${GeometryCastleEngine.available(tier).size} şekil",
+                    fontSize=13.sp,color=Color(0xFF30576C))
+                GeometryCastleEngine.available(tier).forEach { shape ->
+                    Row(Modifier.fillMaxWidth(),
+                        verticalAlignment=Alignment.CenterVertically,
+                        horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                        Surface(shape=RoundedCornerShape(12.dp),
+                            color=Color(0xFF1F5B73)) {
+                            ShapeIcon(shape,Gold,Modifier.size(64.dp).padding(6.dp))
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(shape.display,color=Ink,fontWeight=FontWeight.Bold)
+                            Text(geometryFact(shape),color=Color(0xFF365668),
+                                fontSize=12.sp,lineHeight=17.sp)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton={
+            androidx.compose.material3.TextButton(onClick=onClose) {
+                Text("Kapat")
+            }
+        }
+    )
+}
+
 @Composable
 fun GeometryCastleScreen(
     store: GeometryCastleProgressStore,
@@ -213,6 +262,7 @@ fun GeometryCastleScreen(
     var feedback by remember { mutableStateOf("") }
     var showExit by remember { mutableStateOf(false) }
     var feedbackPositive by remember { mutableStateOf(true) }
+    var showCollection by remember { mutableStateOf(false) }
     val scroll = rememberScrollState()
     LaunchedEffect(run.room,run.step,run.seed) { scroll.scrollTo(0) }
 
@@ -273,6 +323,12 @@ fun GeometryCastleScreen(
                 onClick={showExit=false;onExit()}){Text("Haritaya dön")}},
             dismissButton={androidx.compose.material3.TextButton(
                 onClick={showExit=false}){Text("Devam et")}}
+        )
+    }
+    if(showCollection) {
+        CastleShapeCollection(
+            tier=if(run.seed==0L) tier else run.tier,
+            onClose={ showCollection=false }
         )
     }
     val landing = run.seed == 0L || run.finished
@@ -358,6 +414,12 @@ fun GeometryCastleScreen(
                     if(started!=null) {run=started;feedback=""}
                     else feedback="Yeni keşif kaydedilemedi."
                 }
+                OutlinedButton(onClick={showCollection=true},
+                    modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+                    border=androidx.compose.foundation.BorderStroke(1.dp,Mint),
+                    colors=ButtonDefaults.outlinedButtonColors(contentColor=Pale)) {
+                    Text("◇ Şekil Koleksiyonunu İncele")
+                }
             } else {
                 Text("Kale yeniden aydınlandı!",color=Gold,fontSize=24.sp,
                     fontWeight=FontWeight.Black)
@@ -390,6 +452,12 @@ fun GeometryCastleScreen(
                     val started=store.begin(run.tier)
                     if(started!=null) {run=started;feedback=""}
                     else feedback="Yeni keşif kaydedilemedi."
+                }
+                OutlinedButton(onClick={showCollection=true},
+                    modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+                    colors=ButtonDefaults.outlinedButtonColors(contentColor=Pale),
+                    border=androidx.compose.foundation.BorderStroke(1.dp,Mint)) {
+                    Text("◇ Şekil Koleksiyonunu İncele")
                 }
                 CastleAction("Haritaya Dön",onClick=onExit)
             }

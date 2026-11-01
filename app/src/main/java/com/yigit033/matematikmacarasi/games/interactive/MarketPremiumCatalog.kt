@@ -80,7 +80,7 @@ object MarketPremiumCatalog {
     )
 
     val productCount:Int get()=shops.sumOf { it.products.size }
-    const val FREE_SHOPS=3
+    const val FREE_SHOPS=com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy.FREE_MARKET_SHOPS
 
     fun scenarios(seed:Long,tier:LearningTier):List<MarketScenario> {
         require(seed>0L)

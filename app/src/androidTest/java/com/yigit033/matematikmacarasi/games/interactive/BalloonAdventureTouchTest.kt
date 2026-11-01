@@ -28,14 +28,15 @@ class BalloonAdventureTouchTest {
             BalloonAdventureScreen(
                 run=state.value,suggestedTier=LearningTier.TEMEL,
                 records=emptyMap(),historicalStars=emptyMap(),feedback="",
-                onStart={realm,tier->
-                    state.value=BalloonAdventureEngine.begin(73L,realm,tier)
+                onStart={realm,tier,pace->
+                    state.value=BalloonAdventureEngine.begin(73L,realm,tier,pace)
                     true
                 },
                 onChoose={value->
                     state.value=BalloonAdventureEngine.choose(state.value,value)
                 },
                 onHint={state.value=BalloonAdventureEngine.hint(state.value)},
+                onEscape={state.value=BalloonAdventureEngine.escape(state.value)},
                 onNext={state.value=BalloonAdventureEngine.continueAfterAnswer(state.value)},
                 onExit={}
             )
@@ -68,21 +69,24 @@ class BalloonAdventureTouchTest {
             BalloonAdventureScreen(
                 run=state.value,suggestedTier=LearningTier.TEMEL,
                 records=emptyMap(),historicalStars=emptyMap(),feedback="",
-                onStart={realm,tier->
-                    state.value=BalloonAdventureEngine.begin(77L,realm,tier)
+                onStart={realm,tier,pace->
+                    state.value=BalloonAdventureEngine.begin(77L,realm,tier,pace)
                     true
                 },
-                onChoose={},onHint={},onNext={},onExit={}
+                onChoose={},onHint={},onEscape={},onNext={},onExit={}
             )
         }
         composeRule.onNodeWithTag("balloon_realm_CLOUD")
             .performScrollTo().performClick()
         composeRule.onNodeWithText("Gelişen").performScrollTo().performClick()
+        composeRule.onNodeWithTag("balloon_pace_CHALLENGE")
+            .performScrollTo().performClick()
         composeRule.onNodeWithText("🚀 Bulut Koyu Macerasını Başlat")
             .performScrollTo().performClick()
         composeRule.runOnIdle {
             assertEquals(BalloonRealm.CLOUD,state.value?.realm)
             assertEquals(LearningTier.GELISEN,state.value?.tier)
+            assertEquals(BalloonPace.CHALLENGE,state.value?.pace)
         }
     }
 }

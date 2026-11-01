@@ -42,3 +42,38 @@ Tarih: 1 Kasım 2026 · Kotlin / Jetpack Compose · kanonik Android oyunu
 10. Öğrenme istatistikleri/daily task aynı bitirme için ikinci kez artmasın; diğer oyunların yıldızları, avatarları ve Premium hakları bozulmasın.
 
 **Önemli:** Uygulamanın Play Store release adayı olması için S3.3 gerçek Play Billing/Families/Data Safety/AAB kapıları ayrıca tamamlanmalıdır. Buradaki CI yalnız Android debug ve JUnit doğrulamasıdır.
+
+## S3.5.1 — Gerçek zamanlı Balon Avı revizyonu
+
+Önceki sabit 2×2 şıklı kartlar kaldırıldı; `BalloonSkyArena` artık 410dp'lik,
+kaydırılabilir ekranın içindeki gerçek zamanlı bir oyun sahasıdır. Dört balon kendi
+yerleşim ve sağa-sola salınımıyla gökyüzünde **yukarı doğru uçarken** gerçek
+Surface dokunma yüzeyleri de aynı koordinatlara taşınır.
+
+- **Keşif (varsayılan):** 23 saniyelik yavaş dalga; kaçan balonlardan ceza yok,
+  aynı matematik sorusu yeniden dört balonla gelir. Çocuk için zorunlu başarısızlık yok.
+- **Rüzgâr Yarışı (isteğe bağlı):** 12 saniyelik dalga; hedef kaçarsa
+  seri sıfırlanır, puan 30 düşer, mevcut soru aynı kalır.
+- Yanlış balon patlayıp kaybolur: deneme kaydı ve puan −20, seri sıfır.
+  Başka bir yanlış balona basmak mümkün; aynı patlamış balon tekrar cezalandıramaz.
+- Doğru balon patlama halkasıyla işaretlenir, animasyon durur ve
+  matematiksel açıklama + devam eylemi görünür. Cevap yine motor tarafından
+  doğrulanır; görsel pozisyon doğruluk hesaplamasını etkileyemez.
+- Oyunda elle **Durdur/Devam** bulunur; Activity arka plana geçerse oyun
+  otomatik durur. Duraklatılmış oyun kazara süre tüketmez.
+- `pace/escapes/wave` aynı `balloon_adventure_v2` kaydına eklenmiştir;
+  eski devam kayıtları Keşif moduyla açılır. Eski yıldız ve görev anahtarları değişmedi.
+- Üst/alt harita dekorasyonu, farklı dünya renkleri, yıldızlı gökyüzü,
+  balon parlaması, bulut hareketi ve parçacık patlamaları Compose Canvas ile
+  yerel çizilir. Harici internet, süreli reklam veya satın alma tetiklenmez.
+- Erişilebilirlik: 100dp ölçeğinde hareketli dokunma hedefleri;
+  zorluk hızını seçme ve sahneyi kalıcı durdurabilme. TalkBack ve düşük cihaz
+  performansı fiziki cihazda ayrıca kabul edilmeli.
+
+**Saha kabul adımları:** İlk soru için hedeflerin sahnede yükseldiğini izle;
+yanlış hedefe dokununca patlama ve yeni puan/seri durumunu doğrula; doğru
+balonun patlayıp sorunun açıklamasının görünmesini kontrol et.
+Keşif modunda bir tam dalganın cezasız yenilenmesini, Rüzgâr Yarışı'nda
+kaçırılan dalganın puanı düşürdüğünü test et. Oyunu durdur/başlat,
+arka plana al/geri gel, telefon ekranını döndür, kaydet/yeniden aç;
+mevcut matematik sorusu ve kazanımlar korunmalı.

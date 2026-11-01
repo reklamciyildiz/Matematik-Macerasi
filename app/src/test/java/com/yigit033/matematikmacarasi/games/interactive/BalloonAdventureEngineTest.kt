@@ -101,6 +101,42 @@ class BalloonAdventureEngineTest {
         assertEquals(once,BalloonAdventureEngine.choose(once,wrong))
     }
 
+    @Test fun escapedFlightsNeverSkipMathAndChallengePenaltiesArePersistable() {
+        var relaxed=BalloonAdventureEngine.begin(
+            33L,BalloonRealm.SUN,LearningTier.TEMEL,BalloonPace.RELAXED)
+        relaxed=BalloonAdventureEngine.escape(relaxed)
+        assertEquals(1,relaxed.wave)
+        assertEquals(0,relaxed.escapes)
+        assertEquals(0,relaxed.index)
+        assertEquals(0,relaxed.errors)
+        assertTrue(BalloonAdventureEngine.valid(relaxed))
+        var challenge=BalloonAdventureEngine.begin(
+            55L,BalloonRealm.WIND,LearningTier.GELISEN,BalloonPace.CHALLENGE)
+        val first=BalloonAdventureEngine.question(challenge)
+        challenge=BalloonAdventureEngine.choose(challenge,first.answer)
+        challenge=BalloonAdventureEngine.continueAfterAnswer(challenge)
+        val baseline=BalloonAdventureEngine.score(challenge)
+        val q=BalloonAdventureEngine.question(challenge)
+        val wrong=q.choices.first {it!=q.answer}
+        challenge=BalloonAdventureEngine.choose(challenge,wrong)
+        assertEquals(1,challenge.errors)
+        challenge=BalloonAdventureEngine.escape(challenge)
+        assertEquals(1,challenge.escapes)
+        assertEquals(1,challenge.wave)
+        assertEquals(0,challenge.index-1)
+        assertEquals(0,challenge.streak)
+        assertEquals(0,challenge.wrongMask)
+        assertTrue(challenge.tainted)
+        assertEquals(baseline-50,BalloonAdventureEngine.score(challenge))
+        assertTrue(BalloonAdventureEngine.valid(challenge))
+        val chosen=BalloonAdventureEngine.choose(challenge,q.answer)
+        assertTrue(chosen.resolved)
+        assertEquals(1,chosen.firstTry)
+        assertEquals(chosen,BalloonAdventureEngine.escape(chosen))
+        assertTrue(BalloonAdventureEngine.valid(
+            BalloonAdventureEngine.continueAfterAnswer(chosen)))
+    }
+
     @Test fun eachWorldHasItsOwnCurricularOperation() {
         val tier=LearningTier.GELISEN
         assertTrue(BalloonAdventureEngine.question(19L,BalloonRealm.SUN,tier,0).expression.contains("+"))

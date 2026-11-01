@@ -247,6 +247,7 @@ fun MazeAdventureScreen(
     remainingPlays:Int,
     recommendedTier:LearningTier,
     completedRuns:Int,
+    regionRecords:Map<MazeRegion,MazeRegionRecord>,
     feedback:String,
     onStart:(MazeRegion,LearningTier)->Boolean,
     onMove:(MazeDirection)->Unit,
@@ -408,6 +409,11 @@ fun MazeAdventureScreen(
                                 Text("${MazeAdventureEngine.questionCount(region)} kapı · ${region.subtitle}",
                                     color=MazeColors.muted,fontSize=10.sp,
                                     lineHeight=14.sp)
+                                val record=regionRecords[region]
+                                if(record!=null && record.completed>0) {
+                                    Text("⭐ ${record.bestStars}/3  ·  ${record.completed} keşif",
+                                        color=MazeColors.gold,fontSize=10.sp)
+                                }
                             }
                         }
                     }
@@ -436,6 +442,9 @@ fun MazeAdventureScreen(
                         Text("${run.solvedCount} kapı · ${run.attempts} deneme · " +
                             "${run.errors} hata · ${run.hints} ipucu",
                             color=MazeColors.white,fontSize=12.sp)
+                        val record=regionRecords[run.region]
+                        Text("Bu bölgedeki en iyi: ${record?.bestStars ?: 0} yıldız",
+                            color=MazeColors.teal,fontSize=12.sp)
                         Text("Tekrar oynarken yalnız önceki en iyi yıldızını " +
                             "aşarsan ek yıldız kazanırsın.",
                             color=MazeColors.muted,fontSize=11.sp)

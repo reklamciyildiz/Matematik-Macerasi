@@ -67,7 +67,7 @@ class GeometryCastleActivity : ComponentActivity() {
                     level=3,
                     score=if(run.attempts==0) 0 else
                         ((run.attempts-run.errors)*100/run.attempts),
-                    stars=if(progress.rewardRecorded()) 1 else 0,
+                    stars=if(run.completedRuns==1 && progress.rewardRecorded()) 1 else 0,
                     gameStartTime=run.seed,
                     taskId=intent.getIntExtra("daily_task_id",-1)
                 )

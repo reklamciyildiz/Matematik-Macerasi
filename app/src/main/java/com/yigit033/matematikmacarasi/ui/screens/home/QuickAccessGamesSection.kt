@@ -98,7 +98,7 @@ fun QuickAccessGamesSection(
         PremiumGameCardItem(
             id = "number_hunt",
             title = "Sayı Avı",
-            imageRes = R.drawable.card_number_hunt,
+            imageRes = R.drawable.market_adventure_hero,
             bgGradient = listOf(Color(0xFF10B981), Color(0xFF059669)),
             borderColor = Color(0xFF6EE7B7),
             activityClass = SayiAvi2Activity::class.java

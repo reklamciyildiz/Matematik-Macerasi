@@ -60,7 +60,7 @@ object MarketAdventureEngine {
     const val DECISIONS = 9
     const val PREMIUM_VISITS = 6
     const val PREMIUM_DECISIONS = 24
-    const val EXPANDED_VISITS = 10
+    const val EXPANDED_VISITS = com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy.PREMIUM_MARKET_SHOPS
     const val FREE_VISITS = MarketPremiumCatalog.FREE_SHOPS
     fun visitCount(run: MarketAdventureRun): Int = when {
         run.contentVersion>=3 && run.singleShop -> 1

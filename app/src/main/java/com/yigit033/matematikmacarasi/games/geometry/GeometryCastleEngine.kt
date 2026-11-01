@@ -31,6 +31,7 @@ data class CastleRun(
     val room: Int = 0,
     val step: Int = 0,
     val selected: CastleShape? = null,
+    val solved: Boolean = false,
     val mirrorMask: Int = 0,
     val attempts: Int = 0,
     val errors: Int = 0,
@@ -161,7 +162,7 @@ object GeometryCastleEngine {
         val completed = run.room == 3 && run.step == 2
         val nextStep = if(run.step == 2) 0 else run.step + 1
         val nextRoom = if(run.step == 2) run.room+1 else run.room
-        return run.copy(room=nextRoom,step=nextStep,selected=null,mirrorMask=0,
+        return run.copy(room=nextRoom,step=nextStep,selected=null,solved=false,mirrorMask=0,
             firstTryCorrect=run.firstTryCorrect+
                 if(!run.hasHintInTask && !run.hasErrorInTask) 1 else 0,
             hasErrorInTask=false,hasHintInTask=false,

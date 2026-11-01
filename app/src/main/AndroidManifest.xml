@@ -196,6 +196,7 @@
         <!-- Billing Test Activity - Geliştirme ve test için -->
         <activity
             android:name=".services.payments.BillingTestActivity"
+            android:enabled="false"
             android:exported="false"
             android:theme="@style/Theme.MatematikMacerasi" />
         

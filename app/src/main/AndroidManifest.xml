@@ -43,12 +43,22 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-9425978099676149~7802874919"/>
             
-        <!-- Ana Aktivite (Varsayılan İkon) -->
+        <!-- MainActivity always stays enabled. Only launcher aliases are switched. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.App.Starting">
+            android:theme="@style/Theme.App.Starting" />
+
+        <!-- Default app launcher; existing robot/space aliases remain available. -->
+        <activity-alias
+            android:name=".DefaultIconActivity"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:targetActivity=".MainActivity"
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -56,7 +66,17 @@
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
-        </activity>
+        </activity-alias>
+
+        <!-- Repairs old devices that previously disabled MainActivity. -->
+        <receiver
+            android:name=".settings.IconUpgradeReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         
         <!-- Robot İkonu için Activity Alias -->
         <activity-alias

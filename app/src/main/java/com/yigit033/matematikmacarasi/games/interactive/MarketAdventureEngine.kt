@@ -65,6 +65,13 @@ object MarketAdventureEngine {
                 Triple("Kitap","📚",15),Triple("Robot","🤖",20)))
     )
 
+    /** Only the best 1–3-star result is awarded by StarManager's high-water policy. */
+    fun starsFor(run: MarketAdventureRun): Int = if(!run.finished) 0 else when {
+        run.perfectDecisions>=8 -> 3
+        run.perfectDecisions>=5 -> 2
+        else -> 1
+    }
+
     fun format(kurus: Int): String {
         val value = kurus.coerceAtLeast(0)
         val lira = value / 100

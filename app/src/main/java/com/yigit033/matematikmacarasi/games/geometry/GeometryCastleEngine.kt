@@ -71,7 +71,7 @@ object GeometryCastleEngine {
                 CastleShape.RECTANGLE -> "Karşılıklı kenarları eşit, kare olmayan şekli bul."
                 CastleShape.PENTAGON -> "Beş kenarlı şekli bul."
                 CastleShape.HEXAGON -> "Altı kenarlı şekli bul."
-            } else "Köprüdeki ${target.display.lowercase()} biçimindeki yuvaya uygun taşı seç."
+            } else "Köprünün boş yuvasındaki siluete uyan taşı seç ve yerleştir."
             val explanation = if(target == CastleShape.CIRCLE)
                 "Yuvarlak çemberin köşesi yoktur."
             else if(target == CastleShape.SQUARE)

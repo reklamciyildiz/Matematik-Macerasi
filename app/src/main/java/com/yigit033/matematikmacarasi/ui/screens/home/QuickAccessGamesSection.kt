@@ -131,7 +131,7 @@ fun QuickAccessGamesSection(
         PremiumGameCardItem(
             id = "shapes",
             title = "Şekiller &\nGeometri",
-            imageRes = R.drawable.geometry_castle_hero,
+            imageRes = R.drawable.geometry_castle_hero_premium,
             bgGradient = listOf(Color(0xFF0284C7), Color(0xFF0369A1)),
             borderColor = Color(0xFF38BDF8),
             activityClass = GeometryCastleActivity::class.java

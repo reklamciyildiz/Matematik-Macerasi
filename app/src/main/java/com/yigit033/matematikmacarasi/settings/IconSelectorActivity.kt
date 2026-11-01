@@ -95,175 +95,15 @@ class IconSelectorActivity : ComponentActivity() {
     /**
      * Uygulama ikonunu değiştir
      */
-    private fun changeAppIcon(iconType: String) {
-        val packageManager = packageManager
-        val context = this
-        
-        try {
-            // İkon tercihini kaydet
-            IconPreferenceManager.getInstance(this).saveSelectedIcon(iconType)
-            
-            // İkonları yapılandır
-            when (iconType) {
-                IconPreferenceManager.ICON_DEFAULT -> {
-                    // Varsayılan ikon için - MainActivity etkin, diğerleri devre dışı
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                }
-                IconPreferenceManager.ICON_ROBOT -> {
-                    // Robot ikonu için - RobotIconActivity etkin, diğerleri devre dışı
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                }
-                IconPreferenceManager.ICON_SPACE -> {
-                    // Uzay ikonu için - SpaceIconActivity etkin, diğerleri devre dışı
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                    packageManager.setComponentEnabledSetting(
-                        ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
-                        PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                        PackageManager.DONT_KILL_APP
-                    )
-                }
-            }
-            
-            // İkon değişimi yapıldı, kullanıcıya bildirim göster
-            Log.d("IconSelector", "İkon başarıyla değiştirildi: $iconType")
-            
-            // Kullanıcıya bilgi ver ve uygulamayı yeniden başlat
-            Toast.makeText(
-                this, 
-                "İkon değişiyor! Uygulama yeniden başlatılıyor...", 
-                Toast.LENGTH_LONG
-            ).show()
-            
-            // Uygulamayı yeniden başlat (1 saniye bekle)
-            Handler(Looper.getMainLooper()).postDelayed({
-                restartApplication()
-            }, 1000)
-        } catch (e: Exception) {
-            Log.e("IconSelector", "İkon değiştirme hatası: ${e.message}")
-            Toast.makeText(
-                this,
-                "İkon değiştirme sırasında bir hata oluştu.",
-                Toast.LENGTH_LONG
-            ).show()
-            
-            // Hata durumunda varsayılan ayarlara dön
-            try {
-                packageManager.setComponentEnabledSetting(
-                    ComponentName(packageName, "com.yigit033.matematikmacarasi.MainActivity"),
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-                packageManager.setComponentEnabledSetting(
-                    ComponentName(packageName, "com.yigit033.matematikmacarasi.RobotIconActivity"),
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-                packageManager.setComponentEnabledSetting(
-                    ComponentName(packageName, "com.yigit033.matematikmacarasi.SpaceIconActivity"),
-                    PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-            } catch (e2: Exception) {
-                Log.e("IconSelector", "Kurtarma hatası: ${e2.message}")
-            }
-        }
+    private fun changeAppIcon(iconType:String):Boolean {
+        val updated=IconLauncherManager.apply(applicationContext,iconType)
+        Toast.makeText(this,
+            if(updated) "İkon tercihin kaydedildi. Telefon ana ekranı birkaç saniye içinde güncellenebilir."
+            else "İkon değiştirilemedi. Önceki ikon korunuyor.",
+            Toast.LENGTH_LONG).show()
+        return updated
     }
-    
-    /**
-     * Uygulamayı güvenli bir şekilde yeniden başlat
-     */
-    private fun restartApplication() {
-        try {
-            // Ana ekrana dönmek ve uygulamayı yeniden başlatmak için Intent oluştur
-            val selectedIcon = IconPreferenceManager.getInstance(this).getSelectedIcon()
-            
-            // Package Manager'dan launcher intent al
-            val intent = packageManager.getLaunchIntentForPackage(packageName)
-            
-            if (intent != null) {
-                // Intent'in tüm önceki örneklerini temizle
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or 
-                               Intent.FLAG_ACTIVITY_CLEAR_TASK or
-                               Intent.FLAG_ACTIVITY_CLEAR_TOP
-                
-                Log.d("IconSelector", "Uygulama yeniden başlatılıyor: $packageName")
-                
-                // Kısa bir gecikme ile yeni bir intent başlat
-                startActivity(intent)
-                
-                // Tüm aktiviteleri kapat
-                finishAffinity()
-            } else {
-                Log.e("IconSelector", "Launcher intent bulunamadı, manuel yöntem deneniyor")
-                
-                // Alternatif yöntem - Ana aktiviteyi hedefleyen yeni bir intent oluştur
-                val mainIntent = Intent(this, MainActivity::class.java)
-                mainIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                startActivity(mainIntent)
-                finish()
-            }
-        } catch (e: Exception) {
-            Log.e("IconSelector", "Yeniden başlatma hatası: ${e.message}")
-            
-            try {
-                // Son çare - En basit yeniden başlatma yöntemi
-                val homeIntent = Intent(Intent.ACTION_MAIN)
-                homeIntent.addCategory(Intent.CATEGORY_HOME)
-                homeIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(homeIntent)
-                
-                // Bir uygulamadan çıkış yaptıktan sonra 500ms sonra tekrar aç
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-                    if (launchIntent != null) {
-                        startActivity(launchIntent)
-                    }
-                    finish()
-                }, 500)
-            } catch (e2: Exception) {
-                Log.e("IconSelector", "Kritik başlatma hatası: ${e2.message}")
-                finish()
-            }
-        }
-    }
-    
+
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun IconSelectorScreen(onBackClick: () -> Unit) {
@@ -376,8 +216,9 @@ class IconSelectorActivity : ComponentActivity() {
                         backgroundColor = Color(0xFF2196F3), // Mavi
                             isLocked = false,
                         onSelect = {
-                            selectedIcon = IconPreferenceManager.ICON_DEFAULT
-                            changeAppIcon(IconPreferenceManager.ICON_DEFAULT)
+                            if(changeAppIcon(IconPreferenceManager.ICON_DEFAULT)) {
+                                        selectedIcon = IconPreferenceManager.ICON_DEFAULT
+                                    }
                         }
                     )
                     
@@ -395,14 +236,16 @@ class IconSelectorActivity : ComponentActivity() {
                             purchaseManager?.withPremiumCheck(
                                 onPremium = {
                                     // Premium kullanıcılar için veya zaten seçili ise
-                                    selectedIcon = IconPreferenceManager.ICON_ROBOT
-                                    changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                    if(changeAppIcon(IconPreferenceManager.ICON_ROBOT)) {
+                                        selectedIcon = IconPreferenceManager.ICON_ROBOT
+                                    }
                                 },
                                 onNonPremium = {
                                     // Zaten kullandığı ikon ise değişikliğe izin ver
                                     if (selectedIcon == IconPreferenceManager.ICON_ROBOT) {
+                                        if(changeAppIcon(IconPreferenceManager.ICON_ROBOT)) {
                                         selectedIcon = IconPreferenceManager.ICON_ROBOT
-                                        changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                    }
                                     } else {
                                         // Premium gerektiğini göster
                                         selectedPremiumIcon = IconPreferenceManager.ICON_ROBOT
@@ -412,8 +255,9 @@ class IconSelectorActivity : ComponentActivity() {
                                 onError = { e ->
                                     // Hata durumunda, eğer zaten kullanıyorsa izin ver
                                     if (selectedIcon == IconPreferenceManager.ICON_ROBOT) {
+                                        if(changeAppIcon(IconPreferenceManager.ICON_ROBOT)) {
                                         selectedIcon = IconPreferenceManager.ICON_ROBOT
-                                        changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                    }
                                     } else {
                                         Log.e("IconSelector", "Premium kontrol hatası: ${e.message}")
                                         // Premium dialogunu göster
@@ -424,8 +268,9 @@ class IconSelectorActivity : ComponentActivity() {
                             ) ?: run {
                                 // PurchaseManager null ise sadece varsayılan ikona izin ver
                                 if (selectedIcon == IconPreferenceManager.ICON_ROBOT) {
-                                    selectedIcon = IconPreferenceManager.ICON_ROBOT
-                                    changeAppIcon(IconPreferenceManager.ICON_ROBOT)
+                                    if(changeAppIcon(IconPreferenceManager.ICON_ROBOT)) {
+                                        selectedIcon = IconPreferenceManager.ICON_ROBOT
+                                    }
                                 } else {
                                     selectedPremiumIcon = IconPreferenceManager.ICON_ROBOT
                                     showPremiumDialog = true
@@ -448,14 +293,16 @@ class IconSelectorActivity : ComponentActivity() {
                             purchaseManager?.withPremiumCheck(
                                 onPremium = {
                                     // Premium kullanıcılar için veya zaten seçili ise
-                                    selectedIcon = IconPreferenceManager.ICON_SPACE
-                                    changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                    if(changeAppIcon(IconPreferenceManager.ICON_SPACE)) {
+                                        selectedIcon = IconPreferenceManager.ICON_SPACE
+                                    }
                                 },
                                 onNonPremium = {
                                     // Zaten kullandığı ikon ise değişikliğe izin ver
                                     if (selectedIcon == IconPreferenceManager.ICON_SPACE) {
+                                        if(changeAppIcon(IconPreferenceManager.ICON_SPACE)) {
                                         selectedIcon = IconPreferenceManager.ICON_SPACE
-                                        changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                    }
                                     } else {
                                         // Premium gerektiğini göster
                                         selectedPremiumIcon = IconPreferenceManager.ICON_SPACE
@@ -465,8 +312,9 @@ class IconSelectorActivity : ComponentActivity() {
                                 onError = { e ->
                                     // Hata durumunda, eğer zaten kullanıyorsa izin ver
                                     if (selectedIcon == IconPreferenceManager.ICON_SPACE) {
+                                        if(changeAppIcon(IconPreferenceManager.ICON_SPACE)) {
                                         selectedIcon = IconPreferenceManager.ICON_SPACE
-                                        changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                    }
                                     } else {
                                         Log.e("IconSelector", "Premium kontrol hatası: ${e.message}")
                                         // Premium dialogunu göster
@@ -477,8 +325,9 @@ class IconSelectorActivity : ComponentActivity() {
                             ) ?: run {
                                 // PurchaseManager null ise sadece varsayılan ikona izin ver
                                 if (selectedIcon == IconPreferenceManager.ICON_SPACE) {
-                                    selectedIcon = IconPreferenceManager.ICON_SPACE
-                                    changeAppIcon(IconPreferenceManager.ICON_SPACE)
+                                    if(changeAppIcon(IconPreferenceManager.ICON_SPACE)) {
+                                        selectedIcon = IconPreferenceManager.ICON_SPACE
+                                    }
                                 } else {
                                     selectedPremiumIcon = IconPreferenceManager.ICON_SPACE
                                     showPremiumDialog = true
@@ -490,7 +339,7 @@ class IconSelectorActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.height(32.dp))
                     
                     Text(
-                        text = "İkon değişikliği uygulandıktan sonra uygulama yeniden başlatılacaktır.",
+                        text = "İkon değişikliği uygulamayı yeniden başlatmadan yapılır. Ana ekranın güncellenmesi telefon modeline göre gecikebilir.",
                         fontSize = 14.sp,
                         color = Color(0xFF666666),
                             textAlign = TextAlign.Center,

@@ -158,7 +158,7 @@ object GeometryCastleEngine {
         else run.copy(hints=run.hints+1,hasHintInTask=true)
 
     fun advance(run: CastleRun): CastleRun {
-        if(!valid(run) || run.seed <= 0 || run.room == 4) return run
+        if(!valid(run) || run.seed <= 0 || run.room == 4 || !run.solved) return run
         val completed = run.room == 3 && run.step == 2
         val nextStep = if(run.step == 2) 0 else run.step + 1
         val nextRoom = if(run.step == 2) run.room+1 else run.room

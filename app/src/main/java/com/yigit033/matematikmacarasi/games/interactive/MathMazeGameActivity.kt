@@ -141,7 +141,7 @@ class MathMazeGameActivity:ComponentActivity() {
         val world=runCatching {
             MazeAdventureEngine.generate(before.seed,before.region,before.tier)
         }.onFailure {Log.e(TAG,"Could not load maze for movement",it)}
-            .getOrNull()?:let {
+            .getOrNull()?:kotlin.run {
                 feedback="İşlem gerçekleştirilemedi. Tekrar dene."
                 return
             }
@@ -163,11 +163,11 @@ class MathMazeGameActivity:ComponentActivity() {
         val world=runCatching {
             MazeAdventureEngine.generate(before.seed,before.region,before.tier)
         }.onFailure {Log.e(TAG,"Could not load maze for answer",it)}
-            .getOrNull()?:let {
+            .getOrNull()?:kotlin.run {
                 feedback="İşlem gerçekleştirilemedi. Tekrar dene."
                 return
             }
-        val active=world.gates[before.pendingCell]?:let {
+        val active=world.gates[before.pendingCell]?:kotlin.run {
             Log.e(TAG,"Pending math gate not found for cell "+before.pendingCell)
             feedback="İşlem gerçekleştirilemedi. Tekrar dene."
             return

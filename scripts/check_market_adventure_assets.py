@@ -74,8 +74,8 @@ def main():
             errors.append("ten-store Free/Pro catalog not present")
         if "hasPremium" not in screen or "MarketStallScreen(" not in screen:
             errors.append("market screen is not wired to Premium and stall economy")
-        if "purchaseManager.isPremiumSync()" not in activity or \\
-           "purchaseManager.buyPremium(this)" not in activity:
+        if ("purchaseManager.isPremiumSync()" not in activity or
+            "purchaseManager.buyPremium(this)" not in activity):
             errors.append("existing PurchaseManager entitlement and billing not wired")
         if "contentVersion=3" not in store or "singleShop" not in store:
             errors.append("version-three stored progress and quick sessions missing")

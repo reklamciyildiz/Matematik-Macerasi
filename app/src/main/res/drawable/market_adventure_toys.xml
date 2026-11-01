@@ -93,7 +93,7 @@
 <path android:pathData="M992,311 h22 v2 h-22 Z" android:fillColor="#EAD4A6"/>
 <path android:pathData="M1023,320 h22 v2 h-22 Z" android:fillColor="#EAD4A6"/>
 <path android:pathData="M1054,329 h22 v2 h-22 Z" android:fillColor="#EAD4A6"/>
-<path android:pathData="M0,18 Q485,84 960,18" android:fillColor="transparent" android:strokeColor="#FFFFFF" android:strokeWidth="4"/>
+<path android:pathData="M0,18 Q485,84 960,18" android:fillColor="#00000000" android:strokeColor="#FFFFFF" android:strokeWidth="4"/>
 <path android:pathData="M25,32 L44,34 L35,67 Z" android:fillColor="#FF8B61"/>
 <path android:pathData="M70,38.543893935923045 L89,40.543893935923045 L80,73.54389393592305 Z" android:fillColor="#FFE180"/>
 <path android:pathData="M115,44.36739606139474 L134,46.36739606139474 L125,79.36739606139474 Z" android:fillColor="#7DEAA8"/>

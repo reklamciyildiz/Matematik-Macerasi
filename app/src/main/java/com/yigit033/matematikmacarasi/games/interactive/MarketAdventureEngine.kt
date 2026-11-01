@@ -12,8 +12,10 @@ data class MarketScenario(
     val products: List<MarketGood>,
     val needed: List<MarketLine>,
     val budgetKurus: Int,
+    /** Four possible calculated cart totals, exactly one correct. */
     val payOptionsKurus: List<Int>,
     val changeOptionsKurus: List<Int>,
+    /** The fixed banknote amount handed to the cashier for the change task. */
     val cashierPayKurus: Int
 ) {
     fun requiredTotal(): Int = needed.sumOf { line ->
@@ -165,11 +167,11 @@ object MarketAdventureEngine {
         if(!valid(run) || run.phase!=MarketAdventurePhase.PAYMENT) return run
         val scene=scenario(run)?:return run
         if(paid !in scene.payOptionsKurus) return run
-        // A given budget is the planned shopping budget; the cashier offers
-        // a separate wallet amount for the change exercise.
-        val correct=paid==scene.cashierPayKurus
+        // Basket total must be calculated first; the cashier later receives a
+        // fixed separate banknote, so budgeting and making change stay distinct.
+        val correct=paid==scene.requiredTotal()
         return register(run,correct).copy(
-            paidKurus=if(correct) paid else 0,
+            paidKurus=if(correct) scene.cashierPayKurus else 0,
             phase=if(correct) MarketAdventurePhase.CHANGE else MarketAdventurePhase.PAYMENT
         )
     }

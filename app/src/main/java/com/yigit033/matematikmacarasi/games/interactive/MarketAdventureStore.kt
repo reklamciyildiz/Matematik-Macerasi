@@ -33,7 +33,8 @@ class MarketAdventureStore(context: Context) {
             taskHadError=prefs.getBoolean("task_error",false),
             taskHadHint=prefs.getBoolean("task_hint",false),
             completedRuns=prefs.getInt("runs",0),
-            contentVersion=prefs.getInt("content_version",1)
+            contentVersion=prefs.getInt("content_version",1),
+            premiumJourney=prefs.getBoolean("premium_journey",false)
         )
         return if(MarketAdventureEngine.valid(run)) run else
             MarketAdventureRun(completedRuns=prefs.getInt("runs",0).coerceAtLeast(0))
@@ -56,15 +57,16 @@ class MarketAdventureStore(context: Context) {
             .putBoolean("task_hint",next.taskHadHint)
             .putInt("runs",next.completedRuns)
             .putInt("content_version",next.contentVersion)
+            .putBoolean("premium_journey",next.premiumJourney)
             .commit()
     }
 
-    @Synchronized fun begin(tier: LearningTier): MarketAdventureRun? {
+    @Synchronized fun begin(tier: LearningTier, premiumEntitlement: Boolean): MarketAdventureRun? {
         val old=load()
         val seed=System.currentTimeMillis().coerceAtLeast(old.seed+1).coerceAtLeast(1L)
         val start=MarketAdventureRun(seed=seed,tier=tier,
             phase=MarketAdventurePhase.SHOP,completedRuns=old.completedRuns,
-            contentVersion=2)
+            contentVersion=3,premiumJourney=premiumEntitlement)
         return if(save(start)) start else null
     }
 

@@ -99,6 +99,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_market_adventure_assets.py
 
+      - name: Validate settings, icon aliases and profile navigation
+        shell: bash
+        run: python3 scripts/check_personalization_routes.py
+
       - name: Unit tests and Android debug compilation
         shell: bash
         run: |

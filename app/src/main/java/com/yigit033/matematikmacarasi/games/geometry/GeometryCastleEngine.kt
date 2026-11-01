@@ -103,6 +103,7 @@ object GeometryCastleEngine {
                 CastleShape.RECTANGLE -> "Karşılıklı kenarları eşit, kare olmayan şekli bul."
                 CastleShape.PENTAGON -> "Beş kenarlı şekli bul."
                 CastleShape.HEXAGON -> "Altı kenarlı şekli bul."
+                else -> "Köşeleri ve kenarları kontrol et."
             } else "Köprünün boş yuvasındaki siluete uyan taşı seç ve yerleştir."
             val explanation = if(target == CastleShape.CIRCLE)
                 "Yuvarlak çemberin köşesi yoktur."
@@ -148,7 +149,7 @@ object GeometryCastleEngine {
         val random = Random(seed xor 0x7F302L)
         val pool = available(tier)
         val shuffled = pool.shuffled(random)
-        val priority = if (weakShape in pool) listOf(weakShape!!) +
+        val priority = if (weakShape != null && weakShape in pool) listOf(weakShape) +
             shuffled.filterNot { it == weakShape } else shuffled
         val targets = (0 until 8).map { priority[it % priority.size] }
         fun choices(required: List<CastleShape>): List<CastleShape> =

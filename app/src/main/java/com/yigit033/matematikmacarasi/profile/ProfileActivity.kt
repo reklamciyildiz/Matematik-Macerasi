@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.screens.AvatarStoreActivity
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
 import com.yigit033.matematikmacarasi.services.AvatarService
 import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsService
@@ -119,11 +121,16 @@ class ProfileActivity : ComponentActivity() {
                     },
                     onAvatarStoreClick = {
                         try {
-                            val intent = Intent(this, AvatarStoreActivity::class.java)
-                            avatarStoreLauncher.launch(intent)
+                            avatarStoreLauncher.launch(Intent(this, AvatarStoreActivity::class.java))
                         } catch (e: Exception) {
                             Log.e("ProfileActivity", "Avatar mağazası açılamadı: ${e.message}", e)
                         }
+                    },
+                    onSettingsClick = {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                    },
+                    onAppIconClick = {
+                        startActivity(Intent(this, IconSelectorActivity::class.java))
                     }
                 )
             }
@@ -160,7 +167,9 @@ fun ProfileScreen(
     onNameChange: (String) -> Unit,
     onClassChange: (String) -> Unit,
     onSaveClick: () -> Unit,
-    onAvatarStoreClick: () -> Unit
+    onAvatarStoreClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+    onAppIconClick: () -> Unit
 ) {
     val currentContext = LocalContext.current
     var starValue by remember { mutableStateOf(0) }
@@ -449,6 +458,56 @@ fun ProfileScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Bu sayfalar zaten projede mevcut; profil üzerinden tek yerde bulunurlar.
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        elevation = 2.dp,
+                        shape = RoundedCornerShape(16.dp),
+                        backgroundColor = Color.White
+                    ) {
+                        Column(Modifier.fillMaxWidth().padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                            Text("Kişiselleştirme ve Ayarlar",
+                                color = Color(0xFF1565C0),fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold)
+                            Text("Oyuncunu ve oyun deneyimini buradan düzenle.",
+                                fontSize = 12.sp,color = Color.DarkGray)
+                            OutlinedButton(
+                                onClick = onAvatarStoreClick,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                                border = BorderStroke(1.dp,Color(0xFF38BDF8)),
+                                shape = RoundedCornerShape(13.dp)
+                            ) {
+                                Icon(Icons.Default.Face,"Avatar",tint = Color(0xFF1565C0))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Avatarımı Değiştir",color = Color(0xFF1565C0))
+                            }
+                            OutlinedButton(
+                                onClick = onAppIconClick,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                                border = BorderStroke(1.dp,Color(0xFF38BDF8)),
+                                shape = RoundedCornerShape(13.dp)
+                            ) {
+                                Icon(Icons.Default.Palette,"Uygulama ikonu",tint = Color(0xFF1565C0))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Uygulama İkonunu Değiştir",color = Color(0xFF1565C0))
+                            }
+                            Button(
+                                onClick = onSettingsClick,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    backgroundColor = Color(0xFF1565C0),contentColor = Color.White),
+                                shape = RoundedCornerShape(13.dp)
+                            ) {
+                                Icon(Icons.Default.Settings,"Ayarlar")
+                                Spacer(Modifier.width(8.dp))
+                                Text("Ayarlar · Ses, Bildirim ve Premium")
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     // Kullanıcı Bilgileri Kartı
                     Card(
                         modifier = Modifier

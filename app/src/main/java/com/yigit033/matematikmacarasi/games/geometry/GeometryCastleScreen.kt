@@ -96,13 +96,6 @@ private fun CastleScene(drawableId: Int, description: String, big: Boolean = fal
     }
 }
 
-private fun regularPolygon(sides: Int): List<Pair<Float,Float>> =
-    (0 until sides).map { i ->
-        val angle = -Math.PI / 2 + i * 2 * Math.PI / sides
-        Pair(.5f + (kotlin.math.cos(angle) * .38).toFloat(),
-            .5f + (kotlin.math.sin(angle) * .38).toFloat())
-    }
-
 @Composable
 private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Modifier,
     outlineOnly: Boolean = false) {
@@ -119,27 +112,7 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
                     radius=minOf(w,h)*.35f,style=Stroke(width=2.0f))
             }
             else -> {
-                // Normalized geometry keeps each new quadrilateral mathematically distinct.
-                // Rhombus: four equal sides, no right angles.
-                // Parallelogram: two parallel pairs, unequal adjacent sides, oblique angles.
-                // Trapezoid: exactly one parallel pair.
-                val vertices: List<Pair<Float,Float>> = when(shape) {
-                    CastleShape.SQUARE -> listOf(
-                        .22f to .22f, .78f to .22f, .78f to .78f, .22f to .78f)
-                    CastleShape.RECTANGLE -> listOf(
-                        .10f to .34f, .90f to .34f, .90f to .66f, .10f to .66f)
-                    CastleShape.RHOMBUS -> listOf(
-                        .50f to .25f, .92f to .50f, .50f to .75f, .08f to .50f)
-                    CastleShape.PARALLELOGRAM -> listOf(
-                        .26f to .28f, .88f to .28f, .74f to .72f, .12f to .72f)
-                    CastleShape.TRAPEZOID -> listOf(
-                        .34f to .22f, .66f to .22f, .90f to .78f, .10f to .78f)
-                    CastleShape.TRIANGLE -> regularPolygon(3)
-                    CastleShape.PENTAGON -> regularPolygon(5)
-                    CastleShape.HEXAGON -> regularPolygon(6)
-                    CastleShape.OCTAGON -> regularPolygon(8)
-                    CastleShape.CIRCLE -> emptyList()
-                }
+                val vertices = GeometryShapeGeometry.vertices(shape)
                 vertices.forEachIndexed { index, vertex ->
                     if(index == 0) p.moveTo(vertex.first * w,vertex.second * h)
                     else p.lineTo(vertex.first * w,vertex.second * h)

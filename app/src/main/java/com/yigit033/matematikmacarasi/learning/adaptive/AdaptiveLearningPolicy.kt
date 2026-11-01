@@ -11,7 +11,8 @@ enum class LearningTier(val title: String) {
 
 enum class AdventureSkill(val key: String) {
     THREE_COUNTING("count_3"),
-    FOUR_COUNTING("count_4")
+    FOUR_COUNTING("count_4"),
+    GEOMETRY("geometry_castle")
 }
 
 /** Öğrenci profilinin `user_class` değeri; Ana Sınıfı ve hatalı kayıtlar güvenle ayrıştırılır. */

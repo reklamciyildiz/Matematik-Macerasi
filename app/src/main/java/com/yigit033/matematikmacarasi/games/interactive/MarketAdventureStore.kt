@@ -32,7 +32,8 @@ class MarketAdventureStore(context: Context) {
             perfectDecisions=prefs.getInt("perfect",0),
             taskHadError=prefs.getBoolean("task_error",false),
             taskHadHint=prefs.getBoolean("task_hint",false),
-            completedRuns=prefs.getInt("runs",0)
+            completedRuns=prefs.getInt("runs",0),
+            contentVersion=prefs.getInt("content_version",1)
         )
         return if(MarketAdventureEngine.valid(run)) run else
             MarketAdventureRun(completedRuns=prefs.getInt("runs",0).coerceAtLeast(0))
@@ -54,6 +55,7 @@ class MarketAdventureStore(context: Context) {
             .putBoolean("task_error",next.taskHadError)
             .putBoolean("task_hint",next.taskHadHint)
             .putInt("runs",next.completedRuns)
+            .putInt("content_version",next.contentVersion)
             .commit()
     }
 
@@ -61,7 +63,8 @@ class MarketAdventureStore(context: Context) {
         val old=load()
         val seed=System.currentTimeMillis().coerceAtLeast(old.seed+1).coerceAtLeast(1L)
         val start=MarketAdventureRun(seed=seed,tier=tier,
-            phase=MarketAdventurePhase.SHOP,completedRuns=old.completedRuns)
+            phase=MarketAdventurePhase.SHOP,completedRuns=old.completedRuns,
+            contentVersion=2)
         return if(save(start)) start else null
     }
 

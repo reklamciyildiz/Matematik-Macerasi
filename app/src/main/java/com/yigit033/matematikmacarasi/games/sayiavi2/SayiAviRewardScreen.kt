@@ -54,6 +54,7 @@ fun SayiAviRewardScreen(
     timeSpentSeconds: Long,
     starsCount: Int,
     onReplayClick: () -> Unit,
+    onReviewClick: () -> Unit,
     onReturnToGamesClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -268,6 +269,15 @@ fun SayiAviRewardScreen(
                         )
 
                         Spacer(modifier = Modifier.height(20.dp))
+
+                        // Sadece pekiştirme oturumu; yıldız ve görev kaydı değişmez.
+                        AdventureActionButton(
+                            text = "🧩 3 Soruluk Tekrar",
+                            onClick = onReviewClick,
+                            gradient = SayiAviColors.BlueButtonGradient
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
 
                         // Yeniden Oyna Butonu
                         AdventureActionButton(

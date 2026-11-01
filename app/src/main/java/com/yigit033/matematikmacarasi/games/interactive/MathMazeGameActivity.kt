@@ -39,6 +39,7 @@ class MathMazeGameActivity:ComponentActivity() {
     private var feedback by mutableStateOf("")
     private var limitRevision by mutableIntStateOf(0)
     private var completedCount by mutableIntStateOf(0)
+    private var progressRevision by mutableIntStateOf(0)
     private var gameStartAt=0L
     private var seedNonce=0L
 
@@ -73,13 +74,14 @@ class MathMazeGameActivity:ComponentActivity() {
                 val premium=purchaseFlow || purchase.isPremiumSync()
                 // Compose observes this revision after a new Free run uses a daily slot.
                 @Suppress("UNUSED_VARIABLE")
-                val revision=limitRevision
+                val revision=limitRevision + progressRevision
                 MazeAdventureScreen(
                     run=run,
                     isPremium=premium,
                     remainingPlays=limit.getRemainingMathMazePlays(premium),
                     recommendedTier=recommended,
                     completedRuns=completedCount,
+                    regionRecords=MazeRegion.entries.associateWith {store.regionRecord(it)},
                     feedback=feedback,
                     onStart={chapter,tier -> startRun(chapter,tier,premium)},
                     onMove={dir -> move(dir)},
@@ -169,7 +171,10 @@ class MathMazeGameActivity:ComponentActivity() {
                     else System.currentTimeMillis(),
                 taskId=intent.getIntExtra("daily_task_id",-1))
         }.onFailure { Log.e(TAG,"Game stats delivery failed",it) }
-        if(store.recordUniqueCompletion(result.seed))completedCount=store.runsCompleted()
+        if(store.recordUniqueCompletion(result)) {
+            completedCount=store.runsCompleted()
+            progressRevision++
+        }
         runCatching {audio.playSuccessSound()}.onFailure {Log.w(TAG,"No finish sound",it)}
     }
 

@@ -91,6 +91,10 @@ jobs:
           kotlin.daemon.jvmargs=-Xmx1024m
           PROPS
 
+      - name: Validate premium geometry image assets
+        shell: bash
+        run: python3 scripts/check_geometry_premium_assets.py
+
       - name: Unit tests and Android debug compilation
         shell: bash
         run: |

@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
 import com.yigit033.matematikmacarasi.services.NotificationService
+import com.yigit033.matematikmacarasi.settings.IconLauncherManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,7 +24,12 @@ class MatematikMacerasiApp : Application() {
     
     override fun onCreate() {
         super.onCreate()
-        
+
+        // Repair MainActivity for devices migrated from the old icon switcher.
+        // Never let an icon choice disable the real game's main Activity.
+        runCatching { IconLauncherManager.reconcile(applicationContext) }
+            .onFailure { Log.e("MatematikMacerasiApp","Launcher recovery failed",it) }
+
         // Servisleri başlat
         initializeServices()
         

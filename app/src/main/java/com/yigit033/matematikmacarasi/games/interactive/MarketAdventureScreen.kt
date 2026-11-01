@@ -221,6 +221,15 @@ fun MarketAdventureScreen(
                     else "Verilen paradan alışveriş tutarını çıkar."
                 if(next.finished) onCompletion(next)
             }
+        } else if(current.phase==MarketAdventurePhase.BONUS) {
+            val next=MarketAdventureEngine.chooseBonus(current,amount)
+            if(next==current) return
+            if(persist(next)) {
+                isPositive=next.phase!=current.phase
+                message=if(isPositive) "Güzel hesapladın! Bir sonraki pazara geç."
+                    else "Hesabı tekrar kontrol et. İpucunu da kullanabilirsin."
+                if(next.finished) onCompletion(next)
+            }
         }
     }
 
@@ -256,9 +265,9 @@ fun MarketAdventureScreen(
             Text(if(stage==MarketAdventurePhase.WELCOME) chosenTier.title
                 else run.tier.title,fontSize=13.sp,color=turquoise)
         }
-        val completed=if(run.finished) 3 else run.visit
+        val completed=if(run.finished) MarketAdventureEngine.visitCount(run) else run.visit
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-            repeat(3) { index ->
+            repeat(if(run.seed==0L) MarketAdventureEngine.PREMIUM_VISITS else MarketAdventureEngine.visitCount(run)) { index ->
                 Box(Modifier.weight(1f).height(8.dp).clip(CircleShape).background(
                     if(index<completed) orange else Color(0xFF5C8BA2)))
             }
@@ -268,10 +277,11 @@ fun MarketAdventureScreen(
                 "Renkli çizgi film pazarında meyve ve alışveriş tezgâhları",
                 big=true)
             if(!run.finished) {
-                MarketHeadline("Pazar Simülatörü 2.0",
+                MarketHeadline("Pazar Simülatörü 3.0",
                     "Alışveriş yap, bütçeni planla ve para üstünü hesapla.")
                 listOf("🍎 Güneşli Manav","🥖 Mahalle Fırını",
-                    "🧸 Oyuncak Atölyesi").forEachIndexed { i,name ->
+                    "🧸 Oyuncak Atölyesi","📒 Renkli Kırtasiye",
+                    "👕 Giyim Sokağı","🏪 Benim Tezgâhım").forEachIndexed { i,name ->
                     Surface(color=Color(0xFF245C79),
                         shape=RoundedCornerShape(14.dp),
                         border=androidx.compose.foundation.BorderStroke(1.dp,turquoise)) {
@@ -300,17 +310,17 @@ fun MarketAdventureScreen(
                         ) {Text(tier.title,fontSize=11.sp)}
                     }
                 }
-                Text("3 durak · 9 karar · Çevrimdışı · Zaman sınırı yok",
+                Text("6 durak · 21 matematik kararı · Çevrimdışı · Zaman sınırı yok",
                     color=cream,fontSize=12.sp)
                 MarketAction("Pazara Gir ▶") {start(chosenTier)}
             } else {
-                MarketHeadline("Bugünün alışverişi tamamlandı!",
-                    "Üç pazarda da doğru kararlar vererek yolculuğu bitirdin.")
+                MarketHeadline("Pazar maceran tamamlandı!",
+                    "Alışveriş, ödeme ve ekonomik kararları bitirdin.")
                 Surface(color=panel,shape=RoundedCornerShape(20.dp),
                     border=androidx.compose.foundation.BorderStroke(2.dp,orange)) {
                     Column(Modifier.fillMaxWidth().padding(18.dp),
                         verticalArrangement=Arrangement.spacedBy(9.dp)) {
-                        Text("✦   3 durak tamamlandı",fontSize=23.sp,
+                        Text("✦   ${MarketAdventureEngine.visitCount(run)} durak tamamlandı",fontSize=23.sp,
                             fontWeight=FontWeight.ExtraBold,color=orange)
                         Text("★".repeat(MarketAdventureEngine.starsFor(run))+
                             "☆".repeat(3-MarketAdventureEngine.starsFor(run)),
@@ -319,7 +329,7 @@ fun MarketAdventureScreen(
                             color=turquoise,fontSize=13.sp)
                         Text("Tekrar oynayarak en iyi sonucunu yükseltebilirsin.",
                             color=cream,fontSize=12.sp)
-                        Text("İlk denemede bağımsız: ${run.perfectDecisions}/9",
+                        Text("İlk denemede bağımsız: ${run.perfectDecisions}/${MarketAdventureEngine.decisionCount(run)}",
                             color=Color.White,fontSize=15.sp)
                         Text("Toplam: ${run.attempts} deneme · ${run.errors} hata · ${run.hints} ipucu",
                             color=cream,fontSize=13.sp)
@@ -333,12 +343,15 @@ fun MarketAdventureScreen(
                 MarketAction("Haritaya Dön",onClick=onExit)
             }
         } else if(scene!=null) {
-            MarketHeadline("${run.visit+1}/3 · ${scene.location}",
+            MarketHeadline("${run.visit+1}/${MarketAdventureEngine.visitCount(run)} · ${scene.location}",
                 scene.hint)
             val art=when(run.visit) {
                 0 -> R.drawable.market_adventure_manav
                 1 -> R.drawable.market_adventure_firin
-                else -> R.drawable.market_adventure_toys
+                2 -> R.drawable.market_adventure_toys
+                3 -> R.drawable.market_adventure_stationery
+                4 -> R.drawable.market_adventure_clothing
+                else -> R.drawable.market_adventure_stall
             }
             MarketScene(art,scene.location+" pazar tezgâhı")
             val total=MarketAdventureEngine.amount(run,scene)
@@ -352,11 +365,14 @@ fun MarketAdventureScreen(
                 }
             }
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                listOf("1 · Alışveriş","2 · Toplam","3 · Para üstü").forEachIndexed { index,label ->
+                (if(scene.bonus==null) listOf("1 · Alışveriş","2 · Toplam","3 · Para üstü")
+                    else listOf("1 · Alışveriş","2 · Toplam","3 · Para üstü","4 · Ek Görev"))
+                    .forEachIndexed { index,label ->
                     val current=index==when(stage) {
                         MarketAdventurePhase.SHOP -> 0
                         MarketAdventurePhase.PAYMENT -> 1
-                        else -> 2
+                        MarketAdventurePhase.CHANGE -> 2
+                        else -> 3
                     }
                     Surface(Modifier.weight(1f),shape=RoundedCornerShape(10.dp),
                         color=if(current) orange else Color(0xFF235771)) {
@@ -478,9 +494,38 @@ fun MarketAdventureScreen(
                         }
                     }
                 }
+            } else if(stage==MarketAdventurePhase.BONUS && scene.bonus!=null) {
+                val bonus=scene.bonus
+                Text(when(bonus.kind) {
+                    MarketBonusKind.DISCOUNT -> "🏷️ İNDİRİM HESABI"
+                    MarketBonusKind.COMPARE -> "⚖️ FİYAT KARŞILAŞTIRMA"
+                    MarketBonusKind.PROFIT -> "🏪 KENDİ TEZGÂHINI YÖNET"
+                },color=orange,fontSize=17.sp,fontWeight=FontWeight.Black)
+                Surface(color=panel,shape=RoundedCornerShape(18.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp),
+                        verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                        Text(bonus.title,color=turquoise,fontSize=16.sp,
+                            fontWeight=FontWeight.Bold)
+                        Text(bonus.prompt,color=Color.White,fontSize=16.sp,
+                            lineHeight=24.sp)
+                    }
+                }
+                bonus.choicesKurus.chunked(2).forEach { pair ->
+                    Row(Modifier.fillMaxWidth(),
+                        horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                        pair.forEach { option ->
+                            Box(Modifier.weight(1f)) {
+                                MarketOffer(MarketAdventureEngine.format(option),"Hesap") {
+                                    chooseMoney(option)
+                                }
+                            }
+                        }
+                    }
+                }
             }
             if(stage in listOf(MarketAdventurePhase.SHOP,
-                MarketAdventurePhase.PAYMENT,MarketAdventurePhase.CHANGE)) {
+                MarketAdventurePhase.PAYMENT,MarketAdventurePhase.CHANGE,
+                MarketAdventurePhase.BONUS)) {
                 if(!run.taskHadHint) OutlinedButton(onClick={
                     if(persist(MarketAdventureEngine.hint(run))) {
                         isPositive=true
@@ -491,6 +536,8 @@ fun MarketAdventureScreen(
                                 "Her ürünün fiyatını miktarıyla çarpıp sonuçları topla."
                             MarketAdventurePhase.CHANGE ->
                                 "Verilen paradan kasanın hesapladığı toplamı çıkar."
+                            MarketAdventurePhase.BONUS ->
+                                scene.bonus?.explanation ?: "Fiyatları dikkatlice karşılaştır."
                             else -> ""
                         }
                     }
@@ -506,7 +553,7 @@ fun MarketAdventureScreen(
                             modifier=Modifier.fillMaxWidth().padding(13.dp),fontSize=14.sp)
                     }
                 }
-                Text("İlk denemede doğru karar: ${run.perfectDecisions}/9",
+                Text("İlk denemede doğru karar: ${run.perfectDecisions}/${MarketAdventureEngine.decisionCount(run)}",
                     color=cream,fontSize=12.sp)
             }
         }

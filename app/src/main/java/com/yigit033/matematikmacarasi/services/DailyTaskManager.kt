@@ -204,7 +204,7 @@ class DailyTaskManager private constructor(private val context: Context) {
     private fun generateDailyTasks(): List<DailyTask> {
         val random = Random()
         val tasks = mutableListOf<DailyTask>()
-        val availableGameTypes = GameType.values().toMutableList()
+        val availableGameTypes = GameType.values().toMutableList() // Shape now opens playable Geometry Castle
         val usedGameTypes = HashSet<GameType>()
         var taskId = 1
         

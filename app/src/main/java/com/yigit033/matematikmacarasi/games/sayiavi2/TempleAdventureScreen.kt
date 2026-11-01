@@ -380,7 +380,7 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                             }
                         }
                     }
-                    Text("Yerleştirilen taş: " + placed + "/" + q.tiles, color = Color.White)
+                    Text("Kalan boş yuva: " + (q.tiles - placed), color = Color.White)
                     if (placed == q.tiles) {
                         Text("Mozaikte toplam kaç taş var?", color = Color(0xFF9FE9DA), fontWeight = FontWeight.Bold)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

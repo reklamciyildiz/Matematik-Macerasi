@@ -20,6 +20,7 @@
 - `Gelişen` etiketi iki anlama gelmez: haritada `Seçim: Gelişen`; oynarken `Gelişen · Tam/Hızlı`. Önceki kayıt devam ederse eski seviyesini aynen kullanır.
 - Üç başlangıç mağazası kısa oyun olarak hemen gösterilir. `Tüm 10 Mağazayı Göster` komutuyla gerisi açılır, Premium kilitleri mevcut `PurchaseManager` yetkisine göre kalır.
 - Oyun içindeki `Pazar Haritası` Android geri düğmesi ve üst düğmeyle çalışır. Bunun için kayıt silinmez; gerçek uygulama çıkışı yalnız haritadaki `Oyunlara Dön` ile olur.
+- Kısa oyunu bitiren çocuk **Bu Mağazayı Tekrar Oyna** dediğinde yalnızca aynı mağazada yeni görevler başlar; yanlışlıkla 10 mağazalık tam tura atılmaz.
 - Android status/navigation alanları için `safeDrawingPadding()` uygulanır; işletme alt ekranındaki sistem çubuğu da korunur.
 - Oyundan haritaya dönerken dikey kaydırma ilk konuma alınır. Seviye tercihi cihaz dönüşünde korunur.
 - Oyunun matematik, ürün fiyatı, seed, 120 ürün kataloğu, üç katman, yıldız ve Premium yetki kuralları değişmedi.

@@ -94,7 +94,9 @@ internal fun AdventureLearningReport(userClass:String,refreshKey:Int) {
     }
     val report=remember(refreshKey,screenVersion,userClass) {
         LearningReportEngine.build(
-            AdventureSkill.entries.associateWith { store.progress(it) })
+            AdventureSkill.entries.mapNotNull { skill ->
+                store.snapshotForReport(skill)?.let { skill to it }
+            }.toMap())
     }
     val grade=remember(userClass) {GradePolicy.parse(userClass)}
     Column(

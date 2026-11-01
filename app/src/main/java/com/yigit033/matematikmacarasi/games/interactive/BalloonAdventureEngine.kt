@@ -140,7 +140,7 @@ object BalloonAdventureEngine {
             attempts=run.attempts+1,
             firstTry=run.firstTry+(if(clean)1 else 0),
             streak=nextStreak,bestStreak=maxOf(run.bestStreak,nextStreak),
-            resolved=true
+            hintVisible=false,resolved=true
         )
     }
     fun hint(run:BalloonRun):BalloonRun=

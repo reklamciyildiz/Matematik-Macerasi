@@ -613,7 +613,7 @@ class PurchaseManager private constructor(
             text="Yetişkin olduğumu ve ödeme ekranına geçebileceğimi onaylıyorum."
         }
         val prompt=TextView(activity).apply {
-            text="Bu bölüm yetişkinler içindir.\\n\\n"+question.prompt
+            text="Bu bölüm yetişkinler içindir.\n\n"+question.prompt
             textSize=18f
         }
         val layout=LinearLayout(activity).apply {

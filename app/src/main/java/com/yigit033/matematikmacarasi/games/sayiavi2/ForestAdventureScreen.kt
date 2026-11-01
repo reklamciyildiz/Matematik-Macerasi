@@ -115,6 +115,7 @@ fun ForestAdventureScreen(
     var run by remember { mutableStateOf(store.load()) }
     var message by remember { mutableStateOf("") }
     var showExit by remember { mutableStateOf(false) }
+    var showReview by remember { mutableStateOf(false) }
     var hintVisible by remember(run.stage, run.bridgeSpan, run.leafRound, run.trailStep, run.rootRound) {
         mutableStateOf(false)
     }
@@ -142,6 +143,14 @@ fun ForestAdventureScreen(
             hintVisible = true
             update(run.hint())
         }
+    }
+    if (showReview) {
+        AdventureReviewScreen(
+            kind = AdventureReviewKind.COUNT_FOUR,
+            tier = run.tier,
+            onExit = { showReview = false }
+        )
+        return
     }
     BackHandler(enabled = run.stage != ForestStage.INTRO && run.stage != ForestStage.SUMMARY) {
         showExit = true
@@ -537,6 +546,7 @@ fun ForestAdventureScreen(
                                 "Öneri: +4 kuralını farklı başlangıç sayılarıyla tekrar çalış."
                                 else "Öneri: Yeni örüntüler ve zihinden işlemlerle ilerle.",
                                 fontSize = 13.sp, color = ForestPalette.Ink)
+                            ForestButton("🧩 3 Soruluk Tekrar") { showReview = true }
                             ForestButton("🔁 Yeniden Oyna") {
                                 skillProgress = adaptiveStore.progress(AdventureSkill.FOUR_COUNTING)
                                 run = store.startNew(skillProgress.currentTier)

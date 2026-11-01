@@ -334,6 +334,13 @@ class AvatarService(private val context: Context) {
                 return true
             }
             
+            // Premium avatar cannot be selected on Free even if previously
+            // unlocked with stars. Honor the existing offline entitlement cache.
+            if(avatarId>6 && !com.yigit033.matematikmacarasi.services.payments
+                    .PurchaseManager.getInstance(context).isPremiumSync()) {
+                return false
+            }
+
             // Avatarı güncelle
             _currentAvatarId = avatarId
             prefs.edit().putInt("current_avatar_id", avatarId).apply()
@@ -381,7 +388,8 @@ class AvatarService(private val context: Context) {
                 }
             } catch (e: Exception) {
                 Log.e("AvatarService", "Premium durumu kontrol edilirken hata: ${e.message}", e)
-                // Hata durumunda devam et, belki kullanıcı premium'dur
+                // Fail closed: do not deduct stars or unlock Premium content.
+                return false
             }
             
             // Yıldız kontrolü - StarManager'ı başlat

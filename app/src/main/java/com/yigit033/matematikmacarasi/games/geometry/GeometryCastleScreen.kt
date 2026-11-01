@@ -236,6 +236,9 @@ fun GeometryCastleScreen(
         val answered = GeometryCastleEngine.answer(run,correct)
         val next = if(correct) answered.copy(solved=true,selected=selected) else answered
         if(persist(next)) {
+            if(!correct && GeometryCastleEngine.task(run)?.mode != CastleMode.SYMMETRY) {
+                GeometryCastleEngine.task(run)?.let { store.noteWeakShape(it.target) }
+            }
             feedbackPositive=correct
             feedback=if(correct) GeometryCastleEngine.task(run)?.explanation ?: "Doğru!"
                 else "Şeklin kenarlarını ve konumunu tekrar kontrol et."

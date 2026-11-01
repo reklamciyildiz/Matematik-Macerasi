@@ -265,15 +265,26 @@ object GeometryCastleEngine {
             CastleMode.SYMMETRY -> mask == symmetricRightMask(task.leftMask, task.gridSize)
         }
 
-    fun valid(run: CastleRun): Boolean =
-        run.seed >= 0 && run.room in 0..4 && run.step in 0..2 &&
-            run.attempts >= 0 && run.errors in 0..run.attempts &&
-            run.hints >= 0 && run.firstTryCorrect in 0..TOTAL_TASKS &&
-            run.completedRuns >= 0 &&
-            (run.seed > 0 || (run.room == 0 && run.step == 0)) &&
-            run.mirrorMask >= 0 && (run.mirrorMask ushr 18) == 0 &&
-            run.contentVersion in 1..2 && run.placed.size <= 3 &&
-            run.placed.all { it in CastleShape.entries }
+    fun valid(run: CastleRun): Boolean {
+        if (run.seed < 0 || run.room !in 0..4 || run.step !in 0..2 ||
+            run.attempts < 0 || run.errors !in 0..run.attempts ||
+            run.hints < 0 || run.firstTryCorrect !in 0..TOTAL_TASKS ||
+            run.completedRuns < 0 || (run.seed == 0L &&
+                (run.room != 0 || run.step != 0)) ||
+            run.mirrorMask < 0 || (run.mirrorMask ushr 18) != 0 ||
+            run.contentVersion !in 1..2 || run.placed.size > 3) return false
+
+        if (run.contentVersion >= 2 && run.seed > 0L && run.room in 0..3) {
+            val current = task(run) ?: return false
+            if (current.mode == CastleMode.BUILD) {
+                // A resumed game cannot fabricate completed sockets or skip a piece.
+                if (run.placed != current.requiredPieces.take(run.placed.size)) return false
+                if (run.solved && run.placed.size != current.requiredPieces.size)
+                    return false
+            } else if (run.placed.isNotEmpty()) return false
+        } else if (run.placed.isNotEmpty()) return false
+        return true
+    }
 
     fun answer(run: CastleRun, correct: Boolean): CastleRun {
         if(!valid(run) || run.seed <= 0 || run.room == 4) return run

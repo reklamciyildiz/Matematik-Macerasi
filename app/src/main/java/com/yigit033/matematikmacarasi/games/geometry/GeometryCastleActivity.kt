@@ -45,7 +45,11 @@ class GeometryCastleActivity : ComponentActivity() {
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.GEOMETRY).currentTier,
                         onExit={finish()},
-                        onCompleted={run -> deliverCompletion(run)}
+                        onCompleted={run ->
+                    com.yigit033.matematikmacarasi.services.AudioService
+                        .getInstance(this).playVictorySound()
+                    deliverCompletion(run)
+                }
                     )
                 }
             }

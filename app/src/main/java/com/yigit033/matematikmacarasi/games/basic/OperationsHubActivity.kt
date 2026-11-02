@@ -146,19 +146,32 @@ class OperationsHubActivity:ComponentActivity(){
                                 }
                             }
                         }
-                        Surface(
-                            onClick={mixed=true},
-                            shape=RoundedCornerShape(20.dp),
-                            color=Color(0xFF5525A5),
-                            border=BorderStroke(2.dp,Color(0xFFD8A4FF))
-                        ){
-                            Column(Modifier.fillMaxWidth().padding(16.dp),
-                                verticalArrangement=Arrangement.spacedBy(8.dp)){
-                                Text("✨ KARIŞIK MACERA",color=gold,
-                                    fontSize=18.sp,fontWeight=FontWeight.Black)
-                                Text("Sınıfına uygun işlemlerden 12 sürpriz soru. Her turda farklı sorular.",
-                                    color=ivory,fontSize=13.sp)
-                                Text("▶ Oyna",color=cyan,fontWeight=FontWeight.Bold)
+                        Box(
+                            Modifier.fillMaxWidth().height(169.dp)
+                                .clip(RoundedCornerShape(23.dp))
+                                .clickable { mixed=true }
+                        ) {
+                            Image(
+                                painterResource(R.drawable.card_four_operations),
+                                contentDescription=null,
+                                modifier=Modifier.fillMaxSize(),
+                                contentScale=ContentScale.Crop
+                            )
+                            Box(Modifier.fillMaxSize().background(
+                                Brush.verticalGradient(listOf(
+                                    Color(0x663B147E),Color(0xEE15123D)
+                                ))
+                            ))
+                            Column(
+                                Modifier.align(Alignment.BottomStart).padding(17.dp),
+                                verticalArrangement=Arrangement.spacedBy(6.dp)
+                            ){
+                                Text("🌟 KARIŞIK MACERA",
+                                    color=gold,fontSize=21.sp,fontWeight=FontWeight.Black)
+                                Text("3 aşama · 12 görev · doğru serisi ve ustalık puanı",
+                                    color=ivory,fontSize=12.sp)
+                                Text("▶ Maceraya katıl",color=cyan,
+                                    fontSize=14.sp,fontWeight=FontWeight.Black)
                             }
                         }
                         if(last!=null && GradeAwareOperationPolicy.allowed(grade,last!!)){
@@ -171,20 +184,37 @@ class OperationsHubActivity:ComponentActivity(){
                         }
                         Text("Karışık macera zorluğu",color=ivory,
                             fontWeight=FontWeight.Bold,fontSize=14.sp)
-                        Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){
-                            listOf(DifficultyLevel.EASY,DifficultyLevel.MEDIUM,
-                                DifficultyLevel.HARD).forEach{item->
-                                OutlinedButton(onClick={difficulty=item},
-                                    modifier=Modifier.weight(1f),
-                                    contentPadding=PaddingValues(horizontal=4.dp),
-                                    border=BorderStroke(if(difficulty==item)2.dp else 1.dp,
-                                        if(difficulty==item)gold else cyan.copy(alpha=.4f))){
-                                    Text(when(item){
-                                        DifficultyLevel.EASY->"Temel"
-                                        DifficultyLevel.MEDIUM->"Gelişen"
-                                        else->"Ustalık"
-                                    },color=ivory,fontSize=11.sp)
+                        DifficultyLevel.entries.chunked(3).forEach { tierRow ->
+                            Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                                tierRow.forEach { item ->
+                                    OutlinedButton(
+                                        onClick={difficulty=item},
+                                        modifier=Modifier.weight(1f).heightIn(min=50.dp),
+                                        shape=RoundedCornerShape(14.dp),
+                                        contentPadding=PaddingValues(horizontal=4.dp),
+                                        border=BorderStroke(
+                                            if(difficulty==item)2.dp else 1.dp,
+                                            if(difficulty==item)gold else cyan.copy(alpha=.4f)
+                                        ),
+                                        colors=ButtonDefaults.outlinedButtonColors(
+                                            containerColor=if(difficulty==item)
+                                                Color(0xFF5A4389) else Color(0xFF192F62)
+                                        )
+                                    ){
+                                        Text(
+                                            when(item){
+                                                DifficultyLevel.EASY->"Temel"
+                                                DifficultyLevel.MEDIUM->"Gelişen"
+                                                DifficultyLevel.HARD->"Ustalık"
+                                                DifficultyLevel.VERY_HARD->"Çok Zor"
+                                                DifficultyLevel.EXPERT->"Uzman"
+                                            },
+                                            color=ivory,fontSize=12.sp,
+                                            textAlign=TextAlign.Center
+                                        )
+                                    }
                                 }
+                                repeat(3-tierRow.size) { Spacer(Modifier.weight(1f)) }
                             }
                         }
                     }

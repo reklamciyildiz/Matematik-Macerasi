@@ -204,8 +204,8 @@ class OperationsHubActivity:ComponentActivity(){
                                         Text(
                                             when(item){
                                                 DifficultyLevel.EASY->"Temel"
-                                                DifficultyLevel.MEDIUM->"Gelişen"
-                                                DifficultyLevel.HARD->"Ustalık"
+                                                DifficultyLevel.MEDIUM->"Orta"
+                                                DifficultyLevel.HARD->"Zor"
                                                 DifficultyLevel.VERY_HARD->"Çok Zor"
                                                 DifficultyLevel.EXPERT->"Uzman"
                                             },
@@ -327,8 +327,8 @@ private fun MixedOperationSession(
         Text(
             "$grade. SINIF  ·  ${when(difficulty) {
                 DifficultyLevel.EASY -> "TEMEL"
-                DifficultyLevel.MEDIUM -> "GELİŞEN"
-                DifficultyLevel.HARD -> "USTALIK"
+                DifficultyLevel.MEDIUM -> "ORTA"
+                DifficultyLevel.HARD -> "ZOR"
                 DifficultyLevel.VERY_HARD -> "ÇOK ZOR"
                 DifficultyLevel.EXPERT -> "UZMAN"
             }}",

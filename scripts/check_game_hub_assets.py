@@ -31,6 +31,10 @@ manifest=(root/"app/src/main/AndroidManifest.xml").read_text()
 assert 'android:name=".games.basic.OperationsHubActivity"' in manifest
 for op in ["Addition","Subtraction","Multiplication","Division"]:
     act=(main/f"games/basic/{op}GameActivity.kt").read_text()
-    assert 'GradeAwareOperationPolicy.generate(' in act
+    assert 'GradeAwareOperationPolicy.generateUnique(' in act, f'{op}: unique-question generation not wired' 
+    assert 'practiceState.effectiveDifficulty(selectedDifficulty)' in act, f'{op}: support tier not wired' 
+    assert 'GradeAwareOperationPolicy.options(q,OperationKind.' in act, f'{op}: contextual distractors not wired'
     assert 'PremiumOperationDifficultySelect(' in act
-print("Game hub entry mapping / grade gates: PASS")
+assert (main/"games/basic/MixedOperationEngine.kt").is_file()
+assert (main/"games/basic/OperationPracticeState.kt").is_file()
+print("Game hub entry mapping / grade gates / adaptive operation sessions: PASS")

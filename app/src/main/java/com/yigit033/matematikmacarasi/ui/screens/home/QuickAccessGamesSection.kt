@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.games.ComingSoonActivity
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
-import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
+import com.yigit033.matematikmacarasi.games.basic.OperationsHubActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
@@ -85,7 +85,7 @@ fun QuickAccessGamesSection(
             imageRes = R.drawable.card_four_operations,
             bgGradient = listOf(Color(0xFFFF7A00), Color(0xFFFF3D00)),
             borderColor = Color(0xFFFFB74D),
-            activityClass = AdditionGameActivity::class.java
+            activityClass = OperationsHubActivity::class.java
         ),
         PremiumGameCardItem(
             id = "balloon_pop",
@@ -98,7 +98,7 @@ fun QuickAccessGamesSection(
         PremiumGameCardItem(
             id = "number_hunt",
             title = "Sayı Avı",
-            imageRes = R.drawable.market_adventure_hero,
+            imageRes = R.drawable.card_number_hunt_premium,
             bgGradient = listOf(Color(0xFF10B981), Color(0xFF059669)),
             borderColor = Color(0xFF6EE7B7),
             activityClass = SayiAvi2Activity::class.java
@@ -115,7 +115,7 @@ fun QuickAccessGamesSection(
         PremiumGameCardItem(
             id = "math_maze",
             title = "Matematik\nLabirenti",
-            imageRes = R.drawable.card_balloon_pop,
+            imageRes = R.drawable.card_maze_premium,
             bgGradient = listOf(Color(0xFF7C3AED), Color(0xFF5B21B6)),
             borderColor = Color(0xFFA78BFA),
             activityClass = MathMazeGameActivity::class.java
@@ -123,7 +123,7 @@ fun QuickAccessGamesSection(
         PremiumGameCardItem(
             id = "market_sim",
             title = "Pazar\nSimülatörü",
-            imageRes = R.drawable.card_number_hunt,
+            imageRes = R.drawable.market_adventure_hero,
             bgGradient = listOf(Color(0xFF059669), Color(0xFF065F46)),
             borderColor = Color(0xFF34D399),
             activityClass = MarketSimulatorActivity::class.java

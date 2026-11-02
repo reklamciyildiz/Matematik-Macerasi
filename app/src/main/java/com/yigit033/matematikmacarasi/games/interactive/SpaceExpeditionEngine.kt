@@ -150,7 +150,7 @@ object SpaceExpeditionEngine {
 
     fun valid(run:SpaceRun):Boolean {
         if(run.seed<=0 || run.grade !in 1..4 || run.stage !in 0..STAGES ||
-            !run.shipX.isFinite() || run.shipX !in .06f.. .94f ||
+            !run.shipX.isFinite() || run.shipX !in 0.06f..0.94f ||
             run.wave<0 || run.errors<0 || run.hints<0 || run.attempts<0 ||
             run.firstTry !in 0..run.stage || run.combo !in 0..run.stage ||
             run.bestCombo !in 0..run.stage || run.combo>run.bestCombo ||

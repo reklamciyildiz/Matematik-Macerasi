@@ -21,11 +21,7 @@ object SpaceCombatPhysics {
     private const val SHOT_SPEED=1.30f
     fun targets(run:SpaceRun):List<SpaceTarget> {
         val q=SpaceExpeditionEngine.puzzle(run)
-        val values=when(run.mission) {
-            SpaceMission.FLIGHT->q.crystals
-            SpaceMission.REACTOR->listOf(-5,1,Int.MIN_VALUE,5,10)
-            SpaceMission.CIRCUIT->q.nodes
-        }
+        val values=q.crystals
         return values.mapIndexed {index,value->
             val x=(index+.5f)/values.size
             SpaceTarget(index,value,x,index*.19f)

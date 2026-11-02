@@ -13,7 +13,7 @@ class SpaceExpeditionStore(context:Context) {
         "space_expedition_v2",Context.MODE_PRIVATE
     )
     @Synchronized fun load():SpaceRun? {
-        if(prefs.getInt("version",0)!=2)return null
+        if(prefs.getInt("version",0) !in 2..3)return null
         val planet=SpacePlanet.entries.getOrNull(prefs.getInt("planet",-1))?:return null
         val tier=LearningTier.entries.firstOrNull {
             it.name==prefs.getString("tier",null)
@@ -57,7 +57,6 @@ class SpaceExpeditionStore(context:Context) {
             .putLong("seed",run.seed)
             .putInt("planet",run.planet.ordinal)
             .putString("tier",run.tier.name)
-            .putInt("stage",run.stage)
             .putInt("grade",run.grade)
             .putFloat("ship_x",run.shipX)
             .putInt("stage",run.stage)

@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
@@ -63,15 +62,16 @@ private val nebulaColors=listOf(
 fun SpaceCombatArena(
     run:SpaceRun,
     puzzle:SpacePuzzle,
+    modifier:Modifier=Modifier,
     onPosition:(Float)->Unit,
     onHit:(Int)->Unit
 ) {
-    var shipX by remember(run.seed,run.stage) {mutableFloatStateOf(run.shipX)}
+    var shipX by remember(run.seed) {mutableFloatStateOf(run.shipX)}
     var frame by remember(run.seed,run.stage,run.wave) {
         mutableStateOf(SpaceCombatFrame())
     }
-    var paused by rememberSaveable(run.seed,run.stage) {mutableStateOf(true)}
-    var lastShotAt by remember(run.seed,run.stage) {mutableLongStateOf(0L)}
+    var paused by rememberSaveable(run.seed) {mutableStateOf(true)}
+    var lastShotAt by remember(run.seed) {mutableLongStateOf(0L)}
     val context=LocalContext.current.applicationContext
     val soundPool=remember(context) {
         SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
@@ -90,9 +90,9 @@ fun SpaceCombatArena(
         shotSoundId=soundPool.load(context,R.raw.laser_sound,1)
         onDispose{soundPool.release()}
     }
-    var burst by remember(run.seed,run.stage) {mutableStateOf<SpaceBurst?>(null)}
-    var burstId by remember(run.seed,run.stage) {mutableIntStateOf(0)}
-    val burstProgress=remember(run.seed,run.stage) {Animatable(1f)}
+    var burst by remember(run.seed) {mutableStateOf<SpaceBurst?>(null)}
+    var burstId by remember(run.seed) {mutableIntStateOf(0)}
+    val burstProgress=remember(run.seed) {Animatable(1f)}
     LaunchedEffect(burst?.key) {
         if(burst!=null) {
             burstProgress.snapTo(0f)
@@ -111,15 +111,8 @@ fun SpaceCombatArena(
     val latestHit by rememberUpdatedState(onHit)
     val latestPosition by rememberUpdatedState(onPosition)
     val currentTier=run.tier.ordinal
-    val deviceHeightDp=LocalConfiguration.current.screenHeightDp
-    val arenaHeight=when {
-        deviceHeightDp<690->208.dp
-        deviceHeightDp<790->244.dp
-        deviceHeightDp<880->300.dp
-        else->365.dp
-    }
-    LaunchedEffect(run.seed,run.stage,run.wave,run.solved,paused) {
-        if(paused || run.solved)return@LaunchedEffect
+    LaunchedEffect(run.seed,run.stage,run.wave,run.completed,paused) {
+        if(paused || run.completed)return@LaunchedEffect
         var last=0L
         while(true) {
             withFrameNanos {now->
@@ -155,7 +148,7 @@ fun SpaceCombatArena(
         latestPosition(normalized)
     }
     fun fire() {
-        if(paused || run.solved)return
+        if(paused || run.completed)return
         val now=SystemClock.uptimeMillis()
         if(now-lastShotAt<170)return
         lastShotAt=now
@@ -169,14 +162,10 @@ fun SpaceCombatArena(
         }
     }
     val planetColor=nebulaColors[run.planet.ordinal]
-    val missionHint=when(run.mission){
-        SpaceMission.FLIGHT->"🎯 Doğru sonucu taşıyan meteoru lazerle vur."
-        SpaceMission.REACTOR->"⚡ Kapsülleri vurup enerjiyi ayarla; tam dolunca çekirdeği vur."
-        SpaceMission.CIRCUIT->"✧ Sonraki sayıyı taşıyan yıldızı sırayla vur."
-    }
+    val missionHint="🎯 Doğru sonucu vur, yeni meteorlar hemen gelsin"
     Column(
-        modifier=Modifier.fillMaxWidth(),
-        verticalArrangement=Arrangement.spacedBy(9.dp)
+        modifier=modifier.fillMaxWidth(),
+        verticalArrangement=Arrangement.spacedBy(4.dp)
     ) {
         Row(Modifier.fillMaxWidth(),
             verticalAlignment=Alignment.CenterVertically,
@@ -199,25 +188,25 @@ fun SpaceCombatArena(
         Text(missionHint,color=spaceWhite,
             fontSize=12.sp,fontWeight=FontWeight.Medium)
         Box(
-            modifier=Modifier.fillMaxWidth().height(arenaHeight)
+            modifier=Modifier.fillMaxWidth().weight(1f)
                 .clip(RoundedCornerShape(23.dp))
                 .border(2.dp,planetColor.copy(alpha=.88f),
                     RoundedCornerShape(23.dp))
                 .testTag("space_combat_arena")
-                .pointerInput(run.seed,run.stage,paused,run.solved) {
+                .pointerInput(run.seed,run.stage,paused,run.completed) {
                     detectDragGestures(
                         onDragStart={position->
-                            if(!paused&&!run.solved)
+                            if(!paused&&!run.completed)
                                 shipX=(position.x/size.width)
                                     .coerceIn(.06f,.94f)
                         },
                         onDrag={change,_->
                             change.consume()
-                            if(!paused&&!run.solved)
+                            if(!paused&&!run.completed)
                                 shipX=(change.position.x/size.width)
                                     .coerceIn(.06f,.94f)
                         },
-                        onDragEnd={if(!paused&&!run.solved)
+                        onDragEnd={if(!paused&&!run.completed)
                             latestPosition(shipX)}
                     )
                 }
@@ -292,7 +281,7 @@ fun SpaceCombatArena(
                     val y=h*place.y
                     val radius=w*(if(targetValues.size>=5).075f else .092f)
                     if(y < -radius*1.2f || y>h+radius) return@forEach
-                    val isNode=run.mission==SpaceMission.CIRCUIT
+                    val isNode=false
                     val color=if(isNode)spaceGold else
                         nebulaColors[(run.planet.ordinal+target.id)%5]
                     drawCircle(color.copy(alpha=.13f),
@@ -320,18 +309,13 @@ fun SpaceCombatArena(
                         radius=radius*.14f,
                         center=Offset(x-radius*.37f,y-radius*.35f))
                     val display=if(target.value==Int.MIN_VALUE)"GO" else
-                        (if(target.value>0 && run.mission==SpaceMission.REACTOR)
+                        (if(false)
                             "+"+target.value else target.value.toString())
                     paint.color=android.graphics.Color.rgb(13,28,61)
                     paint.textSize=if(display.length>=3)radius*.67f
                         else radius*.89f
                     drawIntoCanvas {it.nativeCanvas.drawText(
                         display,x,y+paint.textSize*.31f,paint)}
-                    if(run.mission==SpaceMission.CIRCUIT && target.value in run.path){
-                        drawCircle(spaceTeal.copy(alpha=.8f),
-                            radius=radius*1.18f,center=Offset(x,y),
-                            style=Stroke(5f))
-                    }
                 }
                 // Explosion feedback is independent of mission state and survives
                 // an immediate answer/round transition.
@@ -403,7 +387,7 @@ fun SpaceCombatArena(
                     Offset(w*.06f,h*.93f),
                     Offset(w*.94f,h*.93f),2f)
             }
-            if(paused && !run.solved){
+            if(paused && !run.completed){
                 Surface(modifier=Modifier.align(Alignment.Center),
                     color=spaceMidnight.copy(alpha=.94f),
                     shape=RoundedCornerShape(17.dp),
@@ -421,7 +405,7 @@ fun SpaceCombatArena(
                     }
                 }
             }
-            if(run.solved)Surface(
+            if(run.completed)Surface(
                 modifier=Modifier.align(Alignment.Center),
                 color=Color(0xFF135761).copy(alpha=.91f),
                 shape=RoundedCornerShape(18.dp),
@@ -437,7 +421,7 @@ fun SpaceCombatArena(
             verticalAlignment=Alignment.CenterVertically){
             OutlinedButton(
                 onClick={move((shipX-.14f).coerceAtLeast(.06f))},
-                enabled=!paused&&!run.solved,
+                enabled=!paused&&!run.completed,
                 modifier=Modifier.weight(1f).heightIn(min=58.dp)
                     .testTag("space_steer_left"),
                 colors=ButtonDefaults.outlinedButtonColors(
@@ -446,7 +430,7 @@ fun SpaceCombatArena(
             ){Text("◀",fontSize=23.sp)}
             Button(
                 onClick={fire()},
-                enabled=!paused&&!run.solved,
+                enabled=!paused&&!run.completed,
                 modifier=Modifier.weight(1.7f).heightIn(min=68.dp)
                     .testTag("space_fire"),
                 shape=RoundedCornerShape(18.dp),
@@ -459,7 +443,7 @@ fun SpaceCombatArena(
             }
             OutlinedButton(
                 onClick={move((shipX+.14f).coerceAtMost(.94f))},
-                enabled=!paused&&!run.solved,
+                enabled=!paused&&!run.completed,
                 modifier=Modifier.weight(1f).heightIn(min=58.dp)
                     .testTag("space_steer_right"),
                 colors=ButtonDefaults.outlinedButtonColors(
@@ -475,21 +459,5 @@ fun SpaceCombatArena(
                 color=spaceWhite,fontSize=11.sp,
                 modifier=Modifier.testTag("space_laser_count"))
         }
-        if(run.mission==SpaceMission.REACTOR)Text(
-            "REAKTÖR  "+run.charge+"/"+puzzle.answer+
-                " enerji · +1 / +5 / +10 / −5 kapsüllerini vur; GO'ya hazırken ateş et.",
-            color=spaceGold,fontWeight=FontWeight.Bold,fontSize=12.sp,
-            modifier=Modifier.fillMaxWidth()
-                .background(Color(0xFF183764),RoundedCornerShape(12.dp))
-                .padding(11.dp)
-        )
-        if(run.mission==SpaceMission.CIRCUIT)Text(
-            "YILDIZ ZİNCİRİ  "+run.path.size+"/3 bağlandı · "+
-                puzzle.sequence.take(run.path.size).joinToString(" → "),
-            color=spaceGold,fontWeight=FontWeight.Bold,fontSize=12.sp,
-            modifier=Modifier.fillMaxWidth()
-                .background(Color(0xFF183764),RoundedCornerShape(12.dp))
-                .padding(11.dp)
-        )
     }
 }

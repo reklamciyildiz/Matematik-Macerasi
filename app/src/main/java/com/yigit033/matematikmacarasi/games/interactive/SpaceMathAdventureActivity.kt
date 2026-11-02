@@ -57,6 +57,7 @@ class SpaceMathAdventureActivity:ComponentActivity() {
                 SpaceExpeditionScreen(
                     run=run,
                     recommended=adaptive.progress(AdventureSkill.SPACE).currentTier,
+                    profileGrade=adaptive.progress(AdventureSkill.SPACE).profileGrade,
                     records=SpacePlanet.entries.associateWith {store.record(it)},
                     historicalStars=SpacePlanet.entries.associateWith {
                         stars.getGameStars(rewardKey(it))

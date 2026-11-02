@@ -125,262 +125,215 @@ private fun GalaxyScene(planet:SpacePlanet,compact:Boolean) {
 fun SpaceExpeditionScreen(
     run:SpaceRun?,
     recommended:LearningTier,
+    profileGrade:Int?,
     records:Map<SpacePlanet,SpacePlanetRecord>,
     historicalStars:Map<SpacePlanet,Int>,
     feedback:String,
     onBegin:(SpacePlanet,LearningTier)->Boolean,
-    onSteer:(Int)->Unit,
-    onIntercept:()->Unit,
     onShipPosition:(Float)->Unit,
     onFireHit:(Int)->Unit,
-    onFuel:(Int)->Unit,
-    onIgnite:()->Unit,
-    onConnect:(Int)->Unit,
     onHint:()->Unit,
-    onNext:()->Unit,
     onExit:()->Unit
 ) {
     var lobby by rememberSaveable {mutableStateOf(true)}
     var choice by rememberSaveable {mutableIntStateOf(0)}
     var selectedTier by rememberSaveable {mutableStateOf(recommended.name)}
-    var replaceWith by remember {mutableStateOf<Pair<SpacePlanet,LearningTier>?>(null)}
-    var startFailed by remember {mutableStateOf(false)}
+    var replacing by remember {mutableStateOf<Pair<SpacePlanet,LearningTier>?>(null)}
+    var failed by remember {mutableStateOf(false)}
     val tier=LearningTier.fromSaved(selectedTier,recommended)
-    fun launch(planet:SpacePlanet,t:LearningTier) {
-        if(run!=null && !run.completed)replaceWith=planet to t
-        else if(onBegin(planet,t)){lobby=false;startFailed=false}
-        else startFailed=true
+    fun start(planet:SpacePlanet,t:LearningTier) {
+        if(run!=null && !run.completed)replacing=planet to t
+        else if(onBegin(planet,t)){lobby=false;failed=false}
+        else failed=true
     }
     BackHandler(enabled=!lobby){lobby=true}
-    replaceWith?.let {pending->
+    replacing?.let{pair->
         AlertDialog(
-            onDismissRequest={replaceWith=null},
-            title={Text("Yeni keşfe geçilsin mi?")},
-            text={Text("Yarım kalan görevin kaydı yenisiyle değişecek.")},
+            onDismissRequest={replacing=null},
+            title={Text("Yeni galaksi turu?")},
+            text={Text("Devam eden tur yerine yeni bir tur başlatılacak.")},
             confirmButton={TextButton(onClick={
-                replaceWith=null
-                if(onBegin(pending.first,pending.second)){lobby=false;startFailed=false}
-                else startFailed=true
-            }){Text("Yeni keşif")}},
-            dismissButton={TextButton(onClick={replaceWith=null}){Text("Vazgeç")}}
+                replacing=null
+                if(onBegin(pair.first,pair.second)){lobby=false;failed=false}
+                else failed=true
+            }){Text("Başlat")}},
+            dismissButton={TextButton(onClick={replacing=null}){Text("Vazgeç")}}
         )
     }
     Column(
-        modifier=Modifier.fillMaxSize()
+        Modifier.fillMaxSize()
             .background(Brush.verticalGradient(listOf(
-                Color(0xFF12347D),GalaxyPaint.night,Color(0xFF03091B)
+                Color(0xFF132E69),GalaxyPaint.night,Color(0xFF03091B)
             )))
-            .safeDrawingPadding().verticalScroll(rememberScrollState())
-            .padding(horizontal=14.dp,vertical=10.dp),
-        verticalArrangement=Arrangement.spacedBy(12.dp)
+            .safeDrawingPadding()
+            .padding(horizontal=10.dp,vertical=5.dp),
+        verticalArrangement=Arrangement.spacedBy(5.dp)
     ) {
-        Row(Modifier.fillMaxWidth(),
+        Row(Modifier.fillMaxWidth().heightIn(min=43.dp),
             verticalAlignment=Alignment.CenterVertically,
-            horizontalArrangement=Arrangement.spacedBy(11.dp)) {
+            horizontalArrangement=Arrangement.spacedBy(8.dp)){
             OutlinedButton(
                 onClick={if(lobby)onExit() else lobby=true},
-                modifier=Modifier.height(48.dp),
-                contentPadding=PaddingValues(horizontal=11.dp),
+                modifier=Modifier.heightIn(min=42.dp),
+                contentPadding=PaddingValues(horizontal=9.dp),
                 border=BorderStroke(1.dp,GalaxyPaint.teal),
                 colors=ButtonDefaults.outlinedButtonColors(contentColor=GalaxyPaint.bright)
-            ){Text(if(lobby)"← Oyunlar" else "← Galaksi",fontSize=12.sp)}
-            Column(Modifier.weight(1f)) {
-                Text("GALAKSİ KAŞİFLERİ",
-                    fontSize=18.sp,fontWeight=FontWeight.Black,color=GalaxyPaint.gold)
-                Text("Uzay Matematik Macerası 2.0",
+            ){Text(if(lobby)"← Oyunlar" else "← Harita",fontSize=12.sp)}
+            Column(Modifier.weight(1f)){
+                Text(if(lobby)"GALAKSİ KAŞİFLERİ" else run?.planet?.title?:"UZAY",
+                    fontSize=15.sp,fontWeight=FontWeight.Black,
+                    maxLines=1,color=GalaxyPaint.gold)
+                Text(if(lobby)"Uzay Matematik 2.0"
+                    else run?.grade.toString()+". sınıf · "+run?.tier?.title,
                     fontSize=11.sp,color=GalaxyPaint.quiet)
             }
-            Text("🚀",fontSize=26.sp)
+            Text("🚀",fontSize=23.sp)
         }
         if(lobby) {
-            GalaxyScene(SpacePlanet.entries[choice],compact=false)
-            Text("5 gezegen · 3 sektör · 9 interaktif görev",
-                color=GalaxyPaint.bright,fontSize=20.sp,
-                fontWeight=FontWeight.Black)
-            Text("Gemini serbestçe yönet, lazerle hareketli meteorları vur, reaktörü enerji kapsülleriyle besle ve yıldızları sırayla etkinleştir.",
-                color=GalaxyPaint.quiet,fontSize=13.sp)
-            if(run!=null && !run.completed) {
-                Surface(color=Color(0xFF154D68),
-                    shape=RoundedCornerShape(16.dp),
-                    border=BorderStroke(1.dp,GalaxyPaint.teal)) {
-                    Column(Modifier.padding(13.dp),
-                        verticalArrangement=Arrangement.spacedBy(7.dp)) {
-                        Text("📍 Devam eden: "+run.planet.title+
-                            " · görev "+(run.stage+1)+"/9",
-                            color=GalaxyPaint.bright,fontWeight=FontWeight.Bold)
-                        SpaceButton("▶ Kaydedilen Göreve Dön") {lobby=false}
-                    }
-                }
-            }
-            Text("Öğrenme seviyesi",color=GalaxyPaint.gold,
-                fontSize=16.sp,fontWeight=FontWeight.Bold)
-            Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                LearningTier.entries.forEach {option->
-                    val selected=option==tier
-                    OutlinedButton(
-                        onClick={selectedTier=option.name},
-                        modifier=Modifier.weight(1f).heightIn(min=48.dp),
-                        contentPadding=PaddingValues(horizontal=3.dp),
-                        border=BorderStroke(if(selected)2.dp else 1.dp,
-                            if(selected)GalaxyPaint.gold else GalaxyPaint.quiet),
-                        colors=ButtonDefaults.outlinedButtonColors(
-                            containerColor=if(selected)GalaxyPaint.panel else Color.Transparent,
-                            contentColor=GalaxyPaint.bright)
-                    ){Text(option.title,fontSize=12.sp)}
-                }
-            }
-            Text("Önerilen: "+recommended.title+" · İstersen değiştirebilirsin.",
-                color=GalaxyPaint.quiet,fontSize=11.sp)
-            SpacePlanet.entries.forEach {planet->
-                val chosen=planet.ordinal==choice
-                val best=maxOf(records[planet]?.bestStars?:0,historicalStars[planet]?:0)
-                Surface(
-                    modifier=Modifier.fillMaxWidth()
-                        .testTag("space_planet_"+planet.name),
-                    onClick={choice=planet.ordinal},
-                    color=if(chosen)Color(0xFF28597B) else GalaxyPaint.panel,
-                    shape=RoundedCornerShape(15.dp),
-                    border=BorderStroke(if(chosen)2.dp else 1.dp,
-                        if(chosen)GalaxyPaint.gold else
-                            GalaxyPaint.planets[planet.ordinal].copy(alpha=.5f))
-                ){
-                    Row(Modifier.padding(14.dp),
-                        verticalAlignment=Alignment.CenterVertically,
-                        horizontalArrangement=Arrangement.spacedBy(13.dp)){
-                        Text(planet.sign,fontSize=28.sp,
-                            color=GalaxyPaint.planets[planet.ordinal])
-                        Column(Modifier.weight(1f)){
-                            Text(planet.title,fontWeight=FontWeight.Black,
-                                fontSize=15.sp,color=GalaxyPaint.bright)
-                            Text(planet.detail,fontSize=11.sp,
-                                color=GalaxyPaint.quiet)
-                        }
-                        Text("★".repeat(best)+"☆".repeat(3-best),
-                            color=GalaxyPaint.gold,fontSize=15.sp)
-                    }
-                }
-            }
-            SpaceButton("🚀 "+SpacePlanet.entries[choice].title+" Keşfini Başlat") {
-                launch(SpacePlanet.entries[choice],tier)
-            }
-            if(startFailed)Text(if(feedback.isBlank())
-                "Kaydedilemedi. Tekrar dene." else feedback,
-                color=GalaxyPaint.gold)
-            Text("Çevrimdışı · reklamsız görev alanı · kaldığın yerden devam",
-                color=GalaxyPaint.quiet,fontSize=11.sp)
-        } else if(run!=null) {
-            if(run.completed){
-                GalaxyScene(run.planet,compact=false)
-                Surface(color=GalaxyPaint.panel,
-                    shape=RoundedCornerShape(24.dp),
-                    border=BorderStroke(2.dp,GalaxyPaint.gold)){
-                    Column(Modifier.fillMaxWidth().padding(18.dp),
-                        horizontalAlignment=Alignment.CenterHorizontally,
-                        verticalArrangement=Arrangement.spacedBy(13.dp)){
-                        Text("🏆 GÖREV TAMAMLANDI",
-                            color=GalaxyPaint.gold,fontSize=23.sp,
-                            fontWeight=FontWeight.Black)
-                        Text("★".repeat(SpaceExpeditionEngine.stars(run))+
-                            "☆".repeat(3-SpaceExpeditionEngine.stars(run)),
-                            color=GalaxyPaint.gold,fontSize=35.sp)
-                        Text(SpaceExpeditionEngine.score(run).toString()+" puan",
-                            color=GalaxyPaint.bright,fontSize=26.sp,
-                            fontWeight=FontWeight.Black)
-                        Text("9 görev · "+run.firstTry+
-                            " ilk denemede doğru · "+run.errors+" hata · "+
-                            run.hints+" ipucu",
-                            color=GalaxyPaint.quiet,fontSize=13.sp)
-                        Text("Gemiyi kullandın, enerji ürettin ve yıldız devresini tamamladın.",
-                            color=GalaxyPaint.bright,fontSize=13.sp,
-                            textAlign=TextAlign.Center)
-                    }
-                }
-                SpaceButton("🚀 Bu Gezegeni Yeniden Keşfet"){
-                    launch(run.planet,run.tier)
-                }
-                OutlinedButton(onClick={lobby=true},
-                    modifier=Modifier.fillMaxWidth().heightIn(min=50.dp),
-                    border=BorderStroke(1.dp,GalaxyPaint.teal),
-                    colors=ButtonDefaults.outlinedButtonColors(
-                        contentColor=GalaxyPaint.bright)) {Text("🪐 Gezegen haritası")}
-            } else {
-                Row(Modifier.fillMaxWidth(),
-                    horizontalArrangement=Arrangement.SpaceBetween,
-                    verticalAlignment=Alignment.CenterVertically){
-                    Text(run.planet.title+" · "+run.tier.title,
-                        color=GalaxyPaint.teal,fontSize=14.sp,
-                        fontWeight=FontWeight.Bold)
-                    Text("🛡 "+run.shields+"  ★ "+run.firstTry,
-                        color=GalaxyPaint.gold,fontSize=13.sp)
-                }
-                LinearProgressIndicator(
-                    progress={run.stage.toFloat()/SpaceExpeditionEngine.STAGES},
-                    modifier=Modifier.fillMaxWidth().height(8.dp),
-                    color=GalaxyPaint.gold,trackColor=Color(0xFF325079)
-                )
-                Text("Sektör "+(run.stage/3+1)+"/3 · Görev "+
-                        (run.stage+1)+"/9 · "+run.mission.title,
-                    color=GalaxyPaint.gold,fontSize=16.sp,
+            Column(
+                modifier=Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                verticalArrangement=Arrangement.spacedBy(10.dp)
+            ){
+                GalaxyScene(SpacePlanet.entries[choice],compact=false)
+                Text("15 soruluk kesintisiz meteor avı",
+                    color=GalaxyPaint.bright,fontSize=19.sp,
                     fontWeight=FontWeight.Black)
-                val q=SpaceExpeditionEngine.puzzle(run)
-                Surface(color=GalaxyPaint.panel,
-                    shape=RoundedCornerShape(15.dp)){
-                    Text(q.prompt,
-                        modifier=Modifier.fillMaxWidth().padding(14.dp)
-                            .testTag("space_mission_prompt"),
-                        color=GalaxyPaint.bright,
-                        fontSize=16.sp,fontWeight=FontWeight.Bold)
-                }
-                SpaceCombatArena(
-                    run=run,
-                    puzzle=q,
-                    onPosition=onShipPosition,
-                    onHit=onFireHit
-                )
-                if(run.solved){
-                    Surface(
-                        modifier=Modifier.fillMaxWidth(),
-                        shape=RoundedCornerShape(16.dp),
-                        color=Color(0xFF14556E),
-                        border=BorderStroke(1.dp,GalaxyPaint.teal)
-                    ){
-                        Column(Modifier.padding(14.dp),
-                            verticalArrangement=Arrangement.spacedBy(7.dp)){
-                            Text("✨ Görev başarılı!",
-                                color=GalaxyPaint.gold,
-                                fontSize=17.sp,fontWeight=FontWeight.Bold)
-                            Text(q.explanation,color=GalaxyPaint.bright,fontSize=13.sp)
+                Text("Geminle nişan al, hareketli meteorları vur. Doğru cevapla yeni soru otomatik gelir.",
+                    color=GalaxyPaint.quiet,fontSize=13.sp)
+                if(run!=null&&!run.completed) {
+                    Surface(shape=RoundedCornerShape(15.dp),
+                        color=Color(0xFF164C63),
+                        border=BorderStroke(1.dp,GalaxyPaint.teal)){
+                        Column(Modifier.fillMaxWidth().padding(12.dp),
+                            verticalArrangement=Arrangement.spacedBy(6.dp)){
+                            Text("Kaydedilen tur: "+run.stage+"/15 · "+run.planet.title,
+                                color=GalaxyPaint.bright,fontWeight=FontWeight.Bold)
+                            SpaceButton("▶ Kaydedilen Göreve Dön"){lobby=false}
                         }
                     }
-                    SpaceButton(if(run.stage==SpaceExpeditionEngine.STAGES-1)
-                        "🏆 Gezegen Sonucunu Gör" else "Sonraki Görev →",
-                        onClick=onNext)
-                } else {
-                    if(run.hintVisible)Text("💡 "+q.hint,
-                        color=GalaxyPaint.teal,fontSize=13.sp,
+                }
+                Surface(shape=RoundedCornerShape(14.dp),
+                    color=GalaxyPaint.panel){
+                    Column(Modifier.padding(12.dp),
+                        verticalArrangement=Arrangement.spacedBy(6.dp)){
+                        Text(if(profileGrade==null)
+                            "Sınıf belirtilmemiş: 1. sınıf kapsamı kullanılır."
+                            else "Profil: "+profileGrade+". sınıf · sorular sınıfa duyarlı",
+                            color=GalaxyPaint.teal,fontSize=12.sp)
+                        Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                            LearningTier.entries.forEach{opt->
+                                OutlinedButton(
+                                    onClick={selectedTier=opt.name},
+                                    modifier=Modifier.weight(1f).heightIn(min=46.dp),
+                                    contentPadding=PaddingValues(horizontal=3.dp),
+                                    border=BorderStroke(if(opt==tier)2.dp else 1.dp,
+                                        if(opt==tier)GalaxyPaint.gold else GalaxyPaint.quiet),
+                                    colors=ButtonDefaults.outlinedButtonColors(
+                                        containerColor=if(opt==tier)
+                                            Color(0xFF264F70) else Color.Transparent,
+                                        contentColor=GalaxyPaint.bright)
+                                ){Text(opt.title,fontSize=12.sp)}
+                            }
+                        }
+                        Text("Zorluk değişse bile sınıfının dışındaki işlemler açılmaz.",
+                            color=GalaxyPaint.quiet,fontSize=11.sp)
+                    }
+                }
+                SpacePlanet.entries.forEach{planet->
+                    val picked=choice==planet.ordinal
+                    val best=maxOf(records[planet]?.bestStars?:0,historicalStars[planet]?:0)
+                    Surface(
                         modifier=Modifier.fillMaxWidth()
-                            .background(GalaxyPaint.panel,RoundedCornerShape(12.dp))
-                            .padding(12.dp))
+                            .testTag("space_planet_"+planet.name),
+                        onClick={choice=planet.ordinal},
+                        shape=RoundedCornerShape(14.dp),
+                        color=if(picked)Color(0xFF28617C) else GalaxyPaint.panel,
+                        border=BorderStroke(if(picked)2.dp else 1.dp,
+                            if(picked)GalaxyPaint.gold else GalaxyPaint.quiet.copy(alpha=.3f))
+                    ){
+                        Row(Modifier.padding(12.dp),
+                            verticalAlignment=Alignment.CenterVertically,
+                            horizontalArrangement=Arrangement.spacedBy(10.dp)){
+                            Text(planet.sign,fontSize=24.sp,
+                                color=GalaxyPaint.planets[planet.ordinal])
+                            Column(Modifier.weight(1f)){
+                                Text(planet.title,color=GalaxyPaint.bright,
+                                    fontSize=15.sp,fontWeight=FontWeight.Black)
+                                Text(planet.detail,color=GalaxyPaint.quiet,fontSize=11.sp)
+                            }
+                            Text("★".repeat(best)+"☆".repeat(3-best),
+                                color=GalaxyPaint.gold,fontSize=14.sp)
+                        }
+                    }
+                }
+                SpaceButton("🚀 "+SpacePlanet.entries[choice].title+" Başlat"){
+                    start(SpacePlanet.entries[choice],tier)
+                }
+                if(failed)Text(if(feedback.isBlank())
+                    "Kayıt yapılamadı." else feedback,color=GalaxyPaint.gold)
+            }
+        } else if(run!=null && run.completed) {
+            Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                horizontalAlignment=Alignment.CenterHorizontally,
+                verticalArrangement=Arrangement.spacedBy(13.dp)){
+                GalaxyScene(run.planet,compact=false)
+                Text("🏆 GALAKSİ TAMAMLANDI",
+                    color=GalaxyPaint.gold,fontSize=22.sp,
+                    fontWeight=FontWeight.Black)
+                Text("★".repeat(SpaceExpeditionEngine.stars(run))+
+                    "☆".repeat(3-SpaceExpeditionEngine.stars(run)),
+                    fontSize=35.sp,color=GalaxyPaint.gold)
+                Text(SpaceExpeditionEngine.score(run).toString()+" puan",
+                    fontSize=24.sp,color=GalaxyPaint.bright,
+                    fontWeight=FontWeight.Black)
+                Text("15 isabet · "+run.errors+" yanlış · en iyi seri "+run.bestCombo,
+                    color=GalaxyPaint.quiet,fontSize=13.sp)
+                SpaceButton("🚀 Bir Tur Daha"){start(run.planet,run.tier)}
+                SpaceButton("🪐 Galaksi Haritası"){lobby=true}
+            }
+        } else if(run!=null) {
+            val q=SpaceExpeditionEngine.puzzle(run)
+            Row(Modifier.fillMaxWidth(),
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.SpaceBetween){
+                Text("🎯 "+(run.stage+1)+"/15   🔥 "+run.combo+" seri",
+                    color=GalaxyPaint.bright,fontSize=13.sp,fontWeight=FontWeight.Black)
+                Text("🛡 "+run.shields+"   ★ "+SpaceExpeditionEngine.score(run),
+                    color=GalaxyPaint.gold,fontSize=13.sp,fontWeight=FontWeight.Black)
+            }
+            LinearProgressIndicator(
+                progress={run.stage.toFloat()/SpaceExpeditionEngine.STAGES},
+                modifier=Modifier.fillMaxWidth().height(5.dp),
+                color=GalaxyPaint.gold,trackColor=Color(0xFF34567B)
+            )
+            Surface(shape=RoundedCornerShape(12.dp),
+                color=Color(0xFF172F5B)){
+                Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=5.dp),
+                    verticalAlignment=Alignment.CenterVertically,
+                    horizontalArrangement=Arrangement.SpaceBetween){
+                    Column(Modifier.weight(1f)){
+                        Text(q.prompt,
+                            modifier=Modifier.testTag("space_mission_prompt"),
+                            color=GalaxyPaint.bright,fontSize=25.sp,
+                            fontWeight=FontWeight.Black)
+                        Text(if(run.hintVisible)"💡 "+q.hint
+                            else "Doğru meteoru vur · sonraki soru otomatik",
+                            color=GalaxyPaint.teal,fontSize=11.sp,maxLines=2)
+                    }
                     OutlinedButton(
                         onClick=onHint,enabled=!run.hintVisible,
-                        modifier=Modifier.fillMaxWidth().heightIn(min=51.dp),
+                        modifier=Modifier.heightIn(min=43.dp),
+                        contentPadding=PaddingValues(horizontal=8.dp),
                         border=BorderStroke(1.dp,GalaxyPaint.teal),
                         colors=ButtonDefaults.outlinedButtonColors(
                             contentColor=GalaxyPaint.bright)
-                    ){Text(if(run.hintVisible)"💡 İpucu açık" else "💡 Yardımcı ipucu")}
+                    ){Text("💡 İpucu",fontSize=11.sp)}
                 }
-                if(feedback.isNotBlank())Text(feedback,color=GalaxyPaint.gold,
-                    fontSize=12.sp,fontWeight=FontWeight.Bold)
-                Text("Hatalar puanı etkiler, ancak çocuk oyundan elenmez.",
-                    color=GalaxyPaint.quiet,fontSize=11.sp)
-                TextButton(
-                    modifier=Modifier.fillMaxWidth(),
-                    onClick={lobby=true}
-                ){Text("💾 Haritaya dön · ilerlemeyi koru",
-                    color=GalaxyPaint.teal,fontSize=12.sp)}
             }
+            SpaceCombatArena(
+                run=run,puzzle=q,modifier=Modifier.weight(1f),
+                onPosition=onShipPosition,onHit=onFireHit
+            )
         }
-        Spacer(Modifier.height(9.dp))
     }
 }
-

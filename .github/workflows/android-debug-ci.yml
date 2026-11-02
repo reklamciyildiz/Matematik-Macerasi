@@ -119,6 +119,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_settings_profile_premium_ui.py
 
+      - name: Validate Fraction Crystals game source and routes
+        shell: bash
+        run: python3 scripts/check_fraction_crystals.py
+
       - name: Validate original audio assets and sound routes
         shell: bash
         run: python3 scripts/check_premium_audio.py

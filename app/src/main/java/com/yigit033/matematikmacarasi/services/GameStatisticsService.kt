@@ -40,7 +40,8 @@ class GameStatisticsService(private val context: Context) {
             "MultiplicationGameActivity", "DivisionGameActivity",
             "BalloonPopGameActivity", "NumberHuntGameActivity", 
             "MathMazeGameActivity", "SpaceMathAdventureActivity",
-            "ShapeRecognitionGameActivity", "MarketSimulatorActivity"
+            "ShapeRecognitionGameActivity", "MarketSimulatorActivity",
+            "FractionCrystalsActivity"
         )
         
         // Oyun isim eşleşmeleri
@@ -54,7 +55,8 @@ class GameStatisticsService(private val context: Context) {
             "MathMazeGameActivity" to "Matematik Labirenti",
             "SpaceMathAdventureActivity" to "Uzay Matematik Macerası",
             "ShapeRecognitionGameActivity" to "Şekil Tanıma",
-            "MarketSimulatorActivity" to "Market Simülasyonu"
+            "MarketSimulatorActivity" to "Market Simülasyonu",
+            "FractionCrystalsActivity" to "Kesir Kristalleri"
         )
         
         // İstatistik hesaplamalarında kullanılacak geçerli oyun ID'leri listesi
@@ -151,6 +153,7 @@ class GameStatisticsService(private val context: Context) {
             GameType.SPACE_MATH_ADVENTURE -> "SpaceMathAdventureActivity"
             GameType.SHAPE_RECOGNITION -> "ShapeRecognitionGameActivity"
             GameType.MARKET_SIMULATOR -> "MarketSimulatorActivity"
+            GameType.FRACTION_CRYSTALS -> "FractionCrystalsActivity"
         }
     }
     

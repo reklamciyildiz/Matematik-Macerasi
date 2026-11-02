@@ -63,15 +63,9 @@ class SpaceMathAdventureActivity:ComponentActivity() {
                     },
                     feedback=feedback,
                     onBegin={planet,tier->start(planet,tier)},
-                    onSteer={lane->transition {SpaceExpeditionEngine.steer(it,lane)}},
                     onShipPosition={x->transition {SpaceExpeditionEngine.position(it,x)}},
                     onFireHit={value->transition {SpaceExpeditionEngine.fireAt(it,value)}},
-                    onIntercept={transition {SpaceExpeditionEngine.intercept(it)}},
-                    onFuel={amount->transition {SpaceExpeditionEngine.adjustFuel(it,amount)}},
-                    onIgnite={transition {SpaceExpeditionEngine.ignite(it)}},
-                    onConnect={node->transition {SpaceExpeditionEngine.connect(it,node)}},
                     onHint={transition {SpaceExpeditionEngine.hint(it)}},
-                    onNext={transition {SpaceExpeditionEngine.next(it)}},
                     onExit={finish()}
                 )
             }
@@ -80,7 +74,8 @@ class SpaceMathAdventureActivity:ComponentActivity() {
     private fun start(planet:SpacePlanet,tier:LearningTier):Boolean {
         val time=System.currentTimeMillis()
         val seed=maxOf(time, (run?.seed?:0L)+1, ++nonce).coerceAtLeast(1)
-        val next=SpaceExpeditionEngine.begin(seed,planet,tier)
+        val grade=adaptive.progress(AdventureSkill.SPACE).profileGrade
+        val next=SpaceExpeditionEngine.begin(seed,planet,tier,grade?:1)
         if(!store.save(next)) {
             feedback="Yeni keşif kaydedilemedi. Tekrar dene."
             return false
@@ -105,11 +100,11 @@ class SpaceMathAdventureActivity:ComponentActivity() {
         feedback=when {
             next.errors>before.errors ->
                 "⚠️ Enerji kaybı! Doğru işlemi düşün, göreve devam edebilirsin."
-            next.solved && !before.solved -> "✨ Görev tamamlandı! Açıklamayı incele."
+            next.stage>before.stage -> "✨ İsabet! Yeni matematik hedefleri geliyor."
             else -> ""
         }
         run=next
-        if(next.solved && !before.solved)runCatching {
+        if(next.stage>before.stage)runCatching {
             audio.playCorrectSound()
         }.onFailure {Log.w(TAG,"Correct SFX unavailable",it)}
         else if(next.errors>before.errors)runCatching {

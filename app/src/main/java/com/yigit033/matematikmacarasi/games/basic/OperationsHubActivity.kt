@@ -346,7 +346,7 @@ private fun MixedOperationSession(
             color = accent, trackColor = Color(0xFF355583)
         )
 
-        if (round >= 12) {
+        if (round >= 12 || current == null) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(25.dp),

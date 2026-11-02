@@ -228,7 +228,7 @@ class SubtractionGameActivity : BaseGameActivity() {
             }
             showDifficultySelection -> {
                 // Zorluk seviyesi seçim ekranı
-                DifficultySelectionScreen(
+                PremiumOperationDifficultySelect(
                     title = "Çıkarma İşlemi",
                     onDifficultySelected = { difficulty ->
                         try {

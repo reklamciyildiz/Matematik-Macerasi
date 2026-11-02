@@ -232,7 +232,7 @@ class MultiplicationGameActivity : BaseGameActivity() {
             }
             showDifficultySelection -> {
                 // Zorluk seviyesi seçim ekranı
-                DifficultySelectionScreen(
+                PremiumOperationDifficultySelect(
                     title = "Çarpma İşlemi",
                     onDifficultySelected = { difficulty ->
                         try {

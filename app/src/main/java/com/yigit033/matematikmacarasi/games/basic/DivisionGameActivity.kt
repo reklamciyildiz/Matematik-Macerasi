@@ -214,7 +214,7 @@ class DivisionGameActivity : BaseGameActivity() {
             }
             showDifficultySelection -> {
                 // Zorluk seviyesi seçim ekranı
-                DifficultySelectionScreen(
+                PremiumOperationDifficultySelect(
                     title = "Bölme İşlemi",
                     onDifficultySelected = { difficulty ->
                         try {

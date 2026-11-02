@@ -205,7 +205,7 @@ class AdditionGameActivity : BaseGameActivity() {
             }
             showDifficultySelection -> {
                 // Zorluk seviyesi seçim ekranı
-                DifficultySelectionScreen(
+                PremiumOperationDifficultySelect(
                     title = "Toplama İşlemi",
                     onDifficultySelected = { difficulty ->
                         try {

@@ -172,7 +172,7 @@ object SpaceExpeditionEngine {
             }
             1->{
                 if(value==Int.MIN_VALUE)ignite(run)
-                else if(value in listOf(-5,-1,1,5)) {
+                else if(value in listOf(-5,1,5,10)) {
                     val updated=adjustFuel(run,value)
                     if(updated==run)run else updated.copy(wave=updated.wave+1)
                 } else run

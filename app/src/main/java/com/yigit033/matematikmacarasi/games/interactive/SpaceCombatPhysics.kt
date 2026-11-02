@@ -23,7 +23,7 @@ object SpaceCombatPhysics {
         val q=SpaceExpeditionEngine.puzzle(run)
         val values=when(run.stage) {
             0->q.crystals
-            1->listOf(-5,-1,Int.MIN_VALUE,1,5)
+            1->listOf(-5,1,Int.MIN_VALUE,5,10)
             else->q.nodes
         }
         return values.mapIndexed {index,value->

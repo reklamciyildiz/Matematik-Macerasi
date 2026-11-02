@@ -1,6 +1,8 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
 import android.os.SystemClock
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -40,6 +42,7 @@ private val spaceWhite=Color(0xFFF4FBFF)
 private val spaceGold=Color(0xFFFFD784)
 private val spaceTeal=Color(0xFF79F4E9)
 private val spaceMidnight=Color(0xFF070D2D)
+private data class SpaceBurst(val x:Float,val y:Float,val value:Int,val key:Int)
 private val nebulaColors=listOf(
     Color(0xFF41CFA4),Color(0xFF50C5F0),
     Color(0xFFEC705B),Color(0xFFB699F9),Color(0xFFEF8FCA)
@@ -63,6 +66,15 @@ fun SpaceCombatArena(
     }
     var paused by rememberSaveable(run.seed,run.stage) {mutableStateOf(true)}
     var lastShotAt by remember(run.seed,run.stage) {mutableLongStateOf(0L)}
+    var burst by remember(run.seed,run.stage) {mutableStateOf<SpaceBurst?>(null)}
+    var burstId by remember(run.seed,run.stage) {mutableIntStateOf(0)}
+    val burstProgress=remember(run.seed,run.stage) {Animatable(1f)}
+    LaunchedEffect(burst?.key) {
+        if(burst!=null) {
+            burstProgress.snapTo(0f)
+            burstProgress.animateTo(1f,tween(440))
+        }
+    }
     val targetValues=remember(run.seed,run.stage) {SpaceCombatPhysics.targets(run)}
     val owner=LocalLifecycleOwner.current
     DisposableEffect(owner){
@@ -87,6 +99,17 @@ fun SpaceCombatArena(
                     )
                     frame=result.frame
                     if(result.impact!=null) {
+                        val struck=targetValues.firstOrNull {
+                            it.value==result.impact
+                        }
+                        if(struck!=null) {
+                            val hitLocation=SpaceCombatPhysics.position(
+                                struck,result.frame.elapsed,currentTier
+                            )
+                            burstId+=1
+                            burst=SpaceBurst(hitLocation.x,hitLocation.y,
+                                result.impact,burstId)
+                        }
                         frame=SpaceCombatFrame()
                         latestHit(result.impact)
                     }
@@ -272,6 +295,33 @@ fun SpaceCombatArena(
                             style=Stroke(5f))
                     }
                 }
+                // Explosion feedback is independent of mission state and survives
+                // an immediate answer/round transition.
+                burst?.let {impact->
+                    val t=burstProgress.value.coerceIn(0f,1f)
+                    if(t<1f){
+                        val cx=w*impact.x
+                        val cy=h*impact.y
+                        val radius=w*(.035f+t*.17f)
+                        drawCircle(spaceGold.copy(alpha=(1f-t)*.87f),
+                            radius=radius,center=Offset(cx,cy),
+                            style=Stroke(width=(1f-t)*7f+2f))
+                        drawCircle(spaceTeal.copy(alpha=(1f-t)*.65f),
+                            radius=radius*.65f,center=Offset(cx,cy),
+                            style=Stroke(width=(1f-t)*5f+1f))
+                        for(i in 0..13){
+                            val a=i*2*PI/14f
+                            val spread=radius*(.45f+t*.65f)
+                            val px=cx+cos(a).toFloat()*spread
+                            val py=cy+sin(a).toFloat()*spread
+                            drawCircle(
+                                if(i%2==0)spaceGold.copy(alpha=1f-t)
+                                    else spaceWhite.copy(alpha=1f-t),
+                                radius=w*.008f*(1f-t)+.5f,
+                                center=Offset(px,py))
+                        }
+                    }
+                }
                 // Ship: layered white-and-cyan hull, canopy, lateral wings,
                 // visible engines and animated twin-thruster exhaust.
                 val ship=Path().apply{
@@ -389,7 +439,7 @@ fun SpaceCombatArena(
         }
         if(run.stage==1)Text(
             "REAKTÖR  "+run.charge+"/"+puzzle.answer+
-                " enerji · GO çekirdeğine yalnız doğru miktarda ateş et.",
+                " enerji · +1 / +5 / +10 / −5 kapsüllerini vur; GO'ya hazırken ateş et.",
             color=spaceGold,fontWeight=FontWeight.Bold,fontSize=12.sp,
             modifier=Modifier.fillMaxWidth()
                 .background(Color(0xFF183764),RoundedCornerShape(12.dp))

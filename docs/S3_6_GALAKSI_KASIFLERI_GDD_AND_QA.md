@@ -25,3 +25,45 @@
 - Android Compose instrumented test: dünya seçimi, gerçek gemi yön tuşu ve reaktör pompası dokunma. GitHub CI test APK'sını derler; emülatörde gerçek UI testlerini çalıştırmaz.
 - Fiziksel cihaz: Sol/sağ sürükleme ve yön tuşu, kristal zamanlaması, yanlış dalga/enerji, doğru dalga, reaktör ve devre görevleri, ipucu/yeniden oynama, 320dp ekran, cihaz arka plana al/geri dön, uçak modu, TalkBack ve yıldız yüksek su seviyesi incelenmeli.
 - Play Console Billing/Families AAB kontrolleri hâlâ ayrı yayın kapılarıdır.
+
+## S3.6.1 — Arcade Shooter yenilemesi (2 Kasım 2026)
+
+**Gerekçe:** Önceki üç ekranın biri klasik şerit seçimi, biri pompa düğmeleri, biri
+sabit yıldız tuşlarından oluşuyordu. Bu tasarım, eski oyunun gerçek gemi
+hareketi ve lazer isabetinden daha az interaktifti.
+
+**Yeni merkez mekanik:** Tek kanonik `SpaceCombatArena` üç görevin tamamında
+kullanılır. Geminin yatay pozisyonu sürüklemeyle veya sol/sağ yön tuşuyla
+değişir; oyuncu **LAZER** butonuyla sınırlı frekansta (170 ms beklemeli)
+gerçek hareketli mermiler ateşler. Mermiler normalize edilmiş oyun uzayında
+uçarken sahnedeki bağımsız düşen/yatay salınan meteorlarla fiziksel temas
+kurmak zorundadır. Hedefe basmak veya cevap butonu seçmek kabul edilmez.
+`SpaceCombatPhysics` geçerli isabet koordinatını saf Kotlin ile doğrular;
+`SpaceExpeditionEngine.fireAt` puan/kalkan/çözüm kararını verir.
+
+Görevler:
+- **Meteor Avı:** Doğru sonucu taşıyan meteora lazer çarparsa görev tamamlanır.
+  Yanlış meteora çarpmak kalkanı düşürür, hata kaydeder ve aynı matematik
+  sorusunu yeni düşen meteor dalgasıyla tekrarlar.
+- **Reaktör Savunması:** Doğru enerji miktarı için hareketli +1, +5, +10, −5
+  kapsülleri vurulur. Çekirdek hedefini sadece sayaç doğru olduğunda
+  vurmak reaktörü çalıştırır; erken atış ceza getirir.
+- **Yıldız Muhafızları:** Sayı örüntüsünün sıradaki yıldızı bağımsız
+  hareket eden hedefler arasından nişan alıp vurularak etkinleştirilir;
+  yanlış isabet dizideki doğru ilerlemeyi silmez.
+
+**UX ve çocuk güvenliği:**
+- Başlatmadan önce sahne duraklatılır; arka planda otomatik durur,
+  yetişkin okuma hızı gibi zorunlu süreler/başarısızlık sınırı yoktur.
+- Serbest hareket sadece yön değiştirme sonunda checkpoint'e kaydedilir;
+  60fps durum değişiklikleri SharedPreferences'e yazılmaz.
+- Sahnedeki tüm görseller cihazda Compose Canvas ile oluşturulur:
+  paralaks yıldızlar, katmanlı nebula, ayrıntılı uzay gemisi, çift jet
+  motoru, nişan lazeri, parlayan meteorlar ve 440ms isabet patlaması.
+  Harici görsel sprite/WebP veya internet kaynaklı yükleme bulunmaz.
+- Önceki yıldız high-water, kayıtlı dünya ve premium hakları korunur.
+- `SpaceCombatPhysicsTest` ve `SpaceExpeditionTouchTest` regresyonları
+  ateş etmenin gerçek çarpışma gerektirdiğini ve buton akışını kontrol eder.
+- Android cihazda küçük ekran, TalkBack, performans, doğru/yanlış atış,
+  lazer isabeti ve ekran döndürme **ayrıca** test edilmelidir; yalnız CI
+  derlemesinin geçmesi gerçek cihaz kabulü değildir.

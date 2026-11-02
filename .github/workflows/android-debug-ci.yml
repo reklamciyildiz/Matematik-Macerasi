@@ -99,6 +99,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_market_adventure_assets.py
 
+      - name: Verify premium Game World covers and routes
+        shell: bash
+        run: python3 scripts/check_game_hub_assets.py
+
       - name: Validate Space S3.6.3 premium WebP assets and integrations
         shell: bash
         run: python3 scripts/check_space_premium_assets.py

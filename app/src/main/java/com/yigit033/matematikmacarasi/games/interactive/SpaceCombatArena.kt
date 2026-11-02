@@ -1,5 +1,7 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
+import android.media.AudioAttributes
+import android.media.SoundPool
 import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -26,6 +28,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +40,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import kotlin.math.cos
 import kotlin.math.sin
+import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.services.AudioService
 import kotlin.math.PI
 
 private val spaceWhite=Color(0xFFF4FBFF)
@@ -67,6 +72,24 @@ fun SpaceCombatArena(
     }
     var paused by rememberSaveable(run.seed,run.stage) {mutableStateOf(true)}
     var lastShotAt by remember(run.seed,run.stage) {mutableLongStateOf(0L)}
+    val context=LocalContext.current.applicationContext
+    val soundPool=remember(context) {
+        SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        ).build()
+    }
+    var shotSoundId by remember(context) {mutableIntStateOf(0)}
+    var soundLoaded by remember(context) {mutableStateOf(false)}
+    DisposableEffect(context,soundPool) {
+        soundPool.setOnLoadCompleteListener {_,id,status->
+            if(id==shotSoundId && status==0)soundLoaded=true
+        }
+        shotSoundId=soundPool.load(context,R.raw.laser_sound,1)
+        onDispose{soundPool.release()}
+    }
     var burst by remember(run.seed,run.stage) {mutableStateOf<SpaceBurst?>(null)}
     var burstId by remember(run.seed,run.stage) {mutableIntStateOf(0)}
     val burstProgress=remember(run.seed,run.stage) {Animatable(1f)}
@@ -136,7 +159,14 @@ fun SpaceCombatArena(
         val now=SystemClock.uptimeMillis()
         if(now-lastShotAt<170)return
         lastShotAt=now
+        val before=frame.lasers.size
         frame=SpaceCombatPhysics.fire(frame,shipX)
+        if(frame.lasers.size>before && soundLoaded) {
+            runCatching {
+                if(AudioService.getInstance(context).isSoundEnabled())
+                    soundPool.play(shotSoundId,.25f,.25f,1,0,1f)
+            }
+        }
     }
     val planetColor=nebulaColors[run.planet.ordinal]
     val missionHint=when(run.stage){

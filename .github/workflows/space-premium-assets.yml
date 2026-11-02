@@ -1,0 +1,52 @@
+name: Generate and commit space premium WebP assets
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/generate_space_premium_art.py
+      - .github/workflows/space-premium-assets.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install offline rendering dependency
+        run: python -m pip install --disable-pip-version-check 'Pillow==11.1.0'
+      - name: Generate twelve optimized WebP resources
+        run: python scripts/generate_space_premium_art.py
+      - name: Validate names, WebP size, alpha and screen dimensions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          root=Path('app/src/main/res/drawable-nodpi')
+          files=list(root.glob('space_*_premium.webp'))
+          assert len(files)==12, [p.name for p in files]
+          for f in files:
+              im=Image.open(f);im.load()
+              assert im.format=='WEBP'
+              assert 1000<f.stat().st_size<360000, (f.name,f.stat().st_size)
+              if '_bg_' in f.name: assert im.size==(640,1050)
+              else: assert im.mode=='RGBA', (f.name,im.mode)
+              print(f.name,im.size,f.stat().st_size)
+          PY
+      - name: Commit generated binary WebP files to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app/src/main/res/drawable-nodpi/space_*_premium.webp
+          if git diff --cached --quiet; then
+            echo "No art changes needed"
+          else
+            git commit -m "art(space): generated optimized premium WebP worlds and combat sprites"
+            git push origin HEAD:main
+          fi

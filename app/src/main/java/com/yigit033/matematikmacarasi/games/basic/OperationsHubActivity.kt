@@ -138,7 +138,7 @@ class OperationsHubActivity:ComponentActivity(){
                                             Text(op.title,color=ivory,fontSize=18.sp,
                                                 fontWeight=FontWeight.Black)
                                             Text(if(available)"▶ Maceraya başla"
-                                                else "🔒 3. sınıfta açılır",
+                                                else "🔒 2. sınıfta açılır",
                                                 color=if(available)gold else Color(0xFF9AB9D2),
                                                 fontSize=11.sp)
                                         }

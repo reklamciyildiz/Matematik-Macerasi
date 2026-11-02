@@ -1,6 +1,11 @@
 package com.yigit033.matematikmacarasi
 
 import android.app.Application
+import android.app.Activity
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import com.yigit033.matematikmacarasi.services.AudioService
 import android.util.Log
 import com.airbnb.lottie.LottieCompositionFactory
 import com.airbnb.lottie.LottieDrawable
@@ -19,6 +24,8 @@ class MathAdventureApp : Application() {
     override fun onCreate() {
         super.onCreate()
         
+        setupAudioLifecycle()
+
         // Global hata yakalayıcı
         setupGlobalExceptionHandler()
         
@@ -37,6 +44,39 @@ class MathAdventureApp : Application() {
         Log.d(TAG, "Uygulama başlatıldı ve optimizasyonlar yapılandırıldı")
     }
     
+    /**
+     * Music belongs to the visible app, not to an Activity.
+     * The delayed background pause prevents brief interruptions during navigation.
+     */
+    private fun setupAudioLifecycle() {
+        val handler = Handler(Looper.getMainLooper())
+        var visibleActivities = 0
+        val pause = Runnable {
+            if (visibleActivities == 0) {
+                AudioService.getInstance(applicationContext).onAppBackground()
+            }
+        }
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: Activity) {
+                handler.removeCallbacks(pause)
+                visibleActivities++
+                val gameplay = activity.javaClass.name.contains(
+                    ".games."
+                )
+                AudioService.getInstance(applicationContext).onAppForeground(gameplay)
+            }
+            override fun onActivityStopped(activity: Activity) {
+                visibleActivities = (visibleActivities - 1).coerceAtLeast(0)
+                if (visibleActivities == 0) handler.postDelayed(pause, 550L)
+            }
+            override fun onActivityCreated(activity: Activity, state: Bundle?) = Unit
+            override fun onActivityResumed(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, state: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        })
+    }
+
     /**
      * Global hata yakalama mekanizması
      */

@@ -108,9 +108,9 @@ class NumberHuntGameActivity : ComponentActivity() {
         private const val TAG = "NumberHuntGameActivity"
     }
     
-    private var mediaPlayerCorrect: MediaPlayer? = null
-    private var mediaPlayerWrong: MediaPlayer? = null
-    private var mediaPlayerSuccess: MediaPlayer? = null
+    private val audio by lazy {
+        com.yigit033.matematikmacarasi.services.AudioService.getInstance(this)
+    }
     
     private val handler = Handler(Looper.getMainLooper())
     private val gameTimer = object : Runnable {
@@ -176,9 +176,8 @@ class NumberHuntGameActivity : ComponentActivity() {
             }
             
             // Ses çalar nesnelerini oluştur (güvenli başlatma)
-            mediaPlayerCorrect = try { MediaPlayer.create(this, R.raw.correct_sound) } catch (e: Exception) { null }
-            mediaPlayerWrong = try { MediaPlayer.create(this, R.raw.wrong_sound) } catch (e: Exception) { null }
-            mediaPlayerSuccess = try { MediaPlayer.create(this, R.raw.success) } catch (e: Exception) { null }
+            // Unified AudioService preloads low-latency cues on first access.
+            audio
         
             // DailyTaskManager'ı başlat
             dailyTaskManager = DailyTaskManager.getInstance(this)
@@ -595,13 +594,7 @@ class NumberHuntGameActivity : ComponentActivity() {
         super.onDestroy()
         
         // Ses kaynaklarını serbest bırak
-        mediaPlayerCorrect?.release()
-        mediaPlayerWrong?.release()
-        mediaPlayerSuccess?.release()
-        
-        mediaPlayerCorrect = null
-        mediaPlayerWrong = null
-        mediaPlayerSuccess = null
+        // Audio resources belong to the shared, lifecycle-managed service.
         
         // AdManager kaynaklarını temizle
         try {
@@ -842,7 +835,7 @@ class NumberHuntGameActivity : ComponentActivity() {
             // Doğru sayı seçildi
             newScore += gameState.level.pointsPerCorrect
             foundCount++
-            mediaPlayerCorrect?.start()
+            audio.playCorrectSound()
         } else {
             // Yanlış sayı seçildi
             newScore = (newScore - gameState.level.pointsPerWrong).coerceAtLeast(0)
@@ -861,7 +854,7 @@ class NumberHuntGameActivity : ComponentActivity() {
             newTimeRemaining = (newTimeRemaining - timePenalty).coerceAtLeast(1)
             Log.d(TAG, "Yanlış cevap! Süre cezası: $timePenalty saniye. Kalan süre: $newTimeRemaining")
             
-            mediaPlayerWrong?.start()
+            audio.playWrongSound()
         }
         
         // Oyun durumunu güncelle
@@ -883,9 +876,7 @@ class NumberHuntGameActivity : ComponentActivity() {
         // Zamanlayıcıyı durdur
         handler.removeCallbacks(gameTimer)
         
-        // Tüm sesi durdur
-        mediaPlayerCorrect?.pause()
-        mediaPlayerWrong?.pause()
+        // Effect one-shots stop automatically; music remains under lifecycle control.
         
         // Oyun durumunu güncelle
         gameState = if (completed) {
@@ -896,7 +887,7 @@ class NumberHuntGameActivity : ComponentActivity() {
         
         // Başarı sesi çal (tamamlandıysa)
         if (completed) {
-            mediaPlayerSuccess?.start()
+            audio.playVictorySound()
         }
         
         // Yıldız puanı hesapla

@@ -12,9 +12,9 @@ enum class SpacePlanet(val title:String,val detail:String,val sign:String) {
     NOVA("Prizma Galaksisi","Dört işlem ustalığı","✧")
 }
 enum class SpaceMission(val title:String) {
-    FLIGHT("Kristal Pilotluğu"),
-    REACTOR("Reaktör Atölyesi"),
-    CIRCUIT("Yıldız Devresi")
+    FLIGHT("Meteor Avı"),
+    REACTOR("Reaktör Savunması"),
+    CIRCUIT("Yıldız Muhafızları")
 }
 data class SpacePuzzle(
     val prompt:String,
@@ -31,6 +31,7 @@ data class SpaceRun(
     val tier:LearningTier,
     val stage:Int=0,
     val lane:Int=1,
+    val shipX:Float=0.5f,
     val wave:Int=0,
     val charge:Int=0,
     val path:List<Int> = emptyList(),
@@ -71,7 +72,7 @@ object SpaceExpeditionEngine {
             return SpacePuzzle(
                 prompt="$start ile başla. Her adımda "+kotlin.math.abs(step)+
                     (if(descending)" azalt." else " artır.")+
-                    " Üç yıldızı sırayla bağla.",
+                    " Koruyucu yıldızları sırayla lazerle etkinleştir.",
                 answer=sequence.last(),
                 explanation="Devre sırası: "+(listOf(start)+sequence).joinToString(" → "),
                 hint="Her yeni yıldızda "+kotlin.math.abs(step)+
@@ -111,7 +112,7 @@ object SpaceExpeditionEngine {
         }
         if(stage==1) {
             return SpacePuzzle(
-                prompt="Reaktöre $formula işleminin sonucu kadar enerji yükle.",
+                prompt="$formula = ? Enerji kapsüllerini lazerle vur; tam $target birimde çekirdeği ateşle.",
                 answer=target,explanation=explanation,hint=hint
             )
         }
@@ -124,13 +125,14 @@ object SpaceExpeditionEngine {
         }
         val crystals=options.toList().shuffled(rng)
         return SpacePuzzle(
-            prompt="$formula = ? Doğru kristali geminle yakala.",
+            prompt="$formula = ? Doğru cevabı taşıyan meteoru lazerle vur.",
             answer=target,explanation=explanation,hint=hint,crystals=crystals
         )
     }
     fun valid(run:SpaceRun):Boolean {
         if(run.seed<=0 || run.stage !in 0..STAGES ||
-            run.lane !in 0..2 || run.wave<0 || run.charge<0 ||
+            run.lane !in 0..2 || !run.shipX.isFinite() ||
+            run.shipX !in 0.06f..0.94f || run.wave<0 || run.charge<0 ||
             run.attempts<0 || run.errors<0 || run.hints<0 ||
             run.firstTry<0 || run.shields !in 1..3 ||
             run.completed!=(run.stage==STAGES) ||
@@ -150,6 +152,40 @@ object SpaceExpeditionEngine {
             (run.charge!=0 || run.path.isNotEmpty()))return false
         if(run.stage==2 && run.path!=p.sequence.take(run.path.size))return false
         return true
+    }
+    /** Update only on pointer release or navigation-button press, not every animation frame. */
+    fun position(run:SpaceRun,x:Float):SpaceRun {
+        if(!valid(run)||run.completed||run.solved||!x.isFinite())return run
+        val next=x.coerceIn(.06f,.94f)
+        return if(kotlin.math.abs(next-run.shipX)<.005f)run
+            else run.copy(shipX=next,lane=(next*3).toInt().coerceIn(0,2))
+    }
+    /** Authoritative hit result; UI/projectile animation cannot award points directly. */
+    fun fireAt(run:SpaceRun,value:Int):SpaceRun {
+        if(!valid(run)||run.completed||run.solved)return run
+        val q=puzzle(run)
+        return when(run.stage){
+            0->{
+                if(value !in q.crystals)run
+                else if(value==q.answer)finishStage(run)
+                else failure(run.copy(wave=run.wave+1))
+            }
+            1->{
+                if(value==Int.MIN_VALUE)ignite(run)
+                else if(value in listOf(-5,-1,1,5)) {
+                    val updated=adjustFuel(run,value)
+                    if(updated==run)run else updated.copy(wave=updated.wave+1)
+                } else run
+            }
+            2->{
+                if(value !in q.nodes)run else {
+                    val updated=connect(run,value)
+                    if(updated==run || updated.solved)updated
+                    else updated.copy(wave=updated.wave+1)
+                }
+            }
+            else->run
+        }
     }
     fun steer(run:SpaceRun,lane:Int):SpaceRun =
         if(!valid(run)||run.completed||run.solved||run.stage!=0||lane !in 0..2)run

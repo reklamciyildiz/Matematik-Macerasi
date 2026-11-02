@@ -64,6 +64,8 @@ class SpaceMathAdventureActivity:ComponentActivity() {
                     feedback=feedback,
                     onBegin={planet,tier->start(planet,tier)},
                     onSteer={lane->transition {SpaceExpeditionEngine.steer(it,lane)}},
+                    onShipPosition={x->transition {SpaceExpeditionEngine.position(it,x)}},
+                    onFireHit={value->transition {SpaceExpeditionEngine.fireAt(it,value)}},
                     onIntercept={transition {SpaceExpeditionEngine.intercept(it)}},
                     onFuel={amount->transition {SpaceExpeditionEngine.adjustFuel(it,amount)}},
                     onIgnite={transition {SpaceExpeditionEngine.ignite(it)}},

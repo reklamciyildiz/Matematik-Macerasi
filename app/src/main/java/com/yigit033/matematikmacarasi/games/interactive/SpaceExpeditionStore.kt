@@ -27,6 +27,7 @@ class SpaceExpeditionStore(context:Context) {
             planet=planet,tier=tier,
             stage=prefs.getInt("stage",0),
             lane=prefs.getInt("lane",1),
+            shipX=prefs.getFloat("ship_x",.5f),
             wave=prefs.getInt("wave",0),
             charge=prefs.getInt("charge",0),
             path=path,solved=prefs.getBoolean("solved",false),
@@ -50,6 +51,7 @@ class SpaceExpeditionStore(context:Context) {
             .putString("tier",run.tier.name)
             .putInt("stage",run.stage)
             .putInt("lane",run.lane)
+            .putFloat("ship_x",run.shipX)
             .putInt("wave",run.wave)
             .putInt("charge",run.charge)
             .putString("path",run.path.joinToString(","))

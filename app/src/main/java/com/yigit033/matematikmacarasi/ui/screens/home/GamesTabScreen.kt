@@ -61,9 +61,9 @@ private fun catalog():List<GameCatalogItem> = listOf(
     GameCatalogItem("subtract","Çıkarma","Farkı keşfet · matematik ustası ol","Temel İşlemler",
         R.drawable.card_subtraction_premium,Color(0xFFFF83BA),SubtractionGameActivity::class.java),
     GameCatalogItem("multiply","Çarpma","Grupları birleştir · çarpımları keşfet","Temel İşlemler",
-        R.drawable.card_multiplication_premium,Color(0xFF65E6BA),MultiplicationGameActivity::class.java,3),
+        R.drawable.card_multiplication_premium,Color(0xFF65E6BA),MultiplicationGameActivity::class.java,2),
     GameCatalogItem("divide","Bölme","Eşit paylaş · sonuçları bul","Temel İşlemler",
-        R.drawable.card_division_premium,Color(0xFFFFC768),DivisionGameActivity::class.java,3),
+        R.drawable.card_division_premium,Color(0xFFFFC768),DivisionGameActivity::class.java,2),
     GameCatalogItem("balloon","Balon Patlatma","Uçan doğru balonları yakala","Macera & Eğlence",
         R.drawable.card_balloon_pop,Color(0xFF67ECF1),BalloonPopGameActivity::class.java),
     GameCatalogItem("hunt","Sayı Avı","Sayıların peşinde hazine keşfi","Macera & Eğlence",
@@ -189,7 +189,7 @@ fun GamesTabScreen(modifier:Modifier=Modifier){
                                             Modifier.fillMaxSize()
                                                 .background(navy.copy(alpha=.66f)),
                                             contentAlignment=Alignment.Center
-                                        ){Text("🔒 3. SINIF",color=white,
+                                        ){Text("🔒 2. SINIF",color=white,
                                             fontWeight=FontWeight.Black,fontSize=12.sp)}
                                     }
                                     Column(Modifier.fillMaxWidth()
@@ -201,7 +201,7 @@ fun GamesTabScreen(modifier:Modifier=Modifier){
                                         Text(item.description,color=Color(0xFFC8E3F4),
                                             fontSize=10.sp,lineHeight=12.sp,
                                             maxLines=2,overflow=TextOverflow.Ellipsis)
-                                        Text(if(locked)"3. sınıfta açılır" else "▶ OYNA",
+                                        Text(if(locked)"2. sınıfta açılır" else "▶ OYNA",
                                             color=if(locked)Color(0xFFB6C2D0) else saffron,
                                             fontSize=11.sp,fontWeight=FontWeight.Black)
                                     }

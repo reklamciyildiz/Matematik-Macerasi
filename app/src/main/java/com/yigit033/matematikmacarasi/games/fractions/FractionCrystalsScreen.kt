@@ -393,5 +393,6 @@ private fun skillTitle(skill:String):String = when(skill) {
     "fraction_compare"->"Büyüklük karşılaştırma"
     "fraction_equivalence"->"Denk kesir"
     "fraction_representation"->"Gösterimler"
+    "fraction_arithmetic"->"Kesirlerle toplama"
     else->skill
 }

@@ -248,6 +248,10 @@ private fun MixedOperationSession(
     difficulty: DifficultyLevel,
     onBack: () -> Unit
 ) {
+    val audioContext = androidx.compose.ui.platform.LocalContext.current
+    val audio = remember(audioContext) {
+        com.yigit033.matematikmacarasi.services.AudioService.getInstance(audioContext)
+    }
     var run by remember { mutableIntStateOf(0) }
     var round by remember(run) { mutableIntStateOf(0) }
     var correct by remember(run) { mutableIntStateOf(0) }
@@ -276,11 +280,13 @@ private fun MixedOperationSession(
             val right = selected.toIntOrNull() == item.second.answer
             engine.record(item.first, right)
             if (right) {
+                audio.playCorrectSound()
                 correct++
                 streak++
                 bestStreak = maxOf(bestStreak, streak)
                 points += 10 + (streak.coerceAtMost(5) * 2)
             } else {
+                audio.playWrongSound()
                 wrong++
                 streak = 0
             }
@@ -290,6 +296,9 @@ private fun MixedOperationSession(
         }
     }
 
+    LaunchedEffect(round, run) {
+        if (round == 12) audio.playVictorySound()
+    }
     BackHandler { onBack() }
     val phase = (round / 4).coerceAtMost(2)
     val phaseNames = listOf("KEŞİF", "YILDIZ YOLU", "USTALIK")

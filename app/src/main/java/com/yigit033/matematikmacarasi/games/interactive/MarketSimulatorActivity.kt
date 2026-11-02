@@ -58,7 +58,11 @@ class MarketSimulatorActivity : ComponentActivity() {
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.MARKET).currentTier,
                         onExit={finish()},
-                        onCompletion={run->recordCompleted(run)}
+                        onCompletion={run->
+                    com.yigit033.matematikmacarasi.services.AudioService
+                        .getInstance(this).playVictorySound()
+                    recordCompleted(run)
+                }
                     )
                 }
             }

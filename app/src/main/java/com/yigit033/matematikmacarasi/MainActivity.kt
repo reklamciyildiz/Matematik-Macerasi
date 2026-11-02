@@ -608,6 +608,10 @@ class DailyTaskManager(private val context: Context) {
                         DailyTaskType.ANY,
                         "$targetCount Market Simülasyonu Oyna"
                     )
+                    GameType.FRACTION_CRYSTALS -> Pair(
+                        DailyTaskType.MATCHING,
+                        "1 Kesir Kristalleri macerası tamamla"
+                    )
                 }
                 
                 tasks.add(
@@ -995,6 +999,7 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
                     GameType.SPACE_MATH_ADVENTURE -> Intent(context, SpaceMathAdventureActivity::class.java)
                     GameType.SHAPE_RECOGNITION -> Intent(context, com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity::class.java)
                     GameType.MARKET_SIMULATOR -> Intent(context, com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity::class.java)
+                    GameType.FRACTION_CRYSTALS -> Intent(context, com.yigit033.matematikmacarasi.games.fractions.FractionCrystalsActivity::class.java)
                 }
                 intent.putExtra("daily_task_id", task.id)
                 context.startActivity(intent)
@@ -1999,6 +2004,7 @@ fun TaskItem(
         GameType.BALLOON_POP_GAME -> Pair(Color(0xFFFF5252), R.drawable.ic_balloon_task)
         GameType.SPACE_MATH_ADVENTURE -> Pair(Color(0xFF3949AB), R.drawable.ic_spaceship)
         GameType.MARKET_SIMULATOR -> Pair(Color(0xFF8D6E63), R.drawable.ic_shopping_cart)
+        GameType.FRACTION_CRYSTALS -> Pair(Color(0xFF7967DB), R.drawable.ic_matching_task)
     }
     
     Card(

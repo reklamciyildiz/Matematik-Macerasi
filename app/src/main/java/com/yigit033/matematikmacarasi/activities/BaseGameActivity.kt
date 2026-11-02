@@ -181,8 +181,7 @@ abstract class BaseGameActivity : ComponentActivity() {
             // audioService.playBackgroundMusic() // Bu müziği yeniden başlatıyor
             
             // Yeni kod: Müziği devam ettir - eğer çalmıyorsa başlat, çalıyorsa aynı kalsın
-            audioService.resumeBackgroundMusic()
-            
+            // Global audio lifecycle keeps the theme continuous during play.
             generateQuestion()
         } catch (e: Exception) {
             Log.e("BaseGameActivity", "Oyun başlatılırken hata: ${e.message}", e)
@@ -202,8 +201,7 @@ abstract class BaseGameActivity : ComponentActivity() {
             // Oyun durumu işaretleme
             isGameRunning = false
             
-            // Ses kontrolü
-            audioService.pauseBackgroundMusic()
+            // Completion music keeps playing under the result screen.
             
             // AGRESİF REKLAM STRATEJİSİ - Premium olmayanlar için her oyun sonrası reklam
             try {
@@ -382,30 +380,14 @@ abstract class BaseGameActivity : ComponentActivity() {
     
     override fun onPause() {
         super.onPause()
-        try {
-            if (isGameRunning) { // Sadece oyun çalışıyorsa duraklat
-                audioService.pauseBackgroundMusic()
-            }
-        } catch (e: Exception) {
-            Log.w("BaseGameActivity", "onPause sırasında ses duraklatılamadı", e)
-        }
+        // Switching screens does not end the soundtrack.
     }
-    
+
     override fun onResume() {
         super.onResume()
-        try {
-            // Önceki kod: audioService.resetMediaPlayers() - bu tüm sesleri sıfırlıyordu
-            
-            // Sadece efekt seslerini sıfırla, müziği değil
-            audioService.clearEffectSounds()
-            
-            // Her durumda müziği devam ettir, oyundan ana ekrana döndüğümüzde bile çalacak
-            audioService.resumeBackgroundMusic()
-        } catch (e: Exception) {
-            Log.w("BaseGameActivity", "onResume sırasında ses başlatılamadı", e)
-        }
+        // Application ActivityLifecycleCallbacks manage app foreground/background.
     }
-    
+
     override fun onDestroy() {
         super.onDestroy()
         try {

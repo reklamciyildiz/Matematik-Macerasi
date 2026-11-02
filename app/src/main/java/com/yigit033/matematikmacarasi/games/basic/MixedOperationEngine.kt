@@ -29,7 +29,7 @@ class MixedOperationEngine(
         // Exposure dominates: weak areas receive another opportunity without
         // starving the other operations, and back-to-back repeats are discouraged.
         val lowest = kinds.minOf { priority(it) }
-        val candidates = kinds.filter { priority(it) <= lowest + 0.01 }
+        val candidates = kinds.filter { priority(it) == lowest }
         val operation = candidates.random(random)
         val question = GradeAwareOperationPolicy.generateUnique(
             grade, operation, difficulty, asked, random

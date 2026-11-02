@@ -1,6 +1,11 @@
 package com.yigit033.matematikmacarasi.modules
 
 import android.app.Application
+import android.app.Activity
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import com.yigit033.matematikmacarasi.services.AudioService
 import android.util.Log
 import com.yigit033.matematikmacarasi.services.NotificationService
 import com.yigit033.matematikmacarasi.settings.IconLauncherManager
@@ -22,6 +27,8 @@ class MatematikMacerasiApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        installMusicLifecycle()
+
         // Repair MainActivity for devices migrated from the old icon switcher.
         // Never let an icon choice disable the real game's main Activity.
         runCatching { IconLauncherManager.reconcile(applicationContext) }
@@ -39,6 +46,32 @@ class MatematikMacerasiApp : Application() {
         initializeNotifications()
     }
     
+    /** Music persists through screen transitions and pauses when app is backgrounded. */
+    private fun installMusicLifecycle() {
+        val handler=Handler(Looper.getMainLooper())
+        var visible=0
+        val stop=Runnable {
+            if(visible==0) AudioService.getInstance(applicationContext).onAppBackground()
+        }
+        registerActivityLifecycleCallbacks(object: ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity:Activity,state:Bundle?)=Unit
+            override fun onActivityStarted(activity:Activity) {
+                handler.removeCallbacks(stop)
+                visible++
+                val gameplay=activity.javaClass.name.contains(".games.")
+                AudioService.getInstance(applicationContext).onAppForeground(gameplay)
+            }
+            override fun onActivityResumed(activity:Activity)=Unit
+            override fun onActivityPaused(activity:Activity)=Unit
+            override fun onActivityStopped(activity:Activity) {
+                visible=(visible-1).coerceAtLeast(0)
+                if(visible==0)handler.postDelayed(stop,550L)
+            }
+            override fun onActivitySaveInstanceState(activity:Activity,state:Bundle)=Unit
+            override fun onActivityDestroyed(activity:Activity)=Unit
+        })
+    }
+
     /**
      * Bildirim servisini başlatır ve kanalları oluşturur
      */

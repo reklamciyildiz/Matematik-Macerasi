@@ -1,85 +1,30 @@
-# S3.6 — Uzay Matematik Macerası 2.0 / Galaksi Kaşifleri
+# S3.6 — Uzay Matematik Macerası / Sürekli Meteor Avı (3 Kasım öncesi revizyon)
 
-**Teslim:** Android Kotlin/Jetpack Compose, ana uygulamanın `SpaceMathAdventureActivity` giriş noktası. Play Store yayını yapılmaz.
+## Geçerli oynanış
+- **Ana aksiyon mekaniği tek ve tutarlı:** Gemi sürüklenerek veya sol/sağ tuşlarıyla yönetilir. Lazer mermileri hareketli üç meteordan birine fiziksel temas etmelidir.
+- **15 ardışık matematik sorusu:** Her doğru isabetten sonra motor, aynı savaş sahasında otomatik yeni soru ve yeni meteorlar üretir. "Sonraki tur" butonu, reaktör enerji pompası ve yıldız devresi artık oynanışta yoktur.
+- Yanlış isabet aynı soruyu tekrar ettirir; seri sıfırlanır, bir hata kaydedilir. Çocuk elenmez; kalkan en az 1 kalır. İpucu kullanılabilir ve o soru için ilk deneme yıldızı verilmez.
+- Yıldızlar tamamlanan 15 hedefin ilk deneme doğruluğuna, yanlışlara ve ipuçlarına dayanır; önceki yıldız yüksek-su seviyesi korunur.
 
-## Oyun tasarım belgesi (GDD)
-- 5 tematik gezegen: Zümrüt Yörünge (+), Okyanus Nebulası (−), Kızıl Meteor (×), Ay Kristali (÷), Prizma Galaksisi (karma).
-- Her gezegende **3 farklı gerçek etkileşimli görev**:
-  1. **Kristal Pilotluğu:** Üç şeritli gerçek zamanlı uzay yolu. Ekrandaki gemiyi soldan sağa sürükleyerek ya da 3 yön tuşuyla yönlendir; kristaller aşağıya inerken doğru işlem sonucunu taşıyan şeritte konumlan. Kristal gemiye gelince motor otomatik yakalar. Yanlış şerit kalkanı bir kademe düşürür (minimum 1), yanlış sayısını artırır, soruyu ve kristalleri aynı tutarak yeni dalgada tekrarlar. Temel 18 sn, Gelişen 15 sn, Ustalık 12 sn.
-  2. **Reaktör Atölyesi:** Hedef işlemin sonucunu hesapla; gerçek pompa düğmeleriyle enerji haznesini +1/+5/-1/-5 artırıp azalt. Görsel doluluk göstergesini izle ve reaktörü ateşle. Yanlış ateşleme hata olarak kaydedilir, oyun sonlanmaz.
-  3. **Yıldız Devresi:** Rastgele üretilen pozitif/negatif adımlı sayı dizisinin sonraki üç değerini bul; dört yıldız düğümünü **doğru sırada fiziksel dokunmayla** bağla. Hatalı bağlama ilerlemeyi silmez; doğru düğümler bağlı kalır.
-- Görev açıklaması, yardım ipucu, geri bildirim ve isteğe bağlı duraklatma içerir. Arka plana geçince gemi otomatik durur.
-- Bölüm bitirme: her gezegen için 0/1/2/3 yıldız high-water kaydı (1–3 arası), ilk deneme kanıtı ve hata/ipucu geçmişi. Tekrar oynama aynı yıldızları tekrar vermez.
-- Çevrimdışı, zorunlu reklam yok, satın alma CTA yok. Eski ödeme/durum/yıldız kayıtları değiştirilmez.
-- Görseller Android Compose Canvas ile özgün vektör kompozisyonlarıdır; **harici premium WebP illüstrasyon varlıkları bu teslimde yoktur**. Oyun mekaniğine öncelik verildi.
+## Sınıfa duyarlı kural
+- Öğrenci profilindeki `user_class` önce mevcut `GradePolicy` ile ayrıştırılır; oyuna başlarken `grade` 1..4 arasında sabitlenir. Profil sınıfı belli değilse **1. sınıfın temkinli kapsamı** seçilir.
+- **1. sınıf:** Sadece toplama ve çıkarma; işlem cevapları Temel ≤10, Gelişen ≤15, Ustalık ≤20. Çarpma ve bölme üretilemez.
+- **2. sınıf:** Toplama ve çıkarma; Temel ≤20, Gelişen ≤50, Ustalık ≤100. Çarpma/bölme varsayılan seviyede açılmaz. Bu bilinçli olarak temkinli bir içerik seçimidir.
+- **3. sınıf:** Daha büyük toplama/çıkarma, küçük çarpım tablosu ve tam bölünebilen bölme.
+- **4. sınıf:** Dört işlem, daha büyük sayılar.
+- `LearningTier` (Temel/Gelişen/Ustalık) sadece ilgili sınıfın **içindeki** rakam büyüklüğünü seçer; sınıf sınırını aşamaz. Bu ürün içeriği resmi MEB kazanım denklik sertifikası değildir.
+- Sınıf/tier/seed + soru indeksi soruyu deterministik üretir; cihaz kapanıp açılsa soru ve doğru meteor değişmez.
 
-## Mimari
-- `SpaceExpeditionEngine.kt`: saf Kotlin deterministik soru ve görev durum makinesi. Seed+gezegen+seviye+görev kombinasyonu tek sonuç üretir.
-- `SpaceExpeditionScreen.kt`: kaydırılabilir galaksi haritası, dinamik gemi/asteroit/kristal sahnesi, enerji reaktörü, yıldız devre tahtası.
-- `SpaceExpeditionStore.kt`: `space_expedition_v2` sürümlü `SharedPreferences`. Bir görev ortasında cihaz kapanırsa sahne/konum/enerji/dizi/ipuçları korunur.
-- `SpaceMathAdventureActivity.kt`: önceki tek giriş noktası korunur. Mevcut `StarManager` anahtarları `SpaceMathAdventureActivity_Level_1..5` kullanılır. Tek completion -> tek DailyTask/statistics kaydı. `AdventureSkill.SPACE` üzerinden öğrenme uyarlaması.
-- Eski `SpaceMathModels.kt` kullanılmayan miras model olarak korunmuştur; diğer sınıflar bağımlı olabileceğinden silinmedi.
+## UI ve performans
+- Lobi dikey kaydırılabilir; **oyun ekranı kaydırılmaz.** Üstte kısa başlık ve tek satır durum; ortada matematik ifadesi; altında kalan yüksekliği dolduran fiziksel lazer/meteor Canvas sahası ve sabit kontrol sırası.
+- Uçuş başlangıçta duraklatılmıştır; kullanıcı BAŞLAT der. Uygulama arka plana geçince otomatik durur.
+- Lazer sesi mevcut uygulama ayarına saygılı `SoundPool` ile çalınır; sahne yerel çizilir. Premium WebP sprite/art paketi henüz yoktur; bunun varlığı iddia edilmez.
+- `SpaceExpeditionStore` v3 formatı profil sınıfını, soru indeksini, hata, ipucu, gemi konumu ve en iyi seriyi kalıcı kaydeder. v2 açık turları korunabildiği ölçüde yeni soruya eşlenir; tamamlanmış v2 kayıtları ise önceki ödül/rekor anahtarlarında saklıdır.
 
-## Test ve kabul
-- Saf Kotlin JUnit: 5 gezegen × 3 seviye × 60 seed = **900 tam tur / 2700 görev**; rastgele işlem, kontrollü gemi yönü, pompa, devre zinciri, hata, ipucu, tekrar deneme, durum doğrulama ve ödül.
-- Android Compose instrumented test: dünya seçimi, gerçek gemi yön tuşu ve reaktör pompası dokunma. GitHub CI test APK'sını derler; emülatörde gerçek UI testlerini çalıştırmaz.
-- Fiziksel cihaz: Sol/sağ sürükleme ve yön tuşu, kristal zamanlaması, yanlış dalga/enerji, doğru dalga, reaktör ve devre görevleri, ipucu/yeniden oynama, 320dp ekran, cihaz arka plana al/geri dön, uçak modu, TalkBack ve yıldız yüksek su seviyesi incelenmeli.
-- Play Console Billing/Families AAB kontrolleri hâlâ ayrı yayın kapılarıdır.
+## Otomatik test ve fiziksel cihaz kabulü
+- JUnit: dört sınıf × beş gezegen × üç seviye × 35 seed = 2100 tur / **31500 geçerli isabet**; soru doğruluğu, 1–2. sınıf işlem sınırları, ceza ve aynı sorunun deterministik tekrarını doğrular.
+- Compose instrumented test APK: lobi açma, hareket kontrolü, lazer butonu ve durum geçerliliği. CI APK'yı **derler**, emülatörde çalıştırmaz.
+- Telefonda: 320–360 dp ekranda gemi ve alt kontrollerin görünmesi; 15 sorunun kesintisiz geçişi; doğru/yanlış fiziksel çarpışma; ses açık/kapalı; duraklatma; arka plan/geri dönüş; yeniden yükleme; uçak modu; profil sınıfına göre işlemler; Play Billing ve mevcut yıldızların değişmemesi kontrol edilmelidir.
 
-## S3.6.1 — Arcade Shooter yenilemesi (2 Kasım 2026)
-
-**Gerekçe:** Önceki üç ekranın biri klasik şerit seçimi, biri pompa düğmeleri, biri
-sabit yıldız tuşlarından oluşuyordu. Bu tasarım, eski oyunun gerçek gemi
-hareketi ve lazer isabetinden daha az interaktifti.
-
-**Yeni merkez mekanik:** Tek kanonik `SpaceCombatArena` üç görevin tamamında
-kullanılır. Geminin yatay pozisyonu sürüklemeyle veya sol/sağ yön tuşuyla
-değişir; oyuncu **LAZER** butonuyla sınırlı frekansta (170 ms beklemeli)
-gerçek hareketli mermiler ateşler. Mermiler normalize edilmiş oyun uzayında
-uçarken sahnedeki bağımsız düşen/yatay salınan meteorlarla fiziksel temas
-kurmak zorundadır. Hedefe basmak veya cevap butonu seçmek kabul edilmez.
-`SpaceCombatPhysics` geçerli isabet koordinatını saf Kotlin ile doğrular;
-`SpaceExpeditionEngine.fireAt` puan/kalkan/çözüm kararını verir.
-
-Görevler:
-- **Meteor Avı:** Doğru sonucu taşıyan meteora lazer çarparsa görev tamamlanır.
-  Yanlış meteora çarpmak kalkanı düşürür, hata kaydeder ve aynı matematik
-  sorusunu yeni düşen meteor dalgasıyla tekrarlar.
-- **Reaktör Savunması:** Doğru enerji miktarı için hareketli +1, +5, +10, −5
-  kapsülleri vurulur. Çekirdek hedefini sadece sayaç doğru olduğunda
-  vurmak reaktörü çalıştırır; erken atış ceza getirir.
-- **Yıldız Muhafızları:** Sayı örüntüsünün sıradaki yıldızı bağımsız
-  hareket eden hedefler arasından nişan alıp vurularak etkinleştirilir;
-  yanlış isabet dizideki doğru ilerlemeyi silmez.
-
-**UX ve çocuk güvenliği:**
-- Başlatmadan önce sahne duraklatılır; arka planda otomatik durur,
-  yetişkin okuma hızı gibi zorunlu süreler/başarısızlık sınırı yoktur.
-- Serbest hareket sadece yön değiştirme sonunda checkpoint'e kaydedilir;
-  60fps durum değişiklikleri SharedPreferences'e yazılmaz.
-- Sahnedeki tüm görseller cihazda Compose Canvas ile oluşturulur:
-  paralaks yıldızlar, katmanlı nebula, ayrıntılı uzay gemisi, çift jet
-  motoru, nişan lazeri, parlayan meteorlar ve 440ms isabet patlaması.
-  Harici görsel sprite/WebP veya internet kaynaklı yükleme bulunmaz.
-- Önceki yıldız high-water, kayıtlı dünya ve premium hakları korunur.
-- `SpaceCombatPhysicsTest` ve `SpaceExpeditionTouchTest` regresyonları
-  ateş etmenin gerçek çarpışma gerektirdiğini ve buton akışını kontrol eder.
-- Android cihazda küçük ekran, TalkBack, performans, doğru/yanlış atış,
-  lazer isabeti ve ekran döndürme **ayrıca** test edilmelidir; yalnız CI
-  derlemesinin geçmesi gerçek cihaz kabulü değildir.
-
-## S3.6.2 — Gerçek kampanya ölçeği
-
-Önceki tasarımda bir gezegen yalnızca üç farklı görevden sonra bitiyordu.
-Yeni sürümde her gezegende **3 sektör × 3 görev = 9 oynanabilir matematik
-görevi** vardır. Her sektörün meteor, reaktör ve yıldız dizisi soruları
-farklı deterministik seed/indeksle üretilir; ödül üç göreve değil gerçek dokuz
-göreve dayanır. 3 yıldız için en az 8 temiz görev (en fazla 1 hata ve 1
-ipucu), 2 yıldız için en az 6 temiz görev ve en fazla 4 hata gerekir.
-Oyuncu, yeni sektörleri tamamlamak için yalnızca gemi, lazer, hareketli
-hedefler ve matematik ipuçlarını kullanır; hiçbir bölüm sabit çoktan
-seçmeli kutulara dönmez.
-
-Eski üç görevlik v2 oturumu tamamlanmışsa yıldız kazanımı saklanır ve
-kayıt dördüncü görevden devam edecek şekilde uyarlanır. Mevcut ürün
-kimliği, profil, ödeme ve eski yıldız high-water anahtarları korunur.
+## Önceki sürümden fark
+Önceki dokuz görevli reaktör/yıldız rejimi artık **geçerli yol değildir**. Bu doküman, aynı klasörde bulunan eski S3.6 planının üzerine geçen güncel oyun kararıdır.

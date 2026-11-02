@@ -129,49 +129,13 @@ fun SayiAvi2Screen(
         completionHandled = false
     }
 
-    // Ses Çalarlar (Güvenli Başlatma)
-    val mediaPlayerCorrect = remember {
-        try { MediaPlayer.create(context, R.raw.correct_sound) } catch (e: Exception) { null }
+    // Shared, settings-aware audio: no duplicate MediaPlayers per screen.
+    val audio = remember(context) {
+        com.yigit033.matematikmacarasi.services.AudioService.getInstance(context)
     }
-    val mediaPlayerWrong = remember {
-        try { MediaPlayer.create(context, R.raw.wrong_sound) } catch (e: Exception) { null }
-    }
-    val mediaPlayerSuccess = remember {
-        try { MediaPlayer.create(context, R.raw.success) } catch (e: Exception) { null }
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            try {
-                mediaPlayerCorrect?.release()
-                mediaPlayerWrong?.release()
-                mediaPlayerSuccess?.release()
-            } catch (e: Exception) {
-                // Sessiz devam
-            }
-        }
-    }
-
-    fun playCorrectSound() {
-        try {
-            mediaPlayerCorrect?.seekTo(0)
-            mediaPlayerCorrect?.start()
-        } catch (e: Exception) {}
-    }
-
-    fun playWrongSound() {
-        try {
-            mediaPlayerWrong?.seekTo(0)
-            mediaPlayerWrong?.start()
-        } catch (e: Exception) {}
-    }
-
-    fun playSuccessSound() {
-        try {
-            mediaPlayerSuccess?.seekTo(0)
-            mediaPlayerSuccess?.start()
-        } catch (e: Exception) {}
-    }
+    fun playCorrectSound() = audio.playCorrectSound()
+    fun playWrongSound() = audio.playWrongSound()
+    fun playSuccessSound() = audio.playLevelCompleteSound()
 
     // Android Donanım/Yazılım Geri Tuşu İşleyicisi
     BackHandler {
@@ -270,7 +234,10 @@ fun SayiAvi2Screen(
                 gridData = stageAGridData,
                 starsCount = currentStars,
                 initialAttempts = counters.aAttempts,
-                onAttemptRecorded = { correct -> attempt(1, correct) },
+                onAttemptRecorded = { correct ->
+                    attempt(1, correct)
+                    if (correct) playCorrectSound() else playWrongSound()
+                },
                 onHintShown = { hint() },
                 onStageACompleted = {
                     playSuccessSound()
@@ -287,7 +254,10 @@ fun SayiAvi2Screen(
             StageBScreen(
                 vaultData = stageBVaultData,
                 starsCount = currentStars,
-                onAttemptRecorded = { correct -> attempt(2, correct) },
+                onAttemptRecorded = { correct ->
+                    attempt(2, correct)
+                    if (correct) playCorrectSound() else playWrongSound()
+                },
                 onHintShown = { hint() },
                 onStageBCompleted = {
                     playSuccessSound()
@@ -306,7 +276,10 @@ fun SayiAvi2Screen(
                 starsCount = currentStars,
                 initialStepIndex = storage.getRouteStep(),
                 onRouteProgress = { storage.saveRouteStep(it) },
-                onAttemptRecorded = { correct -> attempt(3, correct) },
+                onAttemptRecorded = { correct ->
+                    attempt(3, correct)
+                    if (correct) playCorrectSound() else playWrongSound()
+                },
                 onHintShown = { hint() },
                 onStageCCompleted = {
                     playSuccessSound()
@@ -332,7 +305,7 @@ fun SayiAvi2Screen(
                 onCompleted = {
                     if (!completionHandled) {
                         completionHandled = true
-                        playSuccessSound()
+                        audio.playVictorySound()
                         totalTimeSeconds = ((System.currentTimeMillis() - missionStartTime) / 1000).coerceAtLeast(1)
                         val summary = SayiAviLearningSummary(counters, totalTimeSeconds)
                         lastSummary = summary

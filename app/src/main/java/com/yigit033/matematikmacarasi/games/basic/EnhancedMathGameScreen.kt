@@ -451,428 +451,195 @@ fun EnhancedOperationTheme(
  */
 @Composable
 fun EnhancedMathGameScreen(
-    questionText: String,
-    operationText: String,
-    options: List<String>,
-    currentQuestionIndex: Int,
-    totalQuestions: Int,
-    score: Int,
-    timeLimit: Int = 10,
-    onAnswerSelected: (String) -> Unit,
-    gameTitle: String,
-    feedbackState: AnswerFeedbackState? = null,
-    correctAnswerText: String? = null,
-    visualContent: @Composable () -> Unit = {}, // Görsel içerik için parametre
-    ageGroup: AgeGroup = AgeGroup.KIDS // Varsayılan olarak 7-9 yaş grubu
-) {
-    // Oyun ekranı state'i
-    var remainingTime by remember { mutableIntStateOf(timeLimit) }
-    var isTimerRunning by remember { mutableStateOf(true) }
-    var selectedOption by remember { mutableStateOf("") }
-    var answerState by remember { mutableStateOf(EnhancedAnswerState.UNANSWERED) }
-    var correctAnswer by remember { mutableStateOf("") }
-    
-    // Görsel içerik boş mu diye kontrol eden değer
-    val isEmptyVisualContent = remember(visualContent) { visualContent == {} }
-    
-    // Animasyon ve efekt kontrolü için değişkenler
-    var showConfetti by remember { mutableStateOf(false) }
-    var showEncouragementMessage by remember { mutableStateOf(false) }
-    var encouragementMessage by remember { mutableStateOf("") }
-    
-    // Coroutine scope
-    val coroutineScope = rememberCoroutineScope()
-    
-    // Haptic feedback için
-    val haptic = LocalHapticFeedback.current
-    
-    // İşlem tipini belirle
-    val operationType = when {
-        "+" in operationText -> "addition"
-        "-" in operationText -> "subtraction"
-        "×" in operationText || "x" in operationText -> "multiplication"
-        "÷" in operationText || "/" in operationText -> "division"
-        else -> "generic"
+    questionText:String,
+    operationText:String,
+    options:List<String>,
+    currentQuestionIndex:Int,
+    totalQuestions:Int,
+    score:Int,
+    timeLimit:Int=10,
+    onAnswerSelected:(String)->Unit,
+    gameTitle:String,
+    feedbackState:AnswerFeedbackState?=null,
+    correctAnswerText:String?=null,
+    visualContent:@Composable ()->Unit={},
+    ageGroup:AgeGroup=AgeGroup.KIDS
+){
+    val operation=when {
+        "÷" in operationText->OperationKind.DIVIDE
+        "×" in operationText || "x" in operationText->OperationKind.MULTIPLY
+        "-" in operationText->OperationKind.SUBTRACT
+        else->OperationKind.ADD
     }
-    
-    // Seçilen yaş grubuna ve işlem türüne göre tema ve kaynakları al
-    val (backgroundGradient, _) = getOperationThemeResources(operationType, ageGroup)
-    
-    // Cesaretlendirme mesajları listesi - yaş grubuna göre
-    val encouragementMessages = when (ageGroup) {
-        AgeGroup.YOUNG_KIDS, AgeGroup.KIDS -> listOf(
-            "Harika!", "Çok iyi!", "Süpersin!", "Devam et!", "Muhteşem!", 
-            "Mükemmel!", "Sen bir matematik yıldızısın!"
-        )
-        else -> listOf(
-            "Mükemmel çözüm!", "Harika gidiyorsun!", "Matematik dehası!", 
-            "Çok iyi düşündün!", "Doğru cevap!"
-        )
+    val cover=when(operation){
+        OperationKind.ADD->R.drawable.card_addition_premium
+        OperationKind.SUBTRACT->R.drawable.card_subtraction_premium
+        OperationKind.MULTIPLY->R.drawable.card_multiplication_premium
+        OperationKind.DIVIDE->R.drawable.card_division_premium
     }
-    
-    // Eğer oyun aktivitesinden geri bildirim durumu gelirse, güncelle
-    LaunchedEffect(feedbackState) {
-        if (feedbackState != null) {
-            when (feedbackState) {
-                AnswerFeedbackState.CORRECT -> {
-                    answerState = EnhancedAnswerState.CORRECT
-                    // Doğru cevap verildiğinde konfeti göster ve cesaretlendirici mesaj
-                    showConfetti = true
-                    encouragementMessage = encouragementMessages.random()
-                    showEncouragementMessage = true
-                    
-                    // 2 saniye sonra konfeti ve mesajı kaldır
-                    delay(2000)
-                    showConfetti = false
-                    showEncouragementMessage = false
-                }
-                AnswerFeedbackState.INCORRECT, AnswerFeedbackState.TIMEOUT -> {
-                    answerState = EnhancedAnswerState.INCORRECT
-                }
-                AnswerFeedbackState.IDLE -> {
-                    answerState = EnhancedAnswerState.UNANSWERED
-                }
-            }
-            
-            // Doğru cevabı oyun aktivitesinden gelen bilgiye göre güncelle
-            if (correctAnswerText != null) {
-                correctAnswer = correctAnswerText
-            }
-        }
+    val accent=when(operation){
+        OperationKind.ADD->Color(0xFF6CE5FF)
+        OperationKind.SUBTRACT->Color(0xFFFF94B7)
+        OperationKind.MULTIPLY->Color(0xFF74F1BA)
+        OperationKind.DIVIDE->Color(0xFFFFD275)
     }
-    
-    // Cevap kontrol fonksiyonu
-    fun checkAnswer(answer: String) {
-        if (isTimerRunning) {
-            isTimerRunning = false
-            selectedOption = answer
-            
-            // Haptic feedback
-            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-            
-            onAnswerSelected(answer)
-        }
+    var remainingTime by remember(currentQuestionIndex) {
+        mutableIntStateOf(timeLimit.coerceAtLeast(1))
     }
-    
-    // Bu effect, yeni bir soru gösterildiğinde süre sayacını ve diğer state'leri sıfırlar
-    LaunchedEffect(key1 = currentQuestionIndex) {
-        remainingTime = timeLimit
-        isTimerRunning = true
-        selectedOption = ""
-        answerState = EnhancedAnswerState.UNANSWERED
-        correctAnswer = ""
-        showConfetti = false
-        showEncouragementMessage = false
-    }
-    
-    // Bu effect, süre sayacını yönetir
-    LaunchedEffect(key1 = currentQuestionIndex, key2 = isTimerRunning) {
-        while (isTimerRunning && remainingTime > 0) {
+    var selected by remember(currentQuestionIndex){mutableStateOf<String?>(null)}
+    val correct=feedbackState==AnswerFeedbackState.CORRECT
+    val wrong=feedbackState==AnswerFeedbackState.INCORRECT ||
+        feedbackState==AnswerFeedbackState.TIMEOUT
+    val answered=selected!=null || correct || wrong
+    val haptic=LocalHapticFeedback.current
+    val grade=GradeAwareOperationPolicy.grade(
+        com.yigit033.matematikmacarasi.services.PlayerProfileService
+            .getInstance(androidx.compose.ui.platform.LocalContext.current).getUserClass())
+    LaunchedEffect(currentQuestionIndex,timeLimit,selected){
+        while(selected==null && remainingTime>0){
             delay(1000)
-            remainingTime--
+            if(selected==null)remainingTime--
         }
-        
-        if (remainingTime <= 0 && isTimerRunning) {
-            // Süre dolduğunda otomatik olarak cevabı gönder
-            isTimerRunning = false
+        if(remainingTime==0 && selected==null){
+            selected=""
             onAnswerSelected("")
         }
     }
-    
+    val pulseTransition=rememberInfiniteTransition(label="math_orbit")
+    val pulse by pulseTransition.animateFloat(
+        initialValue=.78f,targetValue=1.0f,
+        animationSpec=infiniteRepeatable(
+            animation=tween(1300,easing=LinearEasing),
+            repeatMode=RepeatMode.Reverse),
+        label="math_pulse"
+    )
+    fun pick(value:String){
+        if(!answered){
+            selected=value
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            onAnswerSelected(value)
+        }
+    }
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundGradient)
-    ) {
+        Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(
+            Color(0xFF0A5999),Color(0xFF101F55),Color(0xFF070F33)
+        )))
+    ){
+        Image(
+            painter=painterResource(cover),
+            contentDescription=null,
+            contentScale=androidx.compose.ui.layout.ContentScale.Crop,
+            modifier=Modifier.fillMaxSize().alpha(.22f)
+        )
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Üst bilgi çubuğu - Daha modern tasarım
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Oyun başlığı - Daha öne çıkarıldı
-                Text(
-                    text = gameTitle,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.weight(1f)
-                )
-                
-                // Soru sayacı
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White.copy(alpha = 0.15f)
-                    )
-                ) {
-                    Text(
-                        text = "$currentQuestionIndex/$totalQuestions",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
+            modifier=Modifier.fillMaxSize()
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
+                .padding(horizontal=13.dp,vertical=11.dp),
+            verticalArrangement=Arrangement.spacedBy(9.dp)
+        ){
+            Row(Modifier.fillMaxWidth(),
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.SpaceBetween){
+                Column(Modifier.weight(1f)){
+                    Text("✨ $gameTitle",color=Color(0xFFFFE28B),
+                        fontSize=20.sp,fontWeight=FontWeight.Black,maxLines=1)
+                    Text("$grade. sınıf · "+operation.title+" macerası",
+                        color=Color(0xFFC4EEFF),fontSize=12.sp)
                 }
-                
-                Spacer(modifier = Modifier.width(8.dp))
-                
-                // Puan göstergesi
-                Card(
-                    shape = RoundedCornerShape(20.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.White.copy(alpha = 0.15f)
-                    )
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = "Puan",
-                            tint = Color(0xFFFFC107),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "$score",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
-                        )
-                    }
+                Surface(shape=RoundedCornerShape(13.dp),
+                    color=Color(0xFF142D64),
+                    border=androidx.compose.foundation.BorderStroke(1.dp,accent)){
+                    Text("★ $score",modifier=Modifier.padding(10.dp),
+                        color=Color(0xFFFFE28B),
+                        fontWeight=FontWeight.Black)
                 }
             }
-            
-            // İlerleme ve zaman göstergesi
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 20.dp)
-            ) {
-                // Zaman çubuğu arka planı
+            Row(Modifier.fillMaxWidth(),
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                Text("Soru $currentQuestionIndex/$totalQuestions",
+                    fontSize=13.sp,fontWeight=FontWeight.Bold,color=Color.White)
                 LinearProgressIndicator(
-                    progress = { 1f },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(5.dp)),
-                    color = Color.White.copy(alpha = 0.2f),
-                    trackColor = Color.Transparent
-                )
-                
-                // İlerleme çubuğu
-                LinearProgressIndicator(
-                    progress = { currentQuestionIndex.toFloat() / totalQuestions.toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth(0.5f)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .align(Alignment.CenterStart),
-                    color = Color(0xFF4CAF50),
-                    trackColor = Color.Transparent
-                )
-                
-                // Zaman çubuğu - Sağdan sola azalan
-                LinearProgressIndicator(
-                    progress = { remainingTime.toFloat() / timeLimit.toFloat() },
-                    modifier = Modifier
-                        .fillMaxWidth(0.5f)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(5.dp))
-                        .align(Alignment.CenterEnd),
-                    color = when {
-                        remainingTime < 3 -> Color(0xFFF44336) // Kırmızı
-                        remainingTime < 5 -> Color(0xFFFF9800) // Turuncu
-                        else -> Color(0xFF2196F3) // Mavi
-                    },
-                    trackColor = Color.Transparent
-                )
+                    progress={currentQuestionIndex.toFloat()/
+                        totalQuestions.coerceAtLeast(1)},
+                    modifier=Modifier.weight(1f).height(8.dp),
+                    color=accent,trackColor=Color(0xFF28568D))
+                Text("⏱ $remainingTime",color=if(remainingTime<=5)
+                    Color(0xFFFFCC77) else Color.White,
+                    fontSize=13.sp,fontWeight=FontWeight.Bold)
             }
-            
-            // Soru kartı - Daha modern görünüm
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .weight(1f, fill = false),
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 8.dp
-                ),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                )
-            ) {
-                Box {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = questionText,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color(0xFF333333),
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        // Görsel içerik için alan
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp)
-                                .weight(1f, fill = false),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Eğer custom görsel içerik yoksa, varsayılan görsel içeriği göster
-                            if (isEmptyVisualContent) {
-                                EnhancedOperationTheme(operationText, ageGroup = ageGroup)
-                            } else {
-                                visualContent()
-                            }
+            Surface(shape=RoundedCornerShape(23.dp),
+                color=Color(0xFF112956),
+                border=androidx.compose.foundation.BorderStroke(2.dp,accent)){
+                Column(Modifier.fillMaxWidth().padding(12.dp),
+                    horizontalAlignment=Alignment.CenterHorizontally,
+                    verticalArrangement=Arrangement.spacedBy(6.dp)){
+                    Text(questionText,color=Color(0xFFBBDDF0),
+                        fontSize=14.sp,fontWeight=FontWeight.Bold)
+                    androidx.compose.foundation.Canvas(
+                        Modifier.fillMaxWidth().height(100.dp)){
+                        val cw=size.width;val ch=size.height
+                        for(index in 0..10){
+                            val x=cw*(.06f+index*.088f)
+                            val y=ch*(.25f+(index%3)*.25f)
+                            drawCircle(accent.copy(alpha=.20f+.45f*pulse),
+                                radius=5f+(index%3)*2f,
+                                center=androidx.compose.ui.geometry.Offset(x,y))
                         }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Daha büyük ve dikkat çekici işlem gösterimi
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            val operationColor = when (operationType) {
-                                "addition" -> Color(0xFF4CAF50)       // Yeşil
-                                "subtraction" -> Color(0xFFF44336)    // Kırmızı
-                                "multiplication" -> Color(0xFF9C27B0) // Mor
-                                "division" -> Color(0xFF2196F3)       // Mavi
-                                else -> Color(0xFF607D8B)             // Gri mavi
-                            }
-                            
-                            Text(
-                                text = operationText,
-                                fontSize = 36.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = operationColor,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                        drawCircle(accent.copy(alpha=.11f*pulse),
+                            radius=ch*.5f,center=androidx.compose.ui.geometry.Offset(
+                                cw*.5f,ch*.5f))
                     }
-                    
-                    // Konfeti efekti
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = showConfetti,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Burada konfeti animasyonu gösterilecek
-                            // Özel konfeti bileşeni kullanılmalı
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_confetti),
-                                contentDescription = "Konfeti",
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-                    
-                    // Cesaretlendirici mesaj
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = showEncouragementMessage,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
-                        Box(
-                            modifier = Modifier.align(Alignment.TopCenter),
-                        ) {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF4CAF50).copy(alpha = 0.9f)
-                                ),
-                                shape = RoundedCornerShape(20.dp),
-                                modifier = Modifier.padding(top = 8.dp)
-                            ) {
-                                Text(
-                                    text = encouragementMessage,
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
+                    Text(operationText,
+                        color=Color.White,fontSize=36.sp,
+                        fontWeight=FontWeight.Black,
+                        textAlign=TextAlign.Center)
+                    Text("Doğru sonucu seç, yıldızları topla",
+                        color=accent,fontSize=12.sp)
+                }
+            }
+            if(correct || wrong){
+                Surface(shape=RoundedCornerShape(15.dp),
+                    color=if(correct)Color(0xFF176E59) else Color(0xFF893A5A)){
+                    Text(if(correct)"✦ Doğru! Devam ediyorsun."
+                        else "Bir daha düşün! Doğru cevap: ${correctAnswerText?:""}",
+                        color=Color.White,fontWeight=FontWeight.Bold,
+                        fontSize=14.sp,
+                        modifier=Modifier.fillMaxWidth().padding(11.dp),
+                        textAlign=TextAlign.Center)
+                }
+            }
+            options.chunked(2).forEach{pair->
+                Row(Modifier.fillMaxWidth(),
+                    horizontalArrangement=Arrangement.spacedBy(10.dp)){
+                    pair.forEach{value->
+                        val isCorrect=correctAnswerText==value && (correct||wrong)
+                        val isWrong=selected==value && wrong
+                        Surface(
+                            modifier=Modifier.weight(1f).heightIn(min=77.dp),
+                            onClick={pick(value)},
+                            enabled=!answered,
+                            shape=RoundedCornerShape(20.dp),
+                            border=androidx.compose.foundation.BorderStroke(2.dp,
+                                if(isCorrect)Color(0xFF85FFB8)
+                                else if(isWrong)Color(0xFFFFA9B0) else accent),
+                            color=if(isCorrect)Color(0xFF187C62)
+                                else if(isWrong)Color(0xFF9C4364)
+                                else Color(0xFF1A3F78)
+                        ){
+                            Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){
+                                Text(value,color=Color.White,
+                                    fontSize=27.sp,fontWeight=FontWeight.Black)
                             }
                         }
                     }
+                    if(pair.size==1)Spacer(Modifier.weight(1f))
                 }
             }
-            
-            Spacer(modifier = Modifier.height(20.dp))
-            
-            // Cevap seçenekleri - Modern tasarım
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                // Her satırda 2 seçenek göster (2x2 grid)
-                val rows = options.chunked(2)
-                
-                rows.forEach { rowOptions ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        rowOptions.forEach { option ->
-                            EnhancedAnswerOption(
-                                text = option,
-                                isSelected = selectedOption == option,
-                                isCorrect = when {
-                                    answerState == EnhancedAnswerState.UNANSWERED -> null  // Henüz cevap verilmedi
-                                    selectedOption == option && answerState == EnhancedAnswerState.CORRECT -> true  // Seçilen doğru
-                                    selectedOption == option && answerState == EnhancedAnswerState.INCORRECT -> false // Seçilen yanlış
-                                    option == correctAnswer && answerState == EnhancedAnswerState.INCORRECT -> true // Doğru cevap vurgulanıyor
-                                    else -> null // Diğer seçenekler normal görünümde
-                                },
-                                onClick = {
-                                    if (answerState == EnhancedAnswerState.UNANSWERED) {
-                                        checkAnswer(option)
-                                    }
-                                },
-                                ageGroup = ageGroup,
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                        
-                        // Eğer bir satırda tek sayıda seçenek varsa, boş bir alan ekle
-                        if (rowOptions.size == 1) {
-                            Spacer(modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            }
-
-            // Alt padding
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(10.dp))
         }
     }
 }
-
 @Composable
 fun EnhancedAnswerOption(
     text: String,

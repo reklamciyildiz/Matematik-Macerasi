@@ -354,7 +354,7 @@ fun FractionCrystalsScreen(
                 Text(message,Modifier.fillMaxWidth().padding(14.dp),
                     color=pearl,fontWeight=FontWeight.Bold,fontSize=13.sp)
             }
-            if(run.solved) Button(onClick={next},
+            if(run.solved) Button(onClick={next()},
                 modifier=Modifier.fillMaxWidth().heightIn(min=58.dp),
                 colors=ButtonDefaults.buttonColors(containerColor=gold,contentColor=navy),
                 shape=RoundedCornerShape(17.dp)){

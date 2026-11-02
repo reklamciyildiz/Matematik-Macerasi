@@ -194,7 +194,7 @@ fun SpaceExpeditionScreen(
         }
         if(lobby) {
             GalaxyScene(SpacePlanet.entries[choice],compact=false)
-            Text("5 gezegen · 3 etkileşimli görev",
+            Text("5 gezegen · 3 sektör · 9 interaktif görev",
                 color=GalaxyPaint.bright,fontSize=20.sp,
                 fontWeight=FontWeight.Black)
             Text("Gemini serbestçe yönet, lazerle hareketli meteorları vur, reaktörü enerji kapsülleriyle besle ve yıldızları sırayla etkinleştir.",
@@ -206,7 +206,7 @@ fun SpaceExpeditionScreen(
                     Column(Modifier.padding(13.dp),
                         verticalArrangement=Arrangement.spacedBy(7.dp)) {
                         Text("📍 Devam eden: "+run.planet.title+
-                            " · görev "+(run.stage+1)+"/3",
+                            " · görev "+(run.stage+1)+"/9",
                             color=GalaxyPaint.bright,fontWeight=FontWeight.Bold)
                         SpaceButton("▶ Kaydedilen Göreve Dön") {lobby=false}
                     }
@@ -286,8 +286,8 @@ fun SpaceExpeditionScreen(
                         Text(SpaceExpeditionEngine.score(run).toString()+" puan",
                             color=GalaxyPaint.bright,fontSize=26.sp,
                             fontWeight=FontWeight.Black)
-                        Text(run.firstTry.toString()+
-                            " bağımsız görev · "+run.errors+" hata · "+
+                        Text("9 görev · "+run.firstTry+
+                            " ilk denemede doğru · "+run.errors+" hata · "+
                             run.hints+" ipucu",
                             color=GalaxyPaint.quiet,fontSize=13.sp)
                         Text("Gemiyi kullandın, enerji ürettin ve yıldız devresini tamamladın.",
@@ -318,7 +318,8 @@ fun SpaceExpeditionScreen(
                     modifier=Modifier.fillMaxWidth().height(8.dp),
                     color=GalaxyPaint.gold,trackColor=Color(0xFF325079)
                 )
-                Text("Görev "+(run.stage+1)+"/3 · "+run.mission.title,
+                Text("Sektör "+(run.stage/3+1)+"/3 · Görev "+
+                        (run.stage+1)+"/9 · "+run.mission.title,
                     color=GalaxyPaint.gold,fontSize=16.sp,
                     fontWeight=FontWeight.Black)
                 val q=SpaceExpeditionEngine.puzzle(run)
@@ -351,7 +352,7 @@ fun SpaceExpeditionScreen(
                             Text(q.explanation,color=GalaxyPaint.bright,fontSize=13.sp)
                         }
                     }
-                    SpaceButton(if(run.stage==2)
+                    SpaceButton(if(run.stage==SpaceExpeditionEngine.STAGES-1)
                         "🏆 Gezegen Sonucunu Gör" else "Sonraki Görev →",
                         onClick=onNext)
                 } else {

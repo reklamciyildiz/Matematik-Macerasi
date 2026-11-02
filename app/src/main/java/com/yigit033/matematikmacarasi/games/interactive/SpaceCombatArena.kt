@@ -169,10 +169,10 @@ fun SpaceCombatArena(
         }
     }
     val planetColor=nebulaColors[run.planet.ordinal]
-    val missionHint=when(run.stage){
-        0->"🎯 Doğru sonucu taşıyan meteoru lazerle vur."
-        1->"⚡ Kapsülleri vurup enerjiyi ayarla; tam dolunca çekirdeği vur."
-        else->"✧ Sonraki sayıyı taşıyan yıldızı sırayla vur."
+    val missionHint=when(run.mission){
+        SpaceMission.FLIGHT->"🎯 Doğru sonucu taşıyan meteoru lazerle vur."
+        SpaceMission.REACTOR->"⚡ Kapsülleri vurup enerjiyi ayarla; tam dolunca çekirdeği vur."
+        SpaceMission.CIRCUIT->"✧ Sonraki sayıyı taşıyan yıldızı sırayla vur."
     }
     Column(
         modifier=Modifier.fillMaxWidth(),
@@ -292,7 +292,7 @@ fun SpaceCombatArena(
                     val y=h*place.y
                     val radius=w*(if(targetValues.size>=5).075f else .092f)
                     if(y < -radius*1.2f || y>h+radius) return@forEach
-                    val isNode=run.stage==2
+                    val isNode=run.mission==SpaceMission.CIRCUIT
                     val color=if(isNode)spaceGold else
                         nebulaColors[(run.planet.ordinal+target.id)%5]
                     drawCircle(color.copy(alpha=.13f),
@@ -320,14 +320,14 @@ fun SpaceCombatArena(
                         radius=radius*.14f,
                         center=Offset(x-radius*.37f,y-radius*.35f))
                     val display=if(target.value==Int.MIN_VALUE)"GO" else
-                        (if(target.value>0 && run.stage==1)
+                        (if(target.value>0 && run.mission==SpaceMission.REACTOR)
                             "+"+target.value else target.value.toString())
                     paint.color=android.graphics.Color.rgb(13,28,61)
                     paint.textSize=if(display.length>=3)radius*.67f
                         else radius*.89f
                     drawIntoCanvas {it.nativeCanvas.drawText(
                         display,x,y+paint.textSize*.31f,paint)}
-                    if(run.stage==2 && target.value in run.path){
+                    if(run.mission==SpaceMission.CIRCUIT && target.value in run.path){
                         drawCircle(spaceTeal.copy(alpha=.8f),
                             radius=radius*1.18f,center=Offset(x,y),
                             style=Stroke(5f))
@@ -475,7 +475,7 @@ fun SpaceCombatArena(
                 color=spaceWhite,fontSize=11.sp,
                 modifier=Modifier.testTag("space_laser_count"))
         }
-        if(run.stage==1)Text(
+        if(run.mission==SpaceMission.REACTOR)Text(
             "REAKTÖR  "+run.charge+"/"+puzzle.answer+
                 " enerji · +1 / +5 / +10 / −5 kapsüllerini vur; GO'ya hazırken ateş et.",
             color=spaceGold,fontWeight=FontWeight.Bold,fontSize=12.sp,
@@ -483,7 +483,7 @@ fun SpaceCombatArena(
                 .background(Color(0xFF183764),RoundedCornerShape(12.dp))
                 .padding(11.dp)
         )
-        if(run.stage==2)Text(
+        if(run.mission==SpaceMission.CIRCUIT)Text(
             "YILDIZ ZİNCİRİ  "+run.path.size+"/3 bağlandı · "+
                 puzzle.sequence.take(run.path.size).joinToString(" → "),
             color=spaceGold,fontWeight=FontWeight.Bold,fontSize=12.sp,

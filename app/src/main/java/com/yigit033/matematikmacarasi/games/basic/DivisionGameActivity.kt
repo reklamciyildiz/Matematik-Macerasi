@@ -92,6 +92,7 @@ class DivisionGameActivity : BaseGameActivity() {
     // Sorulan soruları takip eden tracker
     private val questionTracker = QuestionTracker()
     private val askedSessionQuestions = mutableSetOf<String>()
+    private val practiceState = OperationPracticeState()
     
     // Maksimum yeniden deneme sayısı
     private val MAX_RETRY_COUNT = 20
@@ -407,7 +408,8 @@ class DivisionGameActivity : BaseGameActivity() {
             return
         }
         val q=GradeAwareOperationPolicy.generateUnique(
-            grade,OperationKind.DIVIDE,selectedDifficulty,askedSessionQuestions
+            grade,OperationKind.DIVIDE,
+            practiceState.effectiveDifficulty(selectedDifficulty),askedSessionQuestions
         )
         firstNumber=q.first
         secondNumber=q.second
@@ -604,6 +606,7 @@ class DivisionGameActivity : BaseGameActivity() {
             
             if (selectedOption.isNotEmpty()) {
                 val isCorrect = checkAnswer(selectedOption)
+                practiceState.record(isCorrect)
                 
                 // Cevap durumunu güncelle
                 answerFeedbackState = if (isCorrect) {
@@ -649,6 +652,7 @@ class DivisionGameActivity : BaseGameActivity() {
                 }
             } else {
                 // Zamanı geçmiş veya boş cevap
+                practiceState.record(false)
                 answerFeedbackState = AnswerFeedbackState.TIMEOUT
                 wrongAnswersCount++
                 audioService.playWrongSound()
@@ -854,6 +858,7 @@ class DivisionGameActivity : BaseGameActivity() {
             // QuestionTracker'ı sıfırla
             questionTracker.reset()
         askedSessionQuestions.clear()
+            practiceState.reset()
             
             // İlk soruyu oluştur
             generateQuestion()

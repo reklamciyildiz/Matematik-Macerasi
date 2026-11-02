@@ -76,7 +76,7 @@ object FractionCrystalEngine {
                 val rivalNum = random.nextInt(1, rivalDen)
                 val rival = CrystalFraction(rivalNum, rivalDen)
                 val key = "${mode.name}:${target.canonical}:${rival.canonical}"
-                if (seen.add(key)) result = makeTask(mode, target, rival, grade, random)
+                if (seen.add(key)) result = makeTask(mode, target, rival, grade, random, index)
             }
             result ?: error("Fraction task pool exhausted for $grade/$difficulty at $index")
         }
@@ -84,7 +84,7 @@ object FractionCrystalEngine {
 
     private fun makeTask(
         mode: CrystalMode, fraction: CrystalFraction, rival: CrystalFraction,
-        grade: Int, random: Random
+        grade: Int, random: Random, index: Int
     ): CrystalTask {
         val prompt: String
         val skill: String
@@ -114,6 +114,28 @@ object FractionCrystalEngine {
                 }} ${rival.format()}."
             }
             CrystalMode.PORTAL -> {
+                if (grade >= 6 && index == 7) {
+                    val otherNumerator = random.nextInt(1,
+                        fraction.denominator - fraction.numerator + 1)
+                    val other = CrystalFraction(otherNumerator, fraction.denominator)
+                    val sum = fraction + other
+                    prompt = "İki kristal enerjisini birleştir: ${fraction.format()} + ${other.format()}"
+                    skill = "fraction_arithmetic"
+                    answer = sum.format()
+                    val wrong = listOf(
+                        CrystalFraction(fraction.numerator+otherNumerator,
+                            fraction.denominator*2).canonical.format(),
+                        CrystalFraction(fraction.numerator+otherNumerator-1,
+                            fraction.denominator).canonical.format(),
+                        CrystalFraction(fraction.numerator+otherNumerator+1,
+                            fraction.denominator).canonical.format(),
+                        CrystalFraction(fraction.numerator,
+                            fraction.denominator+otherNumerator).canonical.format()
+                    )
+                    choices = (listOf(answer)+wrong.filter{it!=answer}).distinct()
+                        .shuffled(random).take(4)
+                    explanation = "Paydalar eşitse paylar toplanır: ${sum.format()}."
+                } else {
                 skill = if (grade >= 5) "fraction_representation" else "fraction_equivalence"
                 if (grade >= 5 && fraction.denominator in listOf(2,4,5,10,20)) {
                     val percent = fraction.numerator * 100 / fraction.denominator
@@ -137,6 +159,7 @@ object FractionCrystalEngine {
                         .distinct().shuffled(random)
                     explanation = "Payı ve paydayı aynı sayı ile çarpmak miktarı değiştirmez."
                 }
+                }
             }
         }
         return CrystalTask(mode,fraction,rival,prompt,skill,choices,answer,explanation)
@@ -159,5 +182,6 @@ object FractionCrystalEngine {
         if (grade <= 4) listOf("fraction_part_whole","fraction_unit_composition",
             "fraction_compare","fraction_equivalence")
         else listOf("fraction_part_whole","fraction_unit_composition",
-            "fraction_compare","fraction_representation")
+            "fraction_compare","fraction_representation") +
+            if(grade>=6) listOf("fraction_arithmetic") else emptyList()
 }

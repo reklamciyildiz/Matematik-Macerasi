@@ -213,77 +213,267 @@ fun OperationGradeLockedScreen(grade:Int,operation:OperationKind,onBack:()->Unit
     }
 }
 @Composable
-private fun MixedOperationSession(grade:Int,difficulty:DifficultyLevel,onBack:()->Unit){
-    var round by rememberSaveable {mutableIntStateOf(0)}
-    var correct by rememberSaveable {mutableIntStateOf(0)}
-    var wrong by rememberSaveable {mutableIntStateOf(0)}
-    var pending by rememberSaveable {mutableStateOf(false)}
-    val allowed=remember(grade){OperationKind.entries.filter{
-        GradeAwareOperationPolicy.allowed(grade,it)
-    }}
-    val question=remember(round,grade,difficulty){
-        val op=allowed.random()
-        op to GradeAwareOperationPolicy.generate(grade,op,difficulty)
+private fun MixedOperationSession(
+    grade: Int,
+    difficulty: DifficultyLevel,
+    onBack: () -> Unit
+) {
+    var run by remember { mutableIntStateOf(0) }
+    var round by remember(run) { mutableIntStateOf(0) }
+    var correct by remember(run) { mutableIntStateOf(0) }
+    var wrong by remember(run) { mutableIntStateOf(0) }
+    var streak by remember(run) { mutableIntStateOf(0) }
+    var bestStreak by remember(run) { mutableIntStateOf(0) }
+    var points by remember(run) { mutableIntStateOf(0) }
+
+    val engine = remember(grade, difficulty, run) {
+        MixedOperationEngine(grade, difficulty)
     }
-    val choices=remember(round){GradeAwareOperationPolicy.options(question.second)}
-    BackHandler {onBack()}
-    Column(Modifier.fillMaxSize().background(Brush.verticalGradient(
-        listOf(Color(0xFF1D64B8),ink))).safeDrawingPadding().padding(16.dp),
-        horizontalAlignment=Alignment.CenterHorizontally,
-        verticalArrangement=Arrangement.spacedBy(16.dp)){
-        TextButton(onClick=onBack,modifier=Modifier.align(Alignment.Start)){
-            Text("← İşlem Merkezi",color=ivory)
-        }
-        Text("🌟 KARIŞIK MACERA",color=gold,fontSize=24.sp,fontWeight=FontWeight.Black)
-        Text("$grade. sınıf · $correct doğru · $wrong yanlış",
-            color=ivory,fontSize=13.sp)
-        LinearProgressIndicator(
-            progress={round/12f},
-            modifier=Modifier.fillMaxWidth().height(10.dp),
-            color=gold,trackColor=Color(0xFF355583))
-        if(round>=12){
-            Text("🏆 MACERA TAMAMLANDI",fontSize=22.sp,color=gold,
-                fontWeight=FontWeight.Black)
-            Text("12 soruda $correct doğru cevap",color=ivory,fontSize=18.sp)
-            Button(onClick={round=0;correct=0;wrong=0;pending=false}){
-                Text("Yeniden oyna")
+    val current = remember(round, engine) {
+        if (round < 12) engine.next() else null
+    }
+    val choices = remember(round, engine) {
+        current?.let { GradeAwareOperationPolicy.options(it.second, it.first) }
+            ?: emptyList()
+    }
+    var picked by remember(round, run) { mutableStateOf<String?>(null) }
+    val wasCorrect = picked != null && picked?.toIntOrNull() == current?.second?.answer
+
+    LaunchedEffect(picked) {
+        val selected = picked
+        val item = current
+        if (selected != null && item != null) {
+            val right = selected.toIntOrNull() == item.second.answer
+            engine.record(item.first, right)
+            if (right) {
+                correct++
+                streak++
+                bestStreak = maxOf(bestStreak, streak)
+                points += 10 + (streak.coerceAtMost(5) * 2)
+            } else {
+                wrong++
+                streak = 0
             }
-        }else {
-            Spacer(Modifier.height(12.dp))
-            Text("Soru ${round+1} / 12",color=cyan,fontSize=15.sp)
-            Surface(
-                modifier=Modifier.fillMaxWidth().height(155.dp),
-                color=Color(0xFF183867),
-                shape=RoundedCornerShape(25.dp),
-                border=BorderStroke(2.dp,cyan)
-            ){
-                Box(contentAlignment=Alignment.Center){
-                    Text("${question.second.first} ${question.first.symbol} ${question.second.second} = ?",
-                        fontSize=35.sp,fontWeight=FontWeight.Black,color=ivory,
-                        textAlign=TextAlign.Center)
+            // Leave the correct answer visible long enough to learn from mistakes.
+            kotlinx.coroutines.delay(if (right) 950L else 1700L)
+            round++
+        }
+    }
+
+    BackHandler { onBack() }
+    val phase = (round / 4).coerceAtMost(2)
+    val phaseNames = listOf("KEŞİF", "YILDIZ YOLU", "USTALIK")
+    val accents = listOf(Color(0xFF77E9FF), Color(0xFFFFD775), Color(0xFFBD9BFF))
+    val accent = accents[phase]
+
+    Column(
+        Modifier.fillMaxSize()
+            .background(Brush.verticalGradient(listOf(
+                Color(0xFF1265AA), Color(0xFF18265D), Color(0xFF08132D)
+            )))
+            .safeDrawingPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(13.dp)
+    ) {
+        TextButton(onClick = onBack) {
+            Text("← Dört İşlem Merkezi", color = ivory)
+        }
+        Text(
+            "✨ KARIŞIK MATEMATİK MACERASI",
+            color = gold,
+            fontSize = 21.sp,
+            fontWeight = FontWeight.Black
+        )
+        Text(
+            "$grade. SINIF  ·  ${when(difficulty) {
+                DifficultyLevel.EASY -> "TEMEL"
+                DifficultyLevel.MEDIUM -> "GELİŞEN"
+                DifficultyLevel.HARD -> "USTALIK"
+                DifficultyLevel.VERY_HARD -> "ÇOK ZOR"
+                DifficultyLevel.EXPERT -> "UZMAN"
+            }}",
+            color = cyan, fontSize = 12.sp, fontWeight = FontWeight.Bold
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("⭐ $points PUAN", "✓ $correct DOĞRU", "🔥 $streak SERİ").forEach { label ->
+                Surface(
+                    color = Color(0xFF193B68),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, accent.copy(alpha = .6f)),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        label,
+                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 12.dp),
+                        color = ivory, fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold, textAlign = TextAlign.Center
+                    )
                 }
             }
-            choices.chunked(2).forEach{pair->
-                Row(horizontalArrangement=Arrangement.spacedBy(12.dp)){
-                    pair.forEach{choice->
-                        Button(onClick={
-                            if(!pending){
-                                pending=true
-                                if(choice.toInt()==question.second.answer)correct++
-                                else wrong++
-                                round++
-                                pending=false
-                            }
-                        },
-                            modifier=Modifier.weight(1f).height(87.dp),
-                            shape=RoundedCornerShape(20.dp),
-                            colors=ButtonDefaults.buttonColors(
-                                containerColor=Color(0xFF20649A))){
-                            Text(choice,color=ivory,fontSize=27.sp,
-                                fontWeight=FontWeight.Black)
-                        }
+        }
+
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            phaseNames.forEachIndexed { index, name ->
+                Surface(
+                    color = if (index <= phase) Color(0xFF27558A) else Color(0xFF162D55),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(
+                        if (index == phase) 2.dp else 1.dp,
+                        if (index == phase) accent else Color(0xFF436085)
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Column(
+                        Modifier.padding(vertical = 9.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            when(index) { 0 -> "🧭"; 1 -> "🌟"; else -> "🏆" },
+                            fontSize = 20.sp
+                        )
+                        Text(name, color = ivory, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
+            }
+        }
+
+        LinearProgressIndicator(
+            progress = { round / 12f },
+            modifier = Modifier.fillMaxWidth().height(9.dp)
+                .clip(RoundedCornerShape(8.dp)),
+            color = accent, trackColor = Color(0xFF355583)
+        )
+
+        if (round >= 12) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(25.dp),
+                color = Color(0xFF183B6A),
+                border = BorderStroke(2.dp, gold)
+            ) {
+                Column(
+                    Modifier.padding(22.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("🏆", fontSize = 54.sp)
+                    Text("MACERA TAMAMLANDI!", color = gold, fontSize = 23.sp,
+                        textAlign = TextAlign.Center, fontWeight = FontWeight.Black)
+                    Text("$points PUAN", color = ivory, fontSize = 28.sp,
+                        fontWeight = FontWeight.Black)
+                    Text(
+                        "12 soruda $correct doğru · $wrong yanlış\n" +
+                            "En uzun doğru serin: $bestStreak",
+                        color = ivory, textAlign = TextAlign.Center, fontSize = 15.sp
+                    )
+                    Text(
+                        when {
+                            correct >= 11 -> "Mükemmel! İşlemleri çok iyi ayırt ettin."
+                            correct >= 8 -> "Güzel ilerleme! Kaçırdığın işlemleri yeniden dene."
+                            else -> "Pratik yapmaya devam et. Yanlışların öğrenme fırsatı."
+                        },
+                        color = cyan, fontSize = 13.sp, textAlign = TextAlign.Center
+                    )
+                    Button(
+                        onClick = { run++ },
+                        colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = ink),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                    ) {
+                        Text("↻ Yeni bir macera", fontWeight = FontWeight.Black)
+                    }
+                    TextButton(onClick = onBack) {
+                        Text("İşlem merkezine dön", color = ivory)
+                    }
+                }
+            }
+        } else {
+            Text(
+                "BÖLÜM ${phase + 1}  ·  ${phaseNames[phase]}  ·  SORU ${round + 1}/12",
+                color = accent, fontSize = 13.sp, fontWeight = FontWeight.Black
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 164.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = Color(0xFF1A3868),
+                border = BorderStroke(2.dp, accent)
+            ) {
+                Column(
+                    Modifier.padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "${current!!.first.title.uppercase()} GÖREVİ",
+                        color = accent, fontSize = 13.sp, fontWeight = FontWeight.Black
+                    )
+                    Text(
+                        "${current.second.first} ${current.first.symbol} ${current.second.second} = ?",
+                        color = ivory, fontSize = 37.sp, fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        "Doğru cevabı seç ve yıldız serini koru!",
+                        color = Color(0xFFBDDDF4), fontSize = 12.sp
+                    )
+                }
+            }
+            choices.chunked(2).forEach { pair ->
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    pair.forEach { choice ->
+                        val isAnswer = choice.toIntOrNull() == current.second.answer
+                        val selected = picked == choice
+                        val buttonColor = when {
+                            picked != null && isAnswer -> Color(0xFF147B56)
+                            picked != null && selected -> Color(0xFFAA3650)
+                            else -> Color(0xFF26599B)
+                        }
+                        Button(
+                            onClick = { if (picked == null) picked = choice },
+                            enabled = picked == null,
+                            modifier = Modifier.weight(1f).heightIn(min = 76.dp),
+                            shape = RoundedCornerShape(19.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = buttonColor,
+                                disabledContainerColor = buttonColor,
+                                disabledContentColor = ivory
+                            ),
+                            border = BorderStroke(2.dp,
+                                if (picked != null && isAnswer) Color(0xFF75F8BF)
+                                else Color(0xFF8DBCF4))
+                        ) {
+                            Text(
+                                choice, color = ivory, fontSize = 25.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                }
+            }
+            if (picked != null) {
+                Surface(
+                    color = if (wasCorrect) Color(0xFF165C58) else Color(0xFF6D3049),
+                    shape = RoundedCornerShape(15.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (wasCorrect) "✓ Doğru! Serini büyüttün. Yeni soruya geçiliyor…"
+                        else "✦ Doğru cevap: ${current.second.answer}. " +
+                            "Bu işlemi tekrar çalışacağız.",
+                        modifier = Modifier.padding(13.dp),
+                        color = ivory, fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else {
+                Text(
+                    "Yanlış cevapta doğru sonucu görürsün. Bu turda süre sınırı yok.",
+                    color = Color(0xFFB7DDF5), fontSize = 12.sp,
+                    textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }

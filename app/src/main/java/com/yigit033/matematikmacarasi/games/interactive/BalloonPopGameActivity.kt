@@ -104,7 +104,10 @@ class BalloonPopGameActivity:ComponentActivity() {
         else if(next.errors>before.errors)runCatching {
             audio.playWrongSound()
         }.onFailure {Log.w(TAG,"Sound not available",it)}
-        if(next.completed && !before.completed)deliver(next)
+        if(next.completed && !before.completed) {
+            audio.playVictorySound()
+            deliver(next)
+        }
     }
     private fun rewardKey(realm:BalloonRealm):String=
         "BalloonPopGameActivity_level_"+(realm.ordinal+1)

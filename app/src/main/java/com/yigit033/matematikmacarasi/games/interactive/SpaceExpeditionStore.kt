@@ -40,7 +40,13 @@ class SpaceExpeditionStore(context:Context) {
             hintVisible=prefs.getBoolean("hint_visible",false),
             shields=prefs.getInt("shields",3)
         )
-        return run.takeIf(SpaceExpeditionEngine::valid)
+        // A completed legacy three-stage run resumes in sector two,
+        // preserving its already-awarded stars and previous achievements.
+        val adapted=if(run.completed && run.stage==3)
+            run.copy(completed=false,solved=false,
+                tainted=false,hintVisible=false,charge=0,path=emptyList())
+            else run
+        return adapted.takeIf(SpaceExpeditionEngine::valid)
     }
     @Synchronized fun save(run:SpaceRun):Boolean {
         if(!SpaceExpeditionEngine.valid(run))return false

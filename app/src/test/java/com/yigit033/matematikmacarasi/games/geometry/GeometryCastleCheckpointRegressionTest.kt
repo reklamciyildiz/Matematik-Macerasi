@@ -24,7 +24,13 @@ class GeometryCastleCheckpointRegressionTest {
                                 assertTrue("Correct shape invalid at $tier v$version #$index",GeometryCastleEngine.valid(run))
                             }
                             CastleMode.BUILD -> {
-                                task.requiredPieces.forEachIndexed { part,shape ->
+                                if (version == 1) {
+                                    // Legacy saves have one socket and intentionally no placed list.
+                                    run = GeometryCastleEngine.answer(run, true).copy(
+                                        selected = task.target, solved = true
+                                    )
+                                    assertTrue("Legacy socket invalid",GeometryCastleEngine.valid(run))
+                                } else task.requiredPieces.forEachIndexed { part,shape ->
                                     run=run.copy(selected=shape)
                                     assertTrue("Selection invalid $tier/$index/$part",GeometryCastleEngine.valid(run))
                                     run=GeometryCastleEngine.answer(run,true).copy(

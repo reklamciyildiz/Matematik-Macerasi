@@ -5,13 +5,16 @@ import android.util.Log
 import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /** All geometry checkpoints are deliberately isolated from legacy mini-games and billing. */
-class GeometryCastleProgressStore(context: Context) {
+class GeometryCastleProgressStore(
+    context: Context,
+    private val preferenceName: String = "geometry_castle_v1"
+) {
     enum class SaveIssue { NONE, INVALID_TRANSITION, STORAGE_WRITE }
     @Volatile var lastSaveIssue = SaveIssue.NONE
         private set
     private companion object { const val TAG = "GeometryCastleStore" }
     private val prefs = context.applicationContext.getSharedPreferences(
-        "geometry_castle_v1", Context.MODE_PRIVATE
+        preferenceName, Context.MODE_PRIVATE
     )
 
     @Synchronized fun load(): CastleRun {

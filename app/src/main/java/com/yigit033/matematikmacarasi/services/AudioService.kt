@@ -62,6 +62,8 @@ class AudioService private constructor(private val context: Context) {
     private var musicPlayer: ExoPlayer? = null
     private var musicPrepared = false
     private var released = false
+    @Volatile private var appForeground = false
+    @Volatile private var gameplayActive = false
     @Volatile private var musicEnabled = prefs.getBoolean(KEY_MUSIC_ENABLED, true)
     @Volatile private var effectsEnabled = prefs.getBoolean(KEY_SOUND_ENABLED, true)
     @Volatile private var musicVolume =
@@ -101,7 +103,7 @@ class AudioService private constructor(private val context: Context) {
     }
 
     private fun currentMusicVolume(): Float =
-        if (musicEnabled) musicVolume else 0f
+        if (musicEnabled) musicVolume * (if (gameplayActive) .53f else 1f) else 0f
 
     private fun prepareMusic() {
         if (released || musicPrepared) return
@@ -131,11 +133,34 @@ class AudioService private constructor(private val context: Context) {
         }
     }
 
+    /** Application-level lifecycle owns music; navigation must not stop the loop. */
+    fun onAppForeground(gameplay: Boolean) {
+        onMain {
+            appForeground = true
+            gameplayActive = gameplay
+            resumeBackgroundMusic()
+        }
+    }
+
+    fun onGameplayChanged(gameplay: Boolean) {
+        onMain {
+            gameplayActive = gameplay
+            if (!released) musicPlayer?.volume = currentMusicVolume()
+        }
+    }
+
+    fun onAppBackground() {
+        onMain {
+            appForeground = false
+            pauseBackgroundMusic()
+        }
+    }
+
     fun playBackgroundMusic() = resumeBackgroundMusic()
 
     fun resumeBackgroundMusic() {
         onMain {
-            if (released || !musicEnabled) return@onMain
+            if (released || !musicEnabled || !appForeground) return@onMain
             if (!musicPrepared) prepareMusic()
             musicPlayer?.apply {
                 volume = currentMusicVolume()
@@ -201,7 +226,7 @@ class AudioService private constructor(private val context: Context) {
     fun setMusicEnabled(enabled: Boolean) {
         musicEnabled = enabled
         prefs.edit().putBoolean(KEY_MUSIC_ENABLED, enabled).apply()
-        if (enabled) resumeBackgroundMusic() else pauseBackgroundMusic()
+        if (enabled && appForeground) resumeBackgroundMusic() else if (!enabled) pauseBackgroundMusic()
     }
 
     fun setSoundEnabled(enabled: Boolean) {

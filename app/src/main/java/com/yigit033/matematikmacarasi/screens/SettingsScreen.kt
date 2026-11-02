@@ -183,6 +183,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     val scope=rememberCoroutineScope()
     var music by remember { mutableStateOf(audioService.isMusicEnabled()) }
     var effects by remember { mutableStateOf(audioService.isSoundEnabled()) }
+    var musicVolume by remember { mutableFloatStateOf(audioService.getMusicVolume()) }
+    var effectsVolume by remember { mutableFloatStateOf(audioService.getEffectsVolume()) }
     var notifications by remember {
         mutableStateOf(prefs.getBoolean("notifications_enabled",true))
     }
@@ -311,16 +313,54 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                 lineHeight=17.sp)
         }
 
-        SettingsSection("Ses ve Müzik","Oynarken nasıl duymak istediğini seç") {
-            SettingsToggle("Müzik","Arka plan müziği",music) { enabled ->
+        SettingsSection("Ses ve Müzik","Özgün macera teması, yumuşak geri bildirimler ve oyun sesleri") {
+            SettingsToggle("Müzik","Maceranın arka plan teması",music) { enabled ->
                 audioService.setMusicEnabled(enabled)
                 music=enabled
             }
+            Text("Müzik seviyesi  ·  %${(musicVolume * 100).toInt()}",
+                color=SettingsPalette.secondary,fontSize=12.sp)
+            Slider(
+                value=musicVolume,
+                onValueChange={ musicVolume=it; audioService.setMusicVolume(it) },
+                enabled=music,
+                valueRange=0f..1f
+            )
             HorizontalDivider(color=SettingsPalette.border)
-            SettingsToggle("Ses efektleri","Doğru, yanlış ve ödül sesleri",effects) {
+            SettingsToggle("Ses efektleri","Doğru, yanlış, görev ve zafer sesleri",effects) {
                 audioService.setSoundEnabled(it)
                 effects=it
             }
+            Text("Efekt seviyesi  ·  %${(effectsVolume * 100).toInt()}",
+                color=SettingsPalette.secondary,fontSize=12.sp)
+            Slider(
+                value=effectsVolume,
+                onValueChange={ effectsVolume=it; audioService.setEffectsVolume(it) },
+                enabled=effects,
+                valueRange=0f..1f
+            )
+            Text("Sesleri tek tek dene",color=SettingsPalette.secondary,
+                fontSize=12.sp,fontWeight=FontWeight.Bold)
+            Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                listOf(
+                    "✓ Doğru" to { audioService.playCorrectSound() },
+                    "↻ Tekrar" to { audioService.playWrongSound() },
+                    "★ Zafer" to { audioService.playVictorySound() }
+                ).forEach { (label, play) ->
+                    Button(
+                        onClick=play,
+                        enabled=effects,
+                        modifier=Modifier.weight(1f).heightIn(min=48.dp),
+                        contentPadding=PaddingValues(horizontal=4.dp),
+                        shape=RoundedCornerShape(12.dp),
+                        colors=ButtonDefaults.buttonColors(
+                            containerColor=Color(0xFF245C7E)
+                        )
+                    ) { Text(label,fontSize=11.sp) }
+                }
+            }
+            SettingsAction("🎵 Görev ve bölüm seslerini dinle",
+                onClick={ audioService.playSoundTest() },enabled=effects)
         }
 
         SettingsSection("Bildirimler","Günlük görev hatırlatıcılarını yönet") {

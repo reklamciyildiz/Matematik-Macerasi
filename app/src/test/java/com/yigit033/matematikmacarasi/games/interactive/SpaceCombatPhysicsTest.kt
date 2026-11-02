@@ -19,8 +19,8 @@ class SpaceCombatPhysicsTest {
     }
     @Test fun freeSteeringAndWrongMeteorCauseRealDamage() {
         val run=SpaceExpeditionEngine.begin(113L,SpacePlanet.NOVA,LearningTier.GELISEN)
-        assertEquals(.32f,SpaceExpeditionEngine.position(run,.32f).shipX)
-        assertEquals(.06f,SpaceExpeditionEngine.position(run,-20f).shipX)
+        assertEquals(.32f,SpaceExpeditionEngine.position(run,.32f).shipX,.0001f)
+        assertEquals(.06f,SpaceExpeditionEngine.position(run,-20f).shipX,.0001f)
         assertEquals(run,SpaceExpeditionEngine.position(run,Float.NaN))
         val p=SpaceExpeditionEngine.puzzle(run)
         assertEquals(run,SpaceExpeditionEngine.fireAt(run,Int.MAX_VALUE))

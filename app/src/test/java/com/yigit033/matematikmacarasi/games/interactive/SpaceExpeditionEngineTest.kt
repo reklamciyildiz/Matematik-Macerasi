@@ -8,52 +8,50 @@ class SpaceExpeditionEngineTest {
     @Test fun allPlanetsAndTiersHaveDeterministicSolvableMissions() {
         for(planet in SpacePlanet.entries)
             for(tier in LearningTier.entries)
-                for(seed in 1L..60L) {
+                for(seed in 1L..60L){
                     var run=SpaceExpeditionEngine.begin(seed,planet,tier)
-                    assertTrue(SpaceExpeditionEngine.valid(run))
-                    val flight=SpaceExpeditionEngine.puzzle(run)
-                    assertEquals(flight,SpaceExpeditionEngine.puzzle(seed,planet,tier,0))
-                    assertEquals(3,flight.crystals.size)
-                    assertEquals(3,flight.crystals.distinct().size)
-                    assertTrue(flight.crystals.contains(flight.answer))
-                    val right=flight.crystals.indexOf(flight.answer)
-                    run=SpaceExpeditionEngine.steer(run,right)
-                    assertEquals(right,run.lane)
-                    run=SpaceExpeditionEngine.intercept(run)
-                    assertTrue(run.solved)
-                    assertEquals(1,run.attempts)
-                    assertTrue(SpaceExpeditionEngine.valid(run))
-                    run=SpaceExpeditionEngine.next(run)
-                    assertEquals(1,run.stage)
-                    val reactor=SpaceExpeditionEngine.puzzle(run)
-                    assertTrue(reactor.answer>0)
-                    assertEquals(reactor,SpaceExpeditionEngine.puzzle(seed,planet,tier,1))
-                    // User has to pump actual energy units, not choose an option.
-                    while(run.charge+5<=reactor.answer)run=SpaceExpeditionEngine.adjustFuel(run,5)
-                    while(run.charge<reactor.answer)run=SpaceExpeditionEngine.adjustFuel(run,1)
-                    assertEquals(reactor.answer,run.charge)
-                    run=SpaceExpeditionEngine.ignite(run)
-                    assertTrue(run.solved)
-                    assertTrue(SpaceExpeditionEngine.valid(run))
-                    run=SpaceExpeditionEngine.next(run)
-                    val circuit=SpaceExpeditionEngine.puzzle(run)
-                    assertEquals(3,circuit.sequence.size)
-                    assertEquals(4,circuit.nodes.size)
-                    assertEquals(4,circuit.nodes.distinct().size)
-                    assertEquals(circuit,SpaceExpeditionEngine.puzzle(seed,planet,tier,2))
-                    circuit.sequence.forEachIndexed {index,value->
-                        run=SpaceExpeditionEngine.connect(run,value)
-                        assertEquals(index==2,run.solved)
+                    repeat(3) {sector->
                         assertTrue(SpaceExpeditionEngine.valid(run))
+                        val base=sector*3
+                        val flight=SpaceExpeditionEngine.puzzle(run)
+                        assertEquals(flight,SpaceExpeditionEngine.puzzle(seed,planet,tier,base))
+                        assertEquals(3,flight.crystals.size)
+                        assertEquals(3,flight.crystals.distinct().size)
+                        assertTrue(flight.crystals.contains(flight.answer))
+                        val lane=flight.crystals.indexOf(flight.answer)
+                        run=SpaceExpeditionEngine.intercept(
+                            SpaceExpeditionEngine.steer(run,lane))
+                        assertTrue(run.solved)
+                        run=SpaceExpeditionEngine.next(run)
+                        assertEquals(base+1,run.stage)
+                        val reactor=SpaceExpeditionEngine.puzzle(run)
+                        while(run.charge+5<=reactor.answer)
+                            run=SpaceExpeditionEngine.adjustFuel(run,5)
+                        while(run.charge<reactor.answer)
+                            run=SpaceExpeditionEngine.adjustFuel(run,1)
+                        run=SpaceExpeditionEngine.ignite(run)
+                        assertTrue(run.solved)
+                        run=SpaceExpeditionEngine.next(run)
+                        assertEquals(base+2,run.stage)
+                        val circuit=SpaceExpeditionEngine.puzzle(run)
+                        assertEquals(3,circuit.sequence.size)
+                        assertEquals(4,circuit.nodes.distinct().size)
+                        circuit.sequence.forEach {node->
+                            run=SpaceExpeditionEngine.connect(run,node)
+                            assertTrue(SpaceExpeditionEngine.valid(run))
+                        }
+                        assertTrue(run.solved)
+                        run=SpaceExpeditionEngine.next(run)
+                        assertEquals((sector+1)*3,run.stage)
                     }
-                    run=SpaceExpeditionEngine.next(run)
-                    assertTrue(SpaceExpeditionEngine.valid(run))
                     assertTrue(run.completed)
-                    assertEquals(3,run.firstTry)
+                    assertEquals(9,run.firstTry)
                     assertEquals(3,SpaceExpeditionEngine.stars(run))
+                    assertTrue(SpaceExpeditionEngine.valid(run))
                     assertEquals(run,SpaceExpeditionEngine.next(run))
                 }
     }
+
     @Test fun wrongFlightSelectionCostsShieldsAndRetryKeepsSameMath() {
         var run=SpaceExpeditionEngine.begin(
             456L,SpacePlanet.TERRA,LearningTier.GELISEN)

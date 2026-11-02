@@ -37,29 +37,37 @@ class SpaceCombatPhysicsTest {
             for(tier in LearningTier.entries)
                 for(seed in 1L..45L){
                     var run=SpaceExpeditionEngine.begin(seed,world,tier)
-                    val p0=SpaceExpeditionEngine.puzzle(run)
-                    assertEquals(3,SpaceCombatPhysics.targets(run).size)
-                    run=SpaceExpeditionEngine.fireAt(run,p0.answer)
-                    assertTrue(run.solved)
-                    run=SpaceExpeditionEngine.next(run)
-                    val target=SpaceExpeditionEngine.puzzle(run).answer
-                    while(run.charge+5<=target)run=SpaceExpeditionEngine.fireAt(run,5)
-                    while(run.charge<target)run=SpaceExpeditionEngine.fireAt(run,1)
-                    run=SpaceExpeditionEngine.fireAt(run,Int.MIN_VALUE)
-                    assertTrue(run.solved)
-                    run=SpaceExpeditionEngine.next(run)
-                    val p2=SpaceExpeditionEngine.puzzle(run)
-                    for(node in p2.sequence){
-                        run=SpaceExpeditionEngine.fireAt(run,node)
-                        assertTrue(SpaceExpeditionEngine.valid(run))
+                    repeat(3) {
+                        val flight=SpaceExpeditionEngine.puzzle(run)
+                        assertEquals(3,SpaceCombatPhysics.targets(run).size)
+                        run=SpaceExpeditionEngine.fireAt(run,flight.answer)
+                        assertTrue(run.solved)
+                        run=SpaceExpeditionEngine.next(run)
+                        val reactor=SpaceExpeditionEngine.puzzle(run)
+                        while(run.charge+10<=reactor.answer)
+                            run=SpaceExpeditionEngine.fireAt(run,10)
+                        while(run.charge+5<=reactor.answer)
+                            run=SpaceExpeditionEngine.fireAt(run,5)
+                        while(run.charge<reactor.answer)
+                            run=SpaceExpeditionEngine.fireAt(run,1)
+                        run=SpaceExpeditionEngine.fireAt(run,Int.MIN_VALUE)
+                        assertTrue(run.solved)
+                        run=SpaceExpeditionEngine.next(run)
+                        val puzzle=SpaceExpeditionEngine.puzzle(run)
+                        for(n in puzzle.sequence) {
+                            run=SpaceExpeditionEngine.fireAt(run,n)
+                            assertTrue(SpaceExpeditionEngine.valid(run))
+                        }
+                        assertTrue(run.solved)
+                        run=SpaceExpeditionEngine.next(run)
                     }
-                    assertTrue(run.solved)
-                    run=SpaceExpeditionEngine.next(run)
                     assertTrue(run.completed)
+                    assertEquals(9,run.firstTry)
                     assertEquals(3,SpaceExpeditionEngine.stars(run))
                     assertTrue(SpaceExpeditionEngine.valid(run))
                 }
     }
+
     @Test fun reactorCannotBeIgnitedUntilFuelCorrectAndWrongStarIsPenalized() {
         var run=SpaceExpeditionEngine.begin(118L,SpacePlanet.TERRA,LearningTier.TEMEL)
         run=SpaceExpeditionEngine.next(

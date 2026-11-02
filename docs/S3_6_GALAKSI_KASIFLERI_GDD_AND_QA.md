@@ -67,3 +67,19 @@ Görevler:
 - Android cihazda küçük ekran, TalkBack, performans, doğru/yanlış atış,
   lazer isabeti ve ekran döndürme **ayrıca** test edilmelidir; yalnız CI
   derlemesinin geçmesi gerçek cihaz kabulü değildir.
+
+## S3.6.2 — Gerçek kampanya ölçeği
+
+Önceki tasarımda bir gezegen yalnızca üç farklı görevden sonra bitiyordu.
+Yeni sürümde her gezegende **3 sektör × 3 görev = 9 oynanabilir matematik
+görevi** vardır. Her sektörün meteor, reaktör ve yıldız dizisi soruları
+farklı deterministik seed/indeksle üretilir; ödül üç göreve değil gerçek dokuz
+göreve dayanır. 3 yıldız için en az 8 temiz görev (en fazla 1 hata ve 1
+ipucu), 2 yıldız için en az 6 temiz görev ve en fazla 4 hata gerekir.
+Oyuncu, yeni sektörleri tamamlamak için yalnızca gemi, lazer, hareketli
+hedefler ve matematik ipuçlarını kullanır; hiçbir bölüm sabit çoktan
+seçmeli kutulara dönmez.
+
+Eski üç görevlik v2 oturumu tamamlanmışsa yıldız kazanımı saklanır ve
+kayıt dördüncü görevden devam edecek şekilde uyarlanır. Mevcut ürün
+kimliği, profil, ödeme ve eski yıldız high-water anahtarları korunur.

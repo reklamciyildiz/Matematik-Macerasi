@@ -382,27 +382,14 @@ class MainActivity : ComponentActivity() {
     
     override fun onPause() {
         super.onPause()
-        audioService?.pauseBackgroundMusic()
+        // Global foreground lifecycle owns the music; don't pause on game launch.
     }
     
     override fun onDestroy() {
         super.onDestroy()
-        
-        // Uygulama tamamen kapanıyorsa, ses kaynaklarını serbest bırak
-        // Aktiviteler arası geçişlerde müziği korumak için isFinishing kontrolü ekliyoruz
-        if (isFinishing) {
-            // Uygulama gerçekten kapatılıyorsa tüm kaynakları temizle
-            audioService?.release()
-            audioService = null
-            Log.d(TAG, "MainActivity tamamen kapatılıyor, tüm ses kaynakları temizlendi")
-        } else {
-            // Aktiviteler arası geçişlerde sadece efekt seslerini temizle, müziği devam ettir
-            try {
-                Log.d(TAG, "MainActivity yeniden başlatılacak, müzik devam ediyor")
-            } catch (e: Exception) {
-                Log.e(TAG, "Ses servisi işlemi sırasında hata: ${e.message}", e)
-            }
-        }
+        // Activity destruction is NOT application shutdown (navigation/rotation).
+        // AudioService is released with its process, not on screen teardown.
+        audioService = null
     }
 
     // Profil sonucu profileEditorLauncher üzerinden işlenir.

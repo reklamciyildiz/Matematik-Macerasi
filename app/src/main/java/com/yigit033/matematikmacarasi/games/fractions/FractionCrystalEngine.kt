@@ -132,8 +132,8 @@ object FractionCrystalEngine {
                         CrystalFraction(fraction.numerator,
                             fraction.denominator+otherNumerator).canonical.format()
                     )
-                    choices = (listOf(answer)+wrong.filter{it!=answer}).distinct()
-                        .shuffled(random).take(4)
+                    choices = (wrong.filter{it!=answer}.distinct()
+                        .shuffled(random).take(3) + answer).shuffled(random)
                     explanation = "Paydalar eşitse paylar toplanır: ${sum.format()}."
                 } else {
                 skill = if (grade >= 5) "fraction_representation" else "fraction_equivalence"

@@ -120,4 +120,27 @@ class OperationQualityTest {
         assertEquals(chosen, practice.effectiveDifficulty(chosen))
     }
 
+    @Test fun gradeTwoUsesCurriculumLimitedMultiplicationAndDivision() {
+        val rng = Random(2026)
+        for (level in DifficultyLevel.entries) {
+            repeat(150) {
+                val mul = GradeAwareOperationPolicy.generate(
+                    2, OperationKind.MULTIPLY, level, rng
+                )
+                assertTrue(mul.first in 1..10 && mul.second in 1..10)
+                assertTrue(mul.first <= 5 || mul.second <= 5)
+                assertTrue(mul.answer <= 50)
+
+                val division = GradeAwareOperationPolicy.generate(
+                    2, OperationKind.DIVIDE, level, rng
+                )
+                assertTrue(division.first in 2..20)
+                assertTrue(division.second in 2..5)
+                assertEquals(0, division.first % division.second)
+            }
+        }
+        assertFalse(GradeAwareOperationPolicy.allowed(1, OperationKind.MULTIPLY))
+        assertFalse(GradeAwareOperationPolicy.allowed(1, OperationKind.DIVIDE))
+    }
+
 }

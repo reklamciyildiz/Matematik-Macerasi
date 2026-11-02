@@ -80,6 +80,14 @@ fun GameCompletionScreen(
     onNextLevel: () -> Unit
 ) {
     val isLastLevel = currentLevel >= maxLevel
+    val audioContext = androidx.compose.ui.platform.LocalContext.current
+    val audio = remember(audioContext) {
+        com.yigit033.matematikmacarasi.services.AudioService.getInstance(audioContext)
+    }
+    LaunchedEffect(currentLevel, score, correctAnswers, wrongAnswers) {
+        audio.playLevelCompleteSound()
+    }
+
     
     // Yıldızlar için animasyon
     var showStars by remember { mutableStateOf(false) }

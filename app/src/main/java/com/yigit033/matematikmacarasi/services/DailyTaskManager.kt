@@ -99,6 +99,9 @@ class DailyTaskManager private constructor(private val context: Context) {
                 )
                 saveTodayTasks(tasks)
                 EventBus.updateDailyTasks(tasks.toList())
+                if (newCount >= task.targetCount) {
+                    AudioService.getInstance(context).playQuestCompleteSound()
+                }
                 Log.d(TAG, "Görev ilerleme güncellendi: ID=$taskId, Yeni İlerleme=${task.currentCount + 1}/${task.targetCount}")
             }
         } else {
@@ -127,12 +130,14 @@ class DailyTaskManager private constructor(private val context: Context) {
     fun updateTaskProgressByGameType(gameType: GameType) {
         val tasks = getTodayTasks().toMutableList()
         var updated = false
+        var newlyCompleted = false
         
         tasks.forEachIndexed { index, task ->
             // Sadece ilgili oyun türüyle eşleşen ve henüz tamamlanmamış görevleri güncelle
             if (task.gameType == gameType && task.currentCount < task.targetCount) {
                 val newCount = task.currentCount + 1
                 val isNowCompleted = newCount >= task.targetCount
+                if (isNowCompleted && !task.isCompleted) newlyCompleted = true
                 
                 tasks[index] = task.copy(
                     currentCount = newCount,
@@ -146,6 +151,7 @@ class DailyTaskManager private constructor(private val context: Context) {
         if (updated) {
             saveTodayTasks(tasks)
             EventBus.updateDailyTasks(tasks) // Güncel listeyi EventBus üzerinden yayınla
+            if (newlyCompleted) AudioService.getInstance(context).playQuestCompleteSound()
             Log.d(TAG, "$gameType oyunu tamamlandı, ilgili görevler güncellendi ve UI'a yayınlandı.")
         } else {
             Log.d(TAG, "$gameType oyunu tamamlandı, ancak güncellenecek aktif görev bulunamadı.")

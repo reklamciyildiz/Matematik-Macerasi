@@ -119,20 +119,13 @@ fun ForestAdventureScreen(
     var hintVisible by remember(run.stage, run.bridgeSpan, run.leafRound, run.trailStep, run.rootRound) {
         mutableStateOf(false)
     }
-    val soundCorrect = remember { runCatching { MediaPlayer.create(context, R.raw.correct_sound) }.getOrNull() }
-    val soundWrong = remember { runCatching { MediaPlayer.create(context, R.raw.wrong_sound) }.getOrNull() }
-    DisposableEffect(Unit) {
-        onDispose {
-            runCatching { soundCorrect?.release() }
-            runCatching { soundWrong?.release() }
-        }
+    val audio = remember(context) {
+        com.yigit033.matematikmacarasi.services.AudioService.getInstance(context)
     }
     fun play(correct: Boolean) {
         lastActionPositive = correct
         if (correct) haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        runCatching {
-            (if (correct) soundCorrect else soundWrong)?.apply { seekTo(0); start() }
-        }
+        if (correct) audio.playCorrectSound() else audio.playWrongSound()
     }
     fun update(next: ForestSession) {
         if (store.save(next)) run = next
@@ -518,6 +511,7 @@ fun ForestAdventureScreen(
                                         val finished = run
                                         run = finished.copy(stage = ForestStage.SUMMARY)
                                         message = ""
+                                        audio.playVictorySound()
                                         onFinished(finished)
                                     } else {
                                         message = "Tamamlanma kaydedilemedi; tekrar deneyebilirsin."

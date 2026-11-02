@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -87,6 +88,13 @@ fun SpaceCombatArena(
     val latestHit by rememberUpdatedState(onHit)
     val latestPosition by rememberUpdatedState(onPosition)
     val currentTier=run.tier.ordinal
+    val deviceHeightDp=LocalConfiguration.current.screenHeightDp
+    val arenaHeight=when {
+        deviceHeightDp<690->208.dp
+        deviceHeightDp<790->244.dp
+        deviceHeightDp<880->300.dp
+        else->365.dp
+    }
     LaunchedEffect(run.seed,run.stage,run.wave,run.solved,paused) {
         if(paused || run.solved)return@LaunchedEffect
         var last=0L
@@ -161,7 +169,7 @@ fun SpaceCombatArena(
         Text(missionHint,color=spaceWhite,
             fontSize=12.sp,fontWeight=FontWeight.Medium)
         Box(
-            modifier=Modifier.fillMaxWidth().height(365.dp)
+            modifier=Modifier.fillMaxWidth().height(arenaHeight)
                 .clip(RoundedCornerShape(23.dp))
                 .border(2.dp,planetColor.copy(alpha=.88f),
                     RoundedCornerShape(23.dp))

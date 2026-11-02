@@ -888,6 +888,8 @@ class NumberHuntGameActivity : ComponentActivity() {
         // Başarı sesi çal (tamamlandıysa)
         if (completed) {
             audio.playVictorySound()
+        } else {
+            audio.playFailureSound()
         }
         
         // Yıldız puanı hesapla

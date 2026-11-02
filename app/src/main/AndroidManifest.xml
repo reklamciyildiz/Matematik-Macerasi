@@ -131,6 +131,10 @@
             android:exported="false"
             android:theme="@style/Theme.MatematikMacerasi" />
         <activity
+            android:name=".games.basic.OperationsHubActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
             android:name=".games.basic.AdditionGameActivity"
             android:exported="false"
             android:theme="@style/Theme.MatematikMacerasi" />

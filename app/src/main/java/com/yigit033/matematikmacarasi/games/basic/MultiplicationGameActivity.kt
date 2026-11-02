@@ -109,6 +109,7 @@ class MultiplicationGameActivity : BaseGameActivity() {
     
     // Sorulan soruları takip eden tracker
     private val questionTracker = QuestionTracker()
+    private val askedSessionQuestions = mutableSetOf<String>()
     
     // Maksimum yeniden deneme sayısı
     private val MAX_RETRY_COUNT = 20
@@ -536,13 +537,13 @@ class MultiplicationGameActivity : BaseGameActivity() {
             handleGameEnd()
             return
         }
-        val q=GradeAwareOperationPolicy.generate(
-            grade,OperationKind.MULTIPLY,selectedDifficulty
+        val q=GradeAwareOperationPolicy.generateUnique(
+            grade,OperationKind.MULTIPLY,selectedDifficulty,askedSessionQuestions
         )
         firstNumber=q.first
         secondNumber=q.second
         correctAnswer=q.answer
-        options=GradeAwareOperationPolicy.options(q)
+        options=GradeAwareOperationPolicy.options(q,OperationKind.MULTIPLY)
         questionTracker.isOperationAsked(firstNumber,secondNumber,"×")
         answerFeedbackState=AnswerFeedbackState.IDLE
         lastSelectedOption=""
@@ -879,6 +880,7 @@ class MultiplicationGameActivity : BaseGameActivity() {
         try {
             // QuestionTracker'ı sıfırla
             questionTracker.reset()
+        askedSessionQuestions.clear()
             
             // İlk soruyu oluştur
             generateQuestion()

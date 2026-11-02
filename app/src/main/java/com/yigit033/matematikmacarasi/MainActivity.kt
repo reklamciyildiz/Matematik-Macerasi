@@ -553,7 +553,16 @@ class DailyTaskManager(private val context: Context) {
         return try {
             val random = java.util.Random()
             val tasks = mutableListOf<DailyTask>()
-            val gameTypes = GameType.values()
+            // Respect the school grade when producing daily tasks. Otherwise
+            // grade 1-2 students can receive impossible multiplication tasks.
+            val grade=com.yigit033.matematikmacarasi.games.basic.GradeAwareOperationPolicy.grade(
+                com.yigit033.matematikmacarasi.services.PlayerProfileService
+                    .getInstance(context).getUserClass()
+            )
+            val gameTypes = GameType.values().filter {type->
+                grade>=3 || (type!=GameType.MULTIPLICATION_GAME &&
+                    type!=GameType.DIVISION_GAME)
+            }
             val usedGameTypes = mutableSetOf<GameType>()
             var taskId = 1
             
@@ -634,7 +643,7 @@ class DailyTaskManager(private val context: Context) {
                     type = DailyTaskType.ANY,
                     description = "Herhangi Bir Oyunda İlerle",
                     targetCount = 1,
-                    gameType = GameType.values()[random.nextInt(GameType.values().size)]
+                    gameType = gameTypes[random.nextInt(gameTypes.size)]
                 )
             )
             

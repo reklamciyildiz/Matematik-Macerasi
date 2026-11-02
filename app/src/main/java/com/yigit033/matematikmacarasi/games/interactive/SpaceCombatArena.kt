@@ -6,6 +6,7 @@ import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -21,6 +22,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -28,10 +31,17 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.withFrameNanos
@@ -47,7 +57,7 @@ private val spaceWhite=Color(0xFFF4FBFF)
 private val spaceGold=Color(0xFFFFD784)
 private val spaceTeal=Color(0xFF79F4E9)
 private val spaceMidnight=Color(0xFF070D2D)
-private data class SpaceBurst(val x:Float,val y:Float,val value:Int,val key:Int)
+private data class SpaceBurst(val x:Float,val y:Float,val value:Int,val correct:Boolean,val key:Int)
 private val nebulaColors=listOf(
     Color(0xFF41CFA4),Color(0xFF50C5F0),
     Color(0xFFEC705B),Color(0xFFB699F9),Color(0xFFEF8FCA)
@@ -73,6 +83,16 @@ fun SpaceCombatArena(
     var paused by rememberSaveable(run.seed) {mutableStateOf(true)}
     var lastShotAt by remember(run.seed) {mutableLongStateOf(0L)}
     val context=LocalContext.current.applicationContext
+    val haptics=LocalHapticFeedback.current
+    val shipSprite=remember(context){ImageBitmap.imageResource(context.resources,R.drawable.space_ship_premium)}
+    val laserSprite=remember(context){ImageBitmap.imageResource(context.resources,R.drawable.space_laser_premium)}
+    val impactSprite=remember(context){ImageBitmap.imageResource(context.resources,R.drawable.space_impact_premium)}
+    val meteorSprites=remember(context){listOf(
+        ImageBitmap.imageResource(context.resources,R.drawable.space_meteor_1_premium),
+        ImageBitmap.imageResource(context.resources,R.drawable.space_meteor_2_premium),
+        ImageBitmap.imageResource(context.resources,R.drawable.space_meteor_3_premium),
+        ImageBitmap.imageResource(context.resources,R.drawable.space_meteor_4_premium)
+    )}
     val soundPool=remember(context) {
         SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
             AudioAttributes.Builder()
@@ -132,7 +152,11 @@ fun SpaceCombatArena(
                             )
                             burstId+=1
                             burst=SpaceBurst(hitLocation.x,hitLocation.y,
-                                result.impact,burstId)
+                                result.impact,result.impact==puzzle.answer,burstId)
+                            haptics.performHapticFeedback(
+                                if(result.impact==puzzle.answer)HapticFeedbackType.LongPress
+                                else HapticFeedbackType.TextHandleMove
+                            )
                         }
                         frame=SpaceCombatFrame()
                         latestHit(result.impact)
@@ -218,27 +242,20 @@ fun SpaceCombatArena(
                 typeface=android.graphics.Typeface.create(
                     "sans-serif-black",android.graphics.Typeface.BOLD)
             }}
+            Image(
+                painter=painterResource(SpacePremiumArt.background(run.planet)),
+                contentDescription=null,
+                contentScale=ContentScale.FillBounds,
+                modifier=Modifier.matchParentSize()
+            )
             Canvas(Modifier.fillMaxSize()){
                 val w=size.width
                 val h=size.height
                 val accent=planetColor
+                // Premium WebP world is the scene; keep a subtle HUD-friendly veil.
                 drawRect(Brush.verticalGradient(listOf(
-                    spaceMidnight,Color(0xFF182353),Color(0xFF121F4B)
+                    Color(0x9A051128),Color(0x26020923),Color(0x85060721)
                 )))
-                // Subtle planetary atmosphere and a distant cosmic horizon.
-                drawCircle(
-                    Brush.radialGradient(listOf(
-                        accent.copy(alpha=.30f),accent.copy(alpha=0f)
-                    ),center=Offset(w*.86f,h*.08f),radius=w*.70f),
-                    radius=w*.70f,center=Offset(w*.86f,h*.08f)
-                )
-                drawCircle(
-                    Brush.radialGradient(listOf(
-                        accent.copy(alpha=.85f),accent.copy(alpha=.25f),
-                        Color(0xFF0A1C40)
-                    ),center=Offset(w*.84f,-h*.08f),radius=w*.34f),
-                    radius=w*.34f,center=Offset(w*.84f,-h*.08f)
-                )
                 // Animated starfield: two parallax layers, stable seeded pattern.
                 for(i in 0..64) {
                     val x=w*((i*37+run.planet.ordinal*11)%101)/101f
@@ -262,17 +279,16 @@ fun SpaceCombatArena(
                     Offset(sx,h*.10f),Offset(sx,sy),
                     strokeWidth=1.8f)
                 for(laser in frame.lasers){
-                    val at=Offset(w*laser.x,h*laser.y)
-                    drawCircle(spaceTeal.copy(alpha=.24f),
-                        radius=w*.027f,center=at)
-                    drawLine(spaceTeal,
-                        Offset(at.x,at.y+h*.036f),
-                        Offset(at.x,at.y-h*.039f),
-                        strokeWidth=w*.013f)
-                    drawLine(spaceWhite,
-                        Offset(at.x,at.y+h*.020f),
-                        Offset(at.x,at.y-h*.025f),
-                        strokeWidth=w*.006f)
+                    val px=w*laser.x
+                    val py=h*laser.y
+                    val lw=w*.060f
+                    val lh=h*.13f
+                    drawImage(
+                        image=laserSprite,
+                        dstOffset=IntOffset((px-lw/2).toInt(),(py-lh/2).toInt()),
+                        dstSize=IntSize(lw.toInt().coerceAtLeast(2),lh.toInt().coerceAtLeast(3)),
+                        filterQuality=FilterQuality.Medium
+                    )
                 }
                 targetValues.forEach{target->
                     val place=SpaceCombatPhysics.position(
@@ -281,41 +297,22 @@ fun SpaceCombatArena(
                     val y=h*place.y
                     val radius=w*(if(targetValues.size>=5).075f else .092f)
                     if(y < -radius*1.2f || y>h+radius) return@forEach
-                    val isNode=false
-                    val color=if(isNode)spaceGold else
-                        nebulaColors[(run.planet.ordinal+target.id)%5]
-                    drawCircle(color.copy(alpha=.13f),
-                        radius=radius*1.44f,center=Offset(x,y))
-                    drawCircle(color.copy(alpha=.28f),
-                        radius=radius*1.22f,center=Offset(x,y))
-                    val shape=Path().apply{
-                        val points=if(isNode)10 else 8
-                        for(i in 0 until points){
-                            val angle=i*2.0*PI/points-PI/2
-                            val scale=if(isNode && i%2==1).56f else 1f
-                            val px=x+cos(angle).toFloat()*radius*scale
-                            val py=y+sin(angle).toFloat()*radius*scale
-                            if(i==0)moveTo(px,py) else lineTo(px,py)
-                        }
-                        close()
-                    }
-                    drawPath(shape,Brush.linearGradient(listOf(
-                        spaceWhite.copy(alpha=.96f),color,
-                        color.copy(alpha=.80f)
-                    )))
-                    drawPath(shape,color=spaceWhite.copy(alpha=.75f),
-                        style=Stroke(width=2.6f))
-                    drawCircle(spaceWhite.copy(alpha=.41f),
-                        radius=radius*.14f,
-                        center=Offset(x-radius*.37f,y-radius*.35f))
-                    val display=if(target.value==Int.MIN_VALUE)"GO" else
-                        (if(false)
-                            "+"+target.value else target.value.toString())
-                    paint.color=android.graphics.Color.rgb(13,28,61)
-                    paint.textSize=if(display.length>=3)radius*.67f
-                        else radius*.89f
+                    // Glow, silhouette and craters baked into transparent WebP.
+                    val sprite=meteorSprites[(run.planet.ordinal+target.id)%meteorSprites.size]
+                    val diameter=radius*2.65f
+                    drawImage(
+                        image=sprite,
+                        dstOffset=IntOffset((x-diameter/2).toInt(),(y-diameter/2).toInt()),
+                        dstSize=IntSize(diameter.toInt().coerceAtLeast(2),diameter.toInt().coerceAtLeast(2)),
+                        filterQuality=FilterQuality.Medium
+                    )
+                    val display=target.value.toString()
+                    paint.color=android.graphics.Color.WHITE
+                    paint.setShadowLayer(4f,0f,2f,android.graphics.Color.rgb(8,12,48))
+                    paint.textSize=if(display.length>=3)radius*.68f else radius*.95f
                     drawIntoCanvas {it.nativeCanvas.drawText(
                         display,x,y+paint.textSize*.31f,paint)}
+                    paint.clearShadowLayer()
                 }
                 // Explosion feedback is independent of mission state and survives
                 // an immediate answer/round transition.
@@ -324,61 +321,42 @@ fun SpaceCombatArena(
                     if(t<1f){
                         val cx=w*impact.x
                         val cy=h*impact.y
-                        val radius=w*(.035f+t*.17f)
-                        drawCircle(spaceGold.copy(alpha=(1f-t)*.87f),
-                            radius=radius,center=Offset(cx,cy),
-                            style=Stroke(width=(1f-t)*7f+2f))
-                        drawCircle(spaceTeal.copy(alpha=(1f-t)*.65f),
-                            radius=radius*.65f,center=Offset(cx,cy),
-                            style=Stroke(width=(1f-t)*5f+1f))
-                        for(i in 0..13){
-                            val a=i*2*PI/14f
-                            val spread=radius*(.45f+t*.65f)
-                            val px=cx+cos(a).toFloat()*spread
-                            val py=cy+sin(a).toFloat()*spread
-                            drawCircle(
-                                if(i%2==0)spaceGold.copy(alpha=1f-t)
-                                    else spaceWhite.copy(alpha=1f-t),
-                                radius=w*.008f*(1f-t)+.5f,
-                                center=Offset(px,py))
-                        }
+                        val dia=w*(.10f+t*.42f)
+                        drawImage(
+                            image=impactSprite,
+                            dstOffset=IntOffset((cx-dia/2).toInt(),(cy-dia/2).toInt()),
+                            dstSize=IntSize(dia.toInt().coerceAtLeast(2),dia.toInt().coerceAtLeast(2)),
+                            alpha=(1f-t)*.95f,
+                            filterQuality=FilterQuality.Medium
+                        )
+                        drawCircle(
+                            (if(impact.correct)spaceTeal else Color(0xFFFF9468))
+                                .copy(alpha=(1f-t)*.88f),
+                            radius=w*(.06f+t*.16f),
+                            center=Offset(cx,cy),
+                            style=Stroke(width=(1f-t)*6f+1f)
+                        )
                     }
                 }
-                // Ship: layered white-and-cyan hull, canopy, lateral wings,
-                // visible engines and animated twin-thruster exhaust.
-                val ship=Path().apply{
-                    moveTo(sx,sy-h*.084f)
-                    lineTo(sx+w*.048f,sy-h*.003f)
-                    lineTo(sx+w*.092f,sy+h*.045f)
-                    lineTo(sx+w*.060f,sy+h*.069f)
-                    lineTo(sx+w*.021f,sy+h*.032f)
-                    lineTo(sx-w*.021f,sy+h*.032f)
-                    lineTo(sx-w*.060f,sy+h*.069f)
-                    lineTo(sx-w*.092f,sy+h*.045f)
-                    lineTo(sx-w*.048f,sy-h*.003f)
-                    close()
-                }
-                drawPath(ship,Brush.verticalGradient(listOf(
-                    spaceWhite,Color(0xFF7BCDEB),Color(0xFF2F72A8)
-                )))
-                drawPath(ship,spaceWhite.copy(alpha=.92f),
-                    style=Stroke(2.5f))
-                drawOval(Brush.verticalGradient(listOf(
-                    Color(0xFF113A73),spaceTeal
-                )),topLeft=Offset(sx-w*.022f,sy-h*.024f),
-                    size=Size(w*.044f,h*.049f))
-                val flicker=.65f+.35f*sin(frame.elapsed*17f)
+                // Animated engines sit behind the high-resolution ship sprite.
+                val flicker=.7f+.3f*sin(frame.elapsed*18f)
                 for(sign in listOf(-1,1)){
-                    val x=sx+sign*w*.037f
-                    drawLine(spaceTeal.copy(alpha=.4f),
-                        Offset(x,sy+h*.050f),
-                        Offset(x,sy+h*(.11f+flicker*.020f)),
-                        strokeWidth=w*.022f)
-                    drawLine(spaceGold,
-                        Offset(x,sy+h*.050f),
-                        Offset(x,sy+h*(.080f+flicker*.017f)),
-                        strokeWidth=w*.009f)
+                    val ex=sx+sign*w*.033f
+                    drawLine(spaceTeal.copy(alpha=.42f),
+                        Offset(ex,sy+h*.025f),
+                        Offset(ex,sy+h*(.115f+flicker*.018f)),w*.025f)
+                    drawLine(spaceGold.copy(alpha=.92f),
+                        Offset(ex,sy+h*.025f),
+                        Offset(ex,sy+h*(.082f+flicker*.018f)),w*.011f)
                 }
+                val shipW=w*.295f
+                val shipH=h*.25f
+                drawImage(
+                    image=shipSprite,
+                    dstOffset=IntOffset((sx-shipW/2).toInt(),(sy-shipH*.61f).toInt()),
+                    dstSize=IntSize(shipW.toInt().coerceAtLeast(3),shipH.toInt().coerceAtLeast(3)),
+                    filterQuality=FilterQuality.Medium
+                )
                 // Spaceframe perimeter and HUD markings.
                 drawLine(accent.copy(alpha=.28f),
                     Offset(w*.06f,h*.07f),

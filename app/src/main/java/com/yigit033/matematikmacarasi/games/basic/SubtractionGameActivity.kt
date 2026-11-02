@@ -106,6 +106,7 @@ class SubtractionGameActivity : BaseGameActivity() {
     // Sorulan soruları takip eden tracker
     private val questionTracker = QuestionTracker()
     private val askedSessionQuestions = mutableSetOf<String>()
+    private val practiceState = OperationPracticeState()
     
     // Maksimum yeniden deneme sayısı
     private val MAX_RETRY_COUNT = 20
@@ -416,7 +417,8 @@ class SubtractionGameActivity : BaseGameActivity() {
             return
         }
         val q=GradeAwareOperationPolicy.generateUnique(
-            grade,OperationKind.SUBTRACT,selectedDifficulty,askedSessionQuestions
+            grade,OperationKind.SUBTRACT,
+            practiceState.effectiveDifficulty(selectedDifficulty),askedSessionQuestions
         )
         firstNumber=q.first
         secondNumber=q.second
@@ -598,6 +600,7 @@ class SubtractionGameActivity : BaseGameActivity() {
             
             if (selectedOption.isNotEmpty()) {
                 val isCorrect = checkAnswer(selectedOption)
+                practiceState.record(isCorrect)
                 
                 // Cevap durumunu güncelle
                 answerFeedbackState = if (isCorrect) {
@@ -637,6 +640,7 @@ class SubtractionGameActivity : BaseGameActivity() {
                 }
             } else {
                 // Zamanı geçmiş veya boş cevap
+                practiceState.record(false)
                 answerFeedbackState = AnswerFeedbackState.TIMEOUT
                 wrongAnswersCount++
                 audioService.playWrongSound()
@@ -836,6 +840,7 @@ class SubtractionGameActivity : BaseGameActivity() {
             // QuestionTracker'ı sıfırla
             questionTracker.reset()
         askedSessionQuestions.clear()
+            practiceState.reset()
             
             // İlk soruyu oluştur
             generateQuestion()

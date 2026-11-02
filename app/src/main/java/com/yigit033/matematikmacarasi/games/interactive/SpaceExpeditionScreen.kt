@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -27,6 +28,8 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +38,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
+import com.yigit033.matematikmacarasi.R
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -62,60 +66,42 @@ private fun SpaceButton(text:String,enabled:Boolean=true,onClick:()->Unit) {
     ) {Text(text,fontSize=15.sp,fontWeight=FontWeight.ExtraBold)}
 }
 @Composable
-private fun GalaxyScene(planet:SpacePlanet,compact:Boolean) {
-    val tint=GalaxyPaint.planets[planet.ordinal]
+private fun GalaxyScene(planet:SpacePlanet,compact:Boolean){
     Box(
         modifier=Modifier.fillMaxWidth()
-            .height(if(compact)95.dp else 185.dp)
+            .height(if(compact)95.dp else 186.dp)
             .clip(RoundedCornerShape(22.dp)),
         contentAlignment=Alignment.Center
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val w=size.width;val h=size.height
-            drawRect(Brush.verticalGradient(listOf(
-                Color(0xFF101344),Color(0xFF20366F),GalaxyPaint.night
-            )))
-            repeat(48){i->
-                val x=w*((i*37%101)/101f)
-                val y=h*((i*61%97)/97f)
-                drawCircle(
-                    Color.White.copy(alpha=.25f+(i%4)*.17f),
-                    radius=1.2f+(i%3)*.85f,center=Offset(x,y)
-                )
-            }
-            val center=Offset(w*.72f,h*.50f)
-            val radius=h*(if(compact).55f else .43f)
-            drawCircle(tint.copy(alpha=.16f),radius*1.34f,center)
-            drawCircle(Brush.radialGradient(listOf(
-                tint.copy(alpha=.95f),tint.copy(alpha=.72f),
-                Color(0xFF1E416D)),center,radius),radius,center)
-            drawOval(
-                color=GalaxyPaint.bright.copy(alpha=.30f),
-                topLeft=Offset(center.x-radius*1.27f,center.y-radius*.31f),
-                size=Size(radius*2.55f,radius*.65f),
-                style=Stroke(width=3.2f)
+    ){
+        Image(
+            painter=painterResource(SpacePremiumArt.background(planet)),
+            contentDescription=null,
+            contentScale=ContentScale.FillBounds,
+            modifier=Modifier.matchParentSize()
+        )
+        Box(
+            Modifier.matchParentSize().background(
+                Brush.horizontalGradient(listOf(
+                    GalaxyPaint.night.copy(alpha=.70f),
+                    Color.Transparent,
+                    GalaxyPaint.night.copy(alpha=.08f)
+                ))
             )
-            drawCircle(GalaxyPaint.bright.copy(alpha=.24f),
-                radius=radius*.14f,
-                center=Offset(center.x-radius*.35f,center.y-radius*.35f))
-            val ship=Path().apply {
-                moveTo(w*.20f,h*.34f);lineTo(w*.32f,h*.56f)
-                lineTo(w*.22f,h*.54f);lineTo(w*.14f,h*.69f)
-                lineTo(w*.11f,h*.49f);close()
-            }
-            drawPath(ship,GalaxyPaint.bright)
-            drawLine(GalaxyPaint.teal,Offset(w*.17f,h*.60f),
-                Offset(w*.11f,h*.88f),7f)
-            drawCircle(GalaxyPaint.gold,6f,Offset(w*.20f,h*.45f))
-        }
+        )
+        Image(
+            painter=painterResource(R.drawable.space_ship_premium),
+            contentDescription=null,
+            modifier=Modifier.align(Alignment.CenterStart).padding(start=23.dp)
+                .size(if(compact)65.dp else 110.dp)
+        )
         Surface(
-            modifier=Modifier.align(Alignment.BottomStart)
-                .padding(10.dp),
+            modifier=Modifier.align(Alignment.BottomStart).padding(10.dp),
             shape=RoundedCornerShape(12.dp),
-            color=GalaxyPaint.night.copy(alpha=.82f)
+            color=GalaxyPaint.night.copy(alpha=.83f),
+            border=BorderStroke(1.dp,GalaxyPaint.planets[planet.ordinal].copy(alpha=.5f))
         ){
             Text(planet.title+" · "+planet.sign,
-                color=GalaxyPaint.bright,fontSize=13.sp,
+                color=GalaxyPaint.bright,fontSize=14.sp,
                 fontWeight=FontWeight.Black,
                 modifier=Modifier.padding(horizontal=12.dp,vertical=8.dp))
         }
@@ -254,8 +240,12 @@ fun SpaceExpeditionScreen(
                         Row(Modifier.padding(12.dp),
                             verticalAlignment=Alignment.CenterVertically,
                             horizontalArrangement=Arrangement.spacedBy(10.dp)){
-                            Text(planet.sign,fontSize=24.sp,
-                                color=GalaxyPaint.planets[planet.ordinal])
+                            Image(
+                                painter=painterResource(SpacePremiumArt.background(planet)),
+                                contentDescription=null,
+                                contentScale=ContentScale.Crop,
+                                modifier=Modifier.size(58.dp).clip(RoundedCornerShape(11.dp))
+                            )
                             Column(Modifier.weight(1f)){
                                 Text(planet.title,color=GalaxyPaint.bright,
                                     fontSize=15.sp,fontWeight=FontWeight.Black)

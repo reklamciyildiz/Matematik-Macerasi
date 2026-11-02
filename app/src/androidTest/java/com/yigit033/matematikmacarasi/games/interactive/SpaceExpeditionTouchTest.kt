@@ -14,10 +14,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+/** Click dispatch on Android; the CI compiles this APK, a device must execute it. */
 @RunWith(AndroidJUnit4::class)
 class SpaceExpeditionTouchTest {
     @get:Rule val composeRule=createComposeRule()
-    @Test fun launchPlanetAndSteerSpaceship() {
+
+    @Test fun planetLaunchShipSteeringAndLaserTriggerAreClickable() {
         val state=mutableStateOf<SpaceRun?>(null)
         composeRule.setContent {
             SpaceExpeditionScreen(
@@ -26,8 +28,14 @@ class SpaceExpeditionTouchTest {
                 onBegin={planet,tier->
                     state.value=SpaceExpeditionEngine.begin(99L,planet,tier);true
                 },
-                onSteer={lane->state.value=SpaceExpeditionEngine.steer(state.value!!,lane)},
-                onIntercept={},onFuel={},onIgnite={},onConnect={},
+                onSteer={},onIntercept={},
+                onShipPosition={x->
+                    state.value=SpaceExpeditionEngine.position(state.value!!,x)
+                },
+                onFireHit={value->
+                    state.value=SpaceExpeditionEngine.fireAt(state.value!!,value)
+                },
+                onFuel={},onIgnite={},onConnect={},
                 onHint={},onNext={},onExit={}
             )
         }
@@ -35,35 +43,36 @@ class SpaceExpeditionTouchTest {
         composeRule.onNodeWithText("🚀 Okyanus Nebulası Keşfini Başlat")
             .performScrollTo().performClick()
         composeRule.onNodeWithTag("space_pause").performScrollTo().performClick()
-        composeRule.onNodeWithTag("space_lane_0").performScrollTo().performClick()
-        composeRule.onNodeWithTag("space_pause").performScrollTo().performClick()
+        composeRule.onNodeWithTag("space_steer_left").performScrollTo().performClick()
         composeRule.runOnIdle {
             assertEquals(SpacePlanet.AQUA,state.value!!.planet)
-            assertEquals(0,state.value!!.lane)
+            assertTrue(state.value!!.shipX<.5f)
         }
+        composeRule.onNodeWithTag("space_fire").performScrollTo().performClick()
+        composeRule.onNodeWithTag("space_combat_arena").assertExists()
     }
-    @Test fun reactorPumpAndCircuitNodesAreInteractive() {
-        val reactorState=mutableStateOf(
+
+    @Test fun reactorMissionAlsoHasTheSameRealShootingControls() {
+        val state=mutableStateOf(
             SpaceRun(123L,SpacePlanet.TERRA,LearningTier.TEMEL,
                 stage=1,attempts=1,firstTry=1)
         )
         composeRule.setContent {
             SpaceExpeditionScreen(
-                run=reactorState.value,recommended=LearningTier.TEMEL,
+                run=state.value,recommended=LearningTier.TEMEL,
                 records=emptyMap(),historicalStars=emptyMap(),feedback="",
                 onBegin={_,_->false},onSteer={},onIntercept={},
-                onFuel={delta->reactorState.value=SpaceExpeditionEngine.adjustFuel(
-                    reactorState.value,delta)},
-                onIgnite={reactorState.value=SpaceExpeditionEngine.ignite(reactorState.value)},
-                onConnect={},onHint={},onNext={},onExit={}
+                onShipPosition={},onFireHit={value->
+                    state.value=SpaceExpeditionEngine.fireAt(state.value,value)
+                },
+                onFuel={},onIgnite={},onConnect={},
+                onHint={},onNext={},onExit={}
             )
         }
         composeRule.onNodeWithText("▶ Kaydedilen Göreve Dön")
             .performScrollTo().performClick()
-        composeRule.onNodeWithTag("space_fuel_5").performScrollTo().performClick()
-        composeRule.runOnIdle {
-            assertEquals(5,reactorState.value.charge)
-            assertTrue(SpaceExpeditionEngine.valid(reactorState.value))
-        }
+        composeRule.onNodeWithTag("space_pause").performScrollTo().performClick()
+        composeRule.onNodeWithTag("space_fire").performScrollTo().performClick()
+        composeRule.runOnIdle {assertTrue(SpaceExpeditionEngine.valid(state.value))}
     }
 }

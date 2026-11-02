@@ -1,330 +1,215 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
-import android.content.Context
 import android.content.Intent
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
-import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
-import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
-import com.yigit033.matematikmacarasi.games.basic.MultiplicationGameActivity
-import com.yigit033.matematikmacarasi.games.basic.SubtractionGameActivity
-import com.yigit033.matematikmacarasi.games.ComingSoonActivity
+import com.yigit033.matematikmacarasi.games.basic.*
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
-import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
 import com.yigit033.matematikmacarasi.games.interactive.SpaceMathAdventureActivity
+import com.yigit033.matematikmacarasi.games.sayiavi2.ForestAdventureActivity
+import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
+import com.yigit033.matematikmacarasi.services.PlayerProfileService
+
+private val navy=Color(0xFF071D3B)
+private val ocean=Color(0xFF103A66)
+private val aqua=Color(0xFF6DE8F6)
+private val saffron=Color(0xFFFFDA77)
+private val white=Color(0xFFF6FCFF)
 
 data class GameCatalogItem(
-    val title: String,
-    val description: String,
-    val category: String,
-    @DrawableRes val iconRes: Int,
-    val gradientColors: List<Color>,
-    val activityClass: Class<*>
+    val id:String,
+    val title:String,
+    val description:String,
+    val category:String,
+    @DrawableRes val coverRes:Int,
+    val accent:Color,
+    val activityClass:Class<*>,
+    val minGrade:Int=1
 )
-
-/**
- * "Oyunlar" Sekmesi Tam Ekran Görünümü
- *
- * Mevcut 10 oyunun tamamını erişilebilir, kategorize edilmiş ve çalışır durumda sunar.
- */
+private fun catalog():List<GameCatalogItem> = listOf(
+    GameCatalogItem("add","Toplama","Sayıları birleştir · yıldızları kazan","Temel İşlemler",
+        R.drawable.card_addition_premium,Color(0xFF49C2FE),AdditionGameActivity::class.java),
+    GameCatalogItem("subtract","Çıkarma","Farkı keşfet · matematik ustası ol","Temel İşlemler",
+        R.drawable.card_subtraction_premium,Color(0xFFFF83BA),SubtractionGameActivity::class.java),
+    GameCatalogItem("multiply","Çarpma","Grupları birleştir · çarpımları keşfet","Temel İşlemler",
+        R.drawable.card_multiplication_premium,Color(0xFF65E6BA),MultiplicationGameActivity::class.java,3),
+    GameCatalogItem("divide","Bölme","Eşit paylaş · sonuçları bul","Temel İşlemler",
+        R.drawable.card_division_premium,Color(0xFFFFC768),DivisionGameActivity::class.java,3),
+    GameCatalogItem("balloon","Balon Patlatma","Uçan doğru balonları yakala","Macera & Eğlence",
+        R.drawable.card_balloon_pop,Color(0xFF67ECF1),BalloonPopGameActivity::class.java),
+    GameCatalogItem("hunt","Sayı Avı","Sayıların peşinde hazine keşfi","Macera & Eğlence",
+        R.drawable.card_number_hunt_premium,Color(0xFF88F0BA),SayiAvi2Activity::class.java),
+    GameCatalogItem("space","Uzay Macerası","Geminle matematik meteorlarını vur","Macera & Eğlence",
+        R.drawable.card_space_adventure,Color(0xFFC4A5FC),SpaceMathAdventureActivity::class.java),
+    GameCatalogItem("maze","Matematik Labirenti","Kapıları aç · çıkışa ilerle","Macera & Eğlence",
+        R.drawable.card_maze_premium,Color(0xFFBE95FF),MathMazeGameActivity::class.java),
+    GameCatalogItem("forest","Orman Keşfi","Sayı Avı'nın orman bölgesinde macera","Macera & Eğlence",
+        R.drawable.card_forest_premium,Color(0xFF80F0AA),ForestAdventureActivity::class.java),
+    GameCatalogItem("market","Pazar Simülatörü","Alışveriş yap, bütçeyi hesapla","Hayat & Keşif",
+        R.drawable.market_adventure_hero,Color(0xFF73E4A9),MarketSimulatorActivity::class.java),
+    GameCatalogItem("geometry","Geometri Kalesi","Şekilleri tanı · kaleyi kurtar","Hayat & Keşif",
+        R.drawable.geometry_castle_hero_premium,Color(0xFF78D6FF),GeometryCastleActivity::class.java)
+)
 @Composable
-fun GamesTabScreen(
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val scrollState = rememberScrollState()
-
-    val basicGames = listOf(
-        GameCatalogItem(
-            title = "Toplama Oyunu",
-            description = "Sayıları birleştir, adımları hızlandır ve yıldızları topla.",
-            category = "Temel İşlem",
-            iconRes = R.drawable.ic_addition,
-            gradientColors = listOf(Color(0xFF1D4ED8), Color(0xFF3B82F6)),
-            activityClass = AdditionGameActivity::class.java
-        ),
-        GameCatalogItem(
-            title = "Çıkarma Oyunu",
-            description = "Farkı bul, eksilen sayıları hesapla ve maceraya devam et.",
-            category = "Temel İşlem",
-            iconRes = R.drawable.ic_subtraction,
-            gradientColors = listOf(Color(0xFFBE123C), Color(0xFFF43F5E)),
-            activityClass = SubtractionGameActivity::class.java
-        ),
-        GameCatalogItem(
-            title = "Çarpma Oyunu",
-            description = "Çarpım tablosunu eğlenerek ezberle, hızlı cevaplarla rekor kır.",
-            category = "Temel İşlem",
-            iconRes = R.drawable.ic_multiplication,
-            gradientColors = listOf(Color(0xFF047857), Color(0xFF10B981)),
-            activityClass = MultiplicationGameActivity::class.java
-        ),
-        GameCatalogItem(
-            title = "Bölme Oyunu",
-            description = "Paylaştır, böl ve kalanı hesapla. Bölme ustalığını kanıtla.",
-            category = "Temel İşlem",
-            iconRes = R.drawable.ic_division,
-            gradientColors = listOf(Color(0xFFB45309), Color(0xFFF59E0B)),
-            activityClass = DivisionGameActivity::class.java
-        )
-    )
-
-    val adventureGames = listOf(
-        GameCatalogItem(
-            title = "Balon Patlatma",
-            description = "Doğru sonucu taşıyan balonları patlat, puanları katla.",
-            category = "Macera & Eğlence",
-            iconRes = R.drawable.ic_balloon_task,
-            gradientColors = listOf(Color(0xFF6D28D9), Color(0xFFA78BFA)),
-            activityClass = BalloonPopGameActivity::class.java
-        ),
-        GameCatalogItem(
-            title = "Sayı Avcıları",
-            description = "Kabukları grupla, beş farklı görevde matematikle hazineyi keşfet.",
-            category = "Macera & Eğlence",
-            iconRes = R.drawable.ic_comparison_task,
-            gradientColors = listOf(Color(0xFF0F766E), Color(0xFF14B8A6)),
-            activityClass = SayiAvi2Activity::class.java
-        ),
-        GameCatalogItem(
-            title = "Uzay Macerası",
-            description = "Roketinle uzayda matematik görevlerini çözerek ilerle.",
-            category = "Macera & Eğlence",
-            iconRes = R.drawable.ic_spaceship,
-            gradientColors = listOf(Color(0xFF3730A3), Color(0xFF6366F1)),
-            activityClass = SpaceMathAdventureActivity::class.java
-        ),
-        GameCatalogItem(
-            title = "Matematik Labirenti",
-            description = "Labirentte gizli doğru yolları matematik sorularıyla aç.",
-            category = "Macera & Eğlence",
-            iconRes = R.drawable.ic_gamepad,
-            gradientColors = listOf(Color(0xFF5B21B6), Color(0xFF8B5CF6)),
-            activityClass = MathMazeGameActivity::class.java
-        )
-    )
-
-    val conceptGames = listOf(
-        GameCatalogItem(
-            title = "Pazar Simülatörü",
-            description = "Üç pazarda doğru ürünleri seç, bütçeni koru ve para üstünü hesapla.",
-            category = "Gerçek Hayat",
-            iconRes = R.drawable.ic_market_game,
-            gradientColors = listOf(Color(0xFF065F46), Color(0xFF10B981)),
-            activityClass = MarketSimulatorActivity::class.java
-        ),
-        GameCatalogItem(
-            title = "Şekiller & Geometri",
-            description = "Dört odada şekilleri keşfet, köprüyü inşa et ve simetriyle kaleyi onar.",
-            category = "Kavramlar",
-            iconRes = R.drawable.ic_shapes,
-            gradientColors = listOf(Color(0xFF0369A1), Color(0xFF38BDF8)),
-            activityClass = GeometryCastleActivity::class.java
-        )
-    )
-
+fun GamesTabScreen(modifier:Modifier=Modifier){
+    val context=LocalContext.current
+    val grade=remember {GradeAwareOperationPolicy.grade(
+        PlayerProfileService.getInstance(context).getUserClass())}
+    val games=remember {catalog()}
+    var filter by rememberSaveable {mutableStateOf("Tümü")}
+    val tabs=listOf("Tümü","Temel İşlemler","Macera & Eğlence","Hayat & Keşif")
+    val selected=if(filter=="Tümü")games else games.filter{it.category==filter}
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-    ) {
-        // Üst Başlık
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Filled.SportsEsports,
-                contentDescription = null,
-                tint = HomeColors.MagicCyan,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
-                Text(
-                    text = "Oyun Dünyası",
-                    color = HomeColors.TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    text = "Tüm matematik maceraları ve mini oyunlar",
-                    color = HomeColors.TextSecondary,
-                    fontSize = 13.sp
-                )
+        modifier=modifier.fillMaxSize().background(
+            Brush.verticalGradient(listOf(
+                Color(0xFF086BA9),Color(0xFF07568B),navy
+            ))).verticalScroll(rememberScrollState())
+            .padding(horizontal=12.dp,vertical=8.dp),
+        verticalArrangement=Arrangement.spacedBy(13.dp)
+    ){
+        Surface(shape=RoundedCornerShape(22.dp),color=Color(0xFF122D58).copy(alpha=.80f),
+            border=BorderStroke(1.dp,aqua.copy(alpha=.5f))){
+            Column(Modifier.fillMaxWidth().padding(15.dp),
+                verticalArrangement=Arrangement.spacedBy(4.dp)){
+                Text("🎮 OYUN DÜNYASI",color=saffron,fontSize=23.sp,
+                    fontWeight=FontWeight.Black)
+                Text("11 macera · hepsi tek bir keşif haritasında",
+                    color=white,fontSize=13.sp)
+                Text("$grade. sınıf · eğitim içeriği sınıfa göre düzenlenir",
+                    color=aqua,fontSize=12.sp,fontWeight=FontWeight.Bold)
             }
         }
-
-        // 1. Temel İşlemler
-        GameCategoryHeader("Temel İşlemler", "4 Oyun")
-        basicGames.forEach { game ->
-            GameItemCard(game = game, onClick = {
-                context.startActivity(Intent(context, game.activityClass))
-            })
-            Spacer(modifier = Modifier.height(10.dp))
+        Box(
+            Modifier.fillMaxWidth().height(158.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .clickable {context.startActivity(Intent(context,OperationsHubActivity::class.java))}
+        ){
+            Image(painterResource(R.drawable.card_four_operations),
+                contentDescription=null,contentScale=ContentScale.Crop,
+                modifier=Modifier.fillMaxSize())
+            Box(Modifier.fillMaxSize().background(Brush.horizontalGradient(
+                listOf(navy.copy(alpha=.94f),navy.copy(alpha=.20f)))))
+            Column(Modifier.align(Alignment.CenterStart).padding(15.dp),
+                verticalArrangement=Arrangement.spacedBy(6.dp)){
+                Text("✨ DÖRT İŞLEM MERKEZİ",color=saffron,
+                    fontSize=18.sp,fontWeight=FontWeight.Black)
+                Text("Topla · Çıkar · Çarp · Böl\nKarışık matematik macerası",
+                    color=white,fontSize=12.sp)
+                Text("KEŞFET ▶",color=aqua,fontSize=13.sp,
+                    fontWeight=FontWeight.Black)
+            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 2. Macera & Eğlence
-        GameCategoryHeader("Macera & Eğlence", "4 Oyun")
-        adventureGames.forEach { game ->
-            GameItemCard(game = game, onClick = {
-                context.startActivity(Intent(context, game.activityClass))
-            })
-            Spacer(modifier = Modifier.height(10.dp))
+        Row(Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement=Arrangement.spacedBy(8.dp)){
+            tabs.forEach{tab->
+                Surface(
+                    modifier=Modifier.clickable{filter=tab},
+                    shape=RoundedCornerShape(15.dp),
+                    color=if(filter==tab)Color(0xFF2C649E) else navy.copy(alpha=.72f),
+                    border=BorderStroke(if(filter==tab)2.dp else 1.dp,
+                        if(filter==tab)saffron else aqua.copy(alpha=.35f))
+                ){
+                    Text(tab,
+                        modifier=Modifier.padding(horizontal=13.dp,vertical=10.dp),
+                        color=white,fontSize=12.sp,fontWeight=FontWeight.Bold)
+                }
+            }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 3. Gerçek Hayat & Kavramlar
-        GameCategoryHeader("Gerçek Hayat & Kavramlar", "2 Oyun")
-        conceptGames.forEach { game ->
-            GameItemCard(game = game, onClick = {
-                context.startActivity(Intent(context, game.activityClass))
-            })
-            Spacer(modifier = Modifier.height(10.dp))
+        val categories=if(filter=="Tümü")listOf("Temel İşlemler","Macera & Eğlence","Hayat & Keşif")
+            else listOf(filter)
+        categories.forEach{category->
+            val items=selected.filter{it.category==category}
+            if(items.isNotEmpty()){
+                Row(Modifier.fillMaxWidth(),
+                    horizontalArrangement=Arrangement.SpaceBetween,
+                    verticalAlignment=Alignment.CenterVertically){
+                    Text(when(category){
+                        "Temel İşlemler"->"✦ $category"
+                        "Macera & Eğlence"->"🚀 $category"
+                        else->"🧭 $category"
+                    },color=white,fontSize=17.sp,fontWeight=FontWeight.Black)
+                    Text("${items.size} oyun",color=aqua,fontSize=12.sp)
+                }
+                items.chunked(2).forEach{pair->
+                    Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
+                        pair.forEach{item->
+                            val locked=grade<item.minGrade
+                            Surface(
+                                modifier=Modifier.weight(1f).height(234.dp)
+                                    .clickable(enabled=!locked){
+                                        context.startActivity(Intent(context,item.activityClass))
+                                    },
+                                shape=RoundedCornerShape(21.dp),
+                                color=Color(0xFF10345E),
+                                border=BorderStroke(2.dp,
+                                    item.accent.copy(alpha=if(locked).35f else .95f))
+                            ){
+                                Column(Modifier.fillMaxSize(),
+                                    verticalArrangement=Arrangement.spacedBy(4.dp)){
+                                    Box(Modifier.fillMaxWidth().height(133.dp)
+                                        .padding(5.dp).clip(RoundedCornerShape(17.dp))){
+                                        Image(
+                                            painterResource(item.coverRes),
+                                            contentDescription=item.title,
+                                            contentScale=ContentScale.Crop,
+                                            modifier=Modifier.fillMaxSize()
+                                        )
+                                        if(locked)Box(
+                                            Modifier.fillMaxSize()
+                                                .background(navy.copy(alpha=.66f)),
+                                            contentAlignment=Alignment.Center
+                                        ){Text("🔒 3. SINIF",color=white,
+                                            fontWeight=FontWeight.Black,fontSize=12.sp)}
+                                    }
+                                    Column(Modifier.fillMaxWidth()
+                                        .padding(horizontal=10.dp),
+                                        verticalArrangement=Arrangement.spacedBy(3.dp)){
+                                        Text(item.title,color=white,
+                                            fontSize=14.sp,fontWeight=FontWeight.Black,
+                                            maxLines=1,overflow=TextOverflow.Ellipsis)
+                                        Text(item.description,color=Color(0xFFC8E3F4),
+                                            fontSize=10.sp,lineHeight=12.sp,
+                                            maxLines=2,overflow=TextOverflow.Ellipsis)
+                                        Text(if(locked)"3. sınıfta açılır" else "▶ OYNA",
+                                            color=if(locked)Color(0xFFB6C2D0) else saffron,
+                                            fontSize=11.sp,fontWeight=FontWeight.Black)
+                                    }
+                                }
+                            }
+                        }
+                        if(pair.size==1)Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
         }
-
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.height(30.dp))
     }
 }
-
-@Composable
-private fun GameCategoryHeader(title: String, count: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            color = HomeColors.TextAccentCyan,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = count,
-            color = HomeColors.TextMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium
-        )
-    }
-}
-
-@Composable
-private fun GameItemCard(
-    game: GameCatalogItem,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(HomeColors.CardSurface)
-            .border(1.dp, HomeColors.CardBorderSubtle, RoundedCornerShape(18.dp))
-            .clickable { onClick() }
-            .padding(14.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(52.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Brush.linearGradient(game.gradientColors)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(id = game.iconRes),
-                    contentDescription = game.title,
-                    tint = Color.White,
-                    modifier = Modifier.size(30.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.width(14.dp))
-
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = game.title,
-                    color = HomeColors.TextPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = game.description,
-                    color = HomeColors.TextSecondary,
-                    fontSize = 12.sp,
-                    lineHeight = 15.sp,
-                    maxLines = 2
-                )
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Button(
-                onClick = onClick,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = HomeColors.MagicCyan
-                ),
-                modifier = Modifier.height(40.dp)
-            ) {
-                Text(
-                    text = "Oyna",
-                    color = Color(0xFF071426),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-

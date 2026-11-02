@@ -3,39 +3,35 @@ package com.yigit033.matematikmacarasi.games.interactive
 import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 import kotlin.random.Random
 
-/** Deterministic mission rules. No Android, timers or network. */
+/** Shooting is the only answer interaction: no reactor sliders or modal questions. */
 enum class SpacePlanet(val title:String,val detail:String,val sign:String) {
-    TERRA("Zümrüt Yörünge","Sayı enerjisini birleştir","✦"),
-    AQUA("Okyanus Nebulası","Kalan yakıtı hesapla","≈"),
-    PYRA("Kızıl Meteor","Güç gruplarını yönet","◆"),
-    LUNA("Ay Kristali","Enerjiyi eşit dağıt","☾"),
-    NOVA("Prizma Galaksisi","Dört işlem ustalığı","✧")
+    TERRA("Zümrüt Yörünge","Sayı yıldızları","✦"),
+    AQUA("Okyanus Nebulası","Mavi meteorlar","≈"),
+    PYRA("Kızıl Meteor","Kızıl galaksi","◆"),
+    LUNA("Ay Kristali","Ay ışığı","☾"),
+    NOVA("Prizma Galaksisi","Son keşif","✧")
 }
-enum class SpaceMission(val title:String) {
-    FLIGHT("Meteor Avı"),
-    REACTOR("Reaktör Savunması"),
-    CIRCUIT("Yıldız Muhafızları")
-}
+
 data class SpacePuzzle(
-    val prompt:String,
+    val expression:String,
     val answer:Int,
     val explanation:String,
     val hint:String,
-    val crystals:List<Int> = emptyList(),
-    val sequence:List<Int> = emptyList(),
-    val nodes:List<Int> = emptyList()
-)
+    val crystals:List<Int>
+) {
+    val prompt:String get()="$expression = ?"
+}
+
 data class SpaceRun(
     val seed:Long,
     val planet:SpacePlanet,
     val tier:LearningTier,
+    /** Original profile grade captured at expedition start, clamped to primary 1..4. */
+    val grade:Int=1,
+    /** Completed questions within the continuously scrolling 15-hit expedition. */
     val stage:Int=0,
-    val lane:Int=1,
-    val shipX:Float=0.5f,
+    val shipX:Float=.5f,
     val wave:Int=0,
-    val charge:Int=0,
-    val path:List<Int> = emptyList(),
-    val solved:Boolean=false,
     val completed:Boolean=false,
     val attempts:Int=0,
     val errors:Int=0,
@@ -43,200 +39,170 @@ data class SpaceRun(
     val firstTry:Int=0,
     val tainted:Boolean=false,
     val hintVisible:Boolean=false,
+    val combo:Int=0,
+    val bestCombo:Int=0,
     val shields:Int=3
-) {
-    val mission:SpaceMission get()=SpaceMission.entries[stage.coerceIn(0,8)%3]
-}
+)
+
+/** Deterministic grade-gated questions; the school grade is a hard curriculum ceiling. */
 object SpaceExpeditionEngine {
-    const val STAGES=9
-    fun begin(seed:Long,planet:SpacePlanet,tier:LearningTier):SpaceRun {
-        require(seed>0)
-        return SpaceRun(seed,planet,tier)
+    const val STAGES=15
+    fun begin(seed:Long,planet:SpacePlanet,tier:LearningTier,grade:Int=1):SpaceRun {
+        require(seed>0L)
+        return SpaceRun(seed,planet,tier,grade.coerceIn(1,4))
     }
     fun puzzle(run:SpaceRun):SpacePuzzle =
-        puzzle(run.seed,run.planet,run.tier,run.stage.coerceIn(0,STAGES-1))
+        puzzle(run.seed,run.planet,run.tier,run.stage.coerceIn(0,STAGES-1),run.grade)
 
-    fun puzzle(seed:Long,planet:SpacePlanet,tier:LearningTier,stage:Int):SpacePuzzle {
-        require(seed>0 && stage in 0 until STAGES)
-        val rng=Random(seed xor (planet.ordinal*113117L+stage*39971L+
-            tier.ordinal*97339L+0x5A61B3L))
-        val scale=tier.ordinal+1
-        if(stage%3==2) {
-            val descending=planet==SpacePlanet.AQUA
-            val start=if(descending)rng.nextInt(18,25)*scale
-                else rng.nextInt(1,6)*scale
-            val step=rng.nextInt(2,5)*scale*(if(descending)-1 else 1)
-            val sequence=(1..3).map {start+it*step}
-            val falseNode=sequence.last()+step
-            val nodes=(sequence+falseNode).shuffled(rng)
-            return SpacePuzzle(
-                prompt="$start ile başla. Her adımda "+kotlin.math.abs(step)+
-                    (if(descending)" azalt." else " artır.")+
-                    " Koruyucu yıldızları sırayla lazerle etkinleştir.",
-                answer=sequence.last(),
-                explanation="Devre sırası: "+(listOf(start)+sequence).joinToString(" → "),
-                hint="Her yeni yıldızda "+kotlin.math.abs(step)+
-                    (if(descending)" çıkar." else " ekle."),
-                sequence=sequence,nodes=nodes
-            )
+    fun puzzle(seed:Long,planet:SpacePlanet,tier:LearningTier,stage:Int,grade:Int):SpacePuzzle {
+        require(seed>0L && stage in 0 until STAGES && grade in 1..4)
+        val rng=Random(seed xor (planet.ordinal.toLong()*113117L+
+            stage*39971L+tier.ordinal*97339L+grade*17471L+0x5A61B3L))
+        val op=when(grade){
+            1->if(planet==SpacePlanet.AQUA || (stage%5==4))1 else 0
+            2->if(planet==SpacePlanet.AQUA || stage%4==3)1 else 0
+            3->when(planet){
+                SpacePlanet.PYRA->2
+                SpacePlanet.LUNA->3
+                SpacePlanet.AQUA->1
+                else->(stage+planet.ordinal)%4
+            }
+            else->when(planet){
+                SpacePlanet.TERRA->0
+                SpacePlanet.AQUA->1
+                SpacePlanet.PYRA->2
+                SpacePlanet.LUNA->3
+                SpacePlanet.NOVA->(stage+seed.toInt().ushr(2))%4
+            }
         }
-        val operation=if(planet==SpacePlanet.NOVA)
-            (stage+((seed%4).toInt()))%4 else planet.ordinal
-        val a:Int;val b:Int;val target:Int;val formula:String
-        val explanation:String;val hint:String
-        when(operation){
+        val difficulty=tier.ordinal
+        val a:Int;val b:Int;val answer:Int
+        val symbol:String;val explanation:String;val hint:String
+        when(op){
             0->{
-                a=rng.nextInt(3,8*scale+4);b=rng.nextInt(2,6*scale+3)
-                target=a+b;formula="$a + $b"
-                explanation="$a enerji ve $b enerji birleşince $target eder."
-                hint="İki enerji grubunu birleştir."
+                val cap=when(grade){
+                    1->listOf(10,15,20)[difficulty]
+                    2->listOf(20,50,100)[difficulty]
+                    3->listOf(50,100,200)[difficulty]
+                    else->listOf(100,250,500)[difficulty]
+                }
+                answer=rng.nextInt(4,cap+1)
+                a=rng.nextInt(1,answer);b=answer-a
+                symbol="+"
+                explanation="$a ile $b toplanınca $answer olur."
+                hint="İki sayıyı birleştir. Küçük parçadan başlayabilirsin."
             }
             1->{
-                b=rng.nextInt(2,4*scale+3);target=rng.nextInt(2,5*scale+4)
-                a=b+target;formula="$a − $b"
-                explanation="$a enerjiden $b çıkarınca $target kalır."
-                hint="Önce toplam enerjiyi düşün, tüketileni çıkar."
+                val cap=when(grade){
+                    1->listOf(10,15,20)[difficulty]
+                    2->listOf(20,50,100)[difficulty]
+                    3->listOf(50,100,200)[difficulty]
+                    else->listOf(100,250,500)[difficulty]
+                }
+                a=rng.nextInt(4,cap+1);b=rng.nextInt(1,a)
+                answer=a-b
+                symbol="−"
+                explanation="$a içinden $b çıkarılınca $answer kalır."
+                hint="Büyük sayıdan küçük olanı çıkar."
             }
             2->{
-                a=rng.nextInt(2,3*scale+3);b=rng.nextInt(2,3*scale+3)
-                target=a*b;formula="$a × $b"
-                explanation="$a grup, her birinde $b enerji: $target."
-                hint="$b sayısını $a kez tekrarlı topla."
+                val maxFactor=when(grade){
+                    3->listOf(5,7,10)[difficulty]
+                    else->listOf(6,9,12)[difficulty]
+                }
+                a=rng.nextInt(2,maxFactor+1)
+                b=rng.nextInt(2,maxFactor+1)
+                answer=a*b;symbol="×"
+                explanation="$a tane $b, toplam $answer yapar."
+                hint="$b sayısını $a kez toplayabilirsin."
             }
             else->{
-                b=rng.nextInt(2,3*scale+3);target=rng.nextInt(2,3*scale+3)
-                a=b*target;formula="$a ÷ $b"
-                explanation="$a enerji $b gruba eşit dağıtılınca $target düşer."
-                hint="$b ile çarpınca $a veren sayıyı bul."
+                val maxFactor=when(grade){
+                    3->listOf(5,7,10)[difficulty]
+                    else->listOf(6,9,12)[difficulty]
+                }
+                b=rng.nextInt(2,maxFactor+1)
+                answer=rng.nextInt(2,maxFactor+1)
+                a=answer*b;symbol="÷"
+                explanation="$a, $b eşit gruba ayrılırsa her grupta $answer olur."
+                hint="$b ile hangi sayıyı çarparsak $a olur?"
             }
         }
-        if(stage%3==1) {
-            return SpacePuzzle(
-                prompt="$formula = ? Enerji kapsüllerini lazerle vur; tam $target birimde çekirdeği ateşle.",
-                answer=target,explanation=explanation,hint=hint
-            )
+        val choices=linkedSetOf(answer)
+        val distance=when(grade){1->2;2->4;3->5;else->8}
+        var tries=0
+        while(choices.size<3 && tries<100){
+            tries++
+            val delta=rng.nextInt(1,distance+2)*(if(tries%2==0)-1 else 1)
+            val other=answer+delta
+            if(other>=0 && other!=answer)choices.add(other)
         }
-        val options=linkedSetOf(target)
-        var d=1
-        while(options.size<3){
-            val candidate=target+(if(d%2==0)-1 else 1)*(d+1)
-            if(candidate>=0)options.add(candidate)
-            d++
-        }
-        val crystals=options.toList().shuffled(rng)
+        var candidate=answer+1
+        while(choices.size<3){choices.add(candidate++ )}
         return SpacePuzzle(
-            prompt="$formula = ? Doğru cevabı taşıyan meteoru lazerle vur.",
-            answer=target,explanation=explanation,hint=hint,crystals=crystals
+            expression="$a $symbol $b",
+            answer=answer,
+            explanation=explanation,
+            hint=hint,
+            crystals=choices.toList().shuffled(rng)
         )
     }
+
     fun valid(run:SpaceRun):Boolean {
-        if(run.seed<=0 || run.stage !in 0..STAGES ||
-            run.lane !in 0..2 || !run.shipX.isFinite() ||
-            run.shipX !in 0.06f..0.94f || run.wave<0 || run.charge<0 ||
-            run.attempts<0 || run.errors<0 || run.hints<0 ||
-            run.firstTry<0 || run.shields !in 1..3 ||
-            run.completed!=(run.stage==STAGES) ||
-            run.completed && run.solved ||
-            run.solved && run.hintVisible ||
-            run.hintVisible && !run.tainted ||
-            run.firstTry>run.stage+(if(run.solved)1 else 0) ||
-            run.attempts!=run.stage+(if(run.solved)1 else 0)+run.errors ||
-            run.hints>run.stage+1
-        )return false
-        if(run.completed)return run.charge==0 && run.path.isEmpty() &&
-            !run.tainted && !run.hintVisible
-        val p=puzzle(run)
-        if(run.charge>p.answer+10 || (run.mission!=SpaceMission.REACTOR && run.charge!=0) ||
-            (run.mission!=SpaceMission.CIRCUIT && run.path.isNotEmpty()) ||
-            run.path.size>p.sequence.size || run.solved &&
-            (run.charge!=0 || run.path.isNotEmpty()))return false
-        if(run.mission==SpaceMission.CIRCUIT && run.path!=p.sequence.take(run.path.size))return false
+        if(run.seed<=0 || run.grade !in 1..4 || run.stage !in 0..STAGES ||
+            !run.shipX.isFinite() || run.shipX !in .06f.. .94f ||
+            run.wave<0 || run.errors<0 || run.hints<0 || run.attempts<0 ||
+            run.firstTry !in 0..run.stage || run.combo !in 0..run.stage ||
+            run.bestCombo !in 0..run.stage || run.combo>run.bestCombo ||
+            run.shields !in 1..3 || run.completed!=(run.stage==STAGES) ||
+            run.attempts!=run.stage+run.errors ||
+            run.hints>run.stage+1 || run.completed && (run.tainted || run.hintVisible) ||
+            run.hintVisible && !run.tainted)return false
         return true
     }
-    /** Update only on pointer release or navigation-button press, not every animation frame. */
     fun position(run:SpaceRun,x:Float):SpaceRun {
-        if(!valid(run)||run.completed||run.solved||!x.isFinite())return run
-        val next=x.coerceIn(.06f,.94f)
-        return if(kotlin.math.abs(next-run.shipX)<.005f)run
-            else run.copy(shipX=next,lane=(next*3).toInt().coerceIn(0,2))
+        if(!valid(run)||run.completed||!x.isFinite())return run
+        val value=x.coerceIn(.06f,.94f)
+        return if(kotlin.math.abs(value-run.shipX)<.005f)run
+            else run.copy(shipX=value)
     }
-    /** Authoritative hit result; UI/projectile animation cannot award points directly. */
+    /** One confirmed laser collision: correct hits immediately spawn the next question. */
     fun fireAt(run:SpaceRun,value:Int):SpaceRun {
-        if(!valid(run)||run.completed||run.solved)return run
+        if(!valid(run)||run.completed)return run
         val q=puzzle(run)
-        return when(run.mission){
-            SpaceMission.FLIGHT->{
-                if(value !in q.crystals)run
-                else if(value==q.answer)finishStage(run)
-                else failure(run.copy(wave=run.wave+1))
-            }
-            SpaceMission.REACTOR->{
-                if(value==Int.MIN_VALUE)ignite(run)
-                else if(value in listOf(-5,1,5,10)) {
-                    val updated=adjustFuel(run,value)
-                    if(updated==run)run else updated.copy(wave=updated.wave+1)
-                } else run
-            }
-            SpaceMission.CIRCUIT->{
-                if(value !in q.nodes)run else {
-                    val updated=connect(run,value)
-                    if(updated==run || updated.solved)updated
-                    else updated.copy(wave=updated.wave+1)
-                }
-            }
-        }
-    }
-    fun steer(run:SpaceRun,lane:Int):SpaceRun =
-        if(!valid(run)||run.completed||run.solved||run.mission!=SpaceMission.FLIGHT||lane !in 0..2)run
-        else run.copy(lane=lane)
-    /** The crystal wave reaches the ship; exactly one selected lane is intercepted. */
-    fun intercept(run:SpaceRun):SpaceRun {
-        if(!valid(run)||run.completed||run.solved||run.mission!=SpaceMission.FLIGHT)return run
-        val q=puzzle(run)
-        if(q.crystals[run.lane]==q.answer)return finishStage(run)
-        return failure(run.copy(wave=run.wave+1))
-    }
-    fun adjustFuel(run:SpaceRun,amount:Int):SpaceRun {
-        if(!valid(run)||run.completed||run.solved||run.mission!=SpaceMission.REACTOR)return run
-        val target=puzzle(run).answer
-        return run.copy(charge=(run.charge+amount).coerceIn(0,target+10))
-    }
-    fun ignite(run:SpaceRun):SpaceRun {
-        if(!valid(run)||run.completed||run.solved||run.mission!=SpaceMission.REACTOR)return run
-        return if(run.charge==puzzle(run).answer)finishStage(run) else failure(run)
-    }
-    fun connect(run:SpaceRun,node:Int):SpaceRun {
-        if(!valid(run)||run.completed||run.solved||run.mission!=SpaceMission.CIRCUIT)return run
-        val q=puzzle(run)
-        if(node !in q.nodes || node in run.path)return run
-        if(node!=q.sequence[run.path.size])return failure(run)
-        val next=run.copy(path=run.path+node)
-        return if(next.path.size==q.sequence.size)
-            finishStage(next.copy(path=emptyList())) else next
+        if(value !in q.crystals)return run
+        if(value!=q.answer)return run.copy(
+            attempts=run.attempts+1,
+            errors=run.errors+1,
+            wave=run.wave+1,
+            tainted=true,
+            combo=0,
+            shields=(run.shields-1).coerceAtLeast(1)
+        )
+        val nextStage=run.stage+1
+        val streak=run.combo+1
+        return run.copy(
+            stage=nextStage,
+            completed=nextStage==STAGES,
+            attempts=run.attempts+1,
+            firstTry=run.firstTry+(if(!run.tainted)1 else 0),
+            combo=streak,
+            bestCombo=maxOf(run.bestCombo,streak),
+            tainted=false,
+            hintVisible=false,
+            wave=0
+        )
     }
     fun hint(run:SpaceRun):SpaceRun =
-        if(!valid(run)||run.completed||run.solved||run.hintVisible)run
+        if(!valid(run)||run.completed||run.hintVisible)run
         else run.copy(hints=run.hints+1,tainted=true,hintVisible=true)
-    fun next(run:SpaceRun):SpaceRun {
-        if(!valid(run)||!run.solved)return run
-        val stage=run.stage+1
-        return run.copy(stage=stage,completed=stage==STAGES,
-            solved=false,tainted=false,hintVisible=false,
-            charge=0,path=emptyList(),lane=1,wave=0)
-    }
-    private fun failure(run:SpaceRun):SpaceRun =
-        run.copy(attempts=run.attempts+1,errors=run.errors+1,
-            shields=(run.shields-1).coerceAtLeast(1),tainted=true)
-    private fun finishStage(run:SpaceRun):SpaceRun =
-        run.copy(solved=true,attempts=run.attempts+1,
-            firstTry=run.firstTry+(if(run.tainted)0 else 1),
-            hintVisible=false,charge=0,path=emptyList())
+
     fun stars(run:SpaceRun):Int=if(!run.completed)0 else when {
-        run.firstTry>=8 && run.hints<=1 && run.errors<=1 ->3
-        run.firstTry>=6 && run.errors<=4 ->2
-        else ->1
+        run.firstTry>=13 && run.errors<=2 && run.hints<=1->3
+        run.firstTry>=10 && run.errors<=6->2
+        else->1
     }
-    fun score(run:SpaceRun):Int =
-        (run.firstTry*230+(run.stage-run.firstTry).coerceAtLeast(0)*120+
-            run.shields*30-run.errors*35-run.hints*20).coerceAtLeast(0)
+    fun score(run:SpaceRun):Int=
+        (run.stage*100+run.firstTry*30+run.bestCombo*12-
+            run.errors*22-run.hints*15).coerceAtLeast(0)
 }

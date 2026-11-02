@@ -23,7 +23,9 @@ class SpaceExpeditionStore(context:Context) {
         // question checkpoint; obsolete reactor/circuit counters are discarded.
         val version=prefs.getInt("version",0)
         if(version==2 && prefs.getBoolean("completed",false))return null
-        val oldStage=prefs.getInt("stage",0).coerceIn(0,SpaceExpeditionEngine.STAGES-1)
+        val oldStage=prefs.getInt("stage",0).coerceIn(
+            0,if(version==3)SpaceExpeditionEngine.STAGES else 9
+        )
         val oldSolved=version==2 && prefs.getBoolean("solved",false)
         val stage=if(version==2)oldStage+(if(oldSolved)1 else 0)
             else oldStage

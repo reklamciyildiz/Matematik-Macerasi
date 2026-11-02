@@ -547,7 +547,7 @@ class DailyTaskManager(private val context: Context) {
                     .getInstance(context).getUserClass()
             )
             val gameTypes = GameType.values().filter {type->
-                grade>=3 || (type!=GameType.MULTIPLICATION_GAME &&
+                grade>=2 || (type!=GameType.MULTIPLICATION_GAME &&
                     type!=GameType.DIVISION_GAME)
             }
             val usedGameTypes = mutableSetOf<GameType>()
@@ -564,7 +564,7 @@ class DailyTaskManager(private val context: Context) {
                 if (gameType in usedGameTypes) continue
                 
                 // Oyun türüne göre hedef sayısını belirle 
-                val targetCount = random.nextInt(3) + 1 // 1-3 arası
+                val targetCount = if(gameType==GameType.FRACTION_CRYSTALS) 1 else random.nextInt(3) + 1
                 
                 // Oyun türüne göre görev türü ve açıklaması oluştur
                 val (taskType, description) = when (gameType) {

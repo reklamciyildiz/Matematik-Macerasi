@@ -93,6 +93,18 @@ class AdditionGameActivity : BaseGameActivity() {
     
     @Composable
     override fun GameContent() {
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.ADD)){
+            OperationGradeLockedScreen(
+                grade=grade,
+                operation=OperationKind.ADD,
+                onBack={finish()}
+            )
+            return
+        }
         // Compose'ta try-catch kullanılamaz, ancak hata durumları için logic ekleyebiliriz
         when {
             showGameSummary -> {
@@ -482,142 +494,26 @@ class AdditionGameActivity : BaseGameActivity() {
     }
     
     override fun generateQuestion() {
-        try {
-            // Eğer tüm sorular tamamlandıysa, oyunu sonlandır
-            if (questionCount >= maxQuestions) {
-                handleGameEnd()
-                return
-            }
-            
-            // Soru oluşturma ve kontrol için değişkenler
-            var isNewQuestion = false
-            var retryCount = 0
-            
-            // Benzersiz bir soru bulana kadar veya maksimum deneme sayısına ulaşana kadar devam et
-            while (!isNewQuestion && retryCount < MAX_RETRY_COUNT) {
-                // Zorluk seviyesine göre sayı aralıklarını belirle
-                when (currentLevel) {
-                    1 -> { // Kolay - Anasınıfı ve 1. Sınıf (5-7 yaş)
-                        // Küçük sayılarla basit toplama işlemleri
-                        firstNumber = (1..5).random()
-                        secondNumber = (1..5).random()
-                    }
-                    2 -> { // Orta - 2-3. Sınıf (7-9 yaş)
-                        // Tek basamaklı ve iki basamaklı sayılarla toplama
-                        if (Math.random() < 0.6) { // %60 ihtimalle tek basamaklı toplama
-                            firstNumber = (3..9).random()
-                            secondNumber = (3..9).random()
-                        } else { // %40 ihtimalle tek basamaklı + iki basamaklı
-                            firstNumber = (10..15).random()
-                            secondNumber = (1..9).random()
-                        }
-                    }
-                    3 -> { // Zor - 4-5. Sınıf (9-11 yaş)
-                        // İki basamaklı sayılarla toplama
-                        if (Math.random() < 0.7) { // %70 ihtimalle eldesiz toplama
-                            val firstOnes = (0..9).random()
-                            val firstTens = (1..4).random()
-                            firstNumber = firstTens * 10 + firstOnes
-                            
-                            val secondOnes = (0..(9 - firstOnes)).random() // Elde olmasın
-                            val secondTens = (1..4).random()
-                            secondNumber = secondTens * 10 + secondOnes
-                        } else { // %30 ihtimalle genel toplama
-                            firstNumber = (10..50).random()
-                            secondNumber = (10..50).random()
-                        }
-                    }
-                    4 -> { // Çok Zor - 6-7. Sınıf (11-13 yaş)
-                        // Daha büyük sayılarla eldeli toplama işlemleri
-                        if (Math.random() < 0.6) { // %60 ihtimalle eldeli toplama
-                            val firstOnes = (0..9).random()
-                            val firstTens = (1..8).random()
-                            firstNumber = firstTens * 10 + firstOnes
-                            
-                            val secondOnes = (10 - firstOnes..9).random() // Elde olsun
-                            val secondTens = (1..8).random()
-                            secondNumber = secondTens * 10 + secondOnes
-                        } else { // %40 ihtimalle büyük sayılarla toplama
-                            firstNumber = (20..99).random()
-                            secondNumber = (20..99).random()
-                        }
-                    }
-                    else -> { // Uzman - 8. Sınıf ve üstü (13+ yaş)
-                        // Üç basamaklı sayılarla eldeli toplama
-                        if (Math.random() < 0.5) { // %50 ihtimalle iki basamaklı eldeli toplama
-                            firstNumber = (50..99).random()
-                            secondNumber = (50..99).random()
-                        } else { // %50 ihtimalle üç basamaklı toplama
-                            firstNumber = (100..200).random()
-                            secondNumber = (100..200).random()
-                        }
-                    }
-                }
-                
-                correctAnswer = firstNumber + secondNumber
-                
-                // Bu sorunun daha önce sorulup sorulmadığını kontrol et
-                isNewQuestion = !questionTracker.isOperationAsked(firstNumber, secondNumber, "+")
-                
-                // Sayıların yer değiştirdiği durumu da kontrol et (örn. 5+3 ile 3+5 aynı sorudur)
-                if (isNewQuestion && firstNumber != secondNumber) {
-                    isNewQuestion = !questionTracker.isOperationAsked(secondNumber, firstNumber, "+")
-                }
-                
-                retryCount++
-            }
-            
-            // Maksimum deneme sayısına ulaşıldıysa, soru sayısını arttırma ve yeni bir soru üretme
-            if (retryCount >= MAX_RETRY_COUNT) {
-                Log.w("AdditionGameActivity", "Maksimum deneme sayısına ulaşıldı, benzersiz soru bulunamadı")
-                // Deneme sayısına ulaşılsa bile bu soruyu kaydediyoruz ki tekrar denemeyelim
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "+")
-            }
-            
-            // Cevap seçeneklerini oluştur
-            generateAnswerOptions()
-            
-            // Cevap durumunu sıfırla
-            answerFeedbackState = AnswerFeedbackState.IDLE
-            lastSelectedOption = ""
-            
-            // Soru sayısını artır
-            questionCount++
-            
-        } catch (e: Exception) {
-            Log.e("AdditionGameActivity", "Soru oluşturulurken hata: ${e.message}")
-            e.printStackTrace()
-            
-            // Basit bir soru oluşturarak devam et
-            try {
-                firstNumber = (1..5).random()
-                secondNumber = (1..5).random()
-                correctAnswer = firstNumber + secondNumber
-                
-                // Tracker'a ekle
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "+")
-                
-                // Basit cevap seçenekleri
-                options = listOf(
-                    correctAnswer.toString(),
-                    (correctAnswer + 1).toString(),
-                    (correctAnswer + 2).toString(),
-                    (correctAnswer - 1).toString()
-                ).shuffled()
-                
-                // Cevap durumunu sıfırla
-                answerFeedbackState = AnswerFeedbackState.IDLE
-                lastSelectedOption = ""
-                
-                // Soru sayısını artır
-                questionCount++
-            } catch (e: Exception) {
-                // Bu noktada bile başarısız olursa, oyunu sonlandır
-                Log.e("AdditionGameActivity", "Basit soru oluşturulurken de hata: ${e.message}")
-                e.printStackTrace()
-                handleGameEnd()
-            }
+        if(questionCount>=maxQuestions){handleGameEnd();return}
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.ADD)){
+            handleGameEnd()
+            return
         }
+        val q=GradeAwareOperationPolicy.generate(
+            grade,OperationKind.ADD,selectedDifficulty
+        )
+        firstNumber=q.first
+        secondNumber=q.second
+        correctAnswer=q.answer
+        options=GradeAwareOperationPolicy.options(q)
+        questionTracker.isOperationAsked(firstNumber,secondNumber,"+")
+        answerFeedbackState=AnswerFeedbackState.IDLE
+        lastSelectedOption=""
+        questionCount++
     }
     
     /**

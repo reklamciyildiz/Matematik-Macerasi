@@ -120,6 +120,18 @@ class MultiplicationGameActivity : BaseGameActivity() {
     
     @Composable
     override fun GameContent() {
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.MULTIPLY)){
+            OperationGradeLockedScreen(
+                grade=grade,
+                operation=OperationKind.MULTIPLY,
+                onBack={finish()}
+            )
+            return
+        }
         // Compose'ta try-catch kullanılamaz, ancak hata durumları için logic ekleyebiliriz
         when {
             showGameSummary -> {
@@ -515,200 +527,26 @@ class MultiplicationGameActivity : BaseGameActivity() {
     }
     
     override fun generateQuestion() {
-        try {
-            // Eğer tüm sorular tamamlandıysa, oyunu sonlandır
-            if (questionCount >= maxQuestions) {
-                handleGameEnd()
-                return
-            }
-            
-            // Soru oluşturma ve kontrol için değişkenler
-            var isNewQuestion = false
-            var retryCount = 0
-            
-            // Benzersiz bir soru bulana kadar veya maksimum deneme sayısına ulaşana kadar devam et
-            while (!isNewQuestion && retryCount < MAX_RETRY_COUNT) {
-                // Zorluk seviyesine göre sayı aralıklarını belirle
-                when (currentLevel) {
-                    1 -> { // Seviye 1 (6-7 yaş / 1-2. Sınıf)
-                        // Temel çarpma faktörleri ve sayı gruplarına giriş
-                        firstNumber = (1..3).random()
-                        secondNumber = (1..5).random()
-                        
-                        // Çarpım sonucu maksimum 15 olacak şekilde kontrol et
-                        if (firstNumber * secondNumber > 15) {
-                            // Eğer 15'ten büyükse, sayıları küçült
-                            if (firstNumber > 2) firstNumber = 2
-                            if (secondNumber > 5) secondNumber = 5
-                        }
-                    }
-                    2 -> { // Seviye 2 (7-9 yaş / 2-3. Sınıf)
-                        // Temel çarpım tablosu çalışmaları
-                        firstNumber = (2..5).random()
-                        secondNumber = (2..5).random()
-                        
-                        // 2'li, 3'lü, 4'lü ve 5'li çarpım tabloları odaklı
-                        // Kolay hatırlanabilir kalıplar için belirli kombinasyonlar
-                        if (Math.random() < 0.3) {
-                            // 2'li çarpım tablosu vurgusu
-                            if (Math.random() < 0.5) {
-                                firstNumber = 2
-                                secondNumber = (1..10).random()
-                            } else {
-                                firstNumber = (1..10).random()
-                                secondNumber = 2
-                            }
-                        } else if (Math.random() < 0.3) {
-                            // 5'li çarpım tablosu vurgusu
-                            if (Math.random() < 0.5) {
-                                firstNumber = 5
-                                secondNumber = (1..10).random()
-                            } else {
-                                firstNumber = (1..10).random()
-                                secondNumber = 5
-                            }
-                        }
-                    }
-                    3 -> { // Seviye 3 (9-10 yaş / 3-4. Sınıf)
-                        // Genişletilmiş çarpım tablosu
-                        firstNumber = (2..9).random()
-                        secondNumber = (2..9).random()
-                        
-                        // 10 ile çarpma kuralı entegrasyonu
-                        if (Math.random() < 0.2) {
-                            // 10 ile çarpma pratikleri
-                            if (Math.random() < 0.5) {
-                                firstNumber = 10
-                                secondNumber = (1..10).random()
-                            } else {
-                                firstNumber = (1..10).random()
-                                secondNumber = 10
-                            }
-                        }
-                    }
-                    4 -> { // Seviye 4 (10-12 yaş / 4-6. Sınıf)
-                        // İki basamaklı sayıyı tek basamaklı sayıyla çarpma
-                        firstNumber = (10..30).random()
-                        secondNumber = (2..9).random()
-                        
-                        // 10'un katlarıyla çarpma pratikleri
-                        if (Math.random() < 0.3) {
-                            // 10'un katlarını vurgula
-                            firstNumber = (1..3).random() * 10
-                        }
-                    }
-                    5 -> { // Seviye 5 (12-14 yaş / 6-8. Sınıf)
-                        // İki basamaklı sayıları çarpma - aşamalı zorluk artışı
-                        val progressPercentage = (questionCount.toFloat() / maxQuestions.toFloat()) * 100
-
-                        when {
-                            progressPercentage < 30 -> {
-                                // Aşama 1 (İlk %30 soru): Daha basit iki basamaklı çarpımlar
-                                firstNumber = (10..25).random()
-                                secondNumber = (10..15).random()
-                            }
-                            progressPercentage < 70 -> {
-                                // Aşama 2 (Sonraki %40 soru): Orta zorlukta iki basamaklı çarpımlar
-                                firstNumber = (15..40).random()
-                                secondNumber = (10..20).random()
-                            }
-                            else -> {
-                                // Aşama 3 (Son %30 soru): Daha zor iki basamaklı çarpımlar
-                                firstNumber = (20..50).random()
-                                secondNumber = (15..30).random()
-                            }
-                        }
-                    }
-                }
-                
-                correctAnswer = firstNumber * secondNumber
-                
-                // Sonuç çok büyük olmasın - eğer 1000'den büyükse, sayıları küçült
-                if (correctAnswer > 1000) {
-                    // Seviyeye göre uygun bir şekilde küçült
-                    when (currentLevel) {
-                        1, 2 -> {
-                            firstNumber = (1..5).random()
-                            secondNumber = (1..5).random()
-                        }
-                        3 -> {
-                            firstNumber = (2..9).random()
-                            secondNumber = (2..9).random()
-                        }
-                        4 -> {
-                            firstNumber = (10..20).random()
-                            secondNumber = (2..5).random()
-                        }
-                        else -> {
-                            firstNumber = (10..30).random()
-                            secondNumber = (5..15).random()
-                        }
-                    }
-                    correctAnswer = firstNumber * secondNumber
-                }
-                
-                // Bu sorunun daha önce sorulup sorulmadığını kontrol et
-                isNewQuestion = !questionTracker.isOperationAsked(firstNumber, secondNumber, "×")
-                
-                // Sayıların yer değiştirdiği durumu da kontrol et (örn. 5×3 ile 3×5 aynı sorudur)
-                if (isNewQuestion && firstNumber != secondNumber) {
-                    isNewQuestion = !questionTracker.isOperationAsked(secondNumber, firstNumber, "×")
-                }
-                
-                retryCount++
-            }
-            
-            // Maksimum deneme sayısına ulaşıldıysa, soru sayısını arttırma ve yeni bir soru üretme
-            if (retryCount >= MAX_RETRY_COUNT) {
-                Log.w("MultiplicationGameActivity", "Maksimum deneme sayısına ulaşıldı, benzersiz soru bulunamadı")
-                // Deneme sayısına ulaşılsa bile bu soruyu kaydediyoruz ki tekrar denemeyelim
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "×")
-            }
-            
-            // Cevap seçeneklerini oluştur
-            generateAnswerOptions()
-            
-            // Cevap durumunu sıfırla
-            answerFeedbackState = AnswerFeedbackState.IDLE
-            lastSelectedOption = ""
-            
-            // Soru sayısını artır
-            questionCount++
-            
-        } catch (e: Exception) {
-            Log.e("MultiplicationGameActivity", "Soru oluşturulurken hata: ${e.message}")
-            e.printStackTrace()
-            
-            // Basit bir soru oluşturarak devam et
-            try {
-                firstNumber = (2..5).random()
-                secondNumber = (2..5).random()
-                correctAnswer = firstNumber * secondNumber
-                
-                // Tracker'a ekle
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "×")
-                
-                // Basit cevap seçenekleri
-                options = listOf(
-                    correctAnswer.toString(),
-                    (correctAnswer + 1).toString(),
-                    (correctAnswer + 2).toString(),
-                    (correctAnswer - 1).toString()
-                ).shuffled()
-                
-                // Cevap durumunu sıfırla
-                answerFeedbackState = AnswerFeedbackState.IDLE
-                lastSelectedOption = ""
-                
-                // Soru sayısını artır
-                questionCount++
-            } catch (e: Exception) {
-                // Bu noktada bile başarısız olursa, oyunu sonlandır
-                Log.e("MultiplicationGameActivity", "Basit soru oluşturulurken de hata: ${e.message}")
-                e.printStackTrace()
-                handleGameEnd()
-            }
+        if(questionCount>=maxQuestions){handleGameEnd();return}
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.MULTIPLY)){
+            handleGameEnd()
+            return
         }
+        val q=GradeAwareOperationPolicy.generate(
+            grade,OperationKind.MULTIPLY,selectedDifficulty
+        )
+        firstNumber=q.first
+        secondNumber=q.second
+        correctAnswer=q.answer
+        options=GradeAwareOperationPolicy.options(q)
+        questionTracker.isOperationAsked(firstNumber,secondNumber,"×")
+        answerFeedbackState=AnswerFeedbackState.IDLE
+        lastSelectedOption=""
+        questionCount++
     }
     
     /**

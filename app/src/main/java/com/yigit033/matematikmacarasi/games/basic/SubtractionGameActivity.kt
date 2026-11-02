@@ -116,6 +116,18 @@ class SubtractionGameActivity : BaseGameActivity() {
     
     @Composable
     override fun GameContent() {
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.SUBTRACT)){
+            OperationGradeLockedScreen(
+                grade=grade,
+                operation=OperationKind.SUBTRACT,
+                onBack={finish()}
+            )
+            return
+        }
         // Compose'ta try-catch kullanılamaz, ancak hata durumları için logic ekleyebiliriz
         when {
             showGameSummary -> {
@@ -393,183 +405,26 @@ class SubtractionGameActivity : BaseGameActivity() {
     }
     
     override fun generateQuestion() {
-        try {
-            // Eğer tüm sorular tamamlandıysa, oyunu sonlandır
-            if (questionCount >= maxQuestions) {
-                handleGameEnd()
-                return
-            }
-            
-            // Soru oluşturma ve kontrol için değişkenler
-            var isNewQuestion = false
-            var retryCount = 0
-            
-            // Benzersiz bir soru bulana kadar veya maksimum deneme sayısına ulaşana kadar devam et
-            while (!isNewQuestion && retryCount < MAX_RETRY_COUNT) {
-                // Zorluk seviyesine göre sayı aralıklarını belirle
-                when (currentLevel) {
-                    1 -> { // Kolay - Anasınıfı ve 1. Sınıf (5-7 yaş)
-                        // Küçük sayılarla basit çıkarma işlemleri, negatif sonuç yok
-                        firstNumber = (2..10).random()
-                        secondNumber = (1 until firstNumber).random() // Sonuç negatif olmasın
-                    }
-                    2 -> { // Orta - 2-3. Sınıf (7-9 yaş)
-                        // Tek basamaklı sayılarla çıkarma
-                        if (Math.random() < 0.7) { // %70 ihtimalle standart çıkarma
-                            firstNumber = (5..20).random()
-                            secondNumber = (1 until firstNumber).random() // Sonuç negatif olmasın
-                        } else { // %30 ihtimalle 10'dan çıkarma
-                            firstNumber = 10
-                            secondNumber = (1..9).random()
-                        }
-                    }
-                    3 -> { // Zor - 4-5. Sınıf (9-11 yaş)
-                        // İki basamaklı sayılarla çıkarma
-                        if (Math.random() < 0.7) { // %70 ihtimalle eldesiz çıkarma
-                            val firstOnes = (1..9).random()
-                            val firstTens = (1..9).random()
-                            firstNumber = firstTens * 10 + firstOnes
-                            
-                            val secondOnes = (0 until firstOnes).random() // Eldesiz olması için
-                            val secondTens = (0 until firstTens).random()
-                            secondNumber = secondTens * 10 + secondOnes
-                        } else { // %30 ihtimalle genel çıkarma
-                            firstNumber = (20..99).random()
-                            secondNumber = (1 until firstNumber).random() // Sonuç negatif olmasın
-                        }
-                    }
-                    4 -> { // Çok Zor - 6-7. Sınıf (11-13 yaş)
-                        // Daha büyük sayılarla çıkarma, eldeli çıkarma
-                        if (Math.random() < 0.5) { // %50 ihtimalle eldeli çıkarma
-                            // Eldeli çıkarmada, birler basamağında çıkarma yapılamayacak durum oluştur
-                            val firstTens = (1..9).random()
-                            val firstOnes = (0..8).random() // 0-8 arası birler basamağı
-                            firstNumber = firstTens * 10 + firstOnes
-                            
-                            // Birler basamağı daha büyük olan sayı seç - elde gerektirecek
-                            val secondOnes = (firstOnes+1..9).random() // Birler basamağı büyük
-                            
-                            // Onlar basamağını sınırlandır ki sonuç negatif olmasın
-                            val maxTensDigit = if (firstTens > 0) firstTens - 1 else 0
-                            val newTensDigit = (0..maxTensDigit).random()
-                            
-                            secondNumber = newTensDigit * 10 + secondOnes
-                        } else { // %50 ihtimalle daha genel çıkarma
-                            firstNumber = (30..99).random()
-                            secondNumber = (1 until firstNumber).random() // Sonuç negatif olmasın
-                        }
-                    }
-                    else -> { // Uzman - 8. Sınıf ve üstü (13+ yaş)
-                        // Daha karmaşık çıkarma işlemleri, üç basamaklı sayılar
-                        if (Math.random() < 0.6) { // %60 ihtimalle karmaşık eldeli çıkarma
-                            // Onlar basamağı 0 olan sayı üret (örn. 304 gibi)
-                            if (Math.random() < 0.5) {
-                                val firstHundreds = (1..9).random()
-                                val firstOnes = (0..8).random()
-                                firstNumber = firstHundreds * 100 + firstOnes
-                                
-                                // İkinci sayıda birler basamağı daha büyük - elde gerektirecek
-                                val secondOnes = (firstOnes+1..9).random()
-                                
-                                // Yüzler basamağı daha küçük olsun ki toplam küçük olsun
-                                val secondHundreds = (0 until firstHundreds).random()
-                                
-                                // İkinci sayıyı oluştur
-                                val newTensDigit = (0..9).random() // Onlar basamağını da ekleyelim
-                                
-                                secondNumber = secondHundreds * 100 + newTensDigit * 10 + secondOnes
-                            } else {
-                                // Birler ve onlar basamağında eldeli çıkarma
-                                val firstHundreds = (1..9).random()
-                                val firstTens = (0..8).random()
-                                val firstOnes = (0..8).random()
-                                firstNumber = firstHundreds * 100 + firstTens * 10 + firstOnes
-                                
-                                // İkinci sayıda hem onlar hem birler basamağı daha büyük
-                                val secondOnes = (firstOnes+1..9).random()
-                                val secondTens = (firstTens+1..9).random()
-                                
-                                // Yüzler basamağı daha küçük olsun ki toplam küçük olsun
-                                val secondHundreds = (0 until firstHundreds).random()
-                                secondNumber = secondHundreds * 100 + secondTens * 10 + secondOnes
-                            }
-                        } else if (Math.random() < 0.5) {
-                            // Tensdigit=0 olan sayılarla çıkarma (örn. 502-378)
-                            val firstHundreds = (1..9).random()
-                            val firstOnes = (0..9).random()
-                            firstNumber = firstHundreds * 100 + firstOnes
-                            
-                            // İkinci sayıda birler ve onlar basamağı var olsun
-                            val secondHundreds = (0 until firstHundreds).random()
-                            val secondTens = (1..9).random() // Onlar basamağı 0 değil
-                            
-                            // Tensdigit=1 ise eldeli çıkarma yerine normal çıkarma yap
-                            secondNumber = (1 until firstNumber).random()
-                        } else { // %40 ihtimalle üç basamaklı çıkarma
-                            firstNumber = (100..200).random()
-                            secondNumber = (10..firstNumber-1).random()
-                        }
-                    }
-                }
-                
-                correctAnswer = firstNumber - secondNumber
-                
-                // Bu sorunun daha önce sorulup sorulmadığını kontrol et
-                isNewQuestion = !questionTracker.isOperationAsked(firstNumber, secondNumber, "-")
-                
-                retryCount++
-            }
-            
-            // Maksimum deneme sayısına ulaşıldıysa, soru sayısını arttırma ve yeni bir soru üretme
-            if (retryCount >= MAX_RETRY_COUNT) {
-                Log.w("SubtractionGameActivity", "Maksimum deneme sayısına ulaşıldı, benzersiz soru bulunamadı")
-                // Deneme sayısına ulaşılsa bile bu soruyu kaydediyoruz ki tekrar denemeyelim
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "-")
-            }
-            
-            // Cevap seçeneklerini oluştur
-            generateAnswerOptions()
-            
-            // Cevap durumunu sıfırla
-            answerFeedbackState = AnswerFeedbackState.IDLE
-            lastSelectedOption = ""
-            
-            // Soru sayısını artır
-            questionCount++
-        } catch (e: Exception) {
-            Log.e("SubtractionGameActivity", "Soru oluşturulurken hata: ${e.message}")
-            e.printStackTrace()
-            
-            // Basit bir soru oluşturarak devam et
-            try {
-                firstNumber = (5..10).random()
-                secondNumber = (1..4).random()
-                correctAnswer = firstNumber - secondNumber
-                
-                // Tracker'a ekle
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "-")
-                
-                // Basit cevap seçenekleri
-                options = listOf(
-                    correctAnswer.toString(),
-                    (correctAnswer + 1).toString(),
-                    (correctAnswer + 2).toString(),
-                    (correctAnswer - 1).toString()
-                ).shuffled()
-                
-                // Cevap durumunu sıfırla
-                answerFeedbackState = AnswerFeedbackState.IDLE
-                lastSelectedOption = ""
-                
-                // Soru sayısını artır
-                questionCount++
-            } catch (e: Exception) {
-                // Bu noktada bile başarısız olursa, oyunu sonlandır
-                Log.e("SubtractionGameActivity", "Basit soru oluşturulurken de hata: ${e.message}")
-                e.printStackTrace()
-                handleGameEnd()
-            }
+        if(questionCount>=maxQuestions){handleGameEnd();return}
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.SUBTRACT)){
+            handleGameEnd()
+            return
         }
+        val q=GradeAwareOperationPolicy.generate(
+            grade,OperationKind.SUBTRACT,selectedDifficulty
+        )
+        firstNumber=q.first
+        secondNumber=q.second
+        correctAnswer=q.answer
+        options=GradeAwareOperationPolicy.options(q)
+        questionTracker.isOperationAsked(firstNumber,secondNumber,"-")
+        answerFeedbackState=AnswerFeedbackState.IDLE
+        lastSelectedOption=""
+        questionCount++
     }
     
     /**

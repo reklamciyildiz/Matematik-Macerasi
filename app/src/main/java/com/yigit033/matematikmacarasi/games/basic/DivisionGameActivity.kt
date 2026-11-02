@@ -102,6 +102,18 @@ class DivisionGameActivity : BaseGameActivity() {
     
     @Composable
     override fun GameContent() {
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.DIVIDE)){
+            OperationGradeLockedScreen(
+                grade=grade,
+                operation=OperationKind.DIVIDE,
+                onBack={finish()}
+            )
+            return
+        }
         // Compose'ta try-catch kullanılamaz, ancak hata durumları için logic ekleyebiliriz
         when {
             showGameSummary -> {
@@ -384,233 +396,26 @@ class DivisionGameActivity : BaseGameActivity() {
     }
     
     override fun generateQuestion() {
-        try {
-            // Eğer tüm sorular tamamlandıysa, oyunu sonlandır
-            if (questionCount >= maxQuestions) {
-                handleGameEnd()
-                return
-            }
-            
-            // Soru oluşturma ve kontrol için değişkenler
-            var isNewQuestion = false
-            var retryCount = 0
-            
-            // Benzersiz bir soru bulana kadar veya maksimum deneme sayısına ulaşana kadar devam et
-            while (!isNewQuestion && retryCount < MAX_RETRY_COUNT) {
-                // Zorluk seviyesine göre sayı aralıklarını belirle
-                when (currentLevel) {
-                    1 -> { // Seviye 1 (6-7 yaş / 1-2. Sınıf)
-                        // Çok temel bölme işlemleri (bölüm 1-5 arası)
-                        secondNumber = (2..5).random() // Bölen
-                        correctAnswer = (1..3).random() // Bölüm
-                        
-                        // Bölünen = bölüm * bölen (tam bölünme)
-                        firstNumber = correctAnswer * secondNumber
-                    }
-                    2 -> { // Seviye 2 (7-9 yaş / 2-3. Sınıf)
-                        // Temel bölme işlemleri (çarpım tablosu ile ilişkilendirme)
-                        secondNumber = (2..10).random() // Bölen
-                        correctAnswer = (2..5).random() // Bölüm
-                        
-                        // Bölünen = bölüm * bölen (tam bölünme)
-                        firstNumber = correctAnswer * secondNumber
-                        
-                        // 2, 5 ve 10 için özel vurgu
-                        if (Math.random() < 0.3) {
-                            secondNumber = listOf(2, 5, 10).random() // Kolay bölenler
-                            correctAnswer = (1..10).random()
-                            firstNumber = correctAnswer * secondNumber // Tam bölünen
-                        }
-                    }
-                    3 -> { // Seviye 3 (9-10 yaş / 3-4. Sınıf)
-                        // Daha kapsamlı bölme işlemleri
-                        secondNumber = (2..12).random() // Bölen 
-                        correctAnswer = (2..10).random() // Bölüm
-                        
-                        // %70 ihtimalle kalansız, %30 ihtimalle kalanlı bölme
-                        if (Math.random() < 0.7) {
-                            // Bölünen = bölüm * bölen (tam bölünme)
-                            firstNumber = correctAnswer * secondNumber
-                        } else {
-                            // Bölünen = bölüm * bölen + kalan (kalanlı bölme, kalan gösterilmez)
-                            val remainder = (1 until secondNumber).random()
-                            firstNumber = (correctAnswer * secondNumber) + remainder
-                        }
-                    }
-                    4 -> { // Seviye 4 (10-12 yaş / 4-6. Sınıf)
-                        // Daha zor bölme işlemleri, iki basamaklı bölünenler
-                        secondNumber = (2..12).random() // Bölen
-                        correctAnswer = (3..12).random() // Bölüm
-                        
-                        // %60 ihtimalle kalansız, %40 ihtimalle kalanlı bölme
-                        if (Math.random() < 0.6) {
-                            // Bölünen = bölüm * bölen (tam bölünme)
-                            firstNumber = correctAnswer * secondNumber
-                        } else {
-                            // Bölünen = bölüm * bölen + kalan (kalanlı bölme, kalan gösterilmez)
-                            val remainder = (1 until secondNumber).random()
-                            firstNumber = (correctAnswer * secondNumber) + remainder
-                        }
-                        
-                        // 10'un katlarının bölünmesi vurgulansın
-                        if (Math.random() < 0.3) {
-                            firstNumber = ((firstNumber / 10) * 10) // En yakın 10'un katına yuvarla
-                            if (firstNumber < 30) firstNumber = 30
-                            if (firstNumber > 99) firstNumber = 90
-                            
-                            // Yeniden hesapla
-                            correctAnswer = firstNumber / secondNumber
-                            // Bölünen = bölüm * bölen olsun (kalansız)
-                            firstNumber = correctAnswer * secondNumber
-                        }
-                        
-                        // Bölünenin 30-99 arasında olduğundan emin ol
-                        if (firstNumber < 30) {
-                            correctAnswer = 8
-                            firstNumber = correctAnswer * secondNumber
-                        } else if (firstNumber > 99) {
-                            // Sınırlandır
-                            correctAnswer = 7
-                            firstNumber = correctAnswer * secondNumber
-                        }
-                    }
-                    5 -> { // Seviye 5 (12-14 yaş / 6-8. Sınıf)
-                        // Kapsamlı bölme işlemleri - aşamalı zorluk
-                        val progressPercentage = (questionCount.toFloat() / maxQuestions.toFloat()) * 100
-                        
-                        when {
-                            progressPercentage < 20 -> {
-                                // Aşama 1 (İlk %20 soru): Orta zorlukta bölmeler
-                                secondNumber = (5..15).random() // Bölen
-                                correctAnswer = (4..10).random() // Bölüm
-                                
-                                // %50 kalansız, %50 kalanlı işlemler
-                                if (Math.random() < 0.5) {
-                                    // Kalansız
-                                    firstNumber = correctAnswer * secondNumber // Bölünen (50-100 arası)
-                                } else {
-                                    // Kalanlı
-                                    val remainder = (1..(secondNumber-1)).random() // Kalan
-                                    firstNumber = (correctAnswer * secondNumber) + remainder // Bölünen + kalan
-                                }
-                                
-                                // Bölünenin 50-100 arasında olduğundan emin ol
-                                if (firstNumber < 50) {
-                                    correctAnswer = 10
-                                    firstNumber = correctAnswer * secondNumber
-                                } else if (firstNumber > 100) {
-                                    correctAnswer = 6
-                                    firstNumber = correctAnswer * secondNumber
-                                }
-                            }
-                            progressPercentage < 60 -> {
-                                // Aşama 2 (Sonraki %40 soru): Daha zor bölmeler
-                                secondNumber = (8..25).random() // Bölen
-                                correctAnswer = (5..10).random() // Bölüm
-                                
-                                // %50 kalansız, %50 kalanlı işlemler
-                                if (Math.random() < 0.5) {
-                                    // Kalansız
-                                    firstNumber = correctAnswer * secondNumber // Bölünen (80-150 arası)
-                                } else {
-                                    // Kalanlı
-                                    val remainder = (1..(secondNumber/2)).random() // Kalan (bölenin yarısına kadar)
-                                    firstNumber = (correctAnswer * secondNumber) + remainder // Bölünen + kalan
-                                }
-                                
-                                // Bölünenin 80-150 arasında olduğundan emin ol
-                                if (firstNumber < 80) {
-                                    correctAnswer = 10
-                                    firstNumber = correctAnswer * secondNumber
-                                } else if (firstNumber > 150) {
-                                    correctAnswer = 6
-                                    firstNumber = correctAnswer * secondNumber
-                                }
-                            }
-                            else -> {
-                                // Aşama 3 (Son %40 soru): En zor bölmeler
-                                secondNumber = (10..30).random() // Bölen
-                                correctAnswer = (6..12).random() // Bölüm
-                                
-                                // %50 kalansız, %50 kalanlı işlemler
-                                if (Math.random() < 0.5) {
-                                    // Kalansız
-                                    firstNumber = correctAnswer * secondNumber // Bölünen (100-200 arası)
-                                } else {
-                                    // Kalanlı
-                                    val remainder = (1..(secondNumber/2)).random() // Kalan (bölenin yarısına kadar)
-                                    firstNumber = (correctAnswer * secondNumber) + remainder // Bölünen + kalan
-                                }
-                                
-                                // Bölünenin 100-200 arasında olduğundan emin ol
-                                if (firstNumber < 100) {
-                                    correctAnswer = 10
-                                    firstNumber = correctAnswer * secondNumber
-                                } else if (firstNumber > 200) {
-                                    correctAnswer = 6
-                                    firstNumber = correctAnswer * secondNumber
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Bu sorunun daha önce sorulup sorulmadığını kontrol et
-                isNewQuestion = !questionTracker.isOperationAsked(firstNumber, secondNumber, "÷")
-                
-                retryCount++
-            }
-            
-            // Maksimum deneme sayısına ulaşıldıysa, soru sayısını arttırma ve yeni bir soru üretme
-            if (retryCount >= MAX_RETRY_COUNT) {
-                Log.w("DivisionGameActivity", "Maksimum deneme sayısına ulaşıldı, benzersiz soru bulunamadı")
-                // Deneme sayısına ulaşılsa bile bu soruyu kaydediyoruz ki tekrar denemeyelim
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "÷")
-            }
-            
-            // Cevap seçeneklerini oluştur
-            generateAnswerOptions()
-            
-            // Cevap durumunu sıfırla
-            answerFeedbackState = AnswerFeedbackState.IDLE
-            lastSelectedOption = ""
-            
-            // Soru sayısını artır
-            questionCount++
-        } catch (e: Exception) {
-            Log.e("DivisionGameActivity", "Soru oluşturulurken hata: ${e.message}")
-            e.printStackTrace()
-            
-            // Basit bir soru oluşturarak devam et
-            try {
-                correctAnswer = 2 // Bölüm
-                secondNumber = 2 // Bölen
-                firstNumber = 4 // Bölünen
-                
-                // Tracker'a ekle
-                questionTracker.isOperationAsked(firstNumber, secondNumber, "÷")
-                
-                // Basit cevap seçenekleri
-                options = listOf(
-                    correctAnswer.toString(),
-                    (correctAnswer + 1).toString(),
-                    (correctAnswer + 2).toString(),
-                    (correctAnswer - 1).toString()
-                ).shuffled()
-                
-                // Cevap durumunu sıfırla
-                answerFeedbackState = AnswerFeedbackState.IDLE
-                lastSelectedOption = ""
-                
-                // Soru sayısını artır
-                questionCount++
-            } catch (e: Exception) {
-                // Bu noktada bile başarısız olursa, oyunu sonlandır
-                Log.e("DivisionGameActivity", "Basit soru oluşturulurken de hata: ${e.message}")
-                e.printStackTrace()
-                handleGameEnd()
-            }
+        if(questionCount>=maxQuestions){handleGameEnd();return}
+        val grade=GradeAwareOperationPolicy.grade(
+            com.yigit033.matematikmacarasi.services.PlayerProfileService
+                .getInstance(this).getUserClass()
+        )
+        if(!GradeAwareOperationPolicy.allowed(grade,OperationKind.DIVIDE)){
+            handleGameEnd()
+            return
         }
+        val q=GradeAwareOperationPolicy.generate(
+            grade,OperationKind.DIVIDE,selectedDifficulty
+        )
+        firstNumber=q.first
+        secondNumber=q.second
+        correctAnswer=q.answer
+        options=GradeAwareOperationPolicy.options(q)
+        questionTracker.isOperationAsked(firstNumber,secondNumber,"÷")
+        answerFeedbackState=AnswerFeedbackState.IDLE
+        lastSelectedOption=""
+        questionCount++
     }
     
     /**

@@ -111,7 +111,10 @@ class SpaceMathAdventureActivity:ComponentActivity() {
         else if(next.errors>before.errors)runCatching {
             audio.playWrongSound()
         }.onFailure {Log.w(TAG,"Wrong SFX unavailable",it)}
-        if(next.completed && !before.completed)deliver(next)
+        if(next.completed && !before.completed) {
+            audio.playVictorySound()
+            deliver(next)
+        }
     }
     /** Preserve legacy first five reward keys and their existing best values. */
     private fun rewardKey(planet:SpacePlanet):String =

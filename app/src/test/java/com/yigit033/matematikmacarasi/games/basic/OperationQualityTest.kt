@@ -99,4 +99,25 @@ class OperationQualityTest {
         assertEquals(4, values.toSet().size)
         assertTrue(values.any { it != 56 && kotlin.math.abs(it - 56) >= 7 })
     }
+
+    @Test fun supportTierRespondsToErrorsWithoutChangingSelectedLevel() {
+        val practice = OperationPracticeState()
+        val chosen = DifficultyLevel.HARD
+        assertEquals(chosen, practice.effectiveDifficulty(chosen))
+        practice.record(false)
+        assertEquals(chosen, practice.effectiveDifficulty(chosen))
+        practice.record(false)
+        assertEquals(DifficultyLevel.MEDIUM, practice.effectiveDifficulty(chosen))
+        practice.record(true)
+        assertEquals(DifficultyLevel.MEDIUM, practice.effectiveDifficulty(chosen))
+        practice.record(true)
+        assertEquals(chosen, practice.effectiveDifficulty(chosen))
+        practice.record(false)
+        practice.record(false)
+        assertEquals(DifficultyLevel.EASY,
+            practice.effectiveDifficulty(DifficultyLevel.EASY))
+        practice.reset()
+        assertEquals(chosen, practice.effectiveDifficulty(chosen))
+    }
+
 }

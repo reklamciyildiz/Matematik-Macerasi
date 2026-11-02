@@ -5,146 +5,94 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SpaceExpeditionEngineTest {
-    @Test fun allPlanetsAndTiersHaveDeterministicSolvableMissions() {
-        for(planet in SpacePlanet.entries)
+    @Test fun everyGradeTierWorldCompletesFifteenShotsWithoutIntermediateButtons() {
+        for(grade in 1..4)for(world in SpacePlanet.entries)
             for(tier in LearningTier.entries)
-                for(seed in 1L..60L){
-                    var run=SpaceExpeditionEngine.begin(seed,planet,tier)
-                    repeat(3) {sector->
+                for(seed in 1L..35L) {
+                    var run=SpaceExpeditionEngine.begin(seed,world,tier,grade)
+                    assertTrue(SpaceExpeditionEngine.valid(run))
+                    repeat(SpaceExpeditionEngine.STAGES) {index->
+                        val question=SpaceExpeditionEngine.puzzle(run)
+                        assertEquals(question,
+                            SpaceExpeditionEngine.puzzle(seed,world,tier,index,grade))
+                        assertEquals(3,question.crystals.size)
+                        assertEquals(3,question.crystals.distinct().size)
+                        assertTrue(question.crystals.contains(question.answer))
+                        assertTrue(question.explanation.isNotBlank())
+                        assertTrue(question.hint.isNotBlank())
+                        run=SpaceExpeditionEngine.fireAt(run,question.answer)
+                        assertEquals(index+1,run.stage)
+                        assertEquals(index+1,run.firstTry)
                         assertTrue(SpaceExpeditionEngine.valid(run))
-                        val base=sector*3
-                        val flight=SpaceExpeditionEngine.puzzle(run)
-                        assertEquals(flight,SpaceExpeditionEngine.puzzle(seed,planet,tier,base))
-                        assertEquals(3,flight.crystals.size)
-                        assertEquals(3,flight.crystals.distinct().size)
-                        assertTrue(flight.crystals.contains(flight.answer))
-                        val lane=flight.crystals.indexOf(flight.answer)
-                        run=SpaceExpeditionEngine.intercept(
-                            SpaceExpeditionEngine.steer(run,lane))
-                        assertTrue(run.solved)
-                        run=SpaceExpeditionEngine.next(run)
-                        assertEquals(base+1,run.stage)
-                        val reactor=SpaceExpeditionEngine.puzzle(run)
-                        while(run.charge+5<=reactor.answer)
-                            run=SpaceExpeditionEngine.adjustFuel(run,5)
-                        while(run.charge<reactor.answer)
-                            run=SpaceExpeditionEngine.adjustFuel(run,1)
-                        run=SpaceExpeditionEngine.ignite(run)
-                        assertTrue(run.solved)
-                        run=SpaceExpeditionEngine.next(run)
-                        assertEquals(base+2,run.stage)
-                        val circuit=SpaceExpeditionEngine.puzzle(run)
-                        assertEquals(3,circuit.sequence.size)
-                        assertEquals(4,circuit.nodes.distinct().size)
-                        circuit.sequence.forEach {node->
-                            run=SpaceExpeditionEngine.connect(run,node)
-                            assertTrue(SpaceExpeditionEngine.valid(run))
-                        }
-                        assertTrue(run.solved)
-                        run=SpaceExpeditionEngine.next(run)
-                        assertEquals((sector+1)*3,run.stage)
                     }
                     assertTrue(run.completed)
-                    assertEquals(9,run.firstTry)
+                    assertEquals(15,run.attempts)
+                    assertEquals(15,run.combo)
+                    assertEquals(15,run.bestCombo)
                     assertEquals(3,SpaceExpeditionEngine.stars(run))
-                    assertTrue(SpaceExpeditionEngine.valid(run))
-                    assertEquals(run,SpaceExpeditionEngine.next(run))
+                    assertEquals(run,SpaceExpeditionEngine.fireAt(run,1000))
                 }
     }
-
-    @Test fun wrongFlightSelectionCostsShieldsAndRetryKeepsSameMath() {
-        var run=SpaceExpeditionEngine.begin(
-            456L,SpacePlanet.TERRA,LearningTier.GELISEN)
-        val q=SpaceExpeditionEngine.puzzle(run)
-        val wrong=q.crystals.indexOfFirst{it!=q.answer}
-        run=SpaceExpeditionEngine.steer(run,wrong)
-        run=SpaceExpeditionEngine.intercept(run)
-        assertEquals(1,run.wave)
+    @Test fun gradeIsHardOperationCeilingEvenAtUstalik() {
+        for(grade in 1..4)for(tier in LearningTier.entries)
+            for(world in SpacePlanet.entries)
+                for(seed in 1L..35L)for(stage in 0 until SpaceExpeditionEngine.STAGES){
+                    val question=SpaceExpeditionEngine.puzzle(seed,world,tier,stage,grade)
+                    if(grade<=2) {
+                        assertFalse(question.expression.contains("×"))
+                        assertFalse(question.expression.contains("÷"))
+                    }
+                    if(grade==1)assertTrue(question.answer<=20)
+                    if(grade==2)assertTrue(question.answer<=100)
+                    assertTrue(question.answer>=0)
+                }
+    }
+    @Test fun eachShotPenalizesOnceAndWrongAnswerCannotSkipQuestion() {
+        var run=SpaceExpeditionEngine.begin(92L,SpacePlanet.LUNA,LearningTier.TEMEL,1)
+        val question=SpaceExpeditionEngine.puzzle(run)
+        val wrong=question.crystals.first{it!=question.answer}
+        assertEquals(run,SpaceExpeditionEngine.fireAt(run,Int.MAX_VALUE))
+        run=SpaceExpeditionEngine.fireAt(run,wrong)
+        assertEquals(0,run.stage)
         assertEquals(1,run.errors)
         assertEquals(1,run.attempts)
-        assertEquals(0,run.stage)
+        assertEquals(0,run.combo)
         assertEquals(2,run.shields)
-        assertEquals(q,SpaceExpeditionEngine.puzzle(run))
         assertTrue(run.tainted)
-        assertTrue(SpaceExpeditionEngine.valid(run))
-        run=SpaceExpeditionEngine.steer(run,q.crystals.indexOf(q.answer))
-        run=SpaceExpeditionEngine.intercept(run)
-        assertTrue(run.solved)
-        assertEquals(0,run.firstTry)
-        assertEquals(2,run.attempts) // one missed wave, then successful catch
-        assertEquals(1,run.errors)
-        assertEquals(run,SpaceExpeditionEngine.intercept(run))
-        assertTrue(SpaceExpeditionEngine.valid(run))
+        val correct=SpaceExpeditionEngine.fireAt(run,question.answer)
+        assertEquals(1,correct.stage)
+        assertEquals(0,correct.firstTry)
+        assertEquals(2,correct.attempts)
+        assertEquals(1,correct.combo)
+        assertFalse(correct.tainted)
+        assertTrue(SpaceExpeditionEngine.valid(correct))
     }
-    @Test fun reactorCannotBeSolvedBySkippingOrOvercharging() {
-        val start=SpaceExpeditionEngine.begin(
-            893L,SpacePlanet.PYRA,LearningTier.TEMEL)
-        var run=SpaceExpeditionEngine.steer(
-            start,SpaceExpeditionEngine.puzzle(start).crystals.indexOf(
-                SpaceExpeditionEngine.puzzle(start).answer))
-        run=SpaceExpeditionEngine.next(SpaceExpeditionEngine.intercept(run))
-        assertEquals(1,run.stage)
-        val target=SpaceExpeditionEngine.puzzle(run).answer
-        val empty=SpaceExpeditionEngine.ignite(run)
-        assertEquals(1,empty.errors)
-        assertEquals(2,empty.attempts)
-        run=empty
-        run=SpaceExpeditionEngine.adjustFuel(run,10000)
-        assertEquals(target+10,run.charge)
-        run=SpaceExpeditionEngine.adjustFuel(run,-10000)
-        assertEquals(0,run.charge)
-        run=SpaceExpeditionEngine.adjustFuel(run,target)
-        assertEquals(target,run.charge)
-        val solved=SpaceExpeditionEngine.ignite(run)
-        assertEquals(1,solved.stage)
-        assertEquals(0,solved.charge)
-        assertEquals(1,solved.errors)
-        assertEquals(2,solved.attempts-1)
-        assertTrue(SpaceExpeditionEngine.valid(solved))
-    }
-    @Test fun circuitRejectsWrongAndDuplicateNodesWithoutLosingCorrectProgress() {
-        val seed=377L
-        val planet=SpacePlanet.AQUA
-        val tier=LearningTier.TEMEL
-        val run0=SpaceExpeditionEngine.begin(seed,planet,tier)
-        val correctLane=SpaceExpeditionEngine.puzzle(run0).crystals.indexOf(
-            SpaceExpeditionEngine.puzzle(run0).answer)
-        val stage1=SpaceExpeditionEngine.next(
-            SpaceExpeditionEngine.intercept(SpaceExpeditionEngine.steer(run0,correctLane)))
-        val charge=SpaceExpeditionEngine.puzzle(stage1).answer
-        val stage2=SpaceExpeditionEngine.next(
-            SpaceExpeditionEngine.ignite(SpaceExpeditionEngine.adjustFuel(stage1,charge)))
-        val puzzle=SpaceExpeditionEngine.puzzle(stage2)
-        assertTrue(puzzle.sequence.last()>0)
-        var current=SpaceExpeditionEngine.connect(stage2,puzzle.sequence[0])
-        assertEquals(listOf(puzzle.sequence[0]),current.path)
-        assertEquals(current,SpaceExpeditionEngine.connect(current,puzzle.sequence[0]))
-        val wrong=puzzle.nodes.first{it!=puzzle.sequence[1]&&it!=puzzle.sequence[0]}
-        current=SpaceExpeditionEngine.connect(current,wrong)
-        assertEquals(1,current.errors)
-        assertEquals(listOf(puzzle.sequence[0]),current.path)
-        assertTrue(SpaceExpeditionEngine.valid(current))
-        current=SpaceExpeditionEngine.connect(current,puzzle.sequence[1])
-        current=SpaceExpeditionEngine.connect(current,puzzle.sequence[2])
-        assertTrue(current.solved)
-        assertTrue(SpaceExpeditionEngine.valid(current))
-    }
-    @Test fun hintCannotBeFarmedAndInvalidStateCannotAdvance() {
-        var run=SpaceExpeditionEngine.begin(
-            119L,SpacePlanet.NOVA,LearningTier.USTALIK)
-        assertFalse(SpaceExpeditionEngine.valid(run.copy(seed=0)))
-        assertFalse(SpaceExpeditionEngine.valid(run.copy(lane=4)))
-        assertFalse(SpaceExpeditionEngine.valid(run.copy(stage=4)))
-        assertEquals(0,SpaceExpeditionEngine.stars(run))
+    @Test fun hintIsOncePerQuestionAndResetsWhenNewMeteorAppears() {
+        var run=SpaceExpeditionEngine.begin(26L,SpacePlanet.NOVA,LearningTier.USTALIK,2)
         run=SpaceExpeditionEngine.hint(run)
         assertTrue(run.hintVisible)
         assertEquals(run,SpaceExpeditionEngine.hint(run))
-        val right=SpaceExpeditionEngine.puzzle(run).crystals.indexOf(
-            SpaceExpeditionEngine.puzzle(run).answer)
-        run=SpaceExpeditionEngine.intercept(SpaceExpeditionEngine.steer(run,right))
-        assertTrue(run.solved)
+        assertEquals(1,run.hints)
+        run=SpaceExpeditionEngine.fireAt(run,SpaceExpeditionEngine.puzzle(run).answer)
+        assertEquals(1,run.stage)
         assertEquals(0,run.firstTry)
-        assertEquals(run,SpaceExpeditionEngine.hint(run))
+        assertFalse(run.hintVisible)
+        run=SpaceExpeditionEngine.hint(run)
+        assertEquals(2,run.hints)
+        assertTrue(SpaceExpeditionEngine.valid(run))
+    }
+    @Test fun invalidCheckpointsNeverGenerateRewards() {
+        val run=SpaceExpeditionEngine.begin(38L,SpacePlanet.TERRA,LearningTier.TEMEL,1)
         assertEquals(0,SpaceExpeditionEngine.stars(run))
+        assertFalse(SpaceExpeditionEngine.valid(run.copy(seed=0)))
+        assertFalse(SpaceExpeditionEngine.valid(run.copy(grade=8)))
+        assertFalse(SpaceExpeditionEngine.valid(run.copy(stage=16)))
+        assertFalse(SpaceExpeditionEngine.valid(run.copy(completed=true)))
+        assertFalse(SpaceExpeditionEngine.valid(run.copy(attempts=3)))
+        assertFalse(SpaceExpeditionEngine.valid(run.copy(shipX=Float.NaN)))
+        assertEquals(run,SpaceExpeditionEngine.position(run,Float.NaN))
+        val steered=SpaceExpeditionEngine.position(run,.06f)
+        assertEquals(.06f,steered.shipX,.0001f)
+        assertTrue(SpaceExpeditionEngine.valid(steered))
     }
 }

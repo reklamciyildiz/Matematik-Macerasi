@@ -1,7 +1,5 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
-import android.media.AudioAttributes
-import android.media.SoundPool
 import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -93,23 +91,7 @@ fun SpaceCombatArena(
         ImageBitmap.imageResource(context.resources,R.drawable.space_meteor_3_premium),
         ImageBitmap.imageResource(context.resources,R.drawable.space_meteor_4_premium)
     )}
-    val soundPool=remember(context) {
-        SoundPool.Builder().setMaxStreams(3).setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_GAME)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-        ).build()
-    }
-    var shotSoundId by remember(context) {mutableIntStateOf(0)}
-    var soundLoaded by remember(context) {mutableStateOf(false)}
-    DisposableEffect(context,soundPool) {
-        soundPool.setOnLoadCompleteListener {_,id,status->
-            if(id==shotSoundId && status==0)soundLoaded=true
-        }
-        shotSoundId=soundPool.load(context,R.raw.laser_sound,1)
-        onDispose{soundPool.release()}
-    }
+    val audio=remember(context) { AudioService.getInstance(context) }
     var burst by remember(run.seed) {mutableStateOf<SpaceBurst?>(null)}
     var burstId by remember(run.seed) {mutableIntStateOf(0)}
     val burstProgress=remember(run.seed) {Animatable(1f)}
@@ -178,12 +160,7 @@ fun SpaceCombatArena(
         lastShotAt=now
         val before=frame.lasers.size
         frame=SpaceCombatPhysics.fire(frame,shipX)
-        if(frame.lasers.size>before && soundLoaded) {
-            runCatching {
-                if(AudioService.getInstance(context).isSoundEnabled())
-                    soundPool.play(shotSoundId,.25f,.25f,1,0,1f)
-            }
-        }
+        if(frame.lasers.size>before) audio.playLaserSound()
     }
     val planetColor=nebulaColors[run.planet.ordinal]
     val missionHint="🎯 Doğru sonucu vur, yeni meteorlar hemen gelsin"

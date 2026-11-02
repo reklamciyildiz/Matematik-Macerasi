@@ -131,7 +131,7 @@ fun QuickAccessGamesSection(
         ),
         PremiumGameCardItem(
             id = "fractions",
-            title = "Kesir\\nKristalleri",
+            title = "Kesir\nKristalleri",
             imageRes = R.drawable.fraction_crystals_hero,
             bgGradient = listOf(Color(0xFF6D53CC), Color(0xFF1D6EA9)),
             borderColor = Color(0xFFE9D78F),

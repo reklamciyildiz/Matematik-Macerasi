@@ -483,8 +483,13 @@ fun EnhancedMathGameScreen(
         OperationKind.MULTIPLY->Color(0xFF74F1BA)
         OperationKind.DIVIDE->Color(0xFFFFD275)
     }
-    var remainingTime by remember(currentQuestionIndex) {
-        mutableIntStateOf(timeLimit.coerceAtLeast(1))
+    val grade=GradeAwareOperationPolicy.grade(
+        com.yigit033.matematikmacarasi.services.PlayerProfileService
+            .getInstance(androidx.compose.ui.platform.LocalContext.current).getUserClass())
+    val relaxed=grade<=2
+    val timeBudget=maxOf(timeLimit,25)
+    var remainingTime by remember(currentQuestionIndex,relaxed,timeBudget) {
+        mutableIntStateOf(if(relaxed)0 else timeBudget)
     }
     var selected by remember(currentQuestionIndex){mutableStateOf<String?>(null)}
     val correct=feedbackState==AnswerFeedbackState.CORRECT
@@ -492,15 +497,12 @@ fun EnhancedMathGameScreen(
         feedbackState==AnswerFeedbackState.TIMEOUT
     val answered=selected!=null || correct || wrong
     val haptic=LocalHapticFeedback.current
-    val grade=GradeAwareOperationPolicy.grade(
-        com.yigit033.matematikmacarasi.services.PlayerProfileService
-            .getInstance(androidx.compose.ui.platform.LocalContext.current).getUserClass())
-    LaunchedEffect(currentQuestionIndex,timeLimit,selected){
-        while(selected==null && remainingTime>0){
+    LaunchedEffect(currentQuestionIndex,timeBudget,selected,relaxed){
+        while(!relaxed && selected==null && remainingTime>0){
             delay(1000)
             if(selected==null)remainingTime--
         }
-        if(remainingTime==0 && selected==null){
+        if(!relaxed && remainingTime==0 && selected==null){
             selected=""
             onAnswerSelected("")
         }
@@ -564,8 +566,9 @@ fun EnhancedMathGameScreen(
                         totalQuestions.coerceAtLeast(1)},
                     modifier=Modifier.weight(1f).height(8.dp),
                     color=accent,trackColor=Color(0xFF28568D))
-                Text("⏱ $remainingTime",color=if(remainingTime<=5)
-                    Color(0xFFFFCC77) else Color.White,
+                Text(if(relaxed)"∞ Rahat" else "⏱ $remainingTime",
+                    color=if(!relaxed && remainingTime<=5)
+                        Color(0xFFFFCC77) else Color.White,
                     fontSize=13.sp,fontWeight=FontWeight.Bold)
             }
             Surface(shape=RoundedCornerShape(23.dp),

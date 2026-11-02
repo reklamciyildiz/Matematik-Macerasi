@@ -2,7 +2,7 @@ package com.yigit033.matematikmacarasi.learning.adaptive
 
 /** Sınıf bir öneridir; oyun seviyesini veya bir önceki kazanımı kalıcı olarak kilitlemez. */
 enum class LearningTier(val title: String) {
-    TEMEL("Temel"), GELISEN("Gelişen"), USTALIK("Ustalık");
+    TEMEL("Temel"), GELISEN("Orta"), USTALIK("Zor");
     companion object {
         fun fromSaved(value: String?, fallback: LearningTier = GELISEN): LearningTier =
             entries.firstOrNull { it.name == value } ?: fallback

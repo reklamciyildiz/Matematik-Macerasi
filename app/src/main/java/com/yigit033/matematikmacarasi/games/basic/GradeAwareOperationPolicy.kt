@@ -11,8 +11,8 @@ import kotlin.random.Random
 enum class OperationKind(val title: String, val symbol: String, val minGrade: Int) {
     ADD("Toplama", "+", 1),
     SUBTRACT("Çıkarma", "−", 1),
-    MULTIPLY("Çarpma", "×", 3),
-    DIVIDE("Bölme", "÷", 3)
+    MULTIPLY("Çarpma", "×", 2),
+    DIVIDE("Bölme", "÷", 2)
 }
 
 data class GradeQuestion(val first: Int, val second: Int, val answer: Int)
@@ -71,16 +71,32 @@ object GradeAwareOperationPolicy {
                 GradeQuestion(a, b, a - b)
             }
             OperationKind.MULTIPLY -> {
-                val ceiling = factorCeiling(grade, level)
-                val a = random.nextInt(2, ceiling + 1)
-                val b = random.nextInt(2, ceiling + 1)
-                GradeQuestion(a, b, a * b)
+                if (grade == 2) {
+                    // MEB MAT.2.2.4: 1..5 times 1..10; smaller first tiers.
+                    val factor = random.nextInt(1, minOf(5, level + 2) + 1)
+                    val other = random.nextInt(1, (if (level == 0) 6 else 10) + 1)
+                    if (random.nextBoolean())
+                        GradeQuestion(factor, other, factor * other)
+                    else GradeQuestion(other, factor, factor * other)
+                } else {
+                    val ceiling = factorCeiling(grade, level)
+                    val a = random.nextInt(2, ceiling + 1)
+                    val b = random.nextInt(2, ceiling + 1)
+                    GradeQuestion(a, b, a * b)
+                }
             }
             OperationKind.DIVIDE -> {
-                val ceiling = factorCeiling(grade, level)
-                val divisor = random.nextInt(2, ceiling + 1)
-                val quotient = random.nextInt(2, ceiling + 1)
-                GradeQuestion(divisor * quotient, divisor, quotient)
+                if (grade == 2) {
+                    // MEB MAT.2.2.4: exact division of numbers <=20 by 2..5.
+                    val divisor = random.nextInt(2, minOf(5, level + 2) + 1)
+                    val quotient = random.nextInt(1, (20 / divisor) + 1)
+                    GradeQuestion(divisor * quotient, divisor, quotient)
+                } else {
+                    val ceiling = factorCeiling(grade, level)
+                    val divisor = random.nextInt(2, ceiling + 1)
+                    val quotient = random.nextInt(2, ceiling + 1)
+                    GradeQuestion(divisor * quotient, divisor, quotient)
+                }
             }
         }
     }

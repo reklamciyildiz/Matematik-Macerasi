@@ -268,7 +268,13 @@ fun GeometryCastleScreen(
 
     fun persist(next: CastleRun): Boolean {
         if (store.save(next)) { run=next;return true }
-        feedback="İlerleme kaydedilemedi. Yeniden dene."
+        feedback = when (store.lastSaveIssue) {
+            GeometryCastleProgressStore.SaveIssue.INVALID_TRANSITION ->
+                "Bu adım doğrulanamadı. Oyundan çıkıp tekrar girerek kaldığın yeri aç."
+            GeometryCastleProgressStore.SaveIssue.STORAGE_WRITE ->
+                "İlerleme depolamaya yazılamadı. Boş alanı kontrol edip yeniden dene."
+            else -> "İlerleme kaydedilemedi. Yeniden dene."
+        }
         feedbackPositive=false
         return false
     }
@@ -544,9 +550,10 @@ fun GeometryCastleScreen(
                                                 if(task.mode==CastleMode.FIND) submit(
                                                     shape==task.target,shape
                                                 ) else {
-                                                    persist(run.copy(selected=shape))
-                                                    feedback="Taş seçildi. Şimdi üstteki yuvaya dokun."
-                                                    feedbackPositive=true
+                                                    if (persist(run.copy(selected=shape))) {
+                                                        feedback="Taş seçildi. Şimdi üstteki yuvaya dokun."
+                                                        feedbackPositive=true
+                                                    }
                                                 }
                                             })
                                     }

@@ -74,6 +74,7 @@ class AdditionGameActivity : BaseGameActivity() {
     
     // Sorulan soruları takip eden tracker
     private val questionTracker = QuestionTracker()
+    private val askedSessionQuestions = mutableSetOf<String>()
     
     // Maksimum yeniden deneme sayısı
     private val MAX_RETRY_COUNT = 20
@@ -503,13 +504,13 @@ class AdditionGameActivity : BaseGameActivity() {
             handleGameEnd()
             return
         }
-        val q=GradeAwareOperationPolicy.generate(
-            grade,OperationKind.ADD,selectedDifficulty
+        val q=GradeAwareOperationPolicy.generateUnique(
+            grade,OperationKind.ADD,selectedDifficulty,askedSessionQuestions
         )
         firstNumber=q.first
         secondNumber=q.second
         correctAnswer=q.answer
-        options=GradeAwareOperationPolicy.options(q)
+        options=GradeAwareOperationPolicy.options(q,OperationKind.ADD)
         questionTracker.isOperationAsked(firstNumber,secondNumber,"+")
         answerFeedbackState=AnswerFeedbackState.IDLE
         lastSelectedOption=""
@@ -826,6 +827,7 @@ class AdditionGameActivity : BaseGameActivity() {
         try {
             // QuestionTracker'ı sıfırla
             questionTracker.reset()
+        askedSessionQuestions.clear()
             
             // İlk soruyu oluştur
             generateQuestion()

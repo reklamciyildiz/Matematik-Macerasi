@@ -31,7 +31,9 @@ class GradeAwareOperationPolicyTest {
         assertEquals(2,GradeAwareOperationPolicy.grade("2. Sınıf"))
         assertEquals(1,GradeAwareOperationPolicy.grade(""))
         assertEquals(4,GradeAwareOperationPolicy.grade("4. sınıf"))
-        assertFalse(GradeAwareOperationPolicy.allowed(2,OperationKind.DIVIDE))
+        assertFalse(GradeAwareOperationPolicy.allowed(1,OperationKind.DIVIDE))
+        assertTrue(GradeAwareOperationPolicy.allowed(2,OperationKind.DIVIDE))
+        assertTrue(GradeAwareOperationPolicy.allowed(2,OperationKind.MULTIPLY))
         assertTrue(GradeAwareOperationPolicy.allowed(3,OperationKind.DIVIDE))
     }
 }

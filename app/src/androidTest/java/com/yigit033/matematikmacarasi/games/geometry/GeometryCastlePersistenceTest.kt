@@ -17,10 +17,11 @@ class GeometryCastlePersistenceTest {
             val name = "geometry_test_${tier.name}_${System.nanoTime()}"
             val store = GeometryCastleProgressStore(context, name)
             try {
-                var run = store.begin(tier)
-                assertNotNull("Could not start $tier: ${store.lastSaveIssue}", run)
+                val opened = store.begin(tier)
+                assertNotNull("Could not start $tier: ${store.lastSaveIssue}", opened)
+                var run: CastleRun = requireNotNull(opened)
                 for (index in 0 until GeometryCastleEngine.TOTAL_TASKS) {
-                    val task = GeometryCastleEngine.task(run!!)!!
+                    val task = GeometryCastleEngine.task(run)!!
                     when (task.mode) {
                         CastleMode.FIND -> {
                             run = GeometryCastleEngine.answer(run, true).copy(
@@ -52,7 +53,7 @@ class GeometryCastlePersistenceTest {
                     assertTrue("Advance $index ${store.lastSaveIssue}", store.save(run))
                     assertEquals("Persisted advancement differs at $index", run, store.load())
                 }
-                assertTrue(run!!.finished)
+                assertTrue(run.finished)
                 assertEquals(1, run.completedRuns)
             } finally {
                 context.getSharedPreferences(name, Context.MODE_PRIVATE).edit().clear().commit()

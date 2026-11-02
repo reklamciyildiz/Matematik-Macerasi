@@ -1,10 +1,15 @@
 package com.yigit033.matematikmacarasi.games.geometry
 
 import android.content.Context
+import android.util.Log
 import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 
 /** All geometry checkpoints are deliberately isolated from legacy mini-games and billing. */
 class GeometryCastleProgressStore(context: Context) {
+    enum class SaveIssue { NONE, INVALID_TRANSITION, STORAGE_WRITE }
+    @Volatile var lastSaveIssue = SaveIssue.NONE
+        private set
+    private companion object { const val TAG = "GeometryCastleStore" }
     private val prefs = context.applicationContext.getSharedPreferences(
         "geometry_castle_v1", Context.MODE_PRIVATE
     )
@@ -44,7 +49,13 @@ class GeometryCastleProgressStore(context: Context) {
     }
 
     @Synchronized fun save(next: CastleRun): Boolean {
-        if (!GeometryCastleEngine.valid(next)) return false
+        lastSaveIssue = SaveIssue.NONE
+        if (!GeometryCastleEngine.valid(next)) {
+            lastSaveIssue = SaveIssue.INVALID_TRANSITION
+            Log.e(TAG, "Rejected invalid checkpoint: room=${next.room}, step=${next.step}, " +
+                "solved=${next.solved}, placed=${next.placed.size}, version=${next.contentVersion}")
+            return false
+        }
         val previous = load()
         val sameRun = previous.seed > 0 && previous.seed == next.seed
         val previousTaskId = previous.room * 3 + previous.step
@@ -94,7 +105,18 @@ class GeometryCastleProgressStore(context: Context) {
         else editor.putString("focus",next.focusShape.name)
         if(next.selected == null) editor.remove("selected")
         else editor.putString("selected",next.selected.name)
-        return editor.commit()
+        return try {
+            val saved = editor.commit()
+            if (!saved) {
+                lastSaveIssue = SaveIssue.STORAGE_WRITE
+                Log.e(TAG, "SharedPreferences commit returned false; progress unchanged.")
+            }
+            saved
+        } catch (error: RuntimeException) {
+            lastSaveIssue = SaveIssue.STORAGE_WRITE
+            Log.e(TAG, "Cannot persist geometry checkpoint", error)
+            false
+        }
     }
 
     @Synchronized fun begin(tier: LearningTier): CastleRun? {

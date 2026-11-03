@@ -137,7 +137,7 @@ object PatternForestEngine {
             PatternWorld.MOTION->"Totemlerin yön ve boyut hareketini incele."
             PatternWorld.RULES->"Kristalin gizli matematik kuralını aç."
         }
-        val explanation="Kural: "+recipe.rule()+". "+
+        var explanation="Kural: "+recipe.rule()+". "+
             if(recipe.kind==PatternKind.NUMBER)"Ardışık terimler arasındaki farkı kontrol et."
             else "Düzen aynı sırayla yeniden başlar."
         val answer=when(mode) {
@@ -168,10 +168,29 @@ object PatternForestEngine {
                 "$intro Dağılmış üç taşı doğru sıraya diz."
             }
             PatternMechanic.RULE->{
-                ruleChoices=(listOf(recipe.rule())+wrongRules(recipe)).distinct()
-                    .take(4).shuffled(rng)
-                rightRule=ruleChoices.indexOf(recipe.rule())
-                "$intro Bu örüntü hangi kurala uyuyor?"
+                if(recipe.kind==PatternKind.NUMBER && grade>=5 &&
+                    !recipe.alternating) {
+                    // Far-term reasoning rather than yet another basic next-number choice.
+                    val nth=when {grade<=5->10;grade==6->12;else->16}
+                    val term=recipe.at(nth-1).value
+                    val diff=kotlin.math.abs(recipe.step)
+                    val decoys=listOf(term+diff,term-diff,term+2*diff,
+                        term+diff+1,term-2*diff).filter{it>=0 && it!=term}
+                        .distinct().take(3)
+                    ruleChoices=(decoys+term).map{it.toString()}.shuffled(rng)
+                    rightRule=ruleChoices.indexOf(term.toString())
+                    explanation="İlk terim "+recipe.initial+
+                        ", her adımda "+recipe.step+
+                        " değişir. "+nth+". terim = "+
+                        recipe.initial+" + ("+(nth-1)+" × "+recipe.step+
+                        ") = "+term+"."
+                    "$intro "+nth+". sıradaki sayıyı kuralı kullanarak bul."
+                }else{
+                    ruleChoices=(listOf(recipe.rule())+wrongRules(recipe))
+                        .distinct().take(4).shuffled(rng)
+                    rightRule=ruleChoices.indexOf(recipe.rule())
+                    "$intro Bu örüntü hangi kurala uyuyor?"
+                }
             }
             PatternMechanic.SPOT->{
                 corrupt=rng.nextInt(2,prefix-1)

@@ -97,7 +97,9 @@ object PatternForestEngine {
             val decrease=grade>=4 && diff>=1 && random.nextInt(3)==0
             if(decrease)step=-step
             val other=if(decrease)-alt else alt
-            val base=if(decrease)(abs(step)+abs(other))*6+random.nextInt(1,16)
+            val farthest=when {grade>=7->16;grade==6->12;grade==5->10;else->9}
+            val base=if(decrease)(farthest+1)*maxOf(abs(step),abs(other))+
+                random.nextInt(1,16)
                 else if(grade<=2)random.nextInt(1,6)
                 else random.nextInt(1,if(grade<=4)55 else 90)
             return Recipe(kind,emptyList(),base,step,other,alternate)

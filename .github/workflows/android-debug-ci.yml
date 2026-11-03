@@ -91,6 +91,10 @@ jobs:
           kotlin.daemon.jvmargs=-Xmx1024m
           PROPS
 
+      - name: Verify geometry v3, legacy bridge and mobile safe navigation
+        shell: bash
+        run: python3 scripts/check_geometry_v3.py
+
       - name: Validate premium geometry image assets
         shell: bash
         run: python3 scripts/check_geometry_premium_assets.py

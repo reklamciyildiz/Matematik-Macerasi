@@ -72,7 +72,7 @@ class GeometryCastleActivity : ComponentActivity() {
             runCatching {
                 GameStatisticsHelper(this).recordGameCompletion(
                     gameType=GameType.SHAPE_RECOGNITION,
-                    level=3,
+                    level=run.tier.ordinal+1,
                     score=if(run.attempts==0) 0 else
                         ((run.attempts-run.errors)*100/run.attempts),
                     stars=if(run.completedRuns==1 && progress.rewardRecorded()) 1 else 0,

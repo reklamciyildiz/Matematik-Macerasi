@@ -180,32 +180,63 @@ private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Bo
                 }
             )
         } else Modifier
+    val crystalTint = when(shape) {
+        CastleShape.CIRCLE,CastleShape.HEXAGON -> Color(0xFF73ECF4)
+        CastleShape.TRIANGLE,CastleShape.PENTAGON -> Color(0xFFFFCB79)
+        CastleShape.SQUARE,CastleShape.OCTAGON -> Color(0xFFB9A9FF)
+        CastleShape.RECTANGLE,CastleShape.TRAPEZOID -> Color(0xFFFFA5CB)
+        else -> Color(0xFF76EAB8)
+    }
     Surface(
-        modifier = Modifier.fillMaxWidth().heightIn(min = 118.dp)
+        modifier = Modifier.fillMaxWidth().heightIn(min = 132.dp)
             .zIndex(if(dragging)10f else 0f)
             .graphicsLayer {
-                scaleX=if(dragging)1.06f else scale
-                scaleY=if(dragging)1.06f else scale
+                scaleX=if(dragging)1.07f else scale
+                scaleY=if(dragging)1.07f else scale
                 translationX=dragOffset.x
                 translationY=dragOffset.y
             }
             .then(gesture)
             .clickable(enabled=enabled,role=Role.Button,onClick=onClick)
             .semantics { contentDescription = "${shape.display}: dokunarak seç veya uzun basıp yuvaya sürükle" },
-        shape=RoundedCornerShape(18.dp),
-        color=if(active) Color(0xFF397A77) else Color(0xFF245875),
+        shape=RoundedCornerShape(22.dp),
+        color=Color(0xFF194A6F),
         border=androidx.compose.foundation.BorderStroke(
-            if(active) 3.dp else 1.5.dp, if(active) Gold else Mint)
+            if(active) 3.dp else 1.5.dp,
+            if(active) Gold else crystalTint.copy(alpha=.78f))
     ) {
-        Column(
-            Modifier.padding(8.dp),horizontalAlignment=Alignment.CenterHorizontally,
-            verticalArrangement=Arrangement.Center
-        ) {
-            ShapeIcon(shape, if(active) Gold else Color(0xFF70DDEA),
-                Modifier.size(72.dp).graphicsLayer { rotationZ = rotationDegrees })
-            // Names stay available to TalkBack but do not reveal a visual question's answer.
-            Text("Seç", color=Color.White,fontSize=13.sp,
-                fontWeight=FontWeight.Bold)
+        Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(
+            if(active) listOf(Color(0xFF3B8580),Color(0xFF1A596B))
+            else listOf(Color(0xFF2E7194),Color(0xFF123E62))
+        )).padding(horizontal=7.dp,vertical=9.dp),
+            contentAlignment=Alignment.Center) {
+            Column(horizontalAlignment=Alignment.CenterHorizontally,
+                verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                Box(Modifier.size(82.dp).background(
+                    Brush.radialGradient(listOf(
+                        crystalTint.copy(alpha=if(active).33f else .21f),
+                        crystalTint.copy(alpha=.04f)
+                    )),CircleShape),contentAlignment=Alignment.Center) {
+                    ShapeIcon(shape,if(active)Gold else crystalTint,
+                        Modifier.size(72.dp).graphicsLayer {
+                            rotationZ=rotationDegrees
+                        })
+                }
+                // Keep the answer hidden visually; TalkBack still announces the shape.
+                Text(
+                    when {
+                        active && onDrop!=null -> "✓ YUVAYA DOKUN"
+                        active -> "✓ SEÇİLDİ"
+                        onDrop!=null -> "TAŞI SEÇ"
+                        else -> "DOKUN • SEÇ"
+                    },
+                    color=if(active)Gold else Pale,
+                    fontSize=11.sp,fontWeight=FontWeight.ExtraBold,
+                    textAlign=TextAlign.Center,maxLines=2
+                )
+            }
+            Text("✦",color=crystalTint.copy(alpha=.8f),fontSize=12.sp,
+                modifier=Modifier.align(Alignment.TopEnd))
         }
     }
 }

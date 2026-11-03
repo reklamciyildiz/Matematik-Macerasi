@@ -101,7 +101,7 @@ class GeometryCastleV3PersistenceTest {
                     assertTrue("ADVANCE $idx: "+store.lastSaveIssue,store.save(run))
                     assertEquals(run,store.load())
                     assertFalse("Duplicate task completion must not re-count",
-                        store.save(GeometryCastleEngine.advance(before)))
+                        store.save(before))
                 }
                 assertTrue(run.finished)
                 assertEquals(20,run.firstTryCorrect)

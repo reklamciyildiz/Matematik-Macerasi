@@ -564,7 +564,7 @@ class DailyTaskManager(private val context: Context) {
                 if (gameType in usedGameTypes) continue
                 
                 // Oyun türüne göre hedef sayısını belirle 
-                val targetCount = if(gameType==GameType.FRACTION_CRYSTALS || gameType==GameType.TIME_TOWER) 1 else random.nextInt(3) + 1
+                val targetCount = if(gameType==GameType.FRACTION_CRYSTALS || gameType==GameType.TIME_TOWER || gameType==GameType.PATTERN_FOREST) 1 else random.nextInt(3) + 1
                 
                 // Oyun türüne göre görev türü ve açıklaması oluştur
                 val (taskType, description) = when (gameType) {
@@ -615,6 +615,10 @@ class DailyTaskManager(private val context: Context) {
                     GameType.TIME_TOWER -> Pair(
                         DailyTaskType.ANY,
                         "1 Zaman Kulesi macerası tamamla"
+                    )
+                    GameType.PATTERN_FOREST -> Pair(
+                        DailyTaskType.MATCHING,
+                        "1 Örüntü Ormanı macerası tamamla"
                     )
                 }
                 
@@ -1005,6 +1009,7 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
                     GameType.MARKET_SIMULATOR -> Intent(context, com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity::class.java)
                     GameType.FRACTION_CRYSTALS -> Intent(context, com.yigit033.matematikmacarasi.games.fractions.FractionCrystalsActivity::class.java)
                     GameType.TIME_TOWER -> Intent(context, com.yigit033.matematikmacarasi.games.time.TimeTowerActivity::class.java)
+                    GameType.PATTERN_FOREST -> Intent(context, com.yigit033.matematikmacarasi.games.pattern.PatternForestActivity::class.java)
                 }
                 intent.putExtra("daily_task_id", task.id)
                 context.startActivity(intent)
@@ -2011,6 +2016,7 @@ fun TaskItem(
         GameType.MARKET_SIMULATOR -> Pair(Color(0xFF8D6E63), R.drawable.ic_shopping_cart)
         GameType.FRACTION_CRYSTALS -> Pair(Color(0xFF7967DB), R.drawable.ic_matching_task)
         GameType.TIME_TOWER -> Pair(Color(0xFF1B75B0), R.drawable.ic_comparison_task)
+        GameType.PATTERN_FOREST -> Pair(Color(0xFF258E79), R.drawable.ic_matching_task)
     }
     
     Card(

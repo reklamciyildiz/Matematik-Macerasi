@@ -656,6 +656,7 @@ fun DailyTaskItem(
             GameType.MARKET_SIMULATOR -> Pair(Color(0xFF8D6E63), com.yigit033.matematikmacarasi.R.drawable.ic_shopping_cart)
             GameType.FRACTION_CRYSTALS -> Pair(Color(0xFF7967DB), com.yigit033.matematikmacarasi.R.drawable.ic_matching_task)
             GameType.TIME_TOWER -> Pair(Color(0xFF1B75B0), com.yigit033.matematikmacarasi.R.drawable.ic_comparison_task)
+            GameType.PATTERN_FOREST -> Pair(Color(0xFF258E79), com.yigit033.matematikmacarasi.R.drawable.ic_matching_task)
         }
         
         Icon(

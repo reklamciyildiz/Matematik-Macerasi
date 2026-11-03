@@ -243,7 +243,7 @@ class DailyTaskManager private constructor(private val context: Context) {
                 GameType.SPACE_MATH_ADVENTURE,
                 GameType.SHAPE_RECOGNITION,
                 GameType.MARKET_SIMULATOR, GameType.FRACTION_CRYSTALS,
-                GameType.TIME_TOWER -> 1 // one complete run
+                GameType.TIME_TOWER, GameType.PATTERN_FOREST -> 1 // one complete run
             }
             
             // Oyuna göre görev açıklamasını oluştur
@@ -285,6 +285,8 @@ class DailyTaskManager private constructor(private val context: Context) {
                 GameType.FRACTION_CRYSTALS -> "Kesir Kristalleri macerasını tamamla"
 
                 GameType.TIME_TOWER -> "Zaman Kulesi macerasını tamamla"
+
+                GameType.PATTERN_FOREST -> "Örüntü Ormanı macerasını tamamla"
                     
                 GameType.MARKET_SIMULATOR ->
                     if (targetCount == 1) "Bir market simülasyonu oyunu oyna"
@@ -313,7 +315,8 @@ class DailyTaskManager private constructor(private val context: Context) {
                 GameType.SHAPE_RECOGNITION,
                 GameType.MARKET_SIMULATOR,
                 GameType.FRACTION_CRYSTALS,
-                GameType.TIME_TOWER -> 20 * targetCount
+                GameType.TIME_TOWER,
+                GameType.PATTERN_FOREST -> 20 * targetCount
             }
             
             // Yeni görevi oluştur
@@ -421,7 +424,7 @@ class DailyTaskManager private constructor(private val context: Context) {
             GameType.MARKET_SIMULATOR -> DailyTaskType.ANY
             GameType.FRACTION_CRYSTALS -> DailyTaskType.MATCHING
             GameType.TIME_TOWER -> DailyTaskType.ANY
-            GameType.TIME_TOWER -> DailyTaskType.ANY
+            GameType.PATTERN_FOREST -> DailyTaskType.MATCHING
         }
     }
 } 

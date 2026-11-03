@@ -54,6 +54,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.time.TimeTowerActivity
+import com.yigit033.matematikmacarasi.games.pattern.PatternForestActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
@@ -535,6 +536,19 @@ class GameSelectionActivity : ComponentActivity() {
                                     )
                                 }
             
+            GameCard(
+                icon = R.drawable.ic_matching_task,
+                iconTint = Color(0xFF267E70),
+                title = "Örüntü Ormanı",
+                description = "30 görevle renk, şekil, sayı ve gizli kuralları keşfet",
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    startActivity(Intent(this@GameSelectionActivity,
+                        PatternForestActivity::class.java))
+                }
+            )
+            Spacer(Modifier.height(12.dp))
+
             // Gelecekteki gerçek hayat oyunları için mesaj
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 32.dp),

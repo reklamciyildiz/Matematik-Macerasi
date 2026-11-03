@@ -47,6 +47,7 @@ import com.yigit033.matematikmacarasi.games.ComingSoonActivity
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.fractions.FractionCrystalsActivity
 import com.yigit033.matematikmacarasi.games.time.TimeTowerActivity
+import com.yigit033.matematikmacarasi.games.pattern.PatternForestActivity
 import com.yigit033.matematikmacarasi.games.basic.OperationsHubActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
@@ -137,6 +138,14 @@ fun QuickAccessGamesSection(
             bgGradient = listOf(Color(0xFF6D53CC), Color(0xFF1D6EA9)),
             borderColor = Color(0xFFE9D78F),
             activityClass = FractionCrystalsActivity::class.java
+        ),
+        PremiumGameCardItem(
+            id = "pattern_forest",
+            title = "Örüntü\nOrmanı",
+            imageRes = R.drawable.pattern_forest_hero,
+            bgGradient = listOf(Color(0xFF145F78), Color(0xFF144878)),
+            borderColor = Color(0xFFFFD77C),
+            activityClass = PatternForestActivity::class.java
         ),
         PremiumGameCardItem(
             id = "time_tower",

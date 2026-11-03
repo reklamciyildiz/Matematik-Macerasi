@@ -16,5 +16,6 @@ enum class GameType {
     SHAPE_RECOGNITION,
     MARKET_SIMULATOR, // Pazar/Market simülasyonu oyunu için enum değeri
     FRACTION_CRYSTALS,
-    TIME_TOWER
+    TIME_TOWER,
+    PATTERN_FOREST
 } 

@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
@@ -246,6 +247,9 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
     BackHandler(onBack = onExit)
     val scrollState = rememberScrollState()
     LaunchedEffect(seed, stage) { scrollState.scrollTo(0) }
+    AutoAdvanceOnSuccess(seed, stage,
+        seed > 0L && stage == 3 &&
+            selected == quest.mirror.resultAfterDivision) { advance() }
     val isLanding = seed == 0L || stage == 4
     Column(
         Modifier.fillMaxSize()
@@ -560,8 +564,12 @@ fun TempleAdventureScreen(tier: LearningTier, onExit: () -> Unit) {
                                 ) { Text(value.toString(), fontWeight = FontWeight.Bold, fontSize = 18.sp) }
                             }
                     }
-                    TempleButton(enabled = selected == q.resultAfterDivision,
-                        onClick = { advance() }) { Text("Tapınağı aydınlat") }
+                    if(selected == q.resultAfterDivision) {
+                        Text("✓ Tapınak otomatik aydınlanıyor…",
+                            color=Color(0xFFFFD77C),fontWeight=FontWeight.Bold)
+                        if(message.startsWith("İlerleme kaydedilemedi"))
+                            TempleButton(onClick={advance()}) { Text("Yeniden dene") }
+                    }
                 }
             }
             if (stage >= 2) {

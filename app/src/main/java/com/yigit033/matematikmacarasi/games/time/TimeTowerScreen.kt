@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.time
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -229,6 +230,8 @@ fun TimeTowerScreen(
         )
     }
 
+    AutoAdvanceOnSuccess(run.seed, run.index,
+        run.seed > 0L && run.solved && !run.finished) { next() }
     LaunchedEffect(run.seed,run.index) { scroll.scrollTo(0) }
     Column(
         Modifier.fillMaxSize().background(Brush.verticalGradient(
@@ -448,9 +451,9 @@ fun TimeTowerScreen(
                     }
                 }
                 if(run.solved) {
-                    GoldAction(if(run.index==24)"🏆 KULEYİ YENİDEN ÇALIŞTIR"
-                        else if((run.index+1)%5==0)"✦ YENİ DÜNYAYI AÇ"
-                        else "SONRAKİ GÖREV  →",onClick=::next)
+                    Text("✓ Kapı açıldı · Otomatik ilerleniyor…",color=TimeStyle.ice,
+                        fontWeight=FontWeight.Bold)
+                    if(!success) GoldAction("İlerlemeyi yeniden dene",onClick=::next)
                 } else if(!run.usedHint) {
                     OutlinedButton(onClick={
                         if(persist(run.copy(hints=run.hints+1,usedHint=true))){

@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
@@ -163,6 +164,9 @@ fun BalloonAdventureScreen(
     var startError by remember {mutableStateOf(false)}
     val selectedTier=LearningTier.fromSaved(selectedTierName,suggestedTier)
     val selectedPace=BalloonPace.entries.firstOrNull {it.name==selectedPaceName}?:BalloonPace.RELAXED
+    // Every resolved balloon is persisted by the Activity before this timer starts.
+    AutoAdvanceOnSuccess(run?.seed, run?.index,
+        !lobby && run?.resolved == true && run.completed == false) { onNext() }
     BackHandler(enabled=!lobby) {lobby=true}
     fun start(realm:BalloonRealm,tier:LearningTier,pace:BalloonPace=selectedPace) {
         if(run!=null && !run.completed)replacing=Triple(realm,tier,pace)
@@ -429,10 +433,10 @@ fun BalloonAdventureScreen(
                                 fontSize=14.sp)
                         }
                     }
-                    PrimaryButton(
-                        if(run.index==BalloonAdventureEngine.QUESTIONS-1)
-                            "🏆 Sonuçlarımı Gör" else "Sonraki Balon →",
-                        onClick=onNext
+                    Text("✓ Bir sonraki balona otomatik geçiliyor…",
+                        color=BalloonPalette.cyan,fontSize=13.sp)
+                    if(feedback.isNotBlank()) PrimaryButton(
+                        "İlerlemeyi yeniden dene",onClick=onNext
                     )
                 } else {
                     if(run.wrongMask!=0) {

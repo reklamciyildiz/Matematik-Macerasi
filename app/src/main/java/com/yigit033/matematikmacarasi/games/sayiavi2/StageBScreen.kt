@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -67,6 +68,12 @@ fun StageBScreen(
     var showSuccessDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var explanationText by remember { mutableStateOf<String?>(null) }
+    AutoAdvanceOnSuccess(vaultData, "stage-b", showSuccessDialog, delayMillis=1150L) {
+        if(showSuccessDialog) {
+            showSuccessDialog=false
+            onStageBCompleted()
+        }
+    }
 
     Box(
         modifier = modifier
@@ -374,20 +381,9 @@ fun StageBScreen(
                     }
                 },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            showSuccessDialog = false
-                            onStageBCompleted()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = SayiAviColors.EmeraldGreen),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Hazine Rotasına Devam Et ▶",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text("✓ Hazine Rotası otomatik açılıyor…",
+                        color = SayiAviColors.EmeraldGreen,
+                        fontWeight = FontWeight.Bold)
                 },
                 containerColor = SayiAviColors.ParchmentLight,
                 shape = RoundedCornerShape(20.dp)

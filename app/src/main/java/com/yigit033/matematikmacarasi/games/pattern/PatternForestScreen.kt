@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.pattern
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -299,6 +300,8 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
             dismissButton={TextButton(onClick={restart=false}){
                 Text("VAZGEÇ")}})
     }
+    AutoAdvanceOnSuccess(run.seed, run.index,
+        run.seed > 0L && run.solved && !run.finished) { next() }
     LaunchedEffect(run.seed,run.index){scroll.scrollTo(0)}
     Column(Modifier.fillMaxSize()
         .background(Brush.verticalGradient(listOf(
@@ -472,9 +475,9 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
                 }
             }
             if(run.solved) {
-                ForestButton(if(run.index==29)"🏆 KRİSTALİ UYANDIR"
-                    else if((run.index+1)%6==0)"✦ YENİ DÜNYANIN KAPISINI AÇ"
-                    else "SONRAKİ GÖREV →",
+                Text("✓ Örüntü tamamlandı · Otomatik ilerleniyor…",
+                    color=ForestPalette.jade,fontWeight=FontWeight.Bold)
+                if(!positive) ForestButton("İlerlemeyi yeniden dene",
                     modifier=Modifier.fillMaxWidth(),onClick=::next)
             }else if(!run.usedHint) {
                 OutlinedButton(

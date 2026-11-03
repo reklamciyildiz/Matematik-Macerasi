@@ -95,6 +95,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_geometry_v3.py
 
+      - name: Verify automatic game progression and recoverable save failures
+        shell: bash
+        run: python3 scripts/check_automatic_progression.py
+
       - name: Validate premium geometry image assets
         shell: bash
         run: python3 scripts/check_geometry_premium_assets.py

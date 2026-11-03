@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.geometry
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
@@ -423,6 +424,9 @@ fun GeometryCastleScreen(
             else audio.playCoinSound()
         }
     }
+    // Persist the solved checkpoint first; a resumed solved task also advances automatically.
+    AutoAdvanceOnSuccess(run.seed, GeometryCastleEngine.taskIndex(run),
+        run.seed > 0L && run.room < 4 && run.solved) { next() }
     BackHandler { if(run.seed>0 && !run.finished) showExit=true else onExit() }
     if(showExit) {
         androidx.compose.material3.AlertDialog(
@@ -753,11 +757,9 @@ fun GeometryCastleScreen(
                             fontSize=14.sp)
                     }
                 if(run.solved) {
-                    CastleAction(if(run.room==3 && run.step==GeometryCastleEngine.stepsPerRoom(run)-1)
-                            "Kaleyi Aydınlat ✦"
-                        else if(run.step==GeometryCastleEngine.stepsPerRoom(run)-1)
-                            "Sonraki Odaya Geç →"
-                        else "Sonraki Görev →") { next() }
+                    Text("✓ Tamamlandı · Otomatik ilerleniyor…", color=Mint,
+                        fontSize=13.sp,fontWeight=FontWeight.Bold)
+                    if(!feedbackPositive) CastleAction("İlerlemeyi yeniden dene") { next() }
                 }
                 Text("İlk denemede doğru: ${run.firstTryCorrect} · Yanlış: ${run.errors} · İpucu: ${run.hints}",
                     color=Pale.copy(alpha=.85f),fontSize=11.sp)

@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.fractions
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -195,6 +196,8 @@ fun FractionCrystalsScreen(
         } else { positive=false;message=store.lastError.ifBlank { "Sonraki görev kaydedilemedi." } }
     }
 
+    AutoAdvanceOnSuccess(run.seed, run.index,
+        run.seed > 0L && run.solved && !run.finished) { next() }
     LaunchedEffect(run.index,run.seed) { scroll.scrollTo(0) }
     Column(
         Modifier.fillMaxSize()
@@ -354,12 +357,13 @@ fun FractionCrystalsScreen(
                 Text(message,Modifier.fillMaxWidth().padding(14.dp),
                     color=pearl,fontWeight=FontWeight.Bold,fontSize=13.sp)
             }
-            if(run.solved) Button(onClick={next()},
-                modifier=Modifier.fillMaxWidth().heightIn(min=58.dp),
-                colors=ButtonDefaults.buttonColors(containerColor=gold,contentColor=navy),
-                shape=RoundedCornerShape(17.dp)){
-                Text(if(run.index==11)"🏆 KRİSTALLERİ UYANDIR" else "SONRAKİ GÖREV →",
-                    fontWeight=FontWeight.Black)
+            if(run.solved) {
+                Text("✓ Kristal tamamlandı · Otomatik ilerleniyor…",color=gold,
+                    fontWeight=FontWeight.Bold)
+                if(!positive) Button(onClick={next()},
+                    modifier=Modifier.fillMaxWidth().heightIn(min=54.dp)) {
+                    Text("İlerlemeyi yeniden dene")
+                }
             }
             if(!run.solved && !run.usedHint) {
                 OutlinedButton(onClick={

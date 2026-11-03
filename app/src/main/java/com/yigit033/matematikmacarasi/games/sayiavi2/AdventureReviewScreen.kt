@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -132,6 +133,17 @@ fun AdventureReviewScreen(
     var hintShown by rememberSaveable(index, seed) { mutableStateOf(false) }
     var feedback by rememberSaveable(index, seed) { mutableStateOf("") }
     var saveFailed by rememberSaveable { mutableStateOf(false) }
+    var advanceFailed by rememberSaveable(index, seed) { mutableStateOf(false) }
+    fun advanceReview() {
+        if(!solved) return
+        if(index==questions.lastIndex && !history.record(kind,errors,hints)) {
+            saveFailed=true
+            advanceFailed=true
+            return
+        }
+        index++
+    }
+    AutoAdvanceOnSuccess(seed, index, solved) { advanceReview() }
     val scrollState = rememberScrollState()
     LaunchedEffect(index) { scrollState.scrollTo(0) }
     BackHandler(onBack = onExit)
@@ -224,12 +236,11 @@ fun AdventureReviewScreen(
                     if (feedback.isNotBlank()) Text(feedback,
                         color = if (solved) Color(0xFF9EF6E7) else Color(0xFFFFD77C),
                         fontSize = 14.sp)
-                    ReviewButton(if (index == 2) "Tekrarı bitir" else "Sonraki soru",
-                        enabled = solved) {
-                        if (index == questions.lastIndex) {
-                            if (!history.record(kind, errors, hints)) saveFailed = true
-                        }
-                        index++
+                    if(solved) {
+                        Text("✓ Otomatik ilerleniyor…",
+                            color=Color(0xFF9EF6E7),fontWeight=FontWeight.Bold)
+                        if(advanceFailed) ReviewButton("Kaydı tekrar dene",
+                            onClick={ advanceReview() })
                     }
                 }
             }

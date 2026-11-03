@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -80,6 +81,9 @@ fun StageCScreen(
     var errorNodeId by remember { mutableStateOf<Int?>(null) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
     var isRouteComplete by remember(routeData) { mutableStateOf(initialStepIndex >= 4) }
+    AutoAdvanceOnSuccess(routeData, "stage-c", isRouteComplete, delayMillis=1000L) {
+        onStageCCompleted()
+    }
 
     Box(
         modifier = modifier
@@ -344,11 +348,9 @@ fun StageCScreen(
                         .background(SayiAviColors.BottomBarScrim)
                         .padding(16.dp)
                 ) {
-                    AdventureActionButton(
-                        text = "🔑 Hazine Mührüne Geç ▶",
-                        onClick = onStageCCompleted,
-                        gradient = SayiAviColors.OrangeButtonGradient
-                    )
+                    Text("✓ Hazine Mührü otomatik açılıyor…",
+                        color = SayiAviColors.GoldBright,
+                        fontWeight = FontWeight.Bold)
                 }
             }
         }

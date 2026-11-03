@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import android.media.MediaPlayer
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -137,6 +138,20 @@ fun ForestAdventureScreen(
             update(run.hint())
         }
     }
+    fun finishForest() {
+        if(run.stage != ForestStage.ROOTS || run.rootRound != 3)return
+        if(store.finish(run)) {
+            val completed=run
+            run=completed.copy(stage=ForestStage.SUMMARY)
+            message=""
+            audio.playVictorySound()
+            onFinished(completed)
+        } else {
+            message="Tamamlanma kaydedilemedi; tekrar deneyebilirsin."
+        }
+    }
+    AutoAdvanceOnSuccess(run.seed, run.stage,
+        run.stage == ForestStage.ROOTS && run.rootRound == 3) { finishForest() }
     if (showReview) {
         AdventureReviewScreen(
             kind = AdventureReviewKind.COUNT_FOUR,
@@ -505,17 +520,10 @@ fun ForestAdventureScreen(
                             } else {
                                 Text("Üç mühür çözüldü. Orman yeniden ışıldıyor!",
                                     fontSize = 16.sp, color = ForestPalette.Ink)
-                                ForestButton("🏆 Kadim Ağacı Uyandır") {
-                                    if (run.stage == ForestStage.ROOTS && run.rootRound == 3 &&
-                                        store.finish(run)) {
-                                        val finished = run
-                                        run = finished.copy(stage = ForestStage.SUMMARY)
-                                        message = ""
-                                        audio.playVictorySound()
-                                        onFinished(finished)
-                                    } else {
-                                        message = "Tamamlanma kaydedilemedi; tekrar deneyebilirsin."
-                                    }
+                                Text("✓ Kadim ağaç otomatik uyanıyor…",
+                                    color=ForestPalette.Emerald,fontWeight=FontWeight.Bold)
+                                if(message.startsWith("Tamamlanma kaydedilemedi")) {
+                                    ForestButton("İlerlemeyi yeniden dene") { finishForest() }
                                 }
                             }
                         }

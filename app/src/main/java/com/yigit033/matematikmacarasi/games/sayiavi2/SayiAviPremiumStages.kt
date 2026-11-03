@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
@@ -141,6 +142,12 @@ fun ShellGroupingScreen(
     var advanced by remember(data) { mutableStateOf(false) }
     val ready = finishedGroups == data.groups
     val shellsCount = finishedGroups * 3 + partialShells
+    AutoAdvanceOnSuccess(data, "shells", isCorrect) {
+        if(!advanced) {
+            advanced=true
+            onCompleted()
+        }
+    }
 
     IslandChallengeFrame(
         title = "Kabuk Kümeleri",
@@ -281,15 +288,10 @@ fun ShellGroupingScreen(
                             "Her tamamladığın küme 3 kabuk demek. Küme sayısı kadar üçer say.",
                             fontSize = 12.sp, color = SayiAviColors.TextNavyMuted
                         )
-                        if (isCorrect) AdventureActionButton(
-                            text = "Sayı Tahtasına Geç ▶",
-                            onClick = {
-                                if (!advanced) {
-                                    advanced = true
-                                    onCompleted()
-                                }
-                            },
-                            gradient = SayiAviColors.EmeraldButtonGradient
+                        if (isCorrect) Text(
+                            "✓ Sayı Tahtası otomatik açılıyor…",
+                            color = SayiAviColors.EmeraldDark,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -317,6 +319,17 @@ fun TreasureSealScreen(
     var feedback by remember(challenges, questionIndex) { mutableStateOf("") }
     var advanced by remember(challenges) { mutableStateOf(false) }
     val current = challenges[questionIndex]
+    AutoAdvanceOnSuccess(challenges, questionIndex, isCorrect) {
+        if(questionIndex == challenges.lastIndex) {
+            if(!advanced) {
+                advanced=true
+                onCompleted()
+            }
+        } else {
+            questionIndex++
+            onQuestionProgress(questionIndex)
+        }
+    }
 
     IslandChallengeFrame(
         title = "Hazine Mührü",
@@ -402,20 +415,11 @@ fun TreasureSealScreen(
                 }
                 if (showHint && !isCorrect) Text(current.hint,
                     fontSize = 13.sp, color = SayiAviColors.TextNavyMuted)
-                if (isCorrect) AdventureActionButton(
-                    text = if (questionIndex == 2) "🏆 Hazineyi Aç!" else "Sonraki Görev ▶",
-                    onClick = {
-                        if (questionIndex == 2) {
-                            if (!advanced) {
-                                advanced = true
-                                onCompleted()
-                            }
-                        } else {
-                            questionIndex++
-                            onQuestionProgress(questionIndex)
-                        }
-                    },
-                    gradient = SayiAviColors.OrangeButtonGradient
+                if (isCorrect) Text(
+                    "✓ " + if(questionIndex == challenges.lastIndex)
+                        "Hazine otomatik açılıyor…" else "Sonraki görev otomatik açılıyor…",
+                    color = SayiAviColors.EmeraldDark,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

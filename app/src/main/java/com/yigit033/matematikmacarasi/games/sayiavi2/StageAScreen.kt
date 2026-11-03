@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.games.sayiavi2
 
+import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -79,6 +80,12 @@ fun StageAScreen(
     var currentHintText by remember { mutableStateOf<String?>(null) }
     var showSuccessDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    AutoAdvanceOnSuccess(gridData, "stage-a", showSuccessDialog, delayMillis=1150L) {
+        if(showSuccessDialog) {
+            showSuccessDialog=false
+            onStageACompleted()
+        }
+    }
 
     Box(
         modifier = modifier
@@ -344,7 +351,7 @@ fun StageAScreen(
         // Başarı & Harita Parçası Kazanma Diyaloğu
         if (showSuccessDialog) {
             AlertDialog(
-                onDismissRequest = {}, // Kullanıcı butona basarak ilerlemeli
+                onDismissRequest = {}, // Başarı anında otomatik sonraki aşamaya geçilir
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "🎉", fontSize = 24.sp)
@@ -379,20 +386,9 @@ fun StageAScreen(
                     }
                 },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            showSuccessDialog = false
-                            onStageACompleted()
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = SayiAviColors.EmeraldGreen),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Şifre Kasasına İlerle ▶",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Text("✓ Şifre Kasası otomatik açılıyor…",
+                        color = SayiAviColors.EmeraldGreen,
+                        fontWeight = FontWeight.Bold)
                 },
                 containerColor = SayiAviColors.ParchmentLight,
                 shape = RoundedCornerShape(20.dp)

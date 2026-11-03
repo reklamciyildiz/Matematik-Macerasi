@@ -184,8 +184,11 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
             }
         }else{
             val w=task.measureWidth;val h=task.measureHeight
-            val unit=min(size.width*.62f/w,size.height*.62f/h)
-            val width=unit*w;val height=unit*h
+            // The triangle uses base 2*w and height h; the drawn base must match
+            // both the question and the area calculation (2*w*h)/2.
+            val drawingWidth=if(kind=="triangle_area")2*w else w
+            val unit=min(size.width*.62f/drawingWidth,size.height*.62f/h)
+            val width=unit*drawingWidth;val height=unit*h
             val x=cx-width/2f;val y=cy-height/2f
             if(kind=="triangle_area"){
                 val tri=Path().apply{
@@ -213,7 +216,7 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
             }
             drawIntoCanvas{canvas->
                 canvas.nativeCanvas.drawText(
-                    (if(kind=="triangle_area")2*w else w).toString()+" birim",
+                    drawingWidth.toString()+" birim",
                     cx,cy+height/2f+18.dp.toPx(),paint)
                 canvas.nativeCanvas.drawText(h.toString()+" birim",
                     cx+width/2f+34.dp.toPx(),cy,paint)

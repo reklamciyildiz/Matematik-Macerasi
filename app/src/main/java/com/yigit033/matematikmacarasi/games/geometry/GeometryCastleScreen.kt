@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +36,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.yigit033.matematikmacarasi.services.AudioService
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +65,12 @@ private val Ink = Color(0xFF0F2940)
 private val Mint = Color(0xFF7EF1DA)
 private val Panel = Color(0xFF17455E)
 private val Pale = Color(0xFFE9F7F5)
+
+private fun tierLabel(tier:LearningTier)=when(tier) {
+    LearningTier.TEMEL->"Temel"
+    LearningTier.GELISEN->"Orta"
+    LearningTier.USTALIK->"Zor"
+}
 
 @Composable
 private fun CastleAction(text: String, enabled: Boolean = true, onClick: () -> Unit) {
@@ -216,16 +226,18 @@ private fun geometryFact(shape: CastleShape): String = when(shape) {
 }
 
 @Composable
-private fun CastleShapeCollection(tier: LearningTier, onClose: () -> Unit) {
+private fun CastleShapeCollection(tier: LearningTier,grade:Int,
+    onClose: () -> Unit) {
     androidx.compose.material3.AlertDialog(
         onDismissRequest=onClose,
         title={ Text("Şekil Koleksiyonu",fontWeight=FontWeight.Bold) },
         text={
             Column(Modifier.heightIn(max=420.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement=Arrangement.spacedBy(12.dp)) {
-                Text("${tier.title} seviyesi · ${GeometryCastleEngine.available(tier).size} şekil",
+                Text("${tierLabel(tier)} · ${grade}. sınıf · "+
+                    "${GeometryCastleEngine.available(tier,grade).size} şekil",
                     fontSize=13.sp,color=Color(0xFF30576C))
-                GeometryCastleEngine.available(tier).forEach { shape ->
+                GeometryCastleEngine.available(tier,grade).forEach { shape ->
                     Row(Modifier.fillMaxWidth(),
                         verticalAlignment=Alignment.CenterVertically,
                         horizontalArrangement=Arrangement.spacedBy(12.dp)) {
@@ -254,9 +266,12 @@ private fun CastleShapeCollection(tier: LearningTier, onClose: () -> Unit) {
 fun GeometryCastleScreen(
     store: GeometryCastleProgressStore,
     suggestedTier: LearningTier,
+    profileGrade: Int,
     onExit: () -> Unit,
     onCompleted: (CastleRun) -> Unit
 ) {
+    val context=LocalContext.current
+    val audio=remember(context){AudioService.getInstance(context)}
     var run by remember { mutableStateOf(store.load()) }
     var tier by remember { mutableStateOf(suggestedTier) }
     var feedback by remember { mutableStateOf("") }
@@ -270,7 +285,7 @@ fun GeometryCastleScreen(
         if (store.save(next)) { run=next;return true }
         feedback = when (store.lastSaveIssue) {
             GeometryCastleProgressStore.SaveIssue.INVALID_TRANSITION ->
-                "Bu adım doğrulanamadı. Oyundan çıkıp tekrar girerek kaldığın yeri aç."
+                "Bu seçim kaydedilemedi. Mevcut ilerlemeyi koruduk; aynı taşı yeniden dene."
             GeometryCastleProgressStore.SaveIssue.STORAGE_WRITE ->
                 "İlerleme depolamaya yazılamadı. Boş alanı kontrol edip yeniden dene."
             else -> "İlerleme kaydedilemedi. Yeniden dene."
@@ -289,6 +304,7 @@ fun GeometryCastleScreen(
             feedbackPositive=correct
             feedback=if(correct) GeometryCastleEngine.task(run)?.explanation ?: "Doğru!"
                 else "Şeklin kenarlarını ve konumunu tekrar kontrol et."
+            if(correct)audio.playCorrectSound() else audio.playWrongSound()
         }
     }
     fun placePiece(task: CastleTask) {
@@ -314,16 +330,20 @@ fun GeometryCastleScreen(
             feedbackPositive=correct
             feedback=if(correct)
                 if(next.solved) "Tüm parçalar yerine oturdu! " + task.explanation
-                else "Harika! Şimdi sıradaki siluete uygun bir taş seç."
+                else "Tamam! Şimdi sıradaki siluete uygun bir taş seç."
             else "Bu taş yuvaya uymadı. Kenarların ve köşelerin düzenini karşılaştır."
+            if(correct)audio.playCorrectSound() else audio.playWrongSound()
         }
     }
     fun next() {
         if(!run.solved) return
+        val previousRoom=run.room
         val next = GeometryCastleEngine.advance(run)
         if(persist(next)) {
             feedback=""
             if(next.finished) onCompleted(next)
+            else if(next.room!=previousRoom)audio.playLevelCompleteSound()
+            else audio.playCoinSound()
         }
     }
     BackHandler { if(run.seed>0 && !run.finished) showExit=true else onExit() }
@@ -341,6 +361,7 @@ fun GeometryCastleScreen(
     if(showCollection) {
         CastleShapeCollection(
             tier=if(run.seed==0L) tier else run.tier,
+            grade=if(run.seed==0L) profileGrade else run.grade,
             onClose={ showCollection=false }
         )
     }
@@ -357,7 +378,8 @@ fun GeometryCastleScreen(
     Column(
         Modifier.fillMaxSize().background(Brush.verticalGradient(
             listOf(Color(0xFF166B94),Color(0xFF0D3659),Color(0xFF09233E))
-        )).verticalScroll(scroll).padding(horizontal=16.dp,vertical=12.dp),
+        )).statusBarsPadding().navigationBarsPadding()
+            .verticalScroll(scroll).padding(horizontal=16.dp,vertical=12.dp),
         verticalArrangement=Arrangement.spacedBy(12.dp)
     ) {
         OutlinedButton(
@@ -370,7 +392,9 @@ fun GeometryCastleScreen(
             Text("GEOMETRİ KALESİ",color=Gold,fontSize=18.sp,
                 fontWeight=FontWeight.Black,letterSpacing=.7.sp)
             Spacer(Modifier.weight(1f))
-            Text(if(landing) tier.title else run.tier.title,color=Mint,fontSize=12.sp)
+            Text((if(landing) tierLabel(tier) else tierLabel(run.tier))+
+                " · "+(if(landing)profileGrade else run.grade)+". sınıf",
+                color=Mint,fontSize=12.sp)
         }
         val done = if(run.finished) 4 else run.room
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)) {
@@ -401,12 +425,12 @@ fun GeometryCastleScreen(
                             colors=ButtonDefaults.outlinedButtonColors(
                                 containerColor=if(tier==value) Gold else Panel,
                                 contentColor=if(tier==value) Ink else Color.White)
-                        ) {Text(value.title,fontSize=11.sp)}
+                        ) {Text(tierLabel(value),fontSize=12.sp)}
                     }
                 }
-                Text("4 oda · 12 etkileşimli görev · Çevrimdışı",
+                Text("4 dünya · 20 etkileşimli görev · Çevrimdışı",
                     color=Mint,fontSize=13.sp)
-                Text("Bu seviyede ${GeometryCastleEngine.available(tier).size} farklı şekil var.",
+                Text("Bu sınıf ve seviyede ${GeometryCastleEngine.available(tier,profileGrade).size} farklı şekil var.",
                     color=Pale,fontSize=13.sp)
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                     listOf("Avlu","Köprü","Ayna","Taç").forEachIndexed { index, name ->
@@ -423,7 +447,7 @@ fun GeometryCastleScreen(
                     }
                 }
                 CastleAction("Kaleye Gir ▶") {
-                    val started=store.begin(tier)
+                    val started=store.begin(tier,profileGrade)
                     if(started!=null) {run=started;feedback=""}
                     else feedback="Yeni keşif kaydedilemedi."
                 }
@@ -436,13 +460,15 @@ fun GeometryCastleScreen(
             } else {
                 Text("Kale yeniden aydınlandı!",color=Gold,fontSize=24.sp,
                     fontWeight=FontWeight.Black)
-                Text("12 / 12 görev tamamlandı",color=Mint,fontSize=16.sp)
+                Text("${GeometryCastleEngine.totalTasks(run)} / "+
+                    "${GeometryCastleEngine.totalTasks(run)} görev tamamlandı",color=Mint,fontSize=16.sp)
                 Surface(color=Panel,shape=RoundedCornerShape(20.dp),
                     border=androidx.compose.foundation.BorderStroke(1.dp,Gold)) {
                     Column(Modifier.fillMaxWidth().padding(17.dp),
                         verticalArrangement=Arrangement.spacedBy(9.dp)) {
                         Text("ÖĞRENME GÖZLEMİ",fontWeight=FontWeight.Bold,color=Gold)
-                        Text("İlk denemede bağımsız: ${run.firstTryCorrect}/12",color=Color.White)
+                        Text("İlk denemede bağımsız: ${run.firstTryCorrect}/"+
+                            GeometryCastleEngine.totalTasks(run),color=Color.White)
                         Text("Toplam: ${run.attempts} deneme · ${run.errors} yanlış · ${run.hints} ipucu",
                             color=Color.White,fontSize=13.sp)
                         Text("Tamamlanan keşifler: ${run.completedRuns}",
@@ -451,7 +477,11 @@ fun GeometryCastleScreen(
                             "Şekil tanıma" to "geometry_classify",
                             "Şekillerle inşa" to "geometry_compose",
                             "Simetriyi tanıma" to "geometry_symmetry_recognize",
-                            "Simetri oluşturma" to "geometry_symmetry_build"
+                            "Simetri oluşturma" to "geometry_symmetry_build",
+                            "Kenar ve köşe keşfi" to "geometry_properties",
+                            "Çevre hesabı" to "geometry_perimeter",
+                            "Alan hesabı" to "geometry_area",
+                            "Açı ölçme" to "geometry_angle"
                         ).forEach { (title,skill) ->
                             val (done,wrong,help) = store.skillEvidence(skill)
                             if(done>0) Text("$title: $done görev · $wrong yanlış · $help ipucu",
@@ -462,7 +492,7 @@ fun GeometryCastleScreen(
                     }
                 }
                 CastleAction("Yeni Kale Macerası ↻") {
-                    val started=store.begin(run.tier)
+                    val started=store.begin(run.tier,profileGrade)
                     if(started!=null) {run=started;feedback=""}
                     else feedback="Yeni keşif kaydedilemedi."
                 }
@@ -475,7 +505,10 @@ fun GeometryCastleScreen(
                 CastleAction("Haritaya Dön",onClick=onExit)
             }
         } else {
-            Text("${room.title} · Görev ${run.step+1}/3 · ${run.room*3+run.step+1}/12",
+            Text("${room.title} · Görev ${run.step+1}/"+
+                    GeometryCastleEngine.stepsPerRoom(run)+" · "+
+                    (GeometryCastleEngine.taskIndex(run)+1)+"/"+
+                    GeometryCastleEngine.totalTasks(run),
                 color=Gold,fontSize=21.sp,fontWeight=FontWeight.Black)
             Crossfade(targetState=scene,animationSpec=tween(260),
                 label="castle chamber") { art ->
@@ -492,6 +525,20 @@ fun GeometryCastleScreen(
                         modifier=Modifier.weight(1f))
                 }
                 when(task.mode) {
+                    CastleMode.MEASURE -> {
+                        GeometryMeasureBoard(task,run.measureValue,
+                            enabled=!run.solved,
+                            onValue={ value ->
+                                if(persist(run.copy(measureValue=value))) {
+                                    feedback=""
+                                    audio.playTapSound()
+                                }
+                            },
+                            onVerify={
+                                submit(GeometryCastleEngine.isCorrect(
+                                    task,null,run.mirrorMask,run.measureValue))
+                            })
+                    }
                     CastleMode.FIND,CastleMode.BUILD -> {
                         if(task.mode == CastleMode.BUILD) {
                             val pieces=task.requiredPieces
@@ -590,6 +637,13 @@ fun GeometryCastleScreen(
                                     CastleMode.FIND -> "İpucu: ${task.target.sides} kenarlı şekli, köşe ve kenarlarını sayarak bul."
                                     CastleMode.BUILD -> "İpucu: Yuvanın kenar ve köşe sayısını taşlarla karşılaştır."
                                     CastleMode.SYMMETRY -> "İpucu: Karolar ayna çizgisine aynı uzaklıkta durmalı."
+                                    CastleMode.MEASURE -> when(task.measureKind){
+                                        "perimeter"->"İpucu: Çevre, bütün kenarların toplamıdır."
+                                        "area"->"İpucu: Dikdörtgende satır sayısı ile sütun sayısını çarp."
+                                        "triangle_area"->"İpucu: Taban × yükseklik hesaplayıp ikiye böl."
+                                        "angle"->"İpucu: Dik açı 90°, dar açı daha küçük, geniş açı daha büyüktür."
+                                        else->"İpucu: Şeklin köşelerini ve düz kenarlarını say."
+                                    }
                                 }
                             }
                         },
@@ -602,6 +656,7 @@ fun GeometryCastleScreen(
                         CastleMode.FIND -> "Kenarları ve köşeleri tek tek say."
                         CastleMode.BUILD -> "Hedef yuvayla aynı kenar ve köşe sayısını bul."
                         CastleMode.SYMMETRY -> "Her sol kareyi orta çizgiye göre sağa yansıt."
+                        CastleMode.MEASURE -> "Ölçümünü düğmelerle veya kaydırıcıyla ayarlayıp doğrula."
                     },color=Mint,fontSize=13.sp)
                 }
                 val currentFeedback = if(run.solved && feedback.isBlank())
@@ -614,8 +669,10 @@ fun GeometryCastleScreen(
                             fontSize=14.sp)
                     }
                 if(run.solved) {
-                    CastleAction(if(run.room==3 && run.step==2) "Kaleyi Aydınlat ✦"
-                        else if(run.step==2) "Sonraki Odaya Geç →"
+                    CastleAction(if(run.room==3 && run.step==GeometryCastleEngine.stepsPerRoom(run)-1)
+                            "Kaleyi Aydınlat ✦"
+                        else if(run.step==GeometryCastleEngine.stepsPerRoom(run)-1)
+                            "Sonraki Odaya Geç →"
                         else "Sonraki Görev →") { next() }
                 }
                 Text("İlk denemede doğru: ${run.firstTryCorrect} · Yanlış: ${run.errors} · İpucu: ${run.hints}",

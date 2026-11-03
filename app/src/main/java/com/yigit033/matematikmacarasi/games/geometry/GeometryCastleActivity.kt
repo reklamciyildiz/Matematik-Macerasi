@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.yigit033.matematikmacarasi.GameType
+import com.yigit033.matematikmacarasi.games.basic.GradeAwareOperationPolicy
+import com.yigit033.matematikmacarasi.services.PlayerProfileService
 import com.yigit033.matematikmacarasi.learning.adaptive.AdaptiveLearningStore
 import com.yigit033.matematikmacarasi.learning.adaptive.AdventureSkill
 import com.yigit033.matematikmacarasi.services.DailyTaskManager
@@ -42,6 +44,8 @@ class GeometryCastleActivity : ComponentActivity() {
                 Surface(modifier=Modifier.fillMaxSize()) {
                     GeometryCastleScreen(
                         store=progress,
+                        profileGrade=GradeAwareOperationPolicy.grade(
+                            PlayerProfileService.getInstance(this).getUserClass()),
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.GEOMETRY).currentTier,
                         onExit={finish()},

@@ -15,6 +15,7 @@ class GeometryCastleEngineTest {
             assertEquals(questions,GeometryCastleEngine.tasks(seed,tier))
             questions.forEach { q ->
                 when(q.mode) {
+                    CastleMode.MEASURE -> error("Premium measurements are v3-only")
                     CastleMode.FIND,CastleMode.BUILD -> {
                         assertEquals(4,q.options.size)
                         assertEquals(4,q.options.distinct().size)

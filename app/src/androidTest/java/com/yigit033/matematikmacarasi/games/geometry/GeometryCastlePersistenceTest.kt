@@ -23,6 +23,7 @@ class GeometryCastlePersistenceTest {
                 for (index in 0 until GeometryCastleEngine.TOTAL_TASKS) {
                     val task = GeometryCastleEngine.task(run)!!
                     when (task.mode) {
+                    CastleMode.MEASURE -> error("Premium measurements are v3-only")
                         CastleMode.FIND -> {
                             run = GeometryCastleEngine.answer(run, true).copy(
                                 solved = true, selected = task.target

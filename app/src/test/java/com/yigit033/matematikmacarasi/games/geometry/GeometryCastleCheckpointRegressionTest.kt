@@ -18,6 +18,7 @@ class GeometryCastleCheckpointRegressionTest {
                         val task = GeometryCastleEngine.task(run)!!
                         assertTrue("Initial state invalid at $tier v$version #$index",GeometryCastleEngine.valid(run))
                         when(task.mode) {
+                    CastleMode.MEASURE -> error("Premium measurements are v3-only")
                             CastleMode.FIND -> {
                                 run = GeometryCastleEngine.answer(run,true).copy(
                                     selected=task.target,solved=true)

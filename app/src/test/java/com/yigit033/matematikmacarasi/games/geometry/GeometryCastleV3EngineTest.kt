@@ -73,7 +73,12 @@ class GeometryCastleV3EngineTest {
                 }
                 assertTrue(run.finished)
                 assertEquals(20,run.firstTryCorrect)
-                assertEquals(20,run.attempts)
+                assertEquals(
+                    expected.sumOf { q ->
+                        if(q.mode==CastleMode.BUILD)q.requiredPieces.size else 1
+                    },
+                    run.attempts
+                )
                 assertEquals(1,run.completedRuns)
                 assertEquals(0,run.measureValue)
             }

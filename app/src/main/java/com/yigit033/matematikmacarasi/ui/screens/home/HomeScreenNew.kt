@@ -323,8 +323,7 @@ fun HomeScreenNew(
                             onViewDetailsClick = { currentTab = HomeTab.LEARN }
                         )
 
-                        // Alt navigasyon çubuğu boşluğu
-                        Spacer(modifier = Modifier.height(96.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
 
@@ -335,7 +334,7 @@ fun HomeScreenNew(
                             .statusBarsPadding()
                     ) {
                         GamesTabScreen(
-                            modifier = Modifier.padding(bottom = 84.dp)
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -349,7 +348,7 @@ fun HomeScreenNew(
                         LearnTabScreen(
                             userClass = userClass,
                             onNavigateToGames = { currentTab = HomeTab.GAMES },
-                            modifier = Modifier.padding(bottom = 84.dp)
+                            modifier = Modifier.fillMaxSize()
                         )
                     }
                 }
@@ -362,20 +361,17 @@ fun HomeScreenNew(
                     Box(modifier = Modifier.weight(1f))
                 }
             }
+            // Bottom bar participates in the column layout instead of overlaying
+            // or clipping the previous screen's last row on short displays.
+            HomeBottomNavigationBar(
+                selectedTab = currentTab,
+                onTabSelected = { selected ->
+                    if (selected == HomeTab.PROFILE) navigateToProfile()
+                    else currentTab = selected
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
-
-        // Sabit Alt Navigasyon Çubuğu
-        HomeBottomNavigationBar(
-            selectedTab = currentTab,
-            onTabSelected = { selected ->
-                if (selected == HomeTab.PROFILE) {
-                    navigateToProfile()
-                } else {
-                    currentTab = selected
-                }
-            },
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
 
         // Günlük Görevler Modalı
         if (showDailyTasksDialog) {

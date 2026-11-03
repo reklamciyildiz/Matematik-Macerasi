@@ -298,10 +298,17 @@ fun GeometryCastleScreen(
             index !in task.requiredPieces.indices) return
         val correct = GeometryCastleEngine.isCorrectPiece(task,index,chosen)
         val attempted = GeometryCastleEngine.answer(run,correct)
-        val next = if(correct) attempted.copy(
-            placed=run.placed+chosen,selected=null,
-            solved=index+1==task.requiredPieces.size
-        ) else attempted
+        // v1 checkpoints use a single socket and MUST retain an empty placed list.
+        // Adding v2's placed field to a v1 run was rejected by Engine.valid(),
+        // leaving the correctly selected piece apparently frozen on screen.
+        val next = if (correct && run.contentVersion <= 1) {
+            attempted.copy(selected=chosen,placed=emptyList(),solved=true)
+        } else if (correct) {
+            attempted.copy(
+                placed=run.placed+chosen,selected=null,
+                solved=index+1==task.requiredPieces.size
+            )
+        } else attempted
         if(persist(next)) {
             if(!correct) store.noteWeakShape(task.requiredPieces[index])
             feedbackPositive=correct

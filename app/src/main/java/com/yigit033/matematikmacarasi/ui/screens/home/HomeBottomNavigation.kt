@@ -77,8 +77,8 @@ fun HomeBottomNavigationBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .padding(horizontal = 14.dp, vertical = 6.dp),
+                .height(84.dp)
+                .padding(horizontal = 8.dp, vertical = 7.dp),
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -103,7 +103,7 @@ fun HomeBottomNavigationBar(
                         ) {
                             onTabSelected(tab)
                         }
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 2.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
@@ -131,7 +131,7 @@ fun HomeBottomNavigationBar(
                     Text(
                         text = tab.title,
                         color = textColor,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Medium,
                         maxLines = 1
                     )

@@ -119,6 +119,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_settings_profile_premium_ui.py
 
+      - name: Verify Time Tower curriculum game and asset routes
+        shell: bash
+        run: python3 scripts/check_time_tower.py
+
       - name: Validate Fraction Crystals game source and routes
         shell: bash
         run: python3 scripts/check_fraction_crystals.py

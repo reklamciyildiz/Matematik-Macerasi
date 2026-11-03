@@ -40,6 +40,8 @@ class GeometryCastleProgressStore(
             hasHintInTask = prefs.getBoolean("task_hint", false),
             completedRuns = prefs.getInt("runs", 0),
             contentVersion = prefs.getInt("content_version", 1),
+            grade = prefs.getInt("grade", 2),
+            measureValue = prefs.getInt("measure_value", 0),
             placed = prefs.getString("placed", "").orEmpty().split(",")
                 .filter { it.isNotBlank() }
                 .mapNotNull { value ->
@@ -61,11 +63,35 @@ class GeometryCastleProgressStore(
         }
         val previous = load()
         val sameRun = previous.seed > 0 && previous.seed == next.seed
-        val previousTaskId = previous.room * 3 + previous.step
-        val nextTaskId = next.room * 3 + next.step
+        val previousTaskId = GeometryCastleEngine.taskIndex(previous)
+        val nextTaskId = GeometryCastleEngine.taskIndex(next)
         val completedTask = sameRun && previous.room < 4 && previous.solved &&
             nextTaskId == previousTaskId + 1
         val newRun = next.seed > 0 && next.seed != previous.seed && next.room == 0
+        if (sameRun) {
+            val staticChanged = previous.grade != next.grade ||
+                previous.tier != next.tier ||
+                previous.contentVersion != next.contentVersion ||
+                previous.focusShape != next.focusShape
+            val advanced = nextTaskId != previousTaskId
+            if (staticChanged ||
+                advanced && (!completedTask || next != GeometryCastleEngine.advance(previous)) ||
+                !advanced && (previous.room != next.room || previous.step != next.step ||
+                    previous.solved && next != previous ||
+                    next.attempts < previous.attempts ||
+                    next.errors < previous.errors ||
+                    next.hints < previous.hints ||
+                    next.firstTryCorrect != previous.firstTryCorrect ||
+                    next.completedRuns != previous.completedRuns)) {
+                lastSaveIssue = SaveIssue.INVALID_TRANSITION
+                Log.e(TAG, "Blocked checkpoint mismatch: old=$previous, next=$next")
+                return false
+            }
+        } else if (previous.seed > 0L && next.seed == previous.seed ||
+            next.seed > 0L && next.room != 0) {
+            lastSaveIssue = SaveIssue.INVALID_TRANSITION
+            return false
+        }
         val editor = prefs.edit()
         if (newRun) {
             editor.putInt("counted_attempts",0).putInt("counted_errors",0)
@@ -103,6 +129,7 @@ class GeometryCastleProgressStore(
             .putBoolean("task_hint",next.hasHintInTask)
             .putInt("runs",next.completedRuns)
             .putInt("content_version",next.contentVersion)
+            .putInt("grade",next.grade).putInt("measure_value",next.measureValue)
             .putString("placed",next.placed.joinToString(",") { it.name })
         if(next.focusShape == null) editor.remove("focus")
         else editor.putString("focus",next.focusShape.name)
@@ -122,17 +149,25 @@ class GeometryCastleProgressStore(
         }
     }
 
-    @Synchronized fun begin(tier: LearningTier): CastleRun? {
+    /**
+     * Calling begin(tier) retains v2 behavior for existing Android integrations.
+     * The upgraded screen supplies a grade to create v3 twenty-stage adventures.
+     */
+    @Synchronized fun begin(tier: LearningTier, grade: Int? = null): CastleRun? {
         val old = load()
         val seed = System.currentTimeMillis().coerceAtLeast(old.seed + 1).coerceAtLeast(1)
+        val level=grade?.coerceIn(1,8) ?: 2
+        val version=if(grade==null)2 else 3
         val next = CastleRun(seed=seed,tier=tier,completedRuns=old.completedRuns,
-            focusShape=weakShape(),contentVersion=2)
+            focusShape=weakShape(),contentVersion=version,grade=level)
         return if(save(next)) next else null
     }
 
     fun skillEvidence(skill: String): Triple<Int,Int,Int> {
         val valid = setOf("geometry_classify","geometry_compose",
-            "geometry_symmetry_recognize","geometry_symmetry_build")
+            "geometry_symmetry_recognize","geometry_symmetry_build",
+            "geometry_properties","geometry_perimeter","geometry_area",
+            "geometry_angle")
         if(skill !in valid) return Triple(0,0,0)
         return Triple(prefs.getInt(skill + "_completed",0),
             prefs.getInt(skill + "_errors",0),

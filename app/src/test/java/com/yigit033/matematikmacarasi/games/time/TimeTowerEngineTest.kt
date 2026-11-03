@@ -23,7 +23,7 @@ class TimeTowerEngineTest {
         assertEquals(50,TowerDate(2024,12,20).daysUntil(TowerDate(2025,2,8)))
         assertEquals(-50,TowerDate(2025,2,8).daysUntil(TowerDate(2024,12,20)))
         assertNull(TowerDate.fromCode(20250229))
-        assertEquals(TowerDate(20240229),TowerDate.fromCode(20240229))
+        assertEquals(TowerDate(2024,2,29),TowerDate.fromCode(20240229))
     }
 
     @Test fun timeMathAndMidnightDayOffsetCorrect() {

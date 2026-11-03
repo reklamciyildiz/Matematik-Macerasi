@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,6 +44,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -138,17 +145,53 @@ private fun ShapeIcon(shape: CastleShape, color: Color, modifier: Modifier = Mod
 
 @Composable
 private fun ShapeChoice(shape: CastleShape, active: Boolean = false, enabled: Boolean = true,
-    rotationDegrees: Float = 0f, onClick: () -> Unit
+    rotationDegrees: Float = 0f, dragTarget: Rect? = null,
+    onDrop: (() -> Unit)? = null, onClick: () -> Unit
 ) {
     val scale by animateFloatAsState(
         targetValue=if(active) 1.035f else 1f,
         animationSpec=tween(170),label="selected geometry stone"
     )
+    var bounds by remember { mutableStateOf<Rect?>(null) }
+    var dragOrigin by remember { mutableStateOf(Offset.Zero) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+    var dragging by remember { mutableStateOf(false) }
+    val gesture = if(enabled && onDrop!=null)Modifier
+        .onGloballyPositioned { bounds=it.boundsInRoot() }
+        .pointerInput(shape,dragTarget) {
+            detectDragGesturesAfterLongPress(
+                onDragStart={local ->
+                    dragOrigin=(bounds?.topLeft ?: Offset.Zero)+local
+                    dragOffset=Offset.Zero
+                    dragging=true
+                },
+                onDrag={change,delta ->
+                    dragOffset+=delta
+                    change.consume()
+                },
+                onDragEnd={
+                    if(dragTarget?.contains(dragOrigin+dragOffset)==true)onDrop()
+                    dragOffset=Offset.Zero
+                    dragging=false
+                },
+                onDragCancel={
+                    dragOffset=Offset.Zero
+                    dragging=false
+                }
+            )
+        } else Modifier
     Surface(
         modifier = Modifier.fillMaxWidth().heightIn(min = 118.dp)
-            .graphicsLayer { scaleX=scale; scaleY=scale }
+            .zIndex(if(dragging)10f else 0f)
+            .graphicsLayer {
+                scaleX=if(dragging)1.06f else scale
+                scaleY=if(dragging)1.06f else scale
+                translationX=dragOffset.x
+                translationY=dragOffset.y
+            }
+            .then(gesture)
             .clickable(enabled=enabled,role=Role.Button,onClick=onClick)
-            .semantics { contentDescription = "${shape.display} şekli, seçmek için dokun" },
+            .semantics { contentDescription = "${shape.display}: dokunarak seç veya uzun basıp yuvaya sürükle" },
         shape=RoundedCornerShape(18.dp),
         color=if(active) Color(0xFF397A77) else Color(0xFF245875),
         border=androidx.compose.foundation.BorderStroke(
@@ -278,6 +321,9 @@ fun GeometryCastleScreen(
     var showExit by remember { mutableStateOf(false) }
     var feedbackPositive by remember { mutableStateOf(true) }
     var showCollection by remember { mutableStateOf(false) }
+    var activeSlotBounds by remember(run.seed,run.room,run.step,run.placed.size) {
+        mutableStateOf<Rect?>(null)
+    }
     val scroll = rememberScrollState()
     LaunchedEffect(run.room,run.step,run.seed) { scroll.scrollTo(0) }
 
@@ -307,8 +353,8 @@ fun GeometryCastleScreen(
             if(correct)audio.playCorrectSound() else audio.playWrongSound()
         }
     }
-    fun placePiece(task: CastleTask) {
-        val chosen = run.selected ?: return
+    fun placePiece(task: CastleTask, dragged:CastleShape?=null) {
+        val chosen = dragged ?: run.selected ?: return
         val index = run.placed.size
         if(run.solved || task.mode != CastleMode.BUILD ||
             index !in task.requiredPieces.indices) return
@@ -545,8 +591,8 @@ fun GeometryCastleScreen(
                             Text("KÖPRÜ ATÖLYESİ · ${run.placed.size}/${pieces.size} taş yerleştirildi",
                                 color=Mint,fontSize=13.sp,fontWeight=FontWeight.Bold)
                             Text(if(pieces.size==1)
-                                "Siluete uygun şekli seç ve yuvaya dokun."
-                                else "Köprüdeki ${pieces.size} yuvayı sırayla doldur. Döndürülmüş şekilleri de tanı.",
+                                "Taşı yuvaya sürükle veya seçip yuvaya dokun."
+                                else "Sıradaki yuvaya uygun taşı uzun basıp sürükle; istersen seçip yuvaya dokun.",
                                 color=Pale,fontSize=12.sp)
                             Row(Modifier.fillMaxWidth(),
                                 horizontalArrangement=Arrangement.spacedBy(7.dp)) {
@@ -556,6 +602,9 @@ fun GeometryCastleScreen(
                                     val activeSlot = slot == run.placed.size && !run.solved
                                     Surface(
                                         modifier=Modifier.weight(1f).heightIn(min=114.dp)
+                                            .onGloballyPositioned {
+                                                if(activeSlot)activeSlotBounds=it.boundsInRoot()
+                                            }
                                             .clickable(enabled=activeSlot && run.selected!=null,
                                                 role=Role.Button) { placePiece(task) }
                                             .semantics {
@@ -596,6 +645,10 @@ fun GeometryCastleScreen(
                                         ShapeChoice(shape,
                                             active=run.selected==shape,
                                             enabled=!run.solved,
+                                            dragTarget=if(task.mode==CastleMode.BUILD) activeSlotBounds
+                                                else null,
+                                            onDrop=if(task.mode==CastleMode.BUILD)
+                                                ({placePiece(task,shape)}) else null,
                                             rotationDegrees=if(run.contentVersion>=2 &&
                                                 run.tier!=LearningTier.TEMEL)
                                                 (((run.room*3+run.step)+shape.ordinal)%4)*45f

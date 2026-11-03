@@ -38,7 +38,7 @@ games=(src/"ui/screens/home/GamesTabScreen.kt").read_text()
 quick=(src/"ui/screens/home/QuickAccessGamesSection.kt").read_text()
 old=(src/"games/GameSelectionActivity.kt").read_text()
 assert 'GameCatalogItem("time_tower"' in games
-assert "13 macera" in games
+assert any(f"{n} macera" in games for n in range(13,101)), "Game count must not shrink"
 assert 'id = "time_tower"' in quick
 assert "TimeTowerActivity" in old
 art=ROOT/"app/src/main/res/drawable/time_tower_hero.xml"

@@ -143,8 +143,8 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
             val a=task.measureAnswer*PI/180
             val origin=Offset(cx-r*.75f,cy+r*.5f)
             val start=Offset(origin.x+r*1.35f,origin.y)
-            val end=Offset(origin.x+(r*1.35f*cos(a)).toFloat(),
-                origin.y-(r*1.35f*sin(a)).toFloat())
+            val end=Offset(origin.x+r*1.35f*cos(a).toFloat(),
+                origin.y-r*1.35f*sin(a).toFloat())
             drawLine(MeasureGold,origin,start,strokeWidth=7.dp.toPx())
             drawLine(MeasureCyan,origin,end,strokeWidth=7.dp.toPx())
             drawCircle(Color.White,radius=7.dp.toPx(),center=origin)
@@ -152,8 +152,8 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
                 moveTo(origin.x+r*.48f,origin.y)
                 for(i in 1..40){
                     val th=a*i/40
-                    lineTo(origin.x+(r*.48f*cos(th)).toFloat(),
-                        origin.y-(r*.48f*sin(th)).toFloat())
+                    lineTo(origin.x+r*.48f*cos(th).toFloat(),
+                        origin.y-r*.48f*sin(th).toFloat())
                 }
             }
             drawPath(arc,MeasureGold,style=Stroke(3.dp.toPx()))
@@ -164,10 +164,10 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
                 val inner=if(mark%2==0)r*.59f else r*.63f
                 val outer=r*.73f
                 drawLine(if(mark%2==0)MeasureGold else MeasureCyan.copy(alpha=.65f),
-                    Offset(origin.x+(inner*cos(th)).toFloat(),
-                        origin.y-(inner*sin(th)).toFloat()),
-                    Offset(origin.x+(outer*cos(th)).toFloat(),
-                        origin.y-(outer*sin(th)).toFloat()),
+                    Offset(origin.x+inner*cos(th).toFloat(),
+                        origin.y-inner*sin(th).toFloat()),
+                    Offset(origin.x+outer*cos(th).toFloat(),
+                        origin.y-outer*sin(th).toFloat()),
                     strokeWidth=if(mark%2==0)2.dp.toPx() else 1.dp.toPx())
             }
             drawIntoCanvas{canvas->
@@ -175,8 +175,8 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
                 for(mark in 0..6){
                     val th=mark*30.0*PI/180.0
                     canvas.nativeCanvas.drawText((mark*30).toString(),
-                        origin.x+(r*.88f*cos(th)).toFloat(),
-                        origin.y-(r*.88f*sin(th)).toFloat(),
+                        origin.x+r*.88f*cos(th).toFloat(),
+                        origin.y-r*.88f*sin(th).toFloat(),
                         marked)
                 }
                 canvas.nativeCanvas.drawText(

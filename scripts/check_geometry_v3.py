@@ -31,11 +31,15 @@ for term in ("run.contentVersion <= 1","placed=emptyList(),solved=true",
 assert "PlayerProfileService.getInstance(this).getUserClass()" in activity
 assert "GeometryCastleScreen(" in activity and "profileGrade=" in activity
 assert "onValueChangeFinished=" in workshop
+assert 'val drawingWidth=if(kind=="triangle_area")2*w else w' in workshop
+assert 'val width=unit*drawingWidth;val height=unit*h' in workshop
 assert "task.measureKind" in workshop
 assert "onValue:(Int)->Unit" in workshop
 assert "GeometrySketch" in workshop
 assert "navigationBarsPadding()" in nav
-assert ".height(84.dp)" in nav
+assert ".heightIn(min = 84.dp)" in nav
+assert ".height(84.dp)" not in nav
+assert "TextOverflow.Ellipsis" in nav
 assert "HomeBottomNavigationBar(" in home
 assert "Modifier.align(Alignment.BottomCenter)" not in home
 assert 'Spacer(modifier = Modifier.height(96.dp))' not in home

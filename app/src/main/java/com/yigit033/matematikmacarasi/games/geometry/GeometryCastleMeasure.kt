@@ -157,8 +157,31 @@ private fun GeometrySketch(task:CastleTask,modifier:Modifier=Modifier) {
                 }
             }
             drawPath(arc,MeasureGold,style=Stroke(3.dp.toPx()))
-            drawIntoCanvas{it.nativeCanvas.drawText(
-                "?",origin.x+r*.42f,origin.y-r*.32f,paint)}
+            // Readable protractor: 15° marks and every 30° numbered.
+            // Angles cannot be estimated reliably from rays without a scale.
+            for(mark in 0..12){
+                val th=mark*15.0*PI/180.0
+                val inner=if(mark%2==0)r*.59f else r*.63f
+                val outer=r*.73f
+                drawLine(if(mark%2==0)MeasureGold else MeasureCyan.copy(alpha=.65f),
+                    Offset(origin.x+(inner*cos(th)).toFloat(),
+                        origin.y-(inner*sin(th)).toFloat()),
+                    Offset(origin.x+(outer*cos(th)).toFloat(),
+                        origin.y-(outer*sin(th)).toFloat()),
+                    strokeWidth=if(mark%2==0)2.dp.toPx() else 1.dp.toPx())
+            }
+            drawIntoCanvas{canvas->
+                val marked=Paint(paint).apply{textSize=9.sp.toPx()}
+                for(mark in 0..6){
+                    val th=mark*30.0*PI/180.0
+                    canvas.nativeCanvas.drawText((mark*30).toString(),
+                        origin.x+(r*.88f*cos(th)).toFloat(),
+                        origin.y-(r*.88f*sin(th)).toFloat(),
+                        marked)
+                }
+                canvas.nativeCanvas.drawText(
+                    "?",origin.x+r*.42f,origin.y-r*.32f,paint)
+            }
         }else{
             val w=task.measureWidth;val h=task.measureHeight
             val unit=min(size.width*.62f/w,size.height*.62f/h)

@@ -337,15 +337,15 @@ object GeometryCastleEngine {
                 grade<=2->"edges"
                 grade==3->"vertices"
                 grade==4->"perimeter"
-                grade==5->if(index%2==0)"area" else "perimeter"
+                grade==5->if(index%4==0)"perimeter" else "area"
                 else->when(index%3){
                     0->"angle"
                     1->"triangle_area"
                     else->"perimeter"
                 }
             }
-            val w=if(grade<=4)rng.nextInt(2,7) else rng.nextInt(3,11)
-            val h=if(grade<=4)rng.nextInt(2,7) else rng.nextInt(3,10)
+            val w=if(grade<=5)rng.nextInt(2,7) else rng.nextInt(3,11)
+            val h=if(grade<=5)rng.nextInt(2,7) else rng.nextInt(3,10)
             val target=if(kind=="edges"||kind=="vertices")
                 pool.filter{it.sides>0}.random(rng)
                 else if(kind=="triangle_area")CastleShape.TRIANGLE

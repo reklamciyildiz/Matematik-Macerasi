@@ -37,6 +37,7 @@ assert "task.measureKind" in workshop
 assert "onValue:(Int)->Unit" in workshop
 assert "GeometrySketch" in workshop
 assert "navigationBarsPadding()" in nav
+assert ".padding(bottom = 12.dp)" in nav
 assert ".heightIn(min = 84.dp)" in nav
 assert ".height(84.dp)" not in nav
 assert "TextOverflow.Ellipsis" in nav

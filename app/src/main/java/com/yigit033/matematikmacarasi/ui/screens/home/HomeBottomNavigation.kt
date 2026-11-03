@@ -74,6 +74,9 @@ fun HomeBottomNavigationBar(
             )
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             .navigationBarsPadding()
+            // Phones with hidden gesture handles can report zero navigation inset.
+            // Keep labels/touch targets clear of the physical bottom edge regardless.
+            .padding(bottom = 12.dp)
     ) {
         Row(
             modifier = Modifier

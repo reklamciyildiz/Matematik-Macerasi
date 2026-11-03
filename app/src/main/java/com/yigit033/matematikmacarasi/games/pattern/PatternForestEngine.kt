@@ -190,7 +190,7 @@ object PatternForestEngine {
     }
     private fun pool(recipe:Recipe,answers:List<PatternTile>,rng:Random,count:Int):List<PatternTile> {
         val all=answers.distinct().toMutableList()
-        val variants:List<PatternTile>=when(recipe.kind) {
+        val variants:List<PatternTile> = when(recipe.kind) {
             PatternKind.NUMBER->{
                 val n=answers.first().value;val d=abs(recipe.step).coerceAtLeast(1)
                 listOf(n+d,n-d,n+2*d,n+1,n-1,n+3*d,n+5,n+7)

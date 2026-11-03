@@ -47,7 +47,7 @@ data class TowerDate(val year: Int, val month: Int, val day: Int): Comparable<To
         days+=day-1
         return (5+days)%7
     }
-    fun display()="$day \${MONTHS[month-1]} $year"
+    fun display()="$day ${MONTHS[month-1]} $year"
     companion object {
         val MONTHS=listOf("Ocak","Şubat","Mart","Nisan","Mayıs","Haziran",
             "Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık")
@@ -104,7 +104,7 @@ object TimeTowerEngine {
         require(total in 0..2880)
         val day=total/1440
         val minute=total%1440
-        val txt="\${(minute/60).toString().padStart(2,'0')}:\${(minute%60).toString().padStart(2,'0')}"
+        val txt="${(minute/60).toString().padStart(2,'0')}:${(minute%60).toString().padStart(2,'0')}"
         return if(day>0) "$txt (+$day gün)" else txt
     }
     fun partOfDay(minutes:Int):String=when((minutes%1440)/60) {
@@ -129,11 +129,11 @@ object TimeTowerEngine {
                     else "Gizli saati çöz"
                 TimeChallenge(world,title,
                     if(world==TimeWorld.CLOCK)
-                        "Kule saatini \${formatTime(target)} olacak şekilde ayarla."
+                        "Kule saatini ${formatTime(target)} olacak şekilde ayarla."
                     else "Analog saatin gösterdiği zamanı dijital olarak oluştur.",
                     if(world==TimeWorld.CLOCK)
-                        "Akrep saatleri, yelkovan dakikaları gösterir. \${formatTime(target)}."
-                    else "Yelkovan 60 dakikada, akrep 12 saatte tam tur atar. \${formatTime(target)}.",
+                        "Akrep saatleri, yelkovan dakikaları gösterir. ${formatTime(target)}."
+                    else "Yelkovan 60 dakikada, akrep 12 saatte tam tur atar. ${formatTime(target)}.",
                     grade,step,answerMinute=target)
             }
             TimeWorld.TRAIN-> {
@@ -153,8 +153,8 @@ object TimeTowerEngine {
                 val start=hour*60+baseMinute
                 val range=((elapsed+unit*6)/unit)*unit
                 TimeChallenge(world,"Treni zamanında ulaştır",
-                    "Tren \${formatTime(start)}'da ayrılıyor. $elapsed dakika sonra saat kaç? Vagonu zaman çizelgesinde ilerlet.",
-                    "$elapsed dakika \${elapsed/60} saat \${elapsed%60} dakikadır. Varış: \${formatTime(start+elapsed)}.",
+                    "Tren ${formatTime(start)}'da ayrılıyor. $elapsed dakika sonra saat kaç? Vagonu zaman çizelgesinde ilerlet.",
+                    "$elapsed dakika ${elapsed/60} saat ${elapsed%60} dakikadır. Varış: ${formatTime(start+elapsed)}.",
                     grade,unit,answerMinute=start+elapsed,startMinute=start,
                     elapsedMinutes=elapsed,rangeMinutes=range)
             }
@@ -173,8 +173,8 @@ object TimeTowerEngine {
                 }
                 val answer=start.addDays(delta)
                 TimeChallenge(world,"Takvim kapısını aç",
-                    "\${start.display()} tarihinden $delta gün sonrası hangi tarih? Takvimden seç.",
-                    "\${start.display()} + $delta gün = \${answer.display()}. Bir ay bitince ertesi ayın 1'i gelir.",
+                    "${start.display()} tarihinden $delta gün sonrası hangi tarih? Takvimden seç.",
+                    "${start.display()} + $delta gün = ${answer.display()}. Bir ay bitince ertesi ayın 1'i gelir.",
                     grade,step,firstDate=start,answerDate=answer)
             }
             TimeWorld.ROUTE-> {

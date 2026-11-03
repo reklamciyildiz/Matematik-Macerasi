@@ -6,7 +6,7 @@
 
 **Düzeltme:** v1 köprü cevaplarında `selected=chosen`, `placed=[]`, `solved=true` olarak kalır; yalnız v2/v3 çoklu yuvalarda `placed` ilerletilir. Eski kayıtlar silinmedi, otomatik sıfırlanmadı. Yeni Android testleri tam bu senaryoyu bir v1 SharedPreferences kaydı ile tekrar oluşturur.
 
-**Alt menü sorunu:** İkon dairesi, yazı ve iç boşlukların toplam yüksekliği, navigasyon satırının içerik yüksekliğini aşıyordu. Ana ekranın alt menüsü ayrıca yüzen bir katman olarak içeriğin üzerinde duruyordu. Menü, `Column` içinde kalıcı yer kaplayan bir bölgeye taşındı; satır 84 dp oldu ve `navigationBarsPadding` ile sistem gezinme alanı korunuyor. Gereksiz 84/96 dp içerik boşlukları kaldırıldı. Geometry Castle ekranındaki sistem durum/gezinti çubuğu çakışması da `statusBarsPadding` ve `navigationBarsPadding` ile düzeltildi.
+**Alt menü sorunu:** İkon dairesi, yazı ve iç boşlukların toplam yüksekliği, navigasyon satırının içerik yüksekliğini aşıyordu. Ana ekranın alt menüsü ayrıca yüzen bir katman olarak içeriğin üzerinde duruyordu. Menü, `Column` içinde kalıcı yer kaplayan bir bölgeye taşındı; satır asgari 84 dp yüksekliğinde olup büyük sistem yazılarında gerektiği kadar genişliyor. Dar ekranlarda etiketler taşmak yerine üç nokta ile kısaltılıyor. `navigationBarsPadding` ile sistem gezinme alanı korunuyor. Gereksiz 84/96 dp içerik boşlukları kaldırıldı. Geometry Castle ekranındaki sistem durum/gezinti çubuğu çakışması da `statusBarsPadding` ve `navigationBarsPadding` ile düzeltildi.
 
 ## v3 oyun kapsamı
 
@@ -15,7 +15,7 @@
 - Köprü Atölyesi: farklı şekil siluetlerini birer/ikişer/üçer taşla tamamlama; çevre/alan için şekli çizimli ölçme.
 - Ayna Kulesi: 4×4 veya üst seviyede 6×6 vitrayda gerçek düşey simetri; hücrelere dokunarak desen oluşturma.
 - Taç Salonu: görsel tanıma, ölçme, inşa ve simetri karışık final.
-- **Yeni ölçüm mekaniği:** birim karelerle alan, dört kenar toplamıyla çevre, taban/yükseklikli üçgen alanı, iki ışınla açı; +/− butonları ve dokunmatik kaydırıcı. Görevin doğru cevabı doğrudan görüntülenmez.
+- **Yeni ölçüm mekaniği:** birim karelerle alan, dört kenar toplamıyla çevre, taban/yükseklikli üçgen alanı, iki ışınla açı; +/− butonları ve dokunmatik kaydırıcı. Üçgen çizimindeki taban genişliği, soruda verilen `2 × genişlik` ölçüsü ile aynı ölçeği kullanır. Görevin doğru cevabı doğrudan görüntülenmez.
 - Mevcut yedi adet premium lisanslı/ürün içi WebP sahnesi ve karakter varlığı korunur. Yeni resim indirmeye/izin almaya gerek kalmaz; ölçüm çizimleri Android Canvas ile yapılır.
 - Çocuklara zaman baskısı yok, yanlış cevap ve ipucu bağımsız başarı olarak sayılmaz. Doğru/yanlış, bölüm bitişi ve taş yerleştirme sesleri ortak ses sistemini kullanır.
 

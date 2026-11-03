@@ -31,6 +31,7 @@ import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.games.basic.*
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.fractions.FractionCrystalsActivity
+import com.yigit033.matematikmacarasi.games.time.TimeTowerActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
@@ -79,7 +80,9 @@ private fun catalog():List<GameCatalogItem> = listOf(
     GameCatalogItem("geometry","Geometri Kalesi","Şekilleri tanı · kaleyi kurtar","Hayat & Keşif",
         R.drawable.geometry_castle_hero_premium,Color(0xFF78D6FF),GeometryCastleActivity::class.java),
     GameCatalogItem("fractions","Kesir Kristalleri","Eş parçaları oluştur · ışık köprüsünü tamamla","Hayat & Keşif",
-        R.drawable.fraction_crystals_hero,Color(0xFFAF8BFF),FractionCrystalsActivity::class.java)
+        R.drawable.fraction_crystals_hero,Color(0xFFAF8BFF),FractionCrystalsActivity::class.java),
+    GameCatalogItem("time_tower","Zaman Kulesi","Saati kur · zaman trenini sür · takvim ve plan görevleri","Hayat & Keşif",
+        R.drawable.time_tower_hero,Color(0xFFFFD98A),TimeTowerActivity::class.java)
 )
 @Composable
 fun GamesTabScreen(modifier:Modifier=Modifier){
@@ -104,7 +107,7 @@ fun GamesTabScreen(modifier:Modifier=Modifier){
                 verticalArrangement=Arrangement.spacedBy(4.dp)){
                 Text("🎮 OYUN DÜNYASI",color=saffron,fontSize=23.sp,
                     fontWeight=FontWeight.Black)
-                Text("12 macera · hepsi tek bir keşif haritasında",
+                Text("13 macera · hepsi tek bir keşif haritasında",
                     color=white,fontSize=13.sp)
                 Text("$grade. sınıf · eğitim içeriği sınıfa göre düzenlenir",
                     color=aqua,fontSize=12.sp,fontWeight=FontWeight.Bold)

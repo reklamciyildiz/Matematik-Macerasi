@@ -53,6 +53,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
+import com.yigit033.matematikmacarasi.games.time.TimeTowerActivity
 import com.yigit033.matematikmacarasi.games.interactive.BalloonPopGameActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import com.yigit033.matematikmacarasi.games.interactive.MathMazeGameActivity
@@ -520,8 +521,18 @@ class GameSelectionActivity : ComponentActivity() {
                                         }
                                     )
                                     
-                                    // Boş kart (gelecekteki oyunlar için)
-                                    Spacer(modifier = Modifier.weight(1f))
+                                    // Analog saat, takvim ve günlük plan yolculuğu
+                                    GameCard(
+                                        icon = R.drawable.ic_comparison_task,
+                                        iconTint = Color(0xFF147DB4),
+                                        title = "Zaman Kulesi",
+                                        description = "Saat kur, takvim seç ve zaman trenini sür",
+                                        modifier = Modifier.weight(1f),
+                                        onClick = {
+                                            startActivity(Intent(this@GameSelectionActivity,
+                                                TimeTowerActivity::class.java))
+                                        }
+                                    )
                                 }
             
             // Gelecekteki gerçek hayat oyunları için mesaj
@@ -530,7 +541,7 @@ class GameSelectionActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Uygulamaya olan ilgi arttığı zaman daha da farklı gerçek hayat oyunları eklenecektir :) ",
+                    text = "Günlük yaşam problemlerini keşfederek öğren!",
                     fontSize = 16.sp,
                     color = Color.White,
                     fontWeight = FontWeight.Medium,

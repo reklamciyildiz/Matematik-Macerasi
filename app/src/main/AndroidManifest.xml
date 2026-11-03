@@ -115,6 +115,11 @@
         </activity-alias>
         
         <activity
+            android:name=".games.time.TimeTowerActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.MatematikMacerasi" />
+        <activity
             android:name=".games.fractions.FractionCrystalsActivity"
             android:exported="false"
             android:screenOrientation="portrait"

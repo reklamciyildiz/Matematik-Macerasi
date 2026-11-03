@@ -84,6 +84,20 @@ class PatternForestEngineTest {
         assertTrue(a.zip(b).count{it.first!=it.second}>=20)
     }
 
+    @Test fun upperGradesCanGeneralizeToDistantTerms() {
+        for(grade in 5..8)for(difficulty in 0..2)for(seed in 1L..100L) {
+            val t=PatternForestEngine.task(seed,grade,difficulty,15)
+            assertEquals(PatternMechanic.RULE,t.mechanic)
+            val nth=when {grade==5->10;grade==6->12;else->16}
+            val first=t.shown[0].value
+            val delta=t.shown[1].value-first
+            val distant=first+(nth-1)*delta
+            assertEquals(distant.toString(),t.ruleChoices[t.correctRuleIndex])
+            assertTrue(PatternForestEngine.correct(t,t.correctRuleIndex,emptyList()))
+            assertTrue(t.instruction.contains(nth.toString()))
+        }
+    }
+
     @Test fun difficultyNeverReplacesFirstGradeWithAdvancedAlgebra() {
         for(d in 0..2){
             for(i in 0 until 30){

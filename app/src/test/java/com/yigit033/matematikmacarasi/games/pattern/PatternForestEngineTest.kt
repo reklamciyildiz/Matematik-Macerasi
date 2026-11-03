@@ -33,21 +33,6 @@ class PatternForestEngineTest {
                     }
                     PatternMechanic.ORDER,PatternMechanic.CREATE->{
                         assertEquals(3,t.answer.size)
-                        val chosen=t.answer.mapIndexed { i,tile->
-                            // ORDER: each physical tile has an identity even when values repeat.
-                            t.options.indices.first { j ->
-                                t.options[j]==tile &&
-                                    (t.mechanic==PatternMechanic.CREATE ||
-                                        j !in t.answer.take(i).mapNotNull { prior ->
-                                            t.options.indices.firstOrNull{idx->
-                                                t.options[idx]==prior &&
-                                                    idx !in t.answer.take(i-1).mapNotNull{
-                                                        earlier->t.options.indexOf(earlier)
-                                                    }
-                                            }
-                                        })
-                            }
-                        }
                         // Robust construction independent of duplicated repeated colors.
                         val uniquePicks=mutableSetOf<Int>()
                         val actual=t.answer.map {tile ->

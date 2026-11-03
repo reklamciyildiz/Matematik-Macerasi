@@ -51,7 +51,7 @@ class PatternForestEngineTest {
                         else assertTrue(PatternForestEngine.validSelection(t,-1,listOf(0,0)))
                     }
                     PatternMechanic.RULE->{
-                        assertTrue(t.ruleChoices.size>=3)
+                        assertTrue("Missing rule choices grade=$grade diff=$difficulty seed=$seed task=$index: ${t.ruleChoices}", t.ruleChoices.size>=3)
                         assertTrue(t.correctRuleIndex in t.ruleChoices.indices)
                         assertEquals(t.ruleChoices.distinct().size,t.ruleChoices.size)
                         assertTrue(PatternForestEngine.correct(t,t.correctRuleIndex,emptyList()))

@@ -29,9 +29,7 @@ assert "FRACTION_CRYSTALS" in activity
 assert 'android:name=".games.fractions.FractionCrystalsActivity"' in manifest
 assert 'GameCatalogItem("fractions"' in games
 assert 'FractionCrystalsActivity::class.java' in quick
-import re
-header = re.search(r'Text\\("(\\d+) macera', games)
-assert header and int(header.group(1)) >= 12, "Game World count should not shrink"
+assert any(f"{count} macera" in games for count in range(12, 101)), "Game World count must not shrink"
 assert (root/"app/src/test/java/com/yigit033/matematikmacarasi/games/fractions/FractionCrystalEngineTest.kt").exists()
 assert (root/"app/src/androidTest/java/com/yigit033/matematikmacarasi/games/fractions/FractionCrystalPersistenceTest.kt").exists()
 print("Fraction Crystals source, content, game routes and unique award: PASS")

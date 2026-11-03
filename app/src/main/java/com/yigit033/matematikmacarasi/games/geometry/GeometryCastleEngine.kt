@@ -15,7 +15,7 @@ enum class CastleShape(val display: String, val sides: Int) {
     RHOMBUS("Eşkenar dörtgen", 4), PARALLELOGRAM("Paralelkenar", 4),
     TRAPEZOID("Yamuk", 4), OCTAGON("Sekizgen", 8)
 }
-enum class CastleMode { FIND, BUILD, SYMMETRY }
+enum class CastleMode { FIND, BUILD, SYMMETRY, MEASURE }
 data class CastleTask(
     val mode: CastleMode,
     val prompt: String,
@@ -27,7 +27,14 @@ data class CastleTask(
     val skill: String,
     val explanation: String,
     /** Multiple silhouette sockets. Empty on legacy runs means one target. */
-    val buildTargets: List<CastleShape> = emptyList()
+    val buildTargets: List<CastleShape> = emptyList(),
+    val measureAnswer:Int=0,
+    val measureMax:Int=0,
+    val measureStep:Int=1,
+    val measureKind:String="",
+    val measureWidth:Int=0,
+    val measureHeight:Int=0,
+    val measureUnit:String=""
 ) {
     val requiredPieces: List<CastleShape> get() =
         if (mode != CastleMode.BUILD) emptyList()
@@ -51,14 +58,21 @@ data class CastleRun(
     val completedRuns: Int = 0,
     /** Existing checkpoints have version 1; only new runs use the expanded catalogue. */
     val contentVersion: Int = 1,
-    val placed: List<CastleShape> = emptyList()
+    val placed: List<CastleShape> = emptyList(),
+    val grade:Int=2,
+    val measureValue:Int=0
 ) {
     val finished: Boolean get() = seed > 0L && room == 4
 }
 
 object GeometryCastleEngine {
     const val TASKS_PER_ROOM = 3
-    const val TOTAL_TASKS = 12
+    const val TOTAL_TASKS = 12 // old v1/v2 games
+    const val PREMIUM_STEPS_PER_ROOM = 5
+    const val PREMIUM_TOTAL_TASKS = 20
+    fun stepsPerRoom(run:CastleRun)=if(run.contentVersion>=3)5 else 3
+    fun totalTasks(run:CastleRun)=if(run.contentVersion>=3)20 else 12
+    fun taskIndex(run:CastleRun)=run.room*stepsPerRoom(run)+run.step
 
     private val legacyShapes = listOf(
         CastleShape.CIRCLE, CastleShape.TRIANGLE, CastleShape.SQUARE,
@@ -71,6 +85,21 @@ object GeometryCastleEngine {
         LearningTier.USTALIK -> CastleShape.entries
     }
 
+    /** Grade is a content ceiling; skill tier never unlocks future-grade content. */
+    fun available(tier:LearningTier,grade:Int):List<CastleShape>{
+        val shapes=when(grade.coerceIn(1,8)){
+            1,2->legacyShapes.take(4)
+            3,4->legacyShapes
+            else->CastleShape.entries
+        }
+        val cap=when(tier){
+            LearningTier.TEMEL->4
+            LearningTier.GELISEN->6
+            LearningTier.USTALIK->10
+        }
+        return shapes.take(cap)
+    }
+
     private fun legacyAvailable(tier: LearningTier): List<CastleShape> = when (tier) {
         LearningTier.TEMEL -> legacyShapes.take(4)
         LearningTier.GELISEN -> legacyShapes.take(5)
@@ -78,10 +107,12 @@ object GeometryCastleEngine {
     }
 
     /** Legacy generators intentionally remain stable for in-progress v1 checkpoints. */
-    fun tasks(seed: Long, tier: LearningTier,
-        weakShape: CastleShape? = null, contentVersion: Int = 2): List<CastleTask> =
-        if (contentVersion <= 1) legacyTasks(seed, tier, weakShape)
-        else expandedTasks(seed, tier, weakShape)
+    fun tasks(seed:Long,tier:LearningTier,weakShape:CastleShape?=null,
+        contentVersion:Int=2,grade:Int=2):List<CastleTask> = when {
+        contentVersion<=1->legacyTasks(seed,tier,weakShape)
+        contentVersion==2->expandedTasks(seed,tier,weakShape)
+        else->premiumTasks(seed,tier,grade,weakShape)
+    }
 
     private fun legacyTasks(seed: Long, tier: LearningTier,
         weakShape: CastleShape?): List<CastleTask> {
@@ -231,9 +262,150 @@ object GeometryCastleEngine {
         )
     }
 
+
+    /** New 20-task world; legacy v1/v2 generated tasks remain bit-for-bit unchanged. */
+    private fun premiumTasks(seed:Long,tier:LearningTier,grade:Int,
+        weakShape:CastleShape?):List<CastleTask> {
+        require(seed>0 && grade in 1..8)
+        val rng=Random(seed xor 0x72931L)
+        val pool=available(tier,grade)
+        val priorities=if(weakShape in pool) listOfNotNull(weakShape)+
+            pool.filterNot{it==weakShape}.shuffled(rng) else pool.shuffled(rng)
+        fun target(i:Int)=priorities[i%priorities.size]
+        fun picks(needed:List<CastleShape>):List<CastleShape> {
+            val a=needed.distinct()
+            return (a+pool.filterNot{it in a}.shuffled(rng)
+                .take((4-a.size).coerceAtLeast(0))).shuffled(rng)
+        }
+        fun shape(mode:CastleMode,index:Int):CastleTask {
+            val chosen=target(index)
+            val count=when(tier){
+                LearningTier.TEMEL->if(grade<=2)1 else 2
+                LearningTier.GELISEN->2
+                LearningTier.USTALIK->if(grade<=2)2 else 3
+            }
+            val pieces=if(mode==CastleMode.BUILD)
+                listOf(chosen)+pool.filterNot{it==chosen}.shuffled(rng).take(count-1)
+                else emptyList()
+            val prompt=if(mode==CastleMode.BUILD)
+                "Köprüdeki şekil siluetlerini taşlarla sırayla doldur."
+                else when(chosen){
+                    CastleShape.CIRCLE->"Düz kenarı ve köşesi olmayan çemberi bul."
+                    CastleShape.TRIANGLE->"3 köşesi olan üçgeni bul."
+                    CastleShape.SQUARE->"4 eşit kenarı ve 4 dik açısı olan kareyi bul."
+                    CastleShape.RECTANGLE->"4 dik açılı, iki uzun iki kısa kenarlı dikdörtgeni bul."
+                    CastleShape.PENTAGON->"5 köşeli çokgeni bul."
+                    CastleShape.HEXAGON->"6 köşeli çokgeni bul."
+                    CastleShape.OCTAGON->"8 köşeli çokgeni bul."
+                    CastleShape.RHOMBUS->"Dört eşit kenarlı eğik dörtgeni bul."
+                    CastleShape.PARALLELOGRAM->"Karşılıklı kenarları paralel olan eğik dörtgeni bul."
+                    CastleShape.TRAPEZOID->"Yalnızca bir çift paralel kenarı olan yamuğu bul."
+                }
+            val explanation=when(chosen){
+                CastleShape.CIRCLE->"Çemberin düz kenarı ve köşesi yoktur."
+                CastleShape.SQUARE->"Karenin dört kenarı eşit ve dört açısı diktir."
+                CastleShape.RECTANGLE->"Dikdörtgenin dört açısı diktir ve karşı kenarları eşittir."
+                CastleShape.RHOMBUS->"Eşkenar dörtgenin dört kenarı eşittir."
+                CastleShape.PARALLELOGRAM->"Paralelkenarın karşılıklı kenarları paraleldir."
+                CastleShape.TRAPEZOID->"Bu yamukta yalnızca bir çift karşılıklı kenar paraleldir."
+                else->chosen.display+" şeklinin "+chosen.sides+" kenarı vardır."
+            }
+            return CastleTask(mode,prompt,picks(if(pieces.isEmpty())
+                listOf(chosen) else pieces),chosen,4,0,
+                if(mode==CastleMode.FIND)"geometry_classify" else "geometry_compose",
+                explanation,pieces)
+        }
+        fun mirror(index:Int):CastleTask {
+            val grid=if(grade>=5 && tier==LearningTier.USTALIK)6 else 4
+            val cells=grid*(grid/2)
+            val count=when(tier){
+                LearningTier.TEMEL->1+index%2
+                LearningTier.GELISEN->2+index%3
+                LearningTier.USTALIK->3+index%4
+            }.coerceAtMost(cells-1)
+            val mask=(0 until cells).shuffled(rng).take(count)
+                .fold(0){acc,cell->acc or (1 shl cell)}
+            return CastleTask(CastleMode.SYMMETRY,
+                "Sol vitraydaki kristallerin sağdaki ayna görüntüsünü oluştur.",
+                emptyList(),CastleShape.SQUARE,grid,mask,
+                if(tier==LearningTier.TEMEL)"geometry_symmetry_recognize"
+                else "geometry_symmetry_build",
+                "Eksenin iki tarafındaki kareler aynı uzaklıkta eşleşir.")
+        }
+        fun measure(index:Int):CastleTask {
+            val kind=when{
+                grade<=2->"edges"
+                grade==3->"vertices"
+                grade==4->"perimeter"
+                grade==5->if(index%2==0)"area" else "perimeter"
+                else->when(index%3){
+                    0->"angle"
+                    1->"triangle_area"
+                    else->"perimeter"
+                }
+            }
+            val w=if(grade<=4)rng.nextInt(2,7) else rng.nextInt(3,11)
+            val h=if(grade<=4)rng.nextInt(2,7) else rng.nextInt(3,10)
+            val target=if(kind=="edges"||kind=="vertices")
+                pool.filter{it.sides>0}.random(rng)
+                else if(kind=="triangle_area")CastleShape.TRIANGLE
+                else CastleShape.RECTANGLE
+            val angle=listOf(30,45,60,90,120,135,150).random(rng)
+            val answer=when(kind){
+                "edges","vertices"->target.sides
+                "perimeter"->2*(w+h)
+                "area"->w*h
+                "triangle_area"->w*h
+                else->angle
+            }
+            val prompt=when(kind){
+                "edges"->"Taşın düz kenarlarını say. Kristal sayacını doğru sonuca getir."
+                "vertices"->"Çokgenin köşelerini sayıp sayacı ayarla."
+                "perimeter"->"Kapının çevresini ölç: kenarlar "+w+" ve "+h+" birim."
+                "area"->"Bahçenin alanını hesapla: kenarlar "+w+" ve "+h+" birim."
+                "triangle_area"->"Üçgenin alanı kaç birimkare? Taban "+
+                    (2*w)+", yükseklik "+h+"."
+                else->"Pusulanın gösterdiği açıyı derece olarak belirle."
+            }
+            val explanation=when(kind){
+                "edges","vertices"->target.display+" şeklinin "+target.sides+
+                    " düz kenarı ve köşesi vardır."
+                "perimeter"->"Çevre = 2 × ("+w+" + "+h+") = "+answer+" birim."
+                "area"->"Alan = "+w+" × "+h+" = "+answer+" birimkare."
+                "triangle_area"->"Üçgen alanı = ("+(2*w)+" × "+h+
+                    ") / 2 = "+answer+" birimkare."
+                else->answer.toString()+"° açı "+
+                    (if(answer<90)"dar" else if(answer==90)"dik" else "geniş")+
+                    " açıdır."
+            }
+            val unit=if(kind=="angle")"°"
+                else if(kind=="area"||kind=="triangle_area")"birim²"
+                else if(kind=="perimeter")"birim" else "tane"
+            val skill=when(kind){
+                "edges","vertices"->"geometry_properties"
+                "perimeter"->"geometry_perimeter"
+                "area","triangle_area"->"geometry_area"
+                else->"geometry_angle"
+            }
+            return CastleTask(CastleMode.MEASURE,prompt,emptyList(),target,
+                4,0,skill,explanation,emptyList(),answer,
+                if(kind=="angle")180 else maxOf(answer+10,30).coerceAtMost(220),
+                if(kind=="angle")15 else 1,kind,w,h,unit)
+        }
+        return listOf(
+            shape(CastleMode.FIND,0),shape(CastleMode.FIND,1),measure(2),
+            shape(CastleMode.FIND,3),shape(CastleMode.FIND,4),
+            shape(CastleMode.BUILD,5),shape(CastleMode.BUILD,6),
+            shape(CastleMode.BUILD,7),measure(8),shape(CastleMode.BUILD,9),
+            mirror(0),mirror(1),mirror(2),mirror(3),mirror(4),
+            shape(CastleMode.FIND,15),measure(16),shape(CastleMode.BUILD,17),
+            measure(18),mirror(5))
+    }
+
     fun task(run: CastleRun): CastleTask? =
-        if (run.seed <= 0 || run.room !in 0..3 || run.step !in 0..2) null
-        else tasks(run.seed, run.tier, run.focusShape, run.contentVersion)[run.room * 3 + run.step]
+        if (run.seed <= 0 || run.room !in 0..3 || run.step !in 0 until stepsPerRoom(run)) null
+        else tasks(run.seed,run.tier,run.focusShape,run.contentVersion,run.grade)
+            .getOrNull(taskIndex(run))
 
     fun symmetricRightMask(left: Int, size: Int): Int {
         require(size in listOf(4,6))
@@ -259,20 +431,22 @@ object GeometryCastleEngine {
         task.mode == CastleMode.BUILD && slot in task.requiredPieces.indices &&
             task.requiredPieces[slot] == shape
 
-    fun isCorrect(task: CastleTask, shape: CastleShape?, mask: Int): Boolean =
-        when(task.mode) {
-            CastleMode.FIND,CastleMode.BUILD -> shape == task.target
-            CastleMode.SYMMETRY -> mask == symmetricRightMask(task.leftMask, task.gridSize)
-        }
+    fun isCorrect(task:CastleTask,shape:CastleShape?,mask:Int,
+        number:Int=0):Boolean=when(task.mode){
+        CastleMode.FIND,CastleMode.BUILD->shape==task.target
+        CastleMode.SYMMETRY->mask==symmetricRightMask(task.leftMask,task.gridSize)
+        CastleMode.MEASURE->number==task.measureAnswer
+    }
 
     fun valid(run: CastleRun): Boolean {
-        if (run.seed < 0 || run.room !in 0..4 || run.step !in 0..2 ||
+        if (run.seed < 0 || run.room !in 0..4 || run.step !in 0 until stepsPerRoom(run) ||
             run.attempts < 0 || run.errors !in 0..run.attempts ||
-            run.hints < 0 || run.firstTryCorrect !in 0..TOTAL_TASKS ||
+            run.hints < 0 || run.firstTryCorrect !in 0..totalTasks(run) ||
             run.completedRuns < 0 || (run.seed == 0L &&
                 (run.room != 0 || run.step != 0)) ||
             run.mirrorMask < 0 || (run.mirrorMask ushr 18) != 0 ||
-            run.contentVersion !in 1..2 || run.placed.size > 3) return false
+            run.contentVersion !in 1..3 || run.placed.size > 3 ||
+            run.grade !in 1..8 || run.measureValue<0) return false
 
         if (run.contentVersion >= 2 && run.seed > 0L && run.room in 0..3) {
             val current = task(run) ?: return false
@@ -282,7 +456,21 @@ object GeometryCastleEngine {
                 if (run.solved && run.placed.size != current.requiredPieces.size)
                     return false
             } else if (run.placed.isNotEmpty()) return false
-        } else if (run.placed.isNotEmpty()) return false
+            if(current.mode==CastleMode.MEASURE){
+                if(run.measureValue>current.measureMax ||
+                    run.measureValue%current.measureStep!=0)return false
+            }else if(run.measureValue!=0)return false
+            if(run.contentVersion>=3 && run.solved){
+                val right=when(current.mode){
+                    CastleMode.FIND->run.selected==current.target
+                    CastleMode.BUILD->run.placed==current.requiredPieces
+                    CastleMode.SYMMETRY->run.mirrorMask==
+                        symmetricRightMask(current.leftMask,current.gridSize)
+                    CastleMode.MEASURE->run.measureValue==current.measureAnswer
+                }
+                if(!right)return false
+            }
+        } else if (run.placed.isNotEmpty() || run.measureValue!=0) return false
         return true
     }
 
@@ -300,10 +488,11 @@ object GeometryCastleEngine {
 
     fun advance(run: CastleRun): CastleRun {
         if(!valid(run) || run.seed <= 0 || run.room == 4 || !run.solved) return run
-        val completed = run.room == 3 && run.step == 2
-        val nextStep = if(run.step == 2) 0 else run.step + 1
-        val nextRoom = if(run.step == 2) run.room+1 else run.room
+        val completed = run.room == 3 && run.step == stepsPerRoom(run)-1
+        val nextStep = if(run.step == stepsPerRoom(run)-1) 0 else run.step + 1
+        val nextRoom = if(run.step == stepsPerRoom(run)-1) run.room+1 else run.room
         return run.copy(room=nextRoom,step=nextStep,selected=null,solved=false,mirrorMask=0,
+            measureValue=0,
             placed=emptyList(),
             firstTryCorrect=run.firstTryCorrect+
                 if(!run.hasHintInTask && !run.hasErrorInTask) 1 else 0,

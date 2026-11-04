@@ -99,7 +99,7 @@ fun HomeScreenNew(
     // 3. UI State'leri
     var userName by remember { mutableStateOf(playerProfileService.getUserName().ifBlank { "Matematik Gezgini" }) }
     var userClass by remember { mutableStateOf(playerProfileService.getUserClass().ifBlank { "1. Sınıf" }) }
-    var recentlyOpenedId by remember { mutableStateOf(GameLaunchHistory.lastOpenedId(context)) }
+    var recentIds by remember { mutableStateOf(GameLaunchHistory.recentIds(context)) }
     var playerAge by remember { mutableIntStateOf(playerProfileService.getPlayerAge()) }
     var currentAvatar by remember { mutableStateOf(avatarService.getCurrentAvatar()) }
     var dailyTasks by remember { mutableStateOf(dailyTaskManager.getTodayTasks()) }
@@ -130,7 +130,7 @@ fun HomeScreenNew(
 
             userName = playerProfileService.getUserName().ifBlank { "Matematik Gezgini" }
             userClass = playerProfileService.getUserClass().ifBlank { "1. Sınıf" }
-            recentlyOpenedId = GameLaunchHistory.lastOpenedId(context)
+            recentIds = GameLaunchHistory.recentIds(context)
             playerAge = playerProfileService.getPlayerAge()
             totalScore = gameStatisticsService.getTotalScore()
             completedGamesCount = gameStatisticsService.getCompletedGamesCount()
@@ -199,6 +199,11 @@ fun HomeScreenNew(
                 else -> {}
             }
         }
+    }
+
+    val grade = com.yigit033.matematikmacarasi.games.basic.GradeAwareOperationPolicy.grade(userClass)
+    val suggestions = remember(userClass,recentIds,lastResumeTime) {
+        GamePersonalization.recommendations(context,grade,recentIds)
     }
 
     // Ana Görev (Hero Card için ilk tamamlanmamış görev)
@@ -302,8 +307,13 @@ fun HomeScreenNew(
                         // 2. HIZLI ERİŞİM (Referanstaki 4 Canlı İllüstrasyonlu Kart)
                         QuickAccessGamesSection(
                             onSeeAllClick = { currentTab = HomeTab.GAMES },
-                            recentlyOpenedId = recentlyOpenedId
+                            recentIds = recentIds,
+                            recommendedIds = suggestions.map { it.id },
+                            grade = grade
                         )
+
+                        // Real recent game entries across the whole application.
+                        RecentGamesSection(recentIds=recentIds,grade=grade)
 
                         Spacer(modifier = Modifier.height(6.dp))
 
@@ -312,7 +322,7 @@ fun HomeScreenNew(
                             playerAge = playerAge,
                             userClass = userClass,
                             onNavigateToLearn = { currentTab = HomeTab.LEARN },
-                            recentlyOpenedId = recentlyOpenedId
+                            recommendations = suggestions
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -340,7 +350,7 @@ fun HomeScreenNew(
                         GamesTabScreen(
                             modifier = Modifier.fillMaxSize(),
                             userClass = userClass,
-                            recentlyOpenedId = recentlyOpenedId,
+                            recentlyOpenedId = recentIds.firstOrNull(),
                             onChangeGrade = navigateToProfile
                         )
                     }

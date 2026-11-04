@@ -115,6 +115,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_game_catalog.py
 
+      - name: Verify recent game history and evidence-based home recommendations
+        shell: bash
+        run: python3 scripts/check_recent_game_personalization.py
+
       - name: Validate Space S3.6.3 premium WebP assets and integrations
         shell: bash
         run: python3 scripts/check_space_premium_assets.py

@@ -25,15 +25,21 @@ assert 'if(isLocked(grade))' in catalog
 assert 'GameCatalog.games' in games and 'GameTopic.entries' in games
 assert 'Sınıfıma göre' in games and 'Sınıfı değiştir' in games
 assert 'BoxWithConstraints' in games and 'height(cardHeight)' in games
+assert 'GameCardFacts(item,grade,' in games
+assert 'difficultyNote()' in catalog
 assert 'maxWidth<310.dp' in games and 'LocalDensity.current.fontScale' in games
 assert 'it.isLocked(grade)' in games
 assert 'GameLaunchHistory.open(context,item)' in games
 assert 'GameCatalog.byId(key)' in quick and 'GameLaunchHistory.open(context,card.game)' in quick
-assert 'recentlyOpenedId' in quick and 'sortedBy' in quick
-assert 'GameCatalog.suggestionFor(grade, recentlyOpenedId)' in recommended
-assert 'recommendedGame.gradeNote(grade)' in recommended
+assert 'recentIds.take(2)+recommendedIds.take(2)' in quick
+assert 'GameCardFacts(game=card.game,grade=grade,compact=true' in quick
+assert 'suggested.forEach' in recommended
+assert 'game.difficultyNote()' in recommended
+assert 'badge=reason' in recommended
 assert 'onChangeGrade = navigateToProfile' in home
-assert 'recentlyOpenedId = GameLaunchHistory.lastOpenedId(context)' in home
+assert 'recentIds = GameLaunchHistory.recentIds(context)' in home
+assert 'RecentGamesSection(recentIds=recentIds,grade=grade)' in home
+assert 'GamePersonalization.recommendations(context,grade,recentIds)' in home
 # No misleading school-grade blanket promise or duplicated game list.
 assert 'eğitim içeriği sınıfa göre düzenlenir' not in games
 assert 'private fun catalog()' not in games

@@ -74,7 +74,9 @@ data class PremiumGameCardItem(
 @Composable
 fun QuickAccessGamesSection(
     onSeeAllClick: () -> Unit,
-    recentlyOpenedId: String? = null,
+    recentIds: List<String> = emptyList(),
+    recommendedIds: List<String> = emptyList(),
+    grade: Int = 1,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -96,12 +98,17 @@ fun QuickAccessGamesSection(
     val originalCards=styles.mapNotNull{(key,gradient,border)->
         GameCatalog.byId(key)?.let{PremiumGameCardItem(it,gradient,border)}
     }
-    val preferredId=when(recentlyOpenedId){
-        "add","subtract","multiply","divide" -> "operations"
-        else -> recentlyOpenedId
-    }
-    val primaryCards=if(preferredId==null)originalCards else
-        originalCards.sortedBy{if(it.game.id==preferredId)0 else 1}
+    val highlighted=(recentIds.take(2)+recommendedIds.take(2)).distinct()
+        .mapNotNull{GameCatalog.byId(it)}
+        .filterNot{it.isLocked(grade)}
+        .map{game->
+            originalCards.firstOrNull{it.game.id==game.id}
+                ?: PremiumGameCardItem(game,
+                    listOf(game.accent.copy(alpha=.75f),Color(0xFF104270)),
+                    game.accent)
+        }
+    val primaryCards=(highlighted+originalCards).distinctBy{it.game.id}
+        .filterNot{it.game.isLocked(grade)}.take(11)
 
     Column(
         modifier = modifier
@@ -165,6 +172,7 @@ fun QuickAccessGamesSection(
             items(primaryCards, key = { it.game.id }) { card ->
                 IllustratedGameCard(
                     card = card,
+                    grade = grade,
                     onClick = { GameLaunchHistory.open(context,card.game) }
                 )
             }
@@ -175,13 +183,14 @@ fun QuickAccessGamesSection(
 @Composable
 private fun IllustratedGameCard(
     card: PremiumGameCardItem,
+    grade: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Box(
         modifier = modifier
-            .width(148.dp)
-            .height(188.dp)
+            .width(157.dp)
+            .height(247.dp)
             .shadow(
                 elevation = 6.dp,
                 shape = RoundedCornerShape(22.dp),
@@ -200,7 +209,7 @@ private fun IllustratedGameCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(126.dp)
+                    .height(117.dp)
                     .padding(6.dp)
                     .clip(RoundedCornerShape(18.dp))
             ) {
@@ -212,25 +221,20 @@ private fun IllustratedGameCard(
                 )
             }
 
-            // Alt Başlık (Referanstaki beyaz kalın tipografi)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = card.game.quickTitle,
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 16.sp,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            Text(
+                text = card.game.quickTitle,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center,
+                lineHeight = 16.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(horizontal=8.dp,vertical=4.dp)
+            )
+            GameCardFacts(game=card.game,grade=grade,compact=true,
+                modifier=Modifier.fillMaxWidth().padding(horizontal=9.dp))
+
         }
     }
 }

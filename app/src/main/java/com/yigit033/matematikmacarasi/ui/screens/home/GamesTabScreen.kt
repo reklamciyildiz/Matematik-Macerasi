@@ -56,10 +56,10 @@ private fun GameCatalogCard(item:GameCatalogItem,grade:Int,
     val locked=item.isLocked(grade)
     val gradeNote=item.gradeNote(grade)
     val fontScale=LocalDensity.current.fontScale
-    val cardHeight=(258f+(fontScale-1f).coerceAtLeast(0f)*85f).dp
+    val cardHeight=(282f+(fontScale-1f).coerceAtLeast(0f)*115f).dp
     Surface(
         modifier=modifier.height(cardHeight)
-            .semantics { contentDescription="${item.title}. $gradeNote" }
+            .semantics { contentDescription="${item.title}. ${item.focus}. $gradeNote. ${item.difficultyNote()}" }
             .clickable(enabled=!locked,onClick=onPlay),
         shape=RoundedCornerShape(21.dp),
         color=panel,
@@ -79,13 +79,8 @@ private fun GameCatalogCard(item:GameCatalogItem,grade:Int,
             Text(item.title,Modifier.padding(horizontal=5.dp,vertical=3.dp),
                 color=cloud,fontSize=14.sp,lineHeight=17.sp,
                 fontWeight=FontWeight.Black,maxLines=2,overflow=TextOverflow.Ellipsis)
-            Text(item.focus,Modifier.padding(horizontal=5.dp),
-                color=Color(0xFFC6E3F4),fontSize=11.sp,lineHeight=14.sp,
-                maxLines=1,overflow=TextOverflow.Ellipsis)
-            Text(gradeNote,Modifier.padding(horizontal=5.dp),
-                color=if(locked)Color(0xFFC2C6CE) else aqua,
-                fontSize=11.sp,lineHeight=14.sp,
-                fontWeight=FontWeight.SemiBold,maxLines=2,overflow=TextOverflow.Ellipsis)
+            GameCardFacts(item,grade,
+                modifier=Modifier.padding(horizontal=5.dp))
             Spacer(Modifier.weight(1f))
             Text(if(locked)"KİLİTLİ" else "▶ OYNA",
                 Modifier.padding(horizontal=5.dp,vertical=5.dp),

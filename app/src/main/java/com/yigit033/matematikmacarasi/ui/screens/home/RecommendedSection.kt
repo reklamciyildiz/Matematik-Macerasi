@@ -64,12 +64,14 @@ fun RecommendedSection(
     playerAge: Int,
     userClass: String,
     onNavigateToLearn: () -> Unit,
-    recentlyOpenedId: String? = null,
+    recommendations: List<GameSuggestion> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val grade = com.yigit033.matematikmacarasi.games.basic.GradeAwareOperationPolicy.grade(userClass)
-    val recommendedGame = GameCatalog.suggestionFor(grade, recentlyOpenedId)
+    val suggested=recommendations.mapNotNull{pick->
+        GameCatalog.byId(pick.id)?.takeUnless{it.isLocked(grade)}?.let{it to pick.reason}
+    }
     val nextLesson = LearningPathCatalog.forGrade(userClass).first()
 
     Box(
@@ -140,15 +142,16 @@ fun RecommendedSection(
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // 1. Önerilen Oyun: Sayı Avı (Referanstaki sahil/ada temalı kart)
-                item {
-                    RecommendedGameCard(
-                        title = recommendedGame.title,
-                        subtitle = recommendedGame.gradeNote(grade) + " · " + recommendedGame.focus,
-                        badge = "Sınıfına göre öneri",
-                        imageRes = recommendedGame.coverRes,
-                        onPlayClick = { GameLaunchHistory.open(context,recommendedGame) }
-                    )
+                suggested.forEach { (game,reason) ->
+                    item(key=game.id) {
+                        RecommendedGameCard(
+                            title=game.title,
+                            subtitle=game.focus+"\n"+game.gradeNote(grade)+"\n"+game.difficultyNote(),
+                            badge=reason,
+                            imageRes=game.coverRes,
+                            onPlayClick={ GameLaunchHistory.open(context,game) }
+                        )
+                    }
                 }
 
                 // 2. Önerilen Öğrenme: Katlar Konusu (Referanstaki mor kitaplı kart)
@@ -176,7 +179,7 @@ private fun RecommendedGameCard(
     Box(
         modifier = Modifier
             .width(260.dp)
-            .height(144.dp)
+            .height(192.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(
                 Brush.horizontalGradient(
@@ -228,7 +231,9 @@ private fun RecommendedGameCard(
                     text = subtitle,
                     color = Color(0xFFE6FFFA),
                     fontSize = 11.sp,
-                    lineHeight = 14.sp
+                    lineHeight = 15.sp,
+                    maxLines = 3,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
 
@@ -242,7 +247,7 @@ private fun RecommendedGameCard(
                 border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF38BDF8)),
                 modifier = Modifier
                     .fillMaxWidth(0.75f)
-                    .height(34.dp)
+                    .height(42.dp)
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically

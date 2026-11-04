@@ -99,6 +99,7 @@ fun HomeScreenNew(
     // 3. UI State'leri
     var userName by remember { mutableStateOf(playerProfileService.getUserName().ifBlank { "Matematik Gezgini" }) }
     var userClass by remember { mutableStateOf(playerProfileService.getUserClass().ifBlank { "1. Sınıf" }) }
+    var recentlyOpenedId by remember { mutableStateOf(GameLaunchHistory.lastOpenedId(context)) }
     var playerAge by remember { mutableIntStateOf(playerProfileService.getPlayerAge()) }
     var currentAvatar by remember { mutableStateOf(avatarService.getCurrentAvatar()) }
     var dailyTasks by remember { mutableStateOf(dailyTaskManager.getTodayTasks()) }
@@ -129,6 +130,7 @@ fun HomeScreenNew(
 
             userName = playerProfileService.getUserName().ifBlank { "Matematik Gezgini" }
             userClass = playerProfileService.getUserClass().ifBlank { "1. Sınıf" }
+            recentlyOpenedId = GameLaunchHistory.lastOpenedId(context)
             playerAge = playerProfileService.getPlayerAge()
             totalScore = gameStatisticsService.getTotalScore()
             completedGamesCount = gameStatisticsService.getCompletedGamesCount()
@@ -299,7 +301,8 @@ fun HomeScreenNew(
 
                         // 2. HIZLI ERİŞİM (Referanstaki 4 Canlı İllüstrasyonlu Kart)
                         QuickAccessGamesSection(
-                            onSeeAllClick = { currentTab = HomeTab.GAMES }
+                            onSeeAllClick = { currentTab = HomeTab.GAMES },
+                            recentlyOpenedId = recentlyOpenedId
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -308,7 +311,8 @@ fun HomeScreenNew(
                         RecommendedSection(
                             playerAge = playerAge,
                             userClass = userClass,
-                            onNavigateToLearn = { currentTab = HomeTab.LEARN }
+                            onNavigateToLearn = { currentTab = HomeTab.LEARN },
+                            recentlyOpenedId = recentlyOpenedId
                         )
 
                         Spacer(modifier = Modifier.height(6.dp))
@@ -334,7 +338,10 @@ fun HomeScreenNew(
                             .statusBarsPadding()
                     ) {
                         GamesTabScreen(
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
+                            userClass = userClass,
+                            recentlyOpenedId = recentlyOpenedId,
+                            onChangeGrade = navigateToProfile
                         )
                     }
                 }

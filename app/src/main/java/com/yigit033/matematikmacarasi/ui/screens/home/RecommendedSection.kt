@@ -64,26 +64,12 @@ fun RecommendedSection(
     playerAge: Int,
     userClass: String,
     onNavigateToLearn: () -> Unit,
+    recentlyOpenedId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
-    val (recommendedTitle, recommendedSubtitle, recommendedActivity, recommendedImage) = when {
-        grade <= 1 -> listOf("Toplama Oyunu", "10 içinde toplama denemeleri", "addition", "addition")
-        grade in 3..4 -> listOf("Çarpma Oyunu", "Eşit grupları keşfet", "multiply", "multiply")
-        grade >= 5 -> listOf("Sayı Avcıları", "Temel sayı bilgini tekrar et", "number", "number")
-        else -> listOf("Sayı Avcıları", "Üçer ritmik saymayı uygula", "number", "number")
-    }
-    val selectedActivity = when (recommendedActivity) {
-        "addition" -> AdditionGameActivity::class.java
-        "multiply" -> MultiplicationGameActivity::class.java
-        else -> SayiAvi2Activity::class.java
-    }
-    val selectedImage = when (recommendedImage) {
-        "addition" -> R.drawable.ic_addition
-        "multiply" -> R.drawable.ic_multiplication
-        else -> R.drawable.card_number_hunt
-    }
+    val grade = com.yigit033.matematikmacarasi.games.basic.GradeAwareOperationPolicy.grade(userClass)
+    val recommendedGame = GameCatalog.suggestionFor(grade, recentlyOpenedId)
     val nextLesson = LearningPathCatalog.forGrade(userClass).first()
 
     Box(
@@ -157,14 +143,11 @@ fun RecommendedSection(
                 // 1. Önerilen Oyun: Sayı Avı (Referanstaki sahil/ada temalı kart)
                 item {
                     RecommendedGameCard(
-                        title = recommendedTitle,
-                        subtitle = recommendedSubtitle,
-                        badge = "Oyun",
-                        imageRes = selectedImage,
-                        onPlayClick = {
-                            val intent = Intent(context, selectedActivity)
-                            context.startActivity(intent)
-                        }
+                        title = recommendedGame.title,
+                        subtitle = recommendedGame.gradeNote(grade) + " · " + recommendedGame.focus,
+                        badge = "Sınıfına göre öneri",
+                        imageRes = recommendedGame.coverRes,
+                        onPlayClick = { GameLaunchHistory.open(context,recommendedGame) }
                     )
                 }
 

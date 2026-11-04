@@ -56,12 +56,9 @@ import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
 import com.yigit033.matematikmacarasi.games.interactive.SpaceMathAdventureActivity
 
 data class PremiumGameCardItem(
-    val id: String,
-    val title: String,
-    @DrawableRes val imageRes: Int,
-    val bgGradient: List<Color>,
-    val borderColor: Color,
-    val activityClass: Class<*>
+    val game:GameCatalogItem,
+    val bgGradient:List<Color>,
+    val borderColor:Color
 )
 
 /**
@@ -77,93 +74,34 @@ data class PremiumGameCardItem(
 @Composable
 fun QuickAccessGamesSection(
     onSeeAllClick: () -> Unit,
+    recentlyOpenedId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
 
-    val primaryCards = listOf(
-        PremiumGameCardItem(
-            id = "four_operations",
-            title = "Dört İşlem\nOyunları",
-            imageRes = R.drawable.card_four_operations,
-            bgGradient = listOf(Color(0xFFFF7A00), Color(0xFFFF3D00)),
-            borderColor = Color(0xFFFFB74D),
-            activityClass = OperationsHubActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "balloon_pop",
-            title = "Balon\nPatlatma",
-            imageRes = R.drawable.card_balloon_pop,
-            bgGradient = listOf(Color(0xFF00B4D8), Color(0xFF0077B6)),
-            borderColor = Color(0xFF67E8F9),
-            activityClass = BalloonPopGameActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "number_hunt",
-            title = "Sayı Avı",
-            imageRes = R.drawable.card_number_hunt_premium,
-            bgGradient = listOf(Color(0xFF10B981), Color(0xFF059669)),
-            borderColor = Color(0xFF6EE7B7),
-            activityClass = SayiAvi2Activity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "space_math",
-            title = "Uzay\nMacerası",
-            imageRes = R.drawable.card_space_adventure,
-            bgGradient = listOf(Color(0xFF8B5CF6), Color(0xFF6D28D9)),
-            borderColor = Color(0xFFC4B5FD),
-            activityClass = SpaceMathAdventureActivity::class.java
-        ),
-        // Ek mini oyunlar (katalog bütünlüğü için)
-        PremiumGameCardItem(
-            id = "math_maze",
-            title = "Matematik\nLabirenti",
-            imageRes = R.drawable.card_maze_premium,
-            bgGradient = listOf(Color(0xFF7C3AED), Color(0xFF5B21B6)),
-            borderColor = Color(0xFFA78BFA),
-            activityClass = MathMazeGameActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "market_sim",
-            title = "Pazar\nSimülatörü",
-            imageRes = R.drawable.market_adventure_hero,
-            bgGradient = listOf(Color(0xFF059669), Color(0xFF065F46)),
-            borderColor = Color(0xFF34D399),
-            activityClass = MarketSimulatorActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "fractions",
-            title = "Kesir\nKristalleri",
-            imageRes = R.drawable.fraction_crystals_hero,
-            bgGradient = listOf(Color(0xFF6D53CC), Color(0xFF1D6EA9)),
-            borderColor = Color(0xFFE9D78F),
-            activityClass = FractionCrystalsActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "pattern_forest",
-            title = "Örüntü\nOrmanı",
-            imageRes = R.drawable.pattern_forest_hero,
-            bgGradient = listOf(Color(0xFF145F78), Color(0xFF144878)),
-            borderColor = Color(0xFFFFD77C),
-            activityClass = PatternForestActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "time_tower",
-            title = "Zaman\nKulesi",
-            imageRes = R.drawable.time_tower_hero,
-            bgGradient = listOf(Color(0xFF2361A8), Color(0xFF192B67)),
-            borderColor = Color(0xFFFFD98A),
-            activityClass = TimeTowerActivity::class.java
-        ),
-        PremiumGameCardItem(
-            id = "shapes",
-            title = "Şekiller &\nGeometri",
-            imageRes = R.drawable.geometry_castle_hero_premium,
-            bgGradient = listOf(Color(0xFF0284C7), Color(0xFF0369A1)),
-            borderColor = Color(0xFF38BDF8),
-            activityClass = GeometryCastleActivity::class.java
-        )
+    // The visual palettes are presentation only. Catalog metadata, routes and covers
+    // come from GameCatalog so the home carousel and full game grid cannot diverge.
+    val styles=listOf(
+        Triple("operations",listOf(Color(0xFFFF7A00),Color(0xFFFF3D00)),Color(0xFFFFB74D)),
+        Triple("balloon",listOf(Color(0xFF00B4D8),Color(0xFF0077B6)),Color(0xFF67E8F9)),
+        Triple("hunt",listOf(Color(0xFF10B981),Color(0xFF059669)),Color(0xFF6EE7B7)),
+        Triple("space",listOf(Color(0xFF8B5CF6),Color(0xFF6D28D9)),Color(0xFFC4B5FD)),
+        Triple("maze",listOf(Color(0xFF7C3AED),Color(0xFF5B21B6)),Color(0xFFA78BFA)),
+        Triple("market",listOf(Color(0xFF059669),Color(0xFF065F46)),Color(0xFF34D399)),
+        Triple("fractions",listOf(Color(0xFF6D53CC),Color(0xFF1D6EA9)),Color(0xFFBBA5FF)),
+        Triple("pattern_forest",listOf(Color(0xFF158D80),Color(0xFF0B675D)),Color(0xFF7FE8B9)),
+        Triple("time_tower",listOf(Color(0xFFE58C35),Color(0xFFAD5E3D)),Color(0xFFFFD98A)),
+        Triple("geometry",listOf(Color(0xFF0284C7),Color(0xFF0369A1)),Color(0xFF38BDF8))
     )
+    val originalCards=styles.mapNotNull{(key,gradient,border)->
+        GameCatalog.byId(key)?.let{PremiumGameCardItem(it,gradient,border)}
+    }
+    val preferredId=when(recentlyOpenedId){
+        "add","subtract","multiply","divide" -> "operations"
+        else -> recentlyOpenedId
+    }
+    val primaryCards=if(preferredId==null)originalCards else
+        originalCards.sortedBy{if(it.game.id==preferredId)0 else 1}
 
     Column(
         modifier = modifier
@@ -224,17 +162,10 @@ fun QuickAccessGamesSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 16.dp)
         ) {
-            items(primaryCards, key = { it.id }) { card ->
+            items(primaryCards, key = { it.game.id }) { card ->
                 IllustratedGameCard(
                     card = card,
-                    onClick = {
-                        val intent = Intent(context, card.activityClass)
-                        if (card.activityClass == ComingSoonActivity::class.java) {
-                            intent.putExtra("game_name", "Şekiller & Geometri")
-                            intent.putExtra("is_category", true)
-                        }
-                        context.startActivity(intent)
-                    }
+                    onClick = { GameLaunchHistory.open(context,card.game) }
                 )
             }
         }
@@ -274,8 +205,8 @@ private fun IllustratedGameCard(
                     .clip(RoundedCornerShape(18.dp))
             ) {
                 Image(
-                    painter = painterResource(id = card.imageRes),
-                    contentDescription = card.title,
+                    painter = painterResource(id = card.game.coverRes),
+                    contentDescription = card.game.quickTitle,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
                 )
@@ -290,7 +221,7 @@ private fun IllustratedGameCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = card.title,
+                    text = card.game.quickTitle,
                     color = Color.White,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,

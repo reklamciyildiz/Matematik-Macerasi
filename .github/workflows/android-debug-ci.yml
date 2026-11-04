@@ -111,6 +111,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_game_hub_assets.py
 
+      - name: Verify single-source game catalog and honest grade policy labels
+        shell: bash
+        run: python3 scripts/check_game_catalog.py
+
       - name: Validate Space S3.6.3 premium WebP assets and integrations
         shell: bash
         run: python3 scripts/check_space_premium_assets.py

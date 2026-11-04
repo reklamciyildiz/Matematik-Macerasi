@@ -190,7 +190,7 @@ exports.reconcilePlayRefunds = onSchedule({
   const now=Date.now();
   do{
     const qs=new URLSearchParams({
-      startTime:String(now-8*24*60*60*1000),
+      startTime:String(now-29*24*60*60*1000),
       endTime:String(now),
       type:"0",
       "pageSelection.maxResults":"500"

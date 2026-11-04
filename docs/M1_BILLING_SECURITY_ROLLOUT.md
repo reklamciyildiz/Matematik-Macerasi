@@ -31,7 +31,7 @@ yükseltmeyi bu nedenle kullanıcı/müşteri geçiş planı olmadan zorlamıyor
   tombstone kayıtları sayesinde iade edilmiş tokenın tekrar verilmesi engellenir.
 - Play RTDN: güvenilir Pub/Sub kanalındaki iade/iptal bildiriminde
   server-side sahiplik yenilenir; başarısız ACK tekrar denenir.
-- `reconcilePlayRefunds`: her 12 saatte son 8 günü kapsayan
+- `reconcilePlayRefunds`: her 12 saatte son 29 günü kapsayan
   Voided Purchases API kontrolü (30 günlük API sınırını aşmaz).
 - Node politika testleri CI'da çalışır. Gerçek satın alma, Firebase ve Play
   kimlik bilgileri CI ortamında KULLANILMAZ.
@@ -51,6 +51,8 @@ yükseltmeyi bu nedenle kullanıcı/müşteri geçiş planı olmadan zorlamıyor
    bu topic'e yönlendir ve Play'e publisher yetkisi tanı.
 6. Firestore rules: `billingTokensV1` ve
    `parentPremiumEntitlementsV1` için istemci erişimini kapalı tut.
+   `commercial/firestore_billing_rules.fragment` şablonunu mevcut rules dosyasına
+   ekle; mevcut kuralları bu fragmanla tamamen değiştirme.
 7. Google Play'de mevcut sahiplikleri yeni ebeveyn hesaplarıyla
    güvenle eşleme: eski Premium hakkına dokunmadan, tek kullanımlık
    onaylı geçiş. İadeli ve farklı hesap tokenlarını negatif test et.

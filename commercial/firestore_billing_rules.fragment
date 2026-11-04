@@ -1,0 +1,10 @@
+// Add these TWO match blocks to the existing Firestore `match /databases/{database}/documents`.
+// DO NOT replace your entire production Firestore rules with this fragment.
+// Server Firebase Admin SDK bypasses client rules; only authenticated
+// callable functions may expose entitlement status, never raw token records.
+match /billingTokensV1/{purchaseTokenHash} {
+  allow read, write: if false;
+}
+match /parentPremiumEntitlementsV1/{parentUid} {
+  allow read, write: if false;
+}

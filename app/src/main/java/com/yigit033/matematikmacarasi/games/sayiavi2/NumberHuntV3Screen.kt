@@ -278,7 +278,7 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                 audio.playVictorySound()
                 val elapsed=((System.currentTimeMillis()-run.startedAt)/1000L).coerceAtLeast(1L)
                 latestFinished(grade,run.attempts,run.errors,elapsed)
-            }
+            }else warning="Tamamlama kaydedilemedi. Yeniden dene."
             session=store.load(grade)
         }else if(run.solved && run.index<NumberHuntGradeEngine.TASK_COUNT){
             delay(950L)
@@ -419,6 +419,25 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                 Text("Önceki sınıfların dünyalarını tekrar oynayabilirsin. Bu içerikler seçilmiş alıştırmalardır; resmî kazanım değerlendirmesi değildir.",
                     color=Color(0xFFBAD1DF),fontSize=11.sp,lineHeight=16.sp,
                     textAlign=TextAlign.Center)
+            }else if(run!=null && run.index>=NumberHuntGradeEngine.TASK_COUNT &&
+                !run.finished){
+                HuntPanel{
+                    Text("Son görevin tamamlandı ancak kayıt doğrulanamadı.",
+                        color=amber,fontSize=18.sp,fontWeight=FontWeight.Bold)
+                    Text("Ödül ve ilerlemeyi kaybetmemek için kaydı yeniden dene.",
+                        color=cream,fontSize=13.sp)
+                    Button(onClick={
+                        if(store.finish(grade,run.seed)){
+                            audio.playVictorySound()
+                            val elapsed=((System.currentTimeMillis()-run.startedAt)/1000L)
+                                .coerceAtLeast(1L)
+                            onWorldFinished(grade,run.attempts,run.errors,elapsed)
+                        }
+                        session=store.load(grade)
+                    },modifier=Modifier.fillMaxWidth()){
+                        Text("TAMAMLAMAYI KAYDET")
+                    }
+                }
             }else if(run!=null && run.index>=NumberHuntGradeEngine.TASK_COUNT){
                 HuntPanel{
                     Text("🏆 MACERA TAMAMLANDI",color=amber,

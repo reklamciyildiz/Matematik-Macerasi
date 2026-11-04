@@ -100,9 +100,11 @@ class SayiAvi2Activity : ComponentActivity() {
     private fun awardGradeFirstClear(grade:Int):Boolean {
         val store=NumberHuntV3Store(this)
         if(!store.hasCompleted(grade) || store.starAcknowledged(grade))return false
-        val added=starManager.addStars("sayi_avi_3_grade_$grade",1)
-        if(added)store.acknowledgeStar(grade)
-        return added
+        val rewardId="sayi_avi_3_grade_$grade"
+        val wasAlreadyAwarded=starManager.getGameStars(rewardId)>0
+        val confirmed=starManager.addStars(rewardId,1)
+        if(confirmed)store.acknowledgeStar(grade)
+        return confirmed && !wasAlreadyAwarded
     }
 
     private fun handleGradeWorldCompleted(grade:Int,attempts:Int,errors:Int,

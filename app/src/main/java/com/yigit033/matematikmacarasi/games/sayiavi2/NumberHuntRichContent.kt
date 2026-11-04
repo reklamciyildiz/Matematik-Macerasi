@@ -189,7 +189,7 @@ object NumberHuntRichContent {
         when(g){
             1->when(c){
                 0->{q="$a + $b";result=a+b}
-                1->{q=${a+b}.toString()+" - "+a;result=b}
+                1->{q=(a+b).toString()+" - "+a;result=b}
                 2->{q="İki sandıkta "+a+" ve "+b+" taş. Toplam?";result=a+b}
                 else->{q=(a+2*b).toString()+" - "+a;result=2*b}
             }

@@ -55,3 +55,32 @@ Bu ilk sürüm dört temel oyun mekaniğini sekiz sınıfa uyarlıyor. Ders kita
 bazlı kazanım validasyonu, farklı yaşlara özel karakter ve ortam görsellerinin tek tek
 yeniden üretilmesi, özel erişilebilirlik denetimleri ve kapsamlı çocuk testleri
 Play Store sürümü kabul edilmeden ayrıca yapılmalıdır.
+
+
+## Sayı Avı 3.1 – tekrar oynanabilirlik ve içerik çeşitliliği
+
+- Yeni başlayan koşularda (content_version=2): **24 görev = 4 bölüm × 6 mekanik**.
+- 6 mekanik: sayı izleri, köprü sıralama, enerji kadranı, eşleştirme,
+  şifre analizi ve dört kontrol noktalı sayı yolu.
+- Bölüm içinde mekanikler karıştırılır. Her sınıfta dört farklı
+  matematik konusu/predikatı kullanılır; zorluk ve koşu tohumu varyasyon üretir.
+- Önceden başlamış v3 content_version=1 koşular **16 görevlik eski soru
+  setleriyle** oynanır; kayıtlar yeniden başlatılmaz veya geriye dönük dönüştürülmez.
+- Yeni sürümde küçük doğru hamleler (seçilen doğru taşlar/portal geçişi)
+  işlem sırası ile kalıcı olarak saklanır. Geri dönüldüğünde aynı bulmaca
+  tamamlanabilir.
+- Düşük örneklem ve 7–8. sınıf içerik doğruluğu için farklı koşu tohumlarında
+  otomatik jenerasyon testleri çalıştırılır.
+
+### Cihaz kabulü
+
+1. 7. sınıfta 24 soru: negatif tam sayılar, rasyonel karşılaştırma,
+   mutlak değer; aynı mekanik arka arkaya blok hâlinde gelmemeli.
+2. 8. sınıfta tam kare/küp, üslü, köklü ve bilimsel gösterim bulunmalı.
+3. 1–6. sınıflarda matematik konuları gerçekten değişmeli.
+4. Bir bulmacada 2–3 doğru taşı seçip uygulamayı kapat/aç;
+   ara hamle kaldığı yerden devam etmeli.
+5. Eski v3 bitmemiş koşu 16 görev olarak tamamlanmalı;
+   yeni koşu 24 görev ile başlamalı.
+6. Yeni koşu eski yıldızları yeniden vermemeli; sonuç istatistikleri
+   yalnız tamamlanmış koşuyu saymalı.

@@ -65,6 +65,11 @@ require("if(CHILD_AD_DELIVERY_DISABLED) return false" in ad,
         "ad impression gating is missing")
 require("if(CHILD_AD_DELIVERY_DISABLED) return" in ad,
         "rewarded ad loading not gated")
+avatar_ui=read("screens/AvatarStoreActivity.kt")
+require("TEST MODU: 1 yıldız kazandınız!" not in avatar_ui,
+        "debug ad-failure path must never mint stars in production")
+require("Reklam ödülleri şu anda kullanılamıyor." in avatar_ui,
+        "missing explicit unavailable-reward feedback")
 require("initializeAdMob()" not in application,
         "app startup still initializes AdMob")
 if checks:

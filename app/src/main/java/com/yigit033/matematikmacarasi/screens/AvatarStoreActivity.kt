@@ -1153,48 +1153,18 @@ fun AvatarStoreScreen(
                                     try {
                                         // AdManager'ı kontrol et
                                         if (adManager == null) {
-                                            Log.d("AvatarStoreScreen", "Reklam yöneticisi bulunamadı, test modu etkinleştiriliyor")
-                                            // Test modu: AdManager yoksa direkt yıldız ekle
-                                            CoroutineScope(Dispatchers.IO).launch {
-                                                try {
-                                                    // KRİTİK: Doğrudan SharedPreferences üzerinden mevcut değeri al
-                                                    val currentDisplayStars = context.getSharedPreferences("star_manager_prefs", Context.MODE_PRIVATE)
-                                                        .getInt("display_stars", 0)
-                                                    val newStars = currentDisplayStars + 1 // 1 yıldız ekle
-                                                    
-                                                    // KRİTİK: Tüm yerlere aynı anda kaydet
-                                                    val smp = context.getSharedPreferences("star_manager_prefs", Context.MODE_PRIVATE)
-                                                    smp.edit().putInt("display_stars", newStars).commit()
-                                                    
-                                                    context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
-                                                        .edit().putInt("display_stars", newStars).commit()
-                                                    
-                                                    val success = starManager.setDisplayStars(newStars)
-                                                    
-                                                    withContext(Dispatchers.Main) {
-                                                        // UI'ı güncelle
-                                                        userStars = newStars
-                                                        
-                                                        // Dialog'u kapat
-                                                        showNotEnoughStarsDialog = false
-                                                        
-                                                        // Bilgi mesajı göster
-                                                        Toast.makeText(context, "TEST MODU: 1 yıldız kazandınız! Yeni toplam: $newStars", 
-                                                            Toast.LENGTH_SHORT).show()
-                                                        
-                                                        isAdLoading = false
-                                                    }
-                                                } catch (e: Exception) {
-                                                    withContext(Dispatchers.Main) {
-                                                        Log.e("AvatarStoreScreen", "Test modu yıldız ekleme hatası: ${e.message}", e)
-                                                        isAdLoading = false
-                                                        Toast.makeText(context, "Test: Yıldız eklenemedi", Toast.LENGTH_SHORT).show()
-                                                    }
-                                                }
-                                            }
+                                            // Never mint stars when advertising is disabled or the SDK fails.
+                                            // The previous debug fallback was reachable in real builds.
+                                            Log.w("AvatarStoreScreen", "Reklam kapalı; yıldız ödülü verilmiyor")
+                                            isAdLoading = false
+                                            Toast.makeText(
+                                                context,
+                                                "Reklam ödülleri şu anda kullanılamıyor.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
                                             return@Button
                                         }
-                                        
+
                                         // Context'i kontrol et
                                         val activity = context as? Activity
                                         if (activity == null) {

@@ -11,6 +11,7 @@ store=(java/"games/fractions/FractionCrystalStore.kt").read_text()
 activity=(java/"games/fractions/FractionCrystalsActivity.kt").read_text()
 manifest=(root/"app/src/main/AndroidManifest.xml").read_text()
 games=(java/"ui/screens/home/GamesTabScreen.kt").read_text()
+catalog=(java/"ui/screens/home/GameCatalog.kt").read_text()
 quick=(java/"ui/screens/home/QuickAccessGamesSection.kt").read_text()
 vector=root/"app/src/main/res/drawable/fraction_crystals_hero.xml"
 assert vector.exists() and vector.stat().st_size>4000
@@ -27,9 +28,11 @@ for expected in ("last_delivered", "first_reward", "fun validate(", "fun save(",
     assert expected in store,expected
 assert "FRACTION_CRYSTALS" in activity
 assert 'android:name=".games.fractions.FractionCrystalsActivity"' in manifest
-assert 'GameCatalogItem("fractions"' in games
-assert 'FractionCrystalsActivity::class.java' in quick
-assert any(f"{count} macera" in games for count in range(12, 101)), "Game World count must not shrink"
+assert 'GameCatalogItem("fractions"' in catalog
+assert 'FractionCrystalsActivity::class.java' in catalog
+assert '"fractions"' in quick and 'GameCatalog.byId(key)' in quick
+assert 'GameCatalog.games' in games
+assert catalog.count('GameCatalogItem("') >= 14, "Game World count must not shrink"
 assert (root/"app/src/test/java/com/yigit033/matematikmacarasi/games/fractions/FractionCrystalEngineTest.kt").exists()
 assert (root/"app/src/androidTest/java/com/yigit033/matematikmacarasi/games/fractions/FractionCrystalPersistenceTest.kt").exists()
 print("Fraction Crystals source, content, game routes and unique award: PASS")

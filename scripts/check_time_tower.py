@@ -35,11 +35,14 @@ assert "TIME_TOWER" in activity and "markRewardRecorded" in activity
 manifest=(ROOT/"app/src/main/AndroidManifest.xml").read_text()
 assert 'android:name=".games.time.TimeTowerActivity"' in manifest
 games=(src/"ui/screens/home/GamesTabScreen.kt").read_text()
+catalog=(src/"ui/screens/home/GameCatalog.kt").read_text()
 quick=(src/"ui/screens/home/QuickAccessGamesSection.kt").read_text()
 old=(src/"games/GameSelectionActivity.kt").read_text()
-assert 'GameCatalogItem("time_tower"' in games
-assert any(f"{n} macera" in games for n in range(13,101)), "Game count must not shrink"
-assert 'id = "time_tower"' in quick
+assert 'GameCatalogItem("time_tower"' in catalog
+assert 'TimeTowerActivity::class.java' in catalog
+assert catalog.count('GameCatalogItem("') >= 14, "Game count must not shrink"
+assert '"time_tower"' in quick and 'GameCatalog.byId(key)' in quick
+assert 'GameCatalog.games' in games
 assert "TimeTowerActivity" in old
 art=ROOT/"app/src/main/res/drawable/time_tower_hero.xml"
 assert art.exists()

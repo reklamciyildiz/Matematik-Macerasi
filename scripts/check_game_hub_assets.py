@@ -14,13 +14,16 @@ for name in names:
 main=root/"app/src/main/java/com/yigit033/matematikmacarasi"
 q=(main/"ui/screens/home/QuickAccessGamesSection.kt").read_text()
 c=(main/"ui/screens/home/GamesTabScreen.kt").read_text()
+catalog=(main/"ui/screens/home/GameCatalog.kt").read_text()
 h=(main/"games/basic/OperationsHubActivity.kt").read_text()
 g=(main/"games/basic/GradeAwareOperationPolicy.kt").read_text()
-for v in ["activityClass = OperationsHubActivity::class.java",
-          "imageRes = R.drawable.card_number_hunt_premium"]:
-    assert v in q,v
-for v in ["ForestAdventureActivity","SayiAvi2Activity","SpaceMathAdventureActivity",
-          "OperationsHubActivity","GeometryCastleActivity","card_number_hunt_premium"]:
+assert "GameCatalog.byId(key)" in q and "GameLaunchHistory.open(context,card.game)" in q
+for v in ["OperationsHubActivity::class.java", "R.drawable.card_four_operations",
+          "R.drawable.card_number_hunt_premium", "ForestAdventureActivity",
+          "SayiAvi2Activity","SpaceMathAdventureActivity",
+          "GeometryCastleActivity", "GameCatalogItem(\"hunt\""]:
+    assert v in catalog,v
+for v in ["GameCatalog.games", "GameCatalog.operationsHub", "GameLaunchHistory.open(context,item)"]:
     assert v in c,v
 for v in ["OperationKind.entries","MixedOperationSession","grade","last_operation"]:
     assert v in h,v

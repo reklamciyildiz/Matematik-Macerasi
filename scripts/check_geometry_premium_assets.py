@@ -15,7 +15,7 @@ SCREEN = ROOT / (
 )
 QUICK_ACCESS = ROOT / (
     "app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/"
-    "QuickAccessGamesSection.kt"
+    "GameCatalog.kt"
 )
 EXPECTED = {
     "geometry_castle_hero_premium.webp": "17f678b03bd09467672c733b5c675575a6e8e094df45e1925ac332115d7f68fd",
@@ -29,7 +29,7 @@ EXPECTED = {
 
 def main() -> int:
     screen = SCREEN.read_text(encoding="utf-8")
-    quick = QUICK_ACCESS.read_text(encoding="utf-8")
+    catalog = QUICK_ACCESS.read_text(encoding="utf-8")
     failures = []
     total = 0
     for name, checksum in EXPECTED.items():
@@ -47,7 +47,8 @@ def main() -> int:
             failures.append(f"{name}: unexpected size ({len(data)} bytes)")
         if f"R.drawable.{name.removesuffix('.webp')}" not in screen:
             failures.append(f"{name}: GeometryCastleScreen does not reference resource")
-    if "R.drawable.geometry_castle_hero_premium" not in quick:
+    if "R.drawable.geometry_castle_hero_premium" not in catalog or\
+       'GameCatalogItem("geometry"' not in catalog:
         failures.append("QuickAccessGamesSection does not use premium hero")
     if failures:
         for failure in failures:

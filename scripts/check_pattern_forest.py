@@ -35,11 +35,14 @@ assert "GameType.PATTERN_FOREST" in (src/"ui/components/UIComponents.kt").read_t
 assert "PATTERN_FOREST" in (src/"GameType.kt").read_text()
 manifest=(R/"app/src/main/AndroidManifest.xml").read_text()
 assert 'android:name=".games.pattern.PatternForestActivity"' in manifest
-catalog=(src/"ui/screens/home/GamesTabScreen.kt").read_text()
+catalog=(src/"ui/screens/home/GameCatalog.kt").read_text()
+games=(src/"ui/screens/home/GamesTabScreen.kt").read_text()
 assert 'GameCatalogItem("pattern_forest"' in catalog
-assert "14 macera" in catalog
+assert 'PatternForestActivity::class.java' in catalog
+assert catalog.count('GameCatalogItem("') >= 14
+assert 'GameCatalog.games' in games
 quick=(src/"ui/screens/home/QuickAccessGamesSection.kt").read_text()
-assert 'id = "pattern_forest"' in quick
+assert '"pattern_forest"' in quick and 'GameCatalog.byId(key)' in quick
 assert "PatternForestActivity" in (src/"games/GameSelectionActivity.kt").read_text()
 art=R/"app/src/main/res/drawable/pattern_forest_hero.xml"
 assert art.is_file()

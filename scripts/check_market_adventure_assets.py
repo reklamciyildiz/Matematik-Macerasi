@@ -10,7 +10,7 @@ SRC = ROOT / "app/src/main"
 DRAW = SRC / "res/drawable"
 SCREEN = SRC / "java/com/yigit033/matematikmacarasi/games/interactive/MarketAdventureScreen.kt"
 ACTIVITY = SRC / "java/com/yigit033/matematikmacarasi/games/interactive/MarketSimulatorActivity.kt"
-QUICK = SRC / "java/com/yigit033/matematikmacarasi/ui/screens/home/QuickAccessGamesSection.kt"
+QUICK = SRC / "java/com/yigit033/matematikmacarasi/ui/screens/home/GameCatalog.kt"
 NAMES = ["hero","manav","firin","toys","stationery","clothing","stall","sports","pets","grocery","cafe"]
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 
@@ -18,7 +18,7 @@ def main():
     errors=[]
     screen=SCREEN.read_text(encoding="utf-8")
     activity=ACTIVITY.read_text(encoding="utf-8")
-    quick=QUICK.read_text(encoding="utf-8")
+    catalog=QUICK.read_text(encoding="utf-8")
     for name in NAMES:
         slug="market_adventure_"+name
         path=DRAW/(slug+".xml")
@@ -45,7 +45,8 @@ def main():
                 break
         if "R.drawable."+slug not in screen:
             errors.append(slug+": screen missing drawable reference")
-    if "R.drawable.market_adventure_hero" not in quick:
+    if "R.drawable.market_adventure_hero" not in catalog or\
+       'GameCatalogItem("market"' not in catalog:
         errors.append("quick card still displays wrong game art")
     if "MarketAdventureScreen(" not in activity:
         errors.append("existing market Activity not routed to new game")

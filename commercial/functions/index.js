@@ -61,14 +61,13 @@ async function markRevoked(token,reason){
     }
     const item = snapshot.data();
     if(item.status==="REVOKED") return;
+    const entitled=item.ownerUid ? userDocument(item.ownerUid) : null;
+    const active=entitled ? await txn.get(entitled) : null;
+    // Firestore transactions require every read before the first write.
     txn.update(ref,{status:"REVOKED",reason,updatedAt:FieldValue.serverTimestamp()});
-    if(item.ownerUid) {
-      const entitled = userDocument(item.ownerUid);
-      const active = await txn.get(entitled); // all reads must precede writes
-      if(active.exists && active.data().tokenHash===hash){
-        txn.set(entitled,{active:false,reason,updatedAt:FieldValue.serverTimestamp()},
-          {merge:true});
-      }
+    if(entitled && active.exists && active.data().tokenHash===hash){
+      txn.set(entitled,{active:false,reason,updatedAt:FieldValue.serverTimestamp()},
+        {merge:true});
     }
   });
 }

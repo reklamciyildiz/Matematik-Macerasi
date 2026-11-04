@@ -67,19 +67,18 @@ fun SayiAvi2Screen(
         onForestReturn()
     }
 
-    // Oyun Aşaması
-    var currentStage by remember {
-        val lastStage = storage.getLastStage()
-        val initialStage = when (lastStage) {
+    // Always present the new class-aware atlas first. Existing classic checkpoints
+    // are still available under "Klasik Kumsal Koyu" without being reset.
+    var currentStage by remember { mutableStateOf(SayiAviMissionStage.WORLD_ATLAS) }
+    fun openClassicCheckpoint() {
+        currentStage = when(storage.getLastStage()) {
             "STAGE_GROUP" -> SayiAviMissionStage.STAGE_GROUP_SHELLS
             "STAGE_A" -> SayiAviMissionStage.STAGE_A_GRID
             "STAGE_B" -> SayiAviMissionStage.STAGE_B_VAULT
             "STAGE_C" -> SayiAviMissionStage.STAGE_C_ROUTE
             "STAGE_SEAL" -> SayiAviMissionStage.STAGE_TRANSFER_SEAL
-            // No in-progress classic run: enter the grade-aware 3.0 atlas.
-            else -> SayiAviMissionStage.WORLD_ATLAS
+            else -> SayiAviMissionStage.WELCOME
         }
-        mutableStateOf(initialStage)
     }
 
     var showExitDialog by remember { mutableStateOf(false) }
@@ -168,7 +167,7 @@ fun SayiAvi2Screen(
                 .parse(adaptiveStore.gradeLabel())?.coerceIn(1,8) ?: 1,
             currentStars = currentStars,
             onWorldFinished = onGradeWorldFinished,
-            onClassic = { currentStage = SayiAviMissionStage.WELCOME },
+            onClassic = { openClassicCheckpoint() },
             onExit = onExitGame,
             modifier = modifier
         )

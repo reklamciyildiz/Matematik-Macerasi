@@ -131,6 +131,12 @@ jobs:
         shell: bash
         run: python3 scripts/check_personalization_routes.py
 
+      - name: M1 billing policy unit tests and server syntax (not a deployment)
+        shell: bash
+        run: |
+          node --test commercial/functions/src/policy.test.cjs
+          node --check commercial/functions/index.js
+
       - name: S3.3 release safety source preflight
         shell: bash
         run: python3 scripts/check_s3_3_release_preflight.py

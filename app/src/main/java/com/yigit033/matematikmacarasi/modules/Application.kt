@@ -9,6 +9,7 @@ import com.yigit033.matematikmacarasi.services.AudioService
 import android.util.Log
 import com.yigit033.matematikmacarasi.services.NotificationService
 import com.yigit033.matematikmacarasi.settings.IconLauncherManager
+import com.yigit033.matematikmacarasi.ui.screens.home.GameLaunchHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -60,6 +61,9 @@ class MatematikMacerasiApp : Application() {
                 visible++
                 val gameplay=activity.javaClass.name.contains(".games.")
                 AudioService.getInstance(applicationContext).onAppForeground(gameplay)
+                // Track every real game Activity launch, including daily task routes.
+                runCatching { GameLaunchHistory.recordActivityOpened(activity) }
+                    .onFailure { Log.w("MatematikMacerasiApp","Recent game tracking skipped",it) }
             }
             override fun onActivityResumed(activity:Activity)=Unit
             override fun onActivityPaused(activity:Activity)=Unit

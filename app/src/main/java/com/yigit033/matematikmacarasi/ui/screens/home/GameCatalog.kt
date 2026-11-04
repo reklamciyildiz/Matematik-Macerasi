@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.annotation.DrawableRes
@@ -51,6 +52,21 @@ data class GameCatalogItem(
     val minGrade:Int=1,
     val quickTitle:String=title
 ) {
+    /** Standard metadata: do not confuse a difficulty choice with the school grade. */
+    fun difficultyNote():String=when(id){
+        "operations","add","subtract","multiply","divide"->"5 zorluk seviyesi"
+        "hunt","forest"->"Bölümlü macera"
+        else->"Temel · Orta · Zor"
+    }
+
+    fun compactGradeNote(grade:Int):String=when{
+        isLocked(grade)->"${minGrade}. sınıfta açılır"
+        gradeMode==GameGradeMode.GRADE_1_8->"${grade}. sınıf"
+        gradeMode==GameGradeMode.GRADE_1_4->if(grade>4)"4. sınıf tekrar" else "${grade}. sınıf"
+        gradeMode==GameGradeMode.FOUNDATION_2->if(grade>2)"Önceki sınıftan tekrar" else "2. sınıf becerisi"
+        else->"Seviye seçilebilir"
+    }
+
     fun isLocked(grade:Int):Boolean = grade < minGrade
 
     fun isGradeMatched(grade:Int):Boolean =
@@ -161,20 +177,46 @@ object GameCatalog {
     }
 }
 
-/** Keeps only a game id; does not alter achievements, progress checkpoints or rewards. */
+/**
+ * Opened game screens, not game completion or checkpoints.
+ * Captured for all entry paths through Application activity callbacks.
+ */
 object GameLaunchHistory {
     private const val NAME="game_catalog_recent_v1"
     private const val LAST="last_opened_id"
+    private const val RECENT="recent_opened_ids"
+    private const val MAX_RECENT=6
 
-    fun lastOpenedId(context:Context):String? {
-        val id=context.applicationContext.getSharedPreferences(NAME,Context.MODE_PRIVATE)
-            .getString(LAST,null)
-        return GameCatalog.byId(id)?.id
+    fun lastOpenedId(context:Context):String?=recentIds(context).firstOrNull()
+
+    fun recentIds(context:Context):List<String>{
+        val p=context.applicationContext.getSharedPreferences(NAME,Context.MODE_PRIVATE)
+        val saved=p.getString(RECENT,"").orEmpty().split('|')
+            .filter{it.isNotBlank()}.distinct()
+            .filter{GameCatalog.byId(it)!=null}.take(MAX_RECENT)
+        if(saved.isNotEmpty())return saved
+        return listOfNotNull(p.getString(LAST,null)?.takeIf{GameCatalog.byId(it)!=null})
     }
 
-    fun open(context:Context,game:GameCatalogItem) {
+    @Synchronized
+    fun recordOpened(context:Context,id:String){
+        if(GameCatalog.byId(id)==null)return
+        val p=context.applicationContext.getSharedPreferences(NAME,Context.MODE_PRIVATE)
+        val old=recentIds(context)
+        if(old.firstOrNull()==id && p.contains(RECENT))return
+        p.edit().putString(LAST,id)
+            .putString(RECENT,(listOf(id)+old.filterNot{it==id}).take(MAX_RECENT)
+                .joinToString("|")).apply()
+    }
+
+    fun recordActivityOpened(activity:Activity){
+        val id=GameCatalog.games.firstOrNull{it.activityClass==activity.javaClass}?.id
+            ?:GameCatalog.operationsHub.takeIf{it.activityClass==activity.javaClass}?.id
+        if(id!=null)recordOpened(activity.applicationContext,id)
+    }
+
+    fun open(context:Context,game:GameCatalogItem){
         context.startActivity(Intent(context,game.activityClass))
-        context.applicationContext.getSharedPreferences(NAME,Context.MODE_PRIVATE)
-            .edit().putString(LAST,game.id).apply()
+        recordOpened(context,game.id)
     }
 }

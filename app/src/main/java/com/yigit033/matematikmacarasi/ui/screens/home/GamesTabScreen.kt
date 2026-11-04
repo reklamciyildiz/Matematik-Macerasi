@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,8 +55,10 @@ private fun GameCatalogCard(item:GameCatalogItem,grade:Int,
     modifier:Modifier=Modifier,onPlay:()->Unit){
     val locked=item.isLocked(grade)
     val gradeNote=item.gradeNote(grade)
+    val fontScale=LocalDensity.current.fontScale
+    val cardHeight=(258f+(fontScale-1f).coerceAtLeast(0f)*85f).dp
     Surface(
-        modifier=modifier.height(258.dp)
+        modifier=modifier.height(cardHeight)
             .semantics { contentDescription="${item.title}. $gradeNote" }
             .clickable(enabled=!locked,onClick=onPlay),
         shape=RoundedCornerShape(21.dp),
@@ -110,7 +113,7 @@ fun GamesTabScreen(
     }
     val topics=if(filter=="all" || filter=="my_grade")GameTopic.entries.toList()
         else GameTopic.entries.filter { it.name==filter }
-    val recentlyOpened=GameCatalog.byId(recentlyOpenedId)
+    val recentlyOpened=GameCatalog.byId(recentlyOpenedId)?.takeUnless { it.isLocked(grade) }
 
     Column(
         modifier=modifier.fillMaxSize().background(
@@ -215,7 +218,7 @@ fun GamesTabScreen(
                     Text("${entries.size} oyun",color=aqua,fontSize=12.sp)
                 }
                 BoxWithConstraints(Modifier.fillMaxWidth()){
-                    val columns=if(maxWidth<340.dp)1 else 2
+                    val columns=if(maxWidth<310.dp)1 else 2
                     Column(verticalArrangement=Arrangement.spacedBy(10.dp)){
                         entries.chunked(columns).forEach{pair->
                             Row(Modifier.fillMaxWidth(),

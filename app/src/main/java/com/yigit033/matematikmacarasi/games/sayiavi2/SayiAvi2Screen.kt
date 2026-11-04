@@ -36,7 +36,8 @@ enum class SayiAviMissionStage {
     STAGE_TRANSFER_SEAL,
     REWARD_SUMMARY,
     TEMPLE,
-    REINFORCEMENT
+    REINFORCEMENT,
+    WORLD_ATLAS
 }
 
 /**
@@ -48,6 +49,7 @@ fun SayiAvi2Screen(
     currentStars: Int,
     onRewardEarned: (Boolean, SayiAviLearningSummary) -> Unit,
     onForestReturn: () -> Unit,
+    onGradeWorldFinished: (Int,Int,Int,Long) -> Unit,
     onExitGame: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -74,7 +76,8 @@ fun SayiAvi2Screen(
             "STAGE_B" -> SayiAviMissionStage.STAGE_B_VAULT
             "STAGE_C" -> SayiAviMissionStage.STAGE_C_ROUTE
             "STAGE_SEAL" -> SayiAviMissionStage.STAGE_TRANSFER_SEAL
-            else -> SayiAviMissionStage.WELCOME
+            // No in-progress classic run: enter the grade-aware 3.0 atlas.
+            else -> SayiAviMissionStage.WORLD_ATLAS
         }
         mutableStateOf(initialStage)
     }
@@ -139,7 +142,9 @@ fun SayiAvi2Screen(
 
     // Android Donanım/Yazılım Geri Tuşu İşleyicisi
     BackHandler {
-        if (currentStage == SayiAviMissionStage.WELCOME || currentStage == SayiAviMissionStage.REWARD_SUMMARY) {
+        if (currentStage == SayiAviMissionStage.WELCOME ||
+            currentStage == SayiAviMissionStage.WORLD_ATLAS ||
+            currentStage == SayiAviMissionStage.REWARD_SUMMARY) {
             onExitGame()
         } else {
             showExitDialog = true
@@ -158,6 +163,15 @@ fun SayiAvi2Screen(
     }
 
     when (currentStage) {
+        SayiAviMissionStage.WORLD_ATLAS -> NumberHuntV3Screen(
+            profileGrade = com.yigit033.matematikmacarasi.learning.adaptive.GradePolicy
+                .parse(adaptiveStore.gradeLabel())?.coerceIn(1,8) ?: 1,
+            currentStars = currentStars,
+            onWorldFinished = onGradeWorldFinished,
+            onClassic = { currentStage = SayiAviMissionStage.WELCOME },
+            onExit = onExitGame,
+            modifier = modifier
+        )
         SayiAviMissionStage.REINFORCEMENT -> AdventureReviewScreen(
             kind = AdventureReviewKind.COUNT_THREE,
             tier = runTier,
@@ -190,6 +204,7 @@ fun SayiAvi2Screen(
                     newRun()
                     currentStage = SayiAviMissionStage.BRIEFING
                 },
+                onStartGradeWorld = { currentStage = SayiAviMissionStage.WORLD_ATLAS },
                 onBackClick = onExitGame,
                 modifier = modifier
             )

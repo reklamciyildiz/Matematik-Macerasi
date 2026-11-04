@@ -81,6 +81,7 @@ fun SayiAviWelcomeScreen(
     onStartRegion1: () -> Unit,
     onStartRegion2: () -> Unit,
     onStartTemple: () -> Unit,
+    onStartGradeWorld: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -165,6 +166,15 @@ fun SayiAviWelcomeScreen(
                     gradeLabel = gradeLabel,
                     onChange = onSelectTier
                 )
+
+                AdventureActionButton(
+                    text = "✦ SINIFIMA GÖRE YENİ SAYI AVLARI",
+                    onClick = onStartGradeWorld,
+                    gradient = SayiAviColors.EmeraldButtonGradient
+                )
+                Text("Aşağıdaki Klasik Macera haritası eski ilerlemeni ve yıldızlarını korur.",
+                    color = AdventureTokens.Cream,
+                    fontSize = 12.sp, lineHeight = 17.sp)
 
                 AdventureWorldMap(
                     beachCompleted = isCompletedBefore,

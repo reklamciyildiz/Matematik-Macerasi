@@ -55,7 +55,8 @@ data class GameCatalogItem(
     /** Standard metadata: do not confuse a difficulty choice with the school grade. */
     fun difficultyNote():String=when(id){
         "operations","add","subtract","multiply","divide"->"5 zorluk seviyesi"
-        "hunt","forest"->"Bölümlü macera"
+        "hunt"->"Temel · Orta · Zor"
+        "forest"->"Bölümlü macera"
         else->"Temel · Orta · Zor"
     }
 
@@ -81,6 +82,7 @@ data class GameCatalogItem(
         if(isLocked(grade))return "${minGrade}. sınıfta açılır"
         return when(gradeMode) {
             GameGradeMode.GRADE_1_8 -> when {
+                id=="hunt" -> "$grade. sınıfa göre sayı avları"
                 id=="fractions" && grade<=2 -> "$grade. sınıf · görsel keşif"
                 id=="time_tower" && grade==1 -> "1. sınıf · saat keşfi"
                 else -> "$grade. sınıfa göre sorular"
@@ -117,9 +119,9 @@ object GameCatalog {
         GameCatalogItem("divide","Bölme","Eşit paylaş · sonucu bul",
             "Bölme işlemi",GameTopic.OPERATIONS,R.drawable.card_division_premium,
             Color(0xFFFFC768),DivisionGameActivity::class.java,GameGradeMode.GRADE_1_8,2),
-        GameCatalogItem("hunt","Sayı Avı","Harita parçalarını bul · hazineyi aç",
-            "Üçer ritmik sayma",GameTopic.NUMBERS,R.drawable.card_number_hunt_premium,
-            Color(0xFF88F0BA),SayiAvi2Activity::class.java,GameGradeMode.FOUNDATION_2),
+        GameCatalogItem("hunt","Sayı Avı","Sayı izlerini takip et · dört dünyayı keşfet",
+            "Sınıfa göre sayı bulmacaları",GameTopic.NUMBERS,R.drawable.card_number_hunt_premium,
+            Color(0xFF88F0BA),SayiAvi2Activity::class.java,GameGradeMode.GRADE_1_8),
         GameCatalogItem("forest","Orman Keşfi","Kadim ormandaki sayıları keşfet",
             "Dörder ritmik sayma",GameTopic.NUMBERS,R.drawable.card_forest_premium,
             Color(0xFF80F0AA),ForestAdventureActivity::class.java,GameGradeMode.FOUNDATION_2),

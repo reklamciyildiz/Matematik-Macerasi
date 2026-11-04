@@ -16,6 +16,8 @@ object GamePersonalization {
             "space" to AdventureSkill.SPACE
         )
         val signals=mapping.mapNotNull{(id,skill)->
+            // Old three-counting metrics are not evidence of new grade 3–8 quest mastery.
+            if(id=="hunt" && grade!=2)return@mapNotNull null
             val p=store.snapshotForReport(skill) ?: return@mapNotNull null
             if(p.profileGrade!=grade)return@mapNotNull null
             GameSuggestionSignal(id,p.totalAttempts,p.totalErrors,p.totalHints)

@@ -52,6 +52,8 @@ class SayiAvi2Activity : ComponentActivity() {
                     Log.w(TAG, "Bekleyen tek seferlik yıldız sonraki açılışta yeniden denenecek")
                 }
             }
+            // Recover the first-clear star after a crash between checkpoint and wallet update.
+            for(grade in 1..8)awardGradeFirstClear(grade)
         } catch (e: Exception) {
             Log.e(TAG, "Servisler başlatılırken hata: ${e.message}", e)
             finish()
@@ -77,12 +79,51 @@ class SayiAvi2Activity : ComponentActivity() {
                         onForestReturn = {
                             currentStars = starManager.getDisplayStars()
                         },
+                        onGradeWorldFinished = { grade,attempts,errors,seconds ->
+                            handleGradeWorldCompleted(grade,attempts,errors,seconds) {
+                                currentStars = it
+                            }
+                        },
                         onExitGame = {
                             finish()
                         }
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * Grade-specific first-clear rewards are separate from the legacy Kumsal Koyu
+     * achievement. StarManager's idempotent key is the authoritative guard.
+     */
+    private fun awardGradeFirstClear(grade:Int):Boolean {
+        val store=NumberHuntV3Store(this)
+        if(!store.hasCompleted(grade) || store.starAcknowledged(grade))return false
+        val added=starManager.addStars("sayi_avi_3_grade_$grade",1)
+        if(added)store.acknowledgeStar(grade)
+        return added
+    }
+
+    private fun handleGradeWorldCompleted(grade:Int,attempts:Int,errors:Int,
+        seconds:Long,onStarsUpdated:(Int)->Unit){
+        try {
+            val awarded=awardGradeFirstClear(grade)
+            if(awarded){
+                val total=starManager.getDisplayStars()
+                EventBus.updateStars(total)
+                onStarsUpdated(total)
+            }
+            gameStatisticsHelper.recordGameCompletion(
+                gameType=GameType.NUMBER_HUNT_GAME,
+                level=grade,
+                score=if(attempts==0)100 else ((attempts-errors).coerceAtLeast(0)*100/attempts),
+                stars=if(awarded)1 else 0,
+                gameStartTime=System.currentTimeMillis()-seconds.coerceIn(1,7200)*1000L,
+                taskId=dailyTaskId
+            )
+        }catch(e:Exception){
+            Log.e(TAG,"Sınıf macerası sonucu kaydedilemedi: ${e.message}",e)
         }
     }
 

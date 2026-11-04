@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -187,10 +188,15 @@ private fun IllustratedGameCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Old 247dp fixed height left ~50dp unused beneath the three fact rows.
+    // Keep the premium illustration, but fit the compact facts tightly.
+    // Large accessibility font sizes receive extra room instead of clipping.
+    val fontScale = LocalDensity.current.fontScale
+    val cardHeight = (210f + (fontScale - 1f).coerceAtLeast(0f) * 96f).dp
     Box(
         modifier = modifier
             .width(157.dp)
-            .height(247.dp)
+            .height(cardHeight)
             .shadow(
                 elevation = 6.dp,
                 shape = RoundedCornerShape(22.dp),
@@ -202,7 +208,7 @@ private fun IllustratedGameCard(
             .clickable { onClick() }
     ) {
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(bottom = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Üst İllüstrasyon (1254x1254 HD sanat varlığı)
@@ -230,7 +236,7 @@ private fun IllustratedGameCard(
                 lineHeight = 16.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal=8.dp,vertical=4.dp)
+                modifier = Modifier.padding(horizontal=8.dp,vertical=2.dp)
             )
             GameCardFacts(game=card.game,grade=grade,compact=true,
                 modifier=Modifier.fillMaxWidth().padding(horizontal=9.dp))

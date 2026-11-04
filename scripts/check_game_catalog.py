@@ -33,6 +33,10 @@ assert 'GameLaunchHistory.open(context,item)' in games
 assert 'GameCatalog.byId(key)' in quick and 'GameLaunchHistory.open(context,card.game)' in quick
 assert 'recentIds.take(2)+recommendedIds.take(2)' in quick
 assert 'GameCardFacts(game=card.game,grade=grade,compact=true' in quick
+assert 'LocalDensity.current.fontScale' in quick
+assert '.height(cardHeight)' in quick
+assert '210f + (fontScale - 1f).coerceAtLeast(0f) * 96f' in quick
+assert '.height(247.dp)' not in quick
 assert 'suggested.forEach' in recommended
 assert 'game.difficultyNote()' in recommended
 assert 'badge=reason' in recommended

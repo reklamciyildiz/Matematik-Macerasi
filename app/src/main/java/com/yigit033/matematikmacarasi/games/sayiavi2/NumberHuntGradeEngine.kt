@@ -155,12 +155,17 @@ object NumberHuntGradeEngine {
             3->(2..5).map{Token("${i+3} × ${it}",(i+3)*it)}
             4->(3..6).map{Token("${(i+3)*it} ÷ ${i+3}",it)}
             5->listOf(Token("1/10",10),Token("1/5",20),
-                Token("1/4",25),Token("1/2",50))
-            6->listOf(4,9,13,18).map{Token("${it/10},${it%10}",it)}
+                Token("1/4",25),Token("1/2",50),Token("3/4",75),
+                Token("2/5",40),Token("3/5",60),Token("4/5",80)).shuffled(rng).take(4)
+            6->listOf(4,6,9,11,13,16,18,22).shuffled(rng).take(4)
+                .map{Token("${it/10},${it%10}",it)}
             7->listOf(Token("-3/2",-150),Token("-1",-100),
-                Token("-1/2",-50),Token("1/4",25))
-            else->listOf(Token("√25",5),Token("√49",7),
-                Token("2³",8),Token("3²",9))
+                Token("-1/2",-50),Token("1/4",25),Token("3/4",75),
+                Token("-2",-200),Token("1/2",50),Token("-1/4",-25))
+                .shuffled(rng).take(4)
+            else->listOf(Token("√16",4),Token("√25",5),Token("√49",7),
+                Token("2³",8),Token("3²",9),Token("√121",11),
+                Token("√169",13),Token("2⁴",16)).shuffled(rng).take(4)
         }
         val title=when(grade){
             5->"Kesir taşlarını küçükten büyüğe sırala"
@@ -230,9 +235,16 @@ object NumberHuntGradeEngine {
                 "${(result)*(j+3)} ÷ ${j+3}" to "$result"}
             5->(0..2).map{j->val a=12+(i+j)*4
                 "$a sayısının yarısı" to "${a/2}"}
-            6->listOf("0,5" to "1/2","0,25" to "1/4","0,75" to "3/4")
-            7->listOf("-1/2" to "-0,5","-3/2" to "-1,5","1/4" to "0,25")
-            else->listOf("√81" to "9","2⁵" to "32","√144" to "12")
+            6->listOf("0,5" to "1/2","0,25" to "1/4","0,75" to "3/4",
+                "0,2" to "1/5","0,4" to "2/5","0,6" to "3/5",
+                "0,8" to "4/5","0,125" to "1/8").shuffled(rng).take(3)
+            7->listOf("-1/2" to "-0,5","-3/2" to "-1,5",
+                "1/4" to "0,25","-1/4" to "-0,25","3/4" to "0,75",
+                "-2/5" to "-0,4","5/4" to "1,25","-7/4" to "-1,75")
+                .shuffled(rng).take(3)
+            else->listOf("√81" to "9","2⁵" to "32","√144" to "12",
+                "3³" to "27","√169" to "13","2⁴" to "16",
+                "√196" to "14","5²" to "25").shuffled(rng).take(3)
         }
         // Most grade 1..5 generators create increasing distinct answers.
         return Pairs(

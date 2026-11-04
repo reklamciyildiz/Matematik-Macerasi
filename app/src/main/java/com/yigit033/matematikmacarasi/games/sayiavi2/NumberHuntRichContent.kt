@@ -25,6 +25,36 @@ object NumberHuntRichContent {
     const val TASKS_PER_CHAPTER=6
     const val TASK_COUNT=CHAPTERS*TASKS_PER_CHAPTER
     val chapterTitles=listOf("İlk İzler","Gizli Bağlantılar","Kayıp Anahtarlar","Büyük Hazine")
+    /** A short mathematical goal paired with each adventure chapter. */
+    fun chapterMission(grade:Int,chapter:Int):String{
+        require(grade in 1..8 && chapter in 0..3)
+        return when(grade){
+            1->listOf("Tek ve çift sayı ipuçlarını takip et.",
+                "Sayıları karşılaştırarak köprüleri aç.",
+                "Toplama ve çıkarma ile anahtarları keşfet.",
+                "Sayıları birleştir, son sandığa ulaş.")[chapter]
+            2->listOf("Ritmik saymanın gizli izlerini bul.",
+                "Çarpma ve gruplama bağlantılarını keşfet.",
+                "Onlukları ve işlemleri çöz.",
+                "Sayı mühürlerini doğru eşleştir.")[chapter]
+            3,4->listOf("Çarpım ve bölme sayılarını araştır.",
+                "Örüntü kurallarını keşfet.",
+                "Çok adımlı işlemlerle anahtarı aç.",
+                "İşlem zincirlerini son kez çöz.")[chapter]
+            5,6->listOf("Bölenler ve asal sayılarla iz sür.",
+                "Kesir ve ondalık köprülerini kur.",
+                "Oran ve yüzde değerlerini çöz.",
+                "Kristal şifrelerini farklı yollarla doğrula.")[chapter]
+            7->listOf("Negatif tam sayı izlerini yakala.",
+                "Rasyonel sayıları ve işaretleri karşılaştır.",
+                "Mutlak değer ve işlem kurallarını kullan.",
+                "Dört portaldan geçerek sayı hazinesini aç.")[chapter]
+            else->listOf("Tam kare ve küp sayıların izini sür.",
+                "Üslü ve köklü ifadelerin değerlerini bul.",
+                "Bilimsel gösterimin sayı kodlarını çöz.",
+                "Farklı gösterimleri eşleştirerek finali aç.")[chapter]
+        }
+    }
 
     fun generate(grade:Int,tier:LearningTier,seed:Long):List<Task>{
         require(grade in 1..8 && seed!=0L)

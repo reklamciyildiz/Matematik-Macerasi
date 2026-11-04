@@ -348,7 +348,7 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
             }else warning="Tamamlama kaydedilemedi. Yeniden dene."
             session=store.load(grade)
         }else if(run.solved && run.index<run.taskCount){
-            delay(950L)
+            delay(if(run.contentVersion>=NumberHuntRichContent.VERSION)1450L else 950L)
             if(store.advance(grade,run.index)){
                 session=store.load(grade)
                 warning=null
@@ -373,7 +373,7 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                         fontWeight=FontWeight.Black,fontSize=14.sp)
                 }
                 Column(Modifier.weight(1f)){
-                    Text("SAYI AVCILARI 3.0",color=cream,fontWeight=FontWeight.Black,
+                    Text("SAYI AVCILARI 3.1",color=cream,fontWeight=FontWeight.Black,
                         fontSize=17.sp)
                     Text("$grade. sınıf · ${world.title}",color=mint,
                         fontSize=11.sp,maxLines=1,overflow=TextOverflow.Ellipsis)
@@ -555,6 +555,18 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                         fontSize=22.sp,fontWeight=FontWeight.Black)
                     Text("Görev ${index+1}/${run.taskCount} · ${run.tier.title}",color=mint,
                         fontSize=12.sp)
+                    if(modern){
+                        Text(NumberHuntRichContent.chapterMission(grade,room),
+                            color=Color(0xFFD1E6EF),fontSize=12.sp,lineHeight=17.sp)
+                        Row(Modifier.fillMaxWidth(),
+                            horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                            repeat(NumberHuntRichContent.CHAPTERS){section->
+                                Box(Modifier.weight(1f).height(5.dp)
+                                    .background(if(section<=room)mint else ocean,
+                                        RoundedCornerShape(10.dp)))
+                            }
+                        }
+                    }
                     LinearProgressIndicator(progress={(index+if(run.solved)1 else 0)/run.taskCount.toFloat()},
                         modifier=Modifier.fillMaxWidth().height(8.dp),
                         color=accent,trackColor=ocean)

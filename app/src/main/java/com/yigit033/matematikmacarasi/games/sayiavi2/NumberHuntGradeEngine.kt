@@ -224,7 +224,7 @@ object NumberHuntGradeEngine {
 
     private fun pairs(grade:Int,tier:LearningTier,i:Int,rng:Random):Pairs {
         val extra=if(tier==LearningTier.USTALIK)2 else 0
-        val content:List<Pair<String,String>>=when(grade){
+        val content: List<Pair<String,String>> = when(grade){
             1->(0..2).map{j->val a=3+i+j;val b=2+j+extra
                 "$a + $b" to "${a+b}"}
             2->(0..2).map{j->val a=3+i+j;val b=2+j+extra

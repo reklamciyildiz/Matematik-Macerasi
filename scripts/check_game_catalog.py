@@ -24,7 +24,9 @@ assert '2. sınıftan tekrar' in catalog and 'Seviyeni seçerek oyna' in catalog
 assert 'if(isLocked(grade))' in catalog
 assert 'GameCatalog.games' in games and 'GameTopic.entries' in games
 assert 'Sınıfıma göre' in games and 'Sınıfı değiştir' in games
-assert 'BoxWithConstraints' in games and 'height(258.dp)' in games
+assert 'BoxWithConstraints' in games and 'height(cardHeight)' in games
+assert 'maxWidth<310.dp' in games and 'LocalDensity.current.fontScale' in games
+assert 'it.isLocked(grade)' in games
 assert 'GameLaunchHistory.open(context,item)' in games
 assert 'GameCatalog.byId(key)' in quick and 'GameLaunchHistory.open(context,card.game)' in quick
 assert 'recentlyOpenedId' in quick and 'sortedBy' in quick

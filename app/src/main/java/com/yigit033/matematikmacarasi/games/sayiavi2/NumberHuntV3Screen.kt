@@ -97,23 +97,39 @@ private fun HuntTile(label:String,modifier:Modifier=Modifier,
 
 @Composable
 private fun NumberHuntPuzzle(
-    task:NumberHuntGradeEngine.Task,solved:Boolean,
-    onCorrect:()->Unit,onWrong:()->Unit,onGoodStep:()->Unit
+    task:NumberHuntGradeEngine.Task,
+    solved:Boolean,
+    useSavedPartial:Boolean,
+    partial:Set<Int>,
+    onPartial:(Set<Int>)->Unit,
+    onCorrect:()->Unit,
+    onWrong:()->Unit,
+    onGoodStep:()->Unit
 ){
+    // V3.1 persists every intermediate move, while legacy V3 sessions retain
+    // their previous UI behavior without changing the saved task/version.
+    var oldSelections by remember(task){mutableStateOf(emptySet<Int>())}
+    val picked=if(useSavedPartial) partial else oldSelections
+    fun accept(next:Set<Int>){
+        if(useSavedPartial)onPartial(next)
+        else {
+            oldSelections=next
+            onGoodStep()
+        }
+    }
     when(task){
         is NumberHuntGradeEngine.Scan -> {
-            var found by remember(task){mutableStateOf(setOf<Int>())}
-            Text("4 doğru taşı avla · ${found.size}/4",color=mint,
-                fontSize=12.sp,fontWeight=FontWeight.Bold)
-            task.options.chunked(3).forEach{row->
-                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)){
-                    row.forEach{value->
+            Text("Doğru sayı taşları · ${if(solved)4 else picked.size}/4",
+                color=mint,fontSize=12.sp,fontWeight=FontWeight.Bold)
+            task.options.withIndex().toList().chunked(3).forEach{row->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
+                    row.forEach{(index,value)->
                         HuntTile(value.toString(),Modifier.weight(1f),
-                            active=value in found,disabled=solved || value in found){
+                            active=solved && value in task.targets || index in picked,
+                            disabled=solved || index in picked){
                             if(value in task.targets){
-                                val next=found+value
-                                found=next
-                                if(next.size==task.targets.size)onCorrect() else onGoodStep()
+                                val next=picked+index
+                                if(next.size==4)onCorrect() else accept(next)
                             }else onWrong()
                         }
                     }
@@ -121,33 +137,30 @@ private fun NumberHuntPuzzle(
             }
         }
         is NumberHuntGradeEngine.Bridge -> {
-            var picked by remember(task){mutableStateOf(setOf<Int>())}
-            val sorted=remember(task){task.tokens.sortedBy{it.value}}
-            Text("Köprü yolu · ${picked.size}/4",color=mint,
-                fontSize=12.sp,fontWeight=FontWeight.Bold)
+            val ordered=remember(task){task.tokens.sortedBy{it.value}}
+            Text("Kurulan köprü · ${if(solved)4 else picked.size}/4",
+                color=mint,fontSize=12.sp,fontWeight=FontWeight.Bold)
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){
-                repeat(4){slot->
+                repeat(4){step->
                     Surface(Modifier.weight(1f).height(42.dp),
-                        color=if(slot<picked.size)Color(0xFF147A67) else ocean,
+                        color=if(step<picked.size || solved)Color(0xFF147A67) else ocean,
                         shape=RoundedCornerShape(12.dp),
                         border=BorderStroke(1.dp,amber.copy(alpha=.35f))){
                         Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){
-                            Text(if(slot<picked.size)"✓" else "${slot+1}",
+                            Text(if(step<picked.size || solved)"✓" else "${step+1}",
                                 color=cream,fontSize=17.sp,fontWeight=FontWeight.Bold)
                         }
                     }
                 }
             }
-            task.tokens.chunked(2).forEach{row->
+            task.tokens.withIndex().toList().chunked(2).forEach{row->
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(9.dp)){
-                    row.forEach{token->
+                    row.forEach{(index,token)->
                         HuntTile(token.label,Modifier.weight(1f),
-                            active=token.value in picked,
-                            disabled=solved || token.value in picked){
-                            val expected=sorted[picked.size]
-                            if(expected.value==token.value){
-                                picked=picked+token.value
-                                if(picked.size==4)onCorrect() else onGoodStep()
+                            active=index in picked,disabled=solved || index in picked){
+                            if(ordered[picked.size].value==token.value){
+                                val next=picked+index
+                                if(next.size==4)onCorrect() else accept(next)
                             }else onWrong()
                         }
                     }
@@ -156,27 +169,29 @@ private fun NumberHuntPuzzle(
         }
         is NumberHuntGradeEngine.Dial -> {
             var value by remember(task){mutableIntStateOf(task.initial)}
-            Text("Kilidin enerji değerini ayarla",color=mint,
+            Text("Enerji kadranını ayarla",color=mint,
                 fontSize=12.sp,fontWeight=FontWeight.Bold)
             Surface(Modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),
                 color=Color(0xFF133E69),border=BorderStroke(2.dp,amber)){
-                Text("$value${task.suffix}",Modifier.fillMaxWidth().padding(22.dp),
-                    textAlign=TextAlign.Center,color=cream,fontSize=45.sp,
+                Text("$value${task.suffix}",Modifier.fillMaxWidth().padding(20.dp),
+                    textAlign=TextAlign.Center,color=cream,fontSize=41.sp,
                     fontWeight=FontWeight.Black)
             }
-            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp),
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp),
                 verticalAlignment=Alignment.CenterVertically){
-                HuntTile("−",Modifier.width(72.dp),disabled=solved || value<=task.lower){
+                HuntTile("−",Modifier.width(58.dp),
+                    disabled=solved || value<=task.lower){
                     value=(value-task.step).coerceAtLeast(task.lower)
                 }
                 Slider(value=value.toFloat(),onValueChange={raw->
                     if(!solved){
-                        val snapped=((raw-task.lower)/task.step).roundToInt()*task.step+task.lower
-                        value=snapped.coerceIn(task.lower,task.upper)
+                        val snap=((raw-task.lower)/task.step).roundToInt()*task.step+task.lower
+                        value=snap.coerceIn(task.lower,task.upper)
                     }
                 },valueRange=task.lower.toFloat()..task.upper.toFloat(),
                     modifier=Modifier.weight(1f),enabled=!solved)
-                HuntTile("+",Modifier.width(72.dp),disabled=solved || value>=task.upper){
+                HuntTile("+",Modifier.width(58.dp),
+                    disabled=solved || value>=task.upper){
                     value=(value+task.step).coerceAtMost(task.upper)
                 }
             }
@@ -188,30 +203,75 @@ private fun NumberHuntPuzzle(
         }
         is NumberHuntGradeEngine.Pairs -> {
             var selectedId by remember(task){mutableIntStateOf(-1)}
-            var matched by remember(task){mutableStateOf(setOf<Int>())}
             val rights=remember(task){task.pairs.reversed()}
-            Text("Eşleşen mühürler · ${matched.size}/3",color=mint,
-                fontSize=12.sp,fontWeight=FontWeight.Bold)
+            Text("Açılan mühürler · ${if(solved)3 else picked.size}/3",
+                color=mint,fontSize=12.sp,fontWeight=FontWeight.Bold)
             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(9.dp)){
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(9.dp)){
                     task.pairs.forEach{pair->
                         HuntTile(pair.left,Modifier.fillMaxWidth(),
-                            active=pair.id==selectedId || pair.id in matched,
-                            disabled=solved || pair.id in matched){
-                            selectedId=pair.id
-                        }
+                            active=pair.id==selectedId || pair.id in picked,
+                            disabled=solved || pair.id in picked){selectedId=pair.id}
                     }
                 }
                 Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(9.dp)){
                     rights.forEach{pair->
                         HuntTile(pair.right,Modifier.fillMaxWidth(),
-                            active=pair.id in matched,
-                            disabled=solved || pair.id in matched){
-                            if(selectedId==-1)return@HuntTile
-                            if(pair.id==selectedId){
-                                matched=matched+pair.id
-                                selectedId=-1
-                                if(matched.size==3)onCorrect() else onGoodStep()
+                            active=pair.id in picked,
+                            disabled=solved || pair.id in picked){
+                            if(selectedId!=-1){
+                                if(pair.id==selectedId){
+                                    val next=picked+pair.id
+                                    selectedId=-1
+                                    if(next.size==3)onCorrect() else accept(next)
+                                }else onWrong()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        is NumberHuntGradeEngine.Cipher -> {
+            Text("Dört şifreden yalnız biri doğru",color=mint,
+                fontSize=12.sp,fontWeight=FontWeight.Bold)
+            task.choices.chunked(2).forEach{row->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(9.dp)){
+                    row.forEach{option->
+                        HuntTile(option,Modifier.weight(1f),
+                            active=solved && option==task.answer,disabled=solved){
+                            if(option==task.answer)onCorrect() else onWrong()
+                        }
+                    }
+                }
+            }
+        }
+        is NumberHuntGradeEngine.Trail -> {
+            val completed=if(solved)4 else picked.size.coerceIn(0,4)
+            Text("Portal rotası · $completed/4",color=mint,
+                fontSize=12.sp,fontWeight=FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                repeat(4){step->
+                    Surface(Modifier.weight(1f).height(42.dp),
+                        shape=RoundedCornerShape(14.dp),
+                        color=if(step<completed)Color(0xFF147A67) else ocean,
+                        border=BorderStroke(1.dp,amber.copy(alpha=.55f))){
+                        Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){
+                            Text(if(step<completed)"✓" else "${step+1}",
+                                color=cream,fontWeight=FontWeight.Black)
+                        }
+                    }
+                }
+            }
+            val checkpoint=task.checkpoints[completed.coerceAtMost(3)]
+            Text(checkpoint.prompt,color=cream,fontSize=17.sp,
+                lineHeight=23.sp,fontWeight=FontWeight.Bold)
+            checkpoint.choices.chunked(2).forEach{row->
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(9.dp)){
+                    row.forEach{choice->
+                        HuntTile(choice,Modifier.weight(1f),disabled=solved){
+                            if(choice==checkpoint.answer){
+                                val next=picked+completed
+                                if(next.size==4)onCorrect() else accept(next)
                             }else onWrong()
                         }
                     }
@@ -268,19 +328,26 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
         }else warning="Hamle kaydedilemedi. Yeniden dene."
     }
     fun goodStep(){audio.playCorrectSound();warning=null}
+    fun savePartial(next:Set<Int>){
+        val current=session ?: return
+        if(store.savePartial(grade,current.index,next)){
+            session=store.load(grade)
+            goodStep()
+        }else warning="Ara görev kaydedilemedi. Yeniden dene."
+    }
 
     BackHandler(enabled=playing){playing=false}
     LaunchedEffect(grade,session?.seed,session?.index,session?.solved,playing){
         val run=session ?: return@LaunchedEffect
         if(!playing)return@LaunchedEffect
-        if(run.index==NumberHuntGradeEngine.TASK_COUNT && !run.finished){
+        if(run.index==run.taskCount && !run.finished){
             if(store.finish(grade,run.seed)){
                 audio.playVictorySound()
                 val elapsed=((System.currentTimeMillis()-run.startedAt)/1000L).coerceAtLeast(1L)
                 latestFinished(grade,run.attempts,run.errors,elapsed)
             }else warning="Tamamlama kaydedilemedi. Yeniden dene."
             session=store.load(grade)
-        }else if(run.solved && run.index<NumberHuntGradeEngine.TASK_COUNT){
+        }else if(run.solved && run.index<run.taskCount){
             delay(950L)
             if(store.advance(grade,run.index)){
                 session=store.load(grade)
@@ -331,7 +398,7 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                         fontWeight=FontWeight.Black)
                     Text(world.focus+" · "+world.subtitle,color=Color(0xFFD6E9EE),
                         fontSize=13.sp,lineHeight=18.sp)
-                    Text("Her macerada 16 görev, 4 farklı etkileşimli bulmaca. Sınıf matematik konusunu, seviye ise problem zorluğunu belirler.",
+                    Text("Yeni macerada 24 görev, 6 farklı oyun mekaniği ve her oynayışta değişen bulmacalar var. Sınıf içeriği, seçtiğin seviye zorluğu belirler.",
                         color=Color(0xFFAFCFDB),fontSize=12.sp,lineHeight=17.sp)
                 }
                 Text("SINIFINI SEÇ",color=amber,fontWeight=FontWeight.Black,fontSize=13.sp)
@@ -400,10 +467,10 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                         modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),
                         colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF158F6D))){
                         Text(when {
-                            run.index==NumberHuntGradeEngine.TASK_COUNT && !run.finished ->
+                            run.index==run.taskCount && !run.finished ->
                                 "SON KAYDI TAMAMLA"
                             run.finished -> "SONUCU GÖR"
-                            else -> "KAYDEDİLEN GÖREVE DÖN · ${run.index+1}/16"
+                            else -> "KAYDEDİLEN GÖREVE DÖN · ${run.index+1}/${run.taskCount}"
                         },fontWeight=FontWeight.Black)
                     }
                 }
@@ -421,7 +488,7 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                 Text("Önceki sınıfların dünyalarını tekrar oynayabilirsin. Bu içerikler seçilmiş alıştırmalardır; resmî kazanım değerlendirmesi değildir.",
                     color=Color(0xFFBAD1DF),fontSize=11.sp,lineHeight=16.sp,
                     textAlign=TextAlign.Center)
-            }else if(run!=null && run.index>=NumberHuntGradeEngine.TASK_COUNT &&
+            }else if(run!=null && run.index>=run.taskCount &&
                 !run.finished){
                 HuntPanel{
                     Text("Son görevin tamamlandı ancak kayıt doğrulanamadı.",
@@ -440,12 +507,12 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                         Text("TAMAMLAMAYI KAYDET")
                     }
                 }
-            }else if(run!=null && run.index>=NumberHuntGradeEngine.TASK_COUNT){
+            }else if(run!=null && run.index>=run.taskCount){
                 HuntPanel{
                     Text("🏆 MACERA TAMAMLANDI",color=amber,
                         fontSize=16.sp,fontWeight=FontWeight.Black)
                     Text(world.title,color=cream,fontSize=24.sp,fontWeight=FontWeight.Black)
-                    Text("$grade. sınıf · ${run.tier.title} · 16 görev",
+                    Text("$grade. sınıf · ${run.tier.title} · ${run.taskCount} görev",
                         color=mint,fontSize=13.sp)
                     LinearProgressIndicator(progress={1f},
                         modifier=Modifier.fillMaxWidth().height(7.dp),
@@ -471,20 +538,24 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                 }
             }else if(run!=null){
                 val index=run.index
-                val tasks=remember(run.seed,run.tier,grade){
-                    NumberHuntGradeEngine.generate(grade,run.tier,run.seed)
+                val tasks=remember(run.seed,run.tier,grade,run.contentVersion){
+                    if(run.contentVersion>=NumberHuntRichContent.VERSION)
+                        NumberHuntRichContent.generate(grade,run.tier,run.seed)
+                    else NumberHuntGradeEngine.generate(grade,run.tier,run.seed)
                 }
                 val task=tasks[index]
-                val room=index/4
-                val roomTitle=NumberHuntGradeEngine.Mechanic.entries[room]
+                val modern=run.contentVersion>=NumberHuntRichContent.VERSION
+                val room=index/if(modern)NumberHuntRichContent.TASKS_PER_CHAPTER else 4
+                val title=if(modern)NumberHuntRichContent.chapterTitles[room]
+                    else NumberHuntGradeEngine.Mechanic.entries[room].title
                 HuntPanel{
                     Text("DÜNYA ${NumberHuntGradeEngine.worlds.indexOf(world)+1} · BÖLÜM ${room+1}/4",
                         color=amber,fontSize=12.sp,fontWeight=FontWeight.Black)
-                    Text("${roomTitle.icon} ${roomTitle.title}",color=cream,
+                    Text("${task.mechanic.icon} $title · ${task.mechanic.title}",color=cream,
                         fontSize=22.sp,fontWeight=FontWeight.Black)
-                    Text("Görev ${index+1}/16 · ${run.tier.title}",color=mint,
+                    Text("Görev ${index+1}/${run.taskCount} · ${run.tier.title}",color=mint,
                         fontSize=12.sp)
-                    LinearProgressIndicator(progress={(index+if(run.solved)1 else 0)/16f},
+                    LinearProgressIndicator(progress={(index+if(run.solved)1 else 0)/run.taskCount.toFloat()},
                         modifier=Modifier.fillMaxWidth().height(8.dp),
                         color=accent,trackColor=ocean)
                     Text(task.prompt,color=cream,fontSize=19.sp,lineHeight=25.sp,
@@ -493,6 +564,9 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                 HuntPanel{
                     key(run.seed,index){
                         NumberHuntPuzzle(task,run.solved,
+                            useSavedPartial=modern,
+                            partial=run.partial,
+                            onPartial={savePartial(it)},
                             onCorrect={correct()},onWrong={wrong()},onGoodStep={goodStep()})
                     }
                     if(run.solved){

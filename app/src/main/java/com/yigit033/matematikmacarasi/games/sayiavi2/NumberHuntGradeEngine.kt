@@ -29,7 +29,8 @@ object NumberHuntGradeEngine {
 
     enum class Mechanic(val title:String, val icon:String) {
         SCAN("Sayı İzleri","✦"),BRIDGE("Kayıp Köprü","◆"),
-        DIAL("Enerji Kilidi","◉"),PAIRS("Sayı Mührü","✧")
+        DIAL("Enerji Kilidi","◉"),PAIRS("Sayı Mührü","✧"),
+        CIPHER("Şifre Analizi","⌘"),TRAIL("Yıldız Yolu","✦")
     }
     data class Token(val label:String,val value:Int)
     data class MatchPair(val id:Int,val left:String,val right:String)
@@ -60,6 +61,16 @@ object NumberHuntGradeEngine {
         override val explanation:String):Task(){
         override val mechanic=Mechanic.PAIRS
     }
+    data class Cipher(override val prompt:String,
+        val choices:List<String>,val answer:String,
+        override val hint:String,override val explanation:String):Task(){
+        override val mechanic=Mechanic.CIPHER
+    }
+    data class Checkpoint(val prompt:String,val choices:List<String>,val answer:String)
+    data class Trail(override val prompt:String,val checkpoints:List<Checkpoint>,
+        override val hint:String,override val explanation:String):Task(){
+        override val mechanic=Mechanic.TRAIL
+    }
 
     fun generate(grade:Int,tier:LearningTier,seed:Long):List<Task>{
         require(grade in 1..8 && seed!=0L)
@@ -82,6 +93,9 @@ object NumberHuntGradeEngine {
                         it.initial in it.lower..it.upper && it.step>0)
                     is Pairs->require(it.pairs.size==3 &&
                         it.pairs.map(MatchPair::right).distinct().size==3)
+                    is Cipher->require(it.choices.size==4 && it.answer in it.choices)
+                    is Trail->require(it.checkpoints.size==4 &&
+                        it.checkpoints.all{point->point.answer in point.choices})
                 }
             }
         }

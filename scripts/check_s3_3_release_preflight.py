@@ -70,6 +70,10 @@ require("TEST MODU: 1 yıldız kazandınız!" not in avatar_ui,
         "debug ad-failure path must never mint stars in production")
 require("Reklam ödülleri şu anda kullanılamıyor." in avatar_ui,
         "missing explicit unavailable-reward feedback")
+require("if (adManager?.isRewardedAdsEnabled() == true)" in avatar_ui,
+        "avatar store shows disabled child reward advertisements")
+require("fun isRewardedAdsEnabled(): Boolean = !CHILD_AD_DELIVERY_DISABLED" in ad,
+        "UI ads gate disconnected from child delivery policy")
 require("initializeAdMob()" not in application,
         "app startup still initializes AdMob")
 if checks:

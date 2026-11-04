@@ -955,7 +955,8 @@ fun AvatarStoreScreen(
                             
                             Spacer(modifier = Modifier.height(16.dp))
                             
-                            // Premium kullanıcılar için reklam izleme kartı
+                            // Families gate: never promise a reward while delivery is disabled.
+                            if (adManager?.isRewardedAdsEnabled() == true) {
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1138,7 +1139,10 @@ fun AvatarStoreScreen(
                                     }
                                 }
                             }
+                            }
                         } else {
+                            // No child-visible ad CTA until the reviewed ad stack is enabled.
+                            if (adManager?.isRewardedAdsEnabled() == true) {
                             // Premium olmayan kullanıcılar için reklam butonu
                             Button(
                                 onClick = {
@@ -1323,6 +1327,7 @@ fun AvatarStoreScreen(
                                         )
                                     }
                                 }
+                            }
                             }
                         }
                         

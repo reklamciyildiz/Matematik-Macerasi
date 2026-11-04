@@ -136,6 +136,9 @@ class AdManager private constructor(context: Context) {
      * Reklamların gösterilip gösterilmeyeceğini kontrol eder.
      * Premium kullanıcılar için reklamlar gösterilmez.
      */
+    /** Controls whether the UI may offer rewarded ads; false until Families QA. */
+    fun isRewardedAdsEnabled(): Boolean = !CHILD_AD_DELIVERY_DISABLED
+
     fun shouldShowAds(): Boolean {
         if(CHILD_AD_DELIVERY_DISABLED) return false
         val isPremium = try {

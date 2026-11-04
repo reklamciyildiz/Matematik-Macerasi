@@ -49,7 +49,7 @@ private fun worldArtwork(worldKey:String):Int=when(worldKey){
     "beach"->R.drawable.island_explorer_hero
     "temple"->R.drawable.temple_node
     "crystals"->R.drawable.fraction_crystals_hero
-    else->R.drawable.pattern_forest_hero
+    else->R.drawable.space_bg_nova_premium
 }
 private fun worldAccent(worldKey:String):Color=when(worldKey){
     "beach"->Color(0xFF59D8DD)

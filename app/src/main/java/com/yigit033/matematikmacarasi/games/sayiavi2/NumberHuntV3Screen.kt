@@ -395,18 +395,20 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                         }
                     }
                 }
-                if(run!=null && run.index in 1 until NumberHuntGradeEngine.TASK_COUNT &&
-                    !run.finished){
+                if(run!=null){
                     Button(onClick={playing=true},
                         modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),
                         colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF158F6D))){
-                        Text("KAYDEDİLEN GÖREVE DÖN · ${run.index+1}/16",
-                            fontWeight=FontWeight.Black)
+                        Text(when {
+                            run.index==NumberHuntGradeEngine.TASK_COUNT && !run.finished ->
+                                "SON KAYDI TAMAMLA"
+                            run.finished -> "SONUCU GÖR"
+                            else -> "KAYDEDİLEN GÖREVE DÖN · ${run.index+1}/16"
+                        },fontWeight=FontWeight.Black)
                     }
                 }
                 Button(onClick={
-                    if(run!=null && run.index in 1 until NumberHuntGradeEngine.TASK_COUNT &&
-                        !run.finished)confirmOverwrite=true else newRun()
+                    if(run!=null && !run.finished)confirmOverwrite=true else newRun()
                 },modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),
                     colors=ButtonDefaults.buttonColors(containerColor=accent)){
                     Text("✦ YENİ SAYI AVI BAŞLAT · $grade. SINIF",

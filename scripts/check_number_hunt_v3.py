@@ -25,7 +25,9 @@ for k in ('number_hunt_worlds_v3','@Synchronized fun begin(',
     assert k in store,k
 assert 'sayi_avi_2_preferences' in legacy
 assert 'SayiAviMissionStage.WORLD_ATLAS' in host
-assert 'else -> SayiAviMissionStage.WORLD_ATLAS' in host
+assert 'mutableStateOf(SayiAviMissionStage.WORLD_ATLAS)' in host
+assert 'openClassicCheckpoint()' in host
+assert '"STAGE_C" -> SayiAviMissionStage.STAGE_C_ROUTE' in host
 assert 'onStartGradeWorld' in welcome
 assert 'GameGradeMode.GRADE_1_8' in catalog
 assert 'id=="hunt" -> "$grade. sınıfa göre sayı avları"' in catalog

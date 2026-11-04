@@ -2,7 +2,9 @@
 
 ## Oyun akışı
 
-Yeni Sayı Avı açıldığında (eski yarım kalmış klasik koşu yoksa) Sınıf Dünyaları atlası açılır.
+Yeni Sayı Avı açıldığında sınıf dünyaları atlası açılır. Bitmemiş eski Kumsal Koyu
+koşularına atlasın "Klasik Kumsal Koyu ve eski ilerlemem" bağlantısıyla dönülür;
+eski görevin aşaması ve önceki ödüller sıfırlanmaz.
 Profil sınıfı varsayılandır. Oyuncu 1–8 arasında farklı sınıfları keşfedebilir; seçilen
 sınıf soru konusunu, Temel / Orta / Zor ise problem parametrelerini belirler.
 

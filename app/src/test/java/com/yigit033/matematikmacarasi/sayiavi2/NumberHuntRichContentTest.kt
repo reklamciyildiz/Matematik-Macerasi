@@ -75,7 +75,7 @@ class NumberHuntRichContentTest {
         assertTrue(seven.contains("Negatif"))
         assertTrue(seven.contains("Mutlak") || seven.contains("işareti"))
         assertTrue(eight.contains("Karekökü"))
-        assertTrue(eight.contains("Üslü") || eight.contains("2⁻³"))
+        assertTrue(eight.contains("10³"))
     }
 
     @Test fun legacySixteenQuestionGenerationRemainsUntouched(){

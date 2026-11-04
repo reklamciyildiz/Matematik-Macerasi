@@ -149,7 +149,7 @@ object NumberHuntGradeEngine {
 
     private fun bridge(grade:Int,tier:LearningTier,i:Int,rng:Random):Bridge {
         val base=i+if(tier==LearningTier.TEMEL)2 else 4
-        val values:List<Token>=when(grade){
+        val values: List<Token> = when(grade){
             1->(0..3).map{Token("${base+it*2}",base+it*2)}
             2->(1..4).map{Token("${it*(i+3)}",it*(i+3))}
             3->(2..5).map{Token("${i+3} × ${it}",(i+3)*it)}

@@ -67,6 +67,16 @@ class NumberHuntV3Store(context:Context) {
             .putInt(p+"hint_index",index).commit()
     }
 
+    /** A correct solution and its attempt are written atomically. */
+    @Synchronized fun solve(grade:Int,index:Int):Boolean {
+        val session=load(grade)?:return false
+        if(session.index!=index || session.finished)return false
+        if(session.solved)return true
+        val p=prefix(grade)
+        return prefs.edit().putInt(p+"attempts",session.attempts+1)
+            .putBoolean(p+"solved",true).commit()
+    }
+
     @Synchronized fun markSolved(grade:Int,index:Int):Boolean {
         val session=load(grade)?:return false
         if(session.index!=index || session.finished)return false

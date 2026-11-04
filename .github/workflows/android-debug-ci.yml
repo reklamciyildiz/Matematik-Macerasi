@@ -119,6 +119,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_recent_game_personalization.py
 
+      - name: Verify grade-aware Number Hunt 3.0 content, routes and safe progression
+        shell: bash
+        run: python3 scripts/check_number_hunt_v3.py
+
       - name: Validate Space S3.6.3 premium WebP assets and integrations
         shell: bash
         run: python3 scripts/check_space_premium_assets.py

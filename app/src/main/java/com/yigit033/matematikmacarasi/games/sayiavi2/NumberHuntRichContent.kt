@@ -313,58 +313,151 @@ object NumberHuntRichContent {
                 answer=(n+12).toString();choices=choiceNumbers(n+12,r)
                 hint="Her adımda aynı miktar artıyor."
             }
-            5->{
-                val data=listOf(
-                    listOf("Aşağıdakilerden hangisi asal sayıdır?","29","21","27","33",
-                        "Yalnız iki pozitif böleni olan sayıyı bul."),
-                    listOf("Hangi kesir 0,75'e eşdeğerdir?","3/4","1/4","2/3","3/5",
-                        "3 ÷ 4 = 0,75."),
-                    listOf("60'ın kaç farklı pozitif böleni vardır?","12","8","10","14",
-                        "60 = 2² × 3 × 5."),
-                    listOf("3/5 kesri yüzde kaçtır?","%60","%30","%40","%75",
-                        "3 ÷ 5 = 0,6."))
-                val row=data[c]
-                question=row[0];answer=row[1];choices=row.subList(1,5).shuffled(r)
-                hint=row[5]
+            5->when(c){
+                0->{
+                    val chosen=listOf(23,29,31,37,41).random(r)
+                    question="Aşağıdaki sayılardan hangisi asaldır?"
+                    answer=chosen.toString()
+                    choices=(listOf(21,25,27,33,35,39,45,49).shuffled(r)
+                        .take(3).map{it.toString()}+answer).shuffled(r)
+                    hint="Asal sayıların tam iki pozitif böleni bulunur."
+                }
+                1->{
+                    val (fraction,decimal)=listOf(
+                        "1/4" to "0,25","3/4" to "0,75",
+                        "2/5" to "0,4","3/5" to "0,6",
+                        "1/8" to "0,125","7/10" to "0,7").random(r)
+                    question=decimal+" hangi kesre eşdeğerdir?"
+                    answer=fraction
+                    choices=(listOf("1/3","2/3","1/2","4/5","3/8","5/8")
+                        .filterNot{it==answer}.shuffled(r).take(3)+answer).shuffled(r)
+                    hint="Ondalık gösterimi bir kesre çevirip sadeleştir."
+                }
+                2->{
+                    val (n,count)=listOf(24 to 8,36 to 9,40 to 8,
+                        48 to 10,60 to 12,72 to 12,84 to 12).random(r)
+                    question=n.toString()+" sayısının kaç pozitif böleni vardır?"
+                    answer=count.toString()
+                    choices=choiceNumbers(count,r)
+                    hint="Asal çarpanlarına ayırıp üslerin bir fazlasını çarp."
+                }
+                else->{
+                    val (numerator,denominator)=listOf(3 to 5,
+                        1 to 4,3 to 4,2 to 5,7 to 10).random(r)
+                    val result=100*numerator/denominator
+                    question=numerator.toString()+"/"+denominator+" kesri yüzde kaçtır?"
+                    answer="%"+result
+                    choices=choiceNumbers(result,r).map{"%"+it}
+                    hint="Kesri 100 üzerinden düşün."
+                }
             }
-            6->{
-                val data=listOf(
-                    listOf("Hangisi hem 2'ye hem 3'e bölünür?","42","35","44","49",
-                        "6'nın katı olmalı."),
-                    listOf("0,125 hangi kesre eşittir?","1/8","1/4","1/5","1/2",
-                        "125/1000 kesrini sadeleştir."),
-                    listOf("240 sayısının %25'i kaçtır?","60","40","75","80",
-                        "%25 dörtte birdir."),
-                    listOf("8 ve 12'nin en küçük ortak katı?","24","12","18","36",
-                        "İkisinin ortak katlarını araştır."))
-                val row=data[c];question=row[0];answer=row[1]
-                choices=row.subList(1,5).shuffled(r);hint=row[5]
+            6->when(c){
+                0->{
+                    val number=listOf(36,42,54,66,78,84).random(r)
+                    question="Hangi sayı hem 2'ye hem 3'e kalansız bölünür?"
+                    answer=number.toString()
+                    choices=listOf(number,number+1,number-1,number+2)
+                        .map{it.toString()}.shuffled(r)
+                    hint="6'nın katlarını bul."
+                }
+                1->{
+                    val (decimal,fraction)=listOf("0,125" to "1/8",
+                        "0,25" to "1/4","0,2" to "1/5","0,75" to "3/4",
+                        "0,4" to "2/5","0,5" to "1/2").random(r)
+                    question=decimal+" hangi kesre eşittir?"
+                    answer=fraction
+                    choices=(listOf("1/3","1/6","3/5","2/3","4/5","3/8")
+                        .shuffled(r).take(3)+answer).shuffled(r)
+                    hint="Ondalık sayıyı paydası 10, 100 veya 1000 olan kesir olarak düşün."
+                }
+                2->{
+                    val (whole,percent)=listOf(240 to 25,150 to 20,
+                        80 to 75,320 to 50,200 to 40,360 to 25).random(r)
+                    val value=whole*percent/100
+                    question=whole.toString()+" sayısının %"+percent+"'i kaçtır?"
+                    answer=value.toString();choices=choiceNumbers(value,r)
+                    hint="Yüzdeyi kesir olarak yaz: yüzde "+percent+"."
+                }
+                else->{
+                    val (a,b,lcm)=listOf(Triple(8,12,24),Triple(6,15,30),
+                        Triple(9,12,36),Triple(10,15,30),
+                        Triple(14,21,42),Triple(12,18,36)).random(r)
+                    question=a.toString()+" ve "+b+"'nin en küçük ortak katı kaçtır?"
+                    answer=lcm.toString();choices=choiceNumbers(lcm,r)
+                    hint="İkisinin katlarına bak; ilk ortak değeri bul."
+                }
             }
-            7->{
-                val data=listOf(
-                    listOf("Hangi sayı -0,75'e eşdeğerdir?","-3/4","-1/4","3/4","-4/3",
-                        "-3 ÷ 4 hesabını yap."),
-                    listOf("Sayı doğrusunda en küçük değer hangisidir?","-5/4",
-                        "-1/2","0","3/4","Negatif sayılarda -1,25 en küçüktür."),
-                    listOf("(-3) × (-"+k+") işleminin işareti nedir?","Pozitif",
-                        "Negatif","Sıfır","Belirsiz","İki negatif sayının çarpımı pozitiftir."),
-                    listOf("|-8| + (-8) kaç eder?","0","-16","8","16",
-                        "Mutlak değer uzaklıktır: |-8| = 8."))
-                val row=data[c];question=row[0];answer=row[1]
-                choices=row.subList(1,5).shuffled(r);hint=row[5]
+            7->when(c){
+                0->{
+                    val (decimal,fraction)=listOf(
+                        "-0,75" to "-3/4","-0,5" to "-1/2",
+                        "-1,25" to "-5/4","-0,25" to "-1/4",
+                        "-1,5" to "-3/2").random(r)
+                    question=decimal+" sayısına eşdeğer kesri bul."
+                    answer=fraction
+                    choices=(listOf("3/4","1/4","-1/3","-2/3","-4/3","1/2")
+                        .filterNot{it==answer}.shuffled(r).take(3)+answer).shuffled(r)
+                    hint="Payı paydaya böl; eksi işaretini kaybetme."
+                }
+                1->{
+                    val a=k+7;val b=k+3;val n=k-2
+                    question="Sayı doğrusunda en küçük değeri seç."
+                    answer=(-a).toString()
+                    choices=listOf(-a,-b,-n,k).map{it.toString()}.shuffled(r)
+                    hint="Negatif sayıda mutlak değeri daha büyük olan daha küçüktür."
+                }
+                2->{
+                    val signPositive=r.nextBoolean()
+                    question=if(signPositive)"(-3) × (-"+k+") işleminin işareti?"
+                        else "(-3) × "+k+" işleminin işareti?"
+                    answer=if(signPositive)"Pozitif" else "Negatif"
+                    choices=listOf("Pozitif","Negatif","Sıfır","Belirsiz").shuffled(r)
+                    hint="Aynı işaretli çarpanların çarpımı pozitif, farklıların negatiftir."
+                }
+                else->{
+                    val a=k+4;val b=k-1
+                    question="|-"+a+"| + (-"+b+") işleminin değeri nedir?"
+                    val result=a-b
+                    answer=result.toString();choices=choiceNumbers(result,r)
+                    hint="Mutlak değer uzaklıktır. İşaretli toplama yap."
+                }
             }
-            else->{
-                val data=listOf(
-                    listOf("Karekökü tam sayı OLMAYAN ifade hangisi?","√18",
-                        "√16","√25","√36","16, 25, 36 tam karedir."),
-                    listOf("2⁻³ hangi kesre eşittir?","1/8",
-                        "8","-8","-1/8","Negatif üs, çarpımsal tersini gösterir."),
-                    listOf("4,2 × 10³ hangi tam sayıdır?","4200",
-                        "42","420","42000","10³ = 1000."),
-                    listOf("3² + √16 işleminin değeri?","13","11","12","25",
-                        "9 + 4 hesabını yap."))
-                val row=data[c];question=row[0];answer=row[1]
-                choices=row.subList(1,5).shuffled(r);hint=row[5]
+            else->when(c){
+                0->{
+                    val notSquare=listOf(18,20,27,45,63,75).random(r)
+                    question="Karekökü tam sayı OLMAYAN ifadeyi bul."
+                    answer="√"+notSquare
+                    choices=(listOf("√16","√25","√36","√49","√64")
+                        .shuffled(r).take(3)+answer).shuffled(r)
+                    hint="Tam kareler, bir tam sayının karesidir."
+                }
+                1->{
+                    val (base,exponent,result)=listOf(Triple(2,3,8),
+                        Triple(3,2,9),Triple(4,2,16),Triple(2,4,16)).random(r)
+                    question=base.toString()+"⁻"+exponent+" hangi kesre eşittir?"
+                    answer="1/"+result
+                    choices=listOf(answer,(-result).toString(),result.toString(),
+                        "-1/"+result).shuffled(r)
+                    hint="Negatif kuvvet, 1 bölü pozitif kuvvet demektir."
+                }
+                2->{
+                    val a=r.nextInt(2,9);val b=r.nextInt(1,10)
+                    val coefficient=10*a+b
+                    val value=coefficient*100
+                    question=a.toString()+","+b+" × 10³ kaç eder?"
+                    answer=value.toString()
+                    choices=listOf(value,value/10,value*10,coefficient)
+                        .map{it.toString()}.shuffled(r)
+                    hint="Virgülü sağa üç basamak kaydır."
+                }
+                else->{
+                    val a=r.nextInt(3,14)
+                    val b=r.nextInt(2,5)
+                    val result=a+(1 shl b)
+                    question="√"+(a*a)+" + 2"+when(b){2->"²";3->"³";else->"⁴"}+" kaçtır?"
+                    answer=result.toString();choices=choiceNumbers(result,r)
+                    hint="Önce kökü ve kuvveti hesapla."
+                }
             }
         }
         return Cipher("Şifre Analizi · "+chapterTitles[c]+": "+question,

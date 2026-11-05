@@ -1,0 +1,31 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "app_info": {
+      ".read": true,
+      ".write": false
+    },
+    "premium_codes": {
+      ".read": false,
+      ".write": false,
+      "$code": {
+        ".read": true,
+        ".write": false,
+        "used_count": {
+          ".write": "newData.isNumber() && newData.val() >= 1 && ((!data.exists() && newData.val() === 1) || (data.isNumber() && newData.val() === data.val() + 1)) && (!data.parent().child('active').exists() || data.parent().child('active').val() === true) && (!data.parent().child('max_uses').exists() || (data.parent().child('max_uses').isNumber() && newData.val() <= data.parent().child('max_uses').val()))",
+          ".validate": "newData.isNumber() && newData.val() >= 1"
+        }
+      }
+    },
+    "code_activations": {
+      ".read": false,
+      ".write": false,
+      "$deviceId": {
+        ".read": true,
+        ".write": "!data.exists() && newData.exists() && newData.hasChildren(['code', 'activated_at']) && newData.child('code').isString() && newData.child('code').val().length <= 128 && newData.child('code').val().length > 0 && newData.child('activated_at').isNumber() && newData.child('activated_at').val() > 0 && root.child('premium_codes').child(newData.child('code').val()).exists() && (!root.child('premium_codes').child(newData.child('code').val()).child('active').exists() || root.child('premium_codes').child(newData.child('code').val()).child('active').val() === true)",
+        ".validate": "newData.hasChildren(['code', 'activated_at']) && newData.child('code').isString() && newData.child('activated_at').isNumber()"
+      }
+    }
+  }
+}

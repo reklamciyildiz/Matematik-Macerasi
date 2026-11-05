@@ -147,6 +147,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_rtdb_lockdown_staging.py
 
+      - name: Validate legacy-compatible interim RTDB hardening rules (not deployed)
+        shell: bash
+        run: python3 scripts/check_rtdb_compatibility_hardening.py
+
       - name: S3.3 release safety source preflight
         shell: bash
         run: python3 scripts/check_s3_3_release_preflight.py

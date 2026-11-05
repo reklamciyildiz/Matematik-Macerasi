@@ -325,6 +325,38 @@ exports.revokeInstitutionSeatCode=onCall({
   return {status};
 });
 
+/**
+ * Administrator-only usage snapshot. Redemption count comes from immutable
+ * per-code ledger records, not a contested global increment on each student.
+ * This requires only the normal single-field Firestore index on contractId.
+ */
+exports.getInstitutionContractSummary=onCall({
+  region,enforceAppCheck:true,maxInstances:3,timeoutSeconds:30
+},async req=>{
+  requireCommercialAdmin(req);
+  let contractId;
+  try{contractId=policy.validateId(req.data?.contractId);}
+  catch(e){invalid(e);}
+  const snap=await contracts.doc(contractId).get();
+  if(!snap.exists)throw new HttpsError("not-found","Kurum sözleşmesi yok.");
+  const contract=snap.data();
+  const totalCount=await redemptions.where("contractId","==",contractId)
+    .count().get();
+  const everRedeemed=totalCount.data().count;
+  const revoked=Number.isSafeInteger(contract.seatsRevoked)
+    ? contract.seatsRevoked : 0;
+  const activeStatus=contract.status==="ACTIVE" &&
+    Date.now()<contract.expiresAtMs;
+  return {
+    contractId,status:contract.status,capacity:contract.seats,
+    issued:contract.seatsIssued,everRedeemed,revoked,
+    currentlyGranted:activeStatus?Math.max(0,everRedeemed-revoked):0,
+    remainingToIssue:Math.max(0,contract.seats-contract.seatsIssued),
+    expiresAtMs:contract.expiresAtMs,
+    activateUntilMs:contract.activateUntilMs
+  };
+});
+
 /** ADMIN ONLY; suspend/reactivate, or permanently revoke a whole contract. */
 exports.updateInstitutionContractStatus=onCall({
   region,enforceAppCheck:true,maxInstances:3

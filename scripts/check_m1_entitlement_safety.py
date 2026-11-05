@@ -26,7 +26,7 @@ for expected in (
 for expected in ('legacyCodeActivated: Boolean','confirmedPlayPurchase: Boolean'):
     assert expected in policy,expected
 assert 'verifiedInstitution' not in policy
-assert 'return confirmedPlayPurchase || legacyCodeActivated' in policy
+assert '): Boolean = confirmedPlayPurchase || legacyCodeActivated' in policy
 # Dormant design must not be exported as callable Cloud Functions.
 assert 'Object.assign(exports,require("./institution-functions.cjs"))' not in play_server
 assert 'require("./institution-functions.cjs")' not in play_server

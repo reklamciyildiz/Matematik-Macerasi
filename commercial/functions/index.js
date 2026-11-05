@@ -208,3 +208,9 @@ exports.reconcilePlayRefunds = onSchedule({
   }while(page);
   logger.info("Google Play voided purchase reconciliation finished",{pages:count});
 });
+
+/**
+ * The institution functions are staged behind verified admin/parent claims.
+ * Existing Android Billing and Realtime Database activation remain unchanged.
+ */
+Object.assign(exports,require("./institution-functions.cjs"));

@@ -101,3 +101,52 @@ Bu kod **canlı ödeme altyapısının tamamlandığını kanıtlamaz**. Firebas
 kimlik ve yetkilendirme, Google Play API izinleri, yayın güvenliği,
 RTDN teslimi, Firestore transaction davranışı ve gerçek Play ödeme
 testi henüz dış sistemlerde doğrulanmalıdır.
+
+## M1.2 — Kurumsal lisans paketi / merkezi hak değerlendirmesi (kod hazır)
+
+Sunucu tarafına aşağıdaki callable fonksiyonlar eklendi; Firebase'e **deploy yapılmadı**:
+
+- `createInstitutionContract`: yalnız sunucuda verilmiş `mmCommercialAdmin`
+  claim'li yönetici, önceden doğruladığı kurumsal faturaya karşı sözleşme açar.
+  Aynı fatura referansıyla tekrar oluşturmak yeni lisans üretmez.
+- `issueInstitutionSeatCodes`: sözleşme kalan kapasitesi içinde 1–200 ayrı
+  tek kullanımlık kod üretir. 200 lisanslık pakette 201. kod reddedilir.
+  `MM_LICENSE_SIGNING_KEY` Secret Manager secret gerekir; aynı istek kimliği
+  tekrar edilirse aynı kod paketi güvenle yeniden teslim edilir.
+- `redeemInstitutionSeatCode`: **Firebase Auth + App Check + güvenilir yönetici
+  tarafından tanımlanan `mmParentVerified` claim** gerektirir. Firestore
+  transaction ile kod, kullanıcıya bağlı lisans ve sözleşme sayacı **atomik**
+  güncellenir. Cihaz kimliği öğrenci lisansı yerine kullanılmaz.
+- `revokeInstitutionSeatCode` ve `updateInstitutionContractStatus`:
+  kurum lisansının iptali, askıya alınması. **Google Play satın alımına dokunmaz.**
+- `getVerifiedPremiumAccess`: Play satın alımının sunucu hakkı ile kurum
+  lisansını **ayrı kaynaklar** olarak değerlendirir, biri iptal edildiğinde
+  diğerini silmez. Eski kodlar yalnızca doğrulanmış bir geçişten sonra
+  sunucu hakkı olabilir.
+
+Veri koleksiyonları: `institutionContractsV1`,
+`institutionCodeBatchesV1`, `institutionCodesV1`,
+`institutionAssignmentsV1`. Kodlar yalnız güçlü SHA-256 hash olarak
+saklanır; temiz metin yalnız yetkili yöneticinin kod paketini teslim
+aldığı çağrı yanıtında bulunur. Öğrenci adı, doğum tarihi veya e-posta
+sunucu lisans kayıtlarına yazılmaz.
+
+Bu sürümde yönetici kendi Firestore claim'ini, ebeveyn claim'ini ya da
+kurum sözleşmesini mobil istemciden oluşturamaz. Claim'ler Firebase Admin
+SDK üzerinden güvenilir operatör tarafından atanmalıdır.
+
+### ÖNEMLİ: Geçiş kapıları
+
+1. Firebase Auth ebeveyn hesabı, App Check ve Admin claim'leri
+   yapılandırılmadı; yeni fonksiyonlar **mevcut Android uygulamasına bağlanmadı**.
+2. Firestore client kurallarında dört yeni kurum koleksiyonu ve iki ödeme
+   koleksiyonunun tüm doğrudan istemci okuma/yazması kapatılmalı.
+3. Eski iki Google Play satışı, `PurchaseManager` ve
+   `premium_codes` / `code_activations` kayıtları aynen kalır.
+4. Gerçek Firebase emulator'ında 200 paralel kod kullanma, kodun ikinci
+   hesap tarafından tekrar kullanımı, bağlantı kopma ve tekrar deneme
+   senaryoları doğrulanmalı. Node testleri statik/politika testleridir,
+   **Firebase yarış testi yerine geçmez**.
+5. Kurumsal satış ve dağıtımın Google Play/App Store politikası ile
+   hukuki/faturalandırma uyumluluğu ayrıca onaylanmalı; tek başına harici
+   lisans kodu kullanımı mağaza muafiyeti anlamına gelmez.

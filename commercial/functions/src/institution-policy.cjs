@@ -33,6 +33,18 @@ function normalizeCode(value){
   return code;
 }
 function codeHash(code){return hash("commercial-code-v1:"+normalizeCode(code));}
+function validateStudentProfileId(profileId){
+  // Opaque student profile ID, NOT a child's name/email/phone.
+  if(typeof profileId!=="string"||!/^[A-Za-z0-9_-]{8,80}$/.test(profileId))
+    throw new Error("INVALID_STUDENT_PROFILE");
+  return profileId;
+}
+function assignmentKey(parentUid,profileId){
+  if(typeof parentUid!=="string"||!parentUid.trim()||parentUid.length>128)
+    throw new Error("INVALID_ACCOUNT");
+  return hash("commercial-student-assignment-v1:"+parentUid+":"+
+    validateStudentProfileId(profileId));
+}
 function deterministicCode(secret,contract,requestId,index){
   if(typeof secret!=="string"||Buffer.byteLength(secret,"utf8")<32)
     throw new Error("SIGNING_KEY_UNAVAILABLE");
@@ -99,6 +111,7 @@ function effectivePremium(playRecord,contract,assignment,now) {
 module.exports={
   MAX_BATCH, MAX_CONTRACT_SEATS, contractId,batchId,validateId,
   validateRequestId,normalizeCode,codeHash,deterministicCode,
+  validateStudentProfileId,assignmentKey,
   validateCount,validateContractInput,canIssue,canRedeem,
   institutionActive,effectivePremium
 };

@@ -66,3 +66,13 @@ M1.7 eski hakların güvenli taşınması → M2 Premium ürün teklifi →
 M3 Android kontrollü satış pilotu.
 
 **Bu dosya canlıya geçişin tamamlandığı anlamına gelmez.**
+
+## Tek velinin birden fazla çocuğu
+
+Kurumsal lisans tek veli UID'sine değil, `(veli UID, çocuk profil ID)`
+ikilisinden türetilmiş anonim hash anahtarına bağlanır. Aynı veli iki
+farklı çocuk profiline iki farklı kod tanımlayabilir. Aynı kod farklı
+çocuk profilinde veya başka velide tekrar kullanılamaz. Kodda öğrenci
+adı/e-postası saklanmaz. Çocuk profil ID'si veli hesabına bağlı
+kalıcı kimlik olmalıdır; bunun Android/Cloud senkronu hâlâ M1
+canlı entegrasyonunda geliştirilmelidir.

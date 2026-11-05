@@ -150,3 +150,10 @@ SDK üzerinden güvenilir operatör tarafından atanmalıdır.
 5. Kurumsal satış ve dağıtımın Google Play/App Store politikası ile
    hukuki/faturalandırma uyumluluğu ayrıca onaylanmalı; tek başına harici
    lisans kodu kullanımı mağaza muafiyeti anlamına gelmez.
+
+**Çoklu çocuk:** Kod kullanımı `studentProfileId` adlı kişisel bilgi
+içermeyen kalıcı profil kimliğini gerektirir. Yetki anahtarı sunucuda
+`hash(parentUid + studentProfileId)` üzerinden hesaplanır. Bir veli
+birden fazla öğrenci lisansını kendi çocuklarına bağımsız atayabilir.
+`getVerifiedPremiumAccess` seçilen çocuk profil kimliğine göre
+kurum erişimini döndürür; velinin Google Play hakkı ise bağımsızdır.

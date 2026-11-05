@@ -7,6 +7,8 @@
  * Each seat uses an unpredictable, single-use code that is stored only as a
  * SHA-256 digest. Parent ownership requires verified Firebase Auth custom
  * claim mmParentVerified. Commercial admins require mmCommercialAdmin.
+ * Each seat belongs to a pseudonymous child profile under the verified
+ * parent account, not to the phone/Android ID or the parent alone.
  * Admin claims are set only from trusted Admin SDK operations, never by app.
  */
 const {onCall,HttpsError}=require("firebase-functions/v2/https");
@@ -162,7 +164,10 @@ exports.redeemInstitutionSeatCode=onCall({
   try{hash=policy.codeHash(req.data?.code);}
   catch(e){invalid(e);}
   const codeRef=codes.doc(hash);
-  const seatRef=assignments.doc(uid);
+  let seatKey;
+  try{seatKey=policy.assignmentKey(uid,req.data?.studentProfileId);}
+  catch(e){invalid(e);}
+  const seatRef=assignments.doc(seatKey);
   let result;
   await db.runTransaction(async tx=>{
     const codeSnap=await tx.get(codeRef);
@@ -182,7 +187,7 @@ exports.redeemInstitutionSeatCode=onCall({
     const seat=seatSnap.exists ? seatSnap.data() : null;
     const now=Date.now();
     if(code.status==="REDEEMED" && code.ownerUid===uid &&
-       seat?.codeHash===hash &&
+       code.seatKey===seatKey && seat?.codeHash===hash &&
        policy.institutionActive(contract,seat,now)){
       result={status:"ALREADY_REDEEMED",active:true};
       return;
@@ -199,11 +204,11 @@ exports.redeemInstitutionSeatCode=onCall({
        now<seat.expiresAtMs)
       throw new HttpsError("failed-precondition","Aktif lisans devri için yönetici gerekli.");
     tx.update(codeRef,{
-      status:"REDEEMED",ownerUid:uid,
+      status:"REDEEMED",ownerUid:uid,seatKey,
       redeemedAt:FieldValue.serverTimestamp()
     });
     tx.set(seatRef,{
-      status:"ACTIVE",contractId,codeHash:hash,
+      status:"ACTIVE",contractId,codeHash:hash,ownerUid:uid,
       expiresAtMs:contract.expiresAtMs,
       activatedAt:FieldValue.serverTimestamp()
     });
@@ -236,7 +241,7 @@ exports.revokeInstitutionSeatCode=onCall({
     const code=codeSnap.data();
     if(code.status==="REVOKED")return;
     const contractRef=contracts.doc(policy.validateId(code.contractId));
-    const seatRef=code.ownerUid ? assignments.doc(code.ownerUid) : null;
+    const seatRef=code.seatKey ? assignments.doc(code.seatKey) : null;
     // All reads before writes.
     const [contractSnap,seatSnap]=await Promise.all([
       tx.get(contractRef),seatRef?tx.get(seatRef):Promise.resolve(null)
@@ -298,10 +303,19 @@ exports.getVerifiedPremiumAccess=onCall({
   region,enforceAppCheck:true,maxInstances:8
 },async req=>{
   const uid=requireVerifiedParent(req);
+  // A Play purchase covers the parent account. An institution seat covers
+  // exactly ONE selected child profile belonging to that parent.
+  let seatRef=null;
+  if(req.data?.studentProfileId!==undefined && req.data.studentProfileId!==null){
+    try{seatRef=assignments.doc(
+      policy.assignmentKey(uid,req.data.studentProfileId));}
+    catch(e){invalid(e);}
+  }
   const [playSnap,seatSnap]=await Promise.all([
-    googlePurchases.doc(uid).get(),assignments.doc(uid).get()
+    googlePurchases.doc(uid).get(),
+    seatRef?seatRef.get():Promise.resolve(null)
   ]);
-  const seat=seatSnap.exists?seatSnap.data():null;
+  const seat=seatSnap?.exists?seatSnap.data():null;
   let contract=null;
   if(seat?.contractId){
     try{

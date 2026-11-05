@@ -74,6 +74,17 @@ test("unknown, forged or malformed codes always fail validation",()=>{
   assert.throws(()=>P.validateId("../foo"));
   assert.throws(()=>P.validateRequestId("x"));
 });
+test("one verified guardian can hold independent seats for two different students",()=>{
+  const a=P.assignmentKey("guardian-uid","child_profile_001");
+  const b=P.assignmentKey("guardian-uid","child_profile_002");
+  const stranger=P.assignmentKey("other-guardian","child_profile_001");
+  assert.notEqual(a,b);
+  assert.notEqual(a,stranger);
+  assert.equal(a,P.assignmentKey("guardian-uid","child_profile_001"));
+  assert.match(a,/^[0-9a-f]{64}$/);
+  assert.throws(()=>P.assignmentKey("guardian-uid","Ali"));
+  assert.throws(()=>P.assignmentKey("guardian-uid","student@example.com"));
+});
 test("same idempotency request generates same contract and code sequence",()=>{
   const a=P.contractId("admin123","INV-2026-122");
   assert.equal(a,P.contractId("admin123","INV-2026-122"));

@@ -29,6 +29,8 @@ const redemptions=db.collection("institutionRedemptionsV1");
 const googlePurchases=db.collection("parentPremiumEntitlementsV1");
 
 function requireLoggedIn(req){
+  if(process.env.MM_M1_BACKEND_ENABLED!=="true")
+    throw new HttpsError("failed-precondition","M1 henüz canlı kullanıma açılmadı.");
   if(!req.auth?.uid || !req.app?.appId)
     throw new HttpsError("unauthenticated","Doğrulanmış oturum ve uygulama gerekli.");
   return req.auth.uid;

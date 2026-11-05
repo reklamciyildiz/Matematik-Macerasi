@@ -100,6 +100,9 @@ Module._load=function(id,parent,isMain){
   return originalLoad.apply(this,arguments);
 };
 const handlers=require("../institution-functions.cjs");
+// Explicit opt-in ONLY in this isolated mock process. Default remains disabled.
+const previousFlag=process.env.MM_M1_BACKEND_ENABLED;
+process.env.MM_M1_BACKEND_ENABLED="true";
 Module._load=originalLoad;
 
 const adminRequest=(data={})=>({
@@ -204,4 +207,13 @@ test("200 parallel code redemption transactions, ownership, retry and source iso
       guardians[1],{studentProfileId:profiles[1]}))).active,false);
     assert.equal((await handlers.getVerifiedPremiumAccess(guardianRequest(
       guardians[0],{studentProfileId:profiles[0]}))).active,true);
+    // Default-off safety: deployed code cannot mutate or even read commercial
+    // entitlements without a deliberate server-side rollout switch.
+    delete process.env.MM_M1_BACKEND_ENABLED;
+    await assert.rejects(
+      handlers.getVerifiedPremiumAccess(guardianRequest(
+        guardians[0],{studentProfileId:profiles[0]})),
+      {code:"failed-precondition"});
+    if(previousFlag===undefined)delete process.env.MM_M1_BACKEND_ENABLED;
+    else process.env.MM_M1_BACKEND_ENABLED=previousFlag;
   });

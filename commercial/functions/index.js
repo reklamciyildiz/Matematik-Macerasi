@@ -22,6 +22,16 @@ initializeApp();
 const database = getFirestore();
 const googleAuth = new GoogleAuth({scopes:["https://www.googleapis.com/auth/androidpublisher"]});
 const region = "europe-west1";
+/**
+ * Safe-by-default deployment gate. Even if these functions are deployed by
+ * mistake, no purchase grant, RTDN write or scheduled refund sync can run
+ * until this flag is deliberately enabled after live QA.
+ */
+function requireCommercialLaunch(){
+  if(process.env.MM_M1_BACKEND_ENABLED!=="true")
+    throw new HttpsError("failed-precondition","M1 henüz canlı kullanıma açılmadı.");
+}
+
 const base = "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/" +
   encodeURIComponent(PACKAGE) + "/purchases/";
 
@@ -83,6 +93,7 @@ async function markRevoked(token,reason){
 exports.verifyGooglePremium = onCall({
   region,enforceAppCheck:true,maxInstances:5,timeoutSeconds:30,
 },async request=>{
+  requireCommercialLaunch();
   const uid = authenticate(request);
   const token = request.data?.purchaseToken;
   let hash;
@@ -144,6 +155,7 @@ exports.verifyGooglePremium = onCall({
 exports.getParentPremium = onCall({
   region,enforceAppCheck:true,maxInstances:5,
 },async request=>{
+  requireCommercialLaunch();
   const uid=authenticate(request);
   const snapshot=await userDocument(uid).get();
   return {active:snapshot.exists && snapshot.data().active===true};
@@ -156,6 +168,7 @@ exports.getParentPremium = onCall({
 exports.googlePlayOneTimeRtdn = onMessagePublished({
   topic:"mm-google-play-billing",region,maxInstances:3,retry:true,
 },async event=>{
+  if(process.env.MM_M1_BACKEND_ENABLED!=="true")return;
   const raw=event.data?.message?.json ||
     JSON.parse(Buffer.from(event.data?.message?.data||"","base64").toString("utf8"));
   if(raw.packageName!==PACKAGE)return;
@@ -185,6 +198,7 @@ exports.googlePlayOneTimeRtdn = onMessagePublished({
 exports.reconcilePlayRefunds = onSchedule({
   schedule:"every 12 hours",region,maxInstances:1,timeoutSeconds:240,
 },async()=>{
+  if(process.env.MM_M1_BACKEND_ENABLED!=="true")return;
   let page="";
   let count=0;
   const now=Date.now();

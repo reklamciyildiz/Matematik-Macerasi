@@ -9,7 +9,6 @@
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
 const Module=require("node:module");
-const {clone}=require("node:util"); // Not used for dependency mocking.
 const policy=require("./institution-policy.cjs");
 
 const firestore=new Map();
@@ -39,7 +38,14 @@ function ref(path){
 function coll(path) {
   return {
     doc:id=>ref(path+"/"+id),
-    where:()=>{throw new Error("Unexpected query in transaction test");}
+    where:(field,comparison,value)=>{
+      assert.equal(field,"contractId");
+      assert.equal(comparison,"==");
+      return {count:()=>({get:async()=>({data:()=>({
+        count:[...firestore.entries()].filter(([name,record])=>
+          name.startsWith(path+"/") && record.data.contractId===value).length
+      })})})};
+    }
   };
 }
 class Conflict extends Error{}
@@ -168,6 +174,12 @@ test("200 parallel code redemption transactions, ownership, retry and source iso
     assert.equal(Object.prototype.hasOwnProperty.call(contract,"seatsRedeemed"),false);
     assert.equal([...firestore.keys()].filter(p=>
       p.startsWith("institutionRedemptionsV1/")).length,200);
+    const usage=await handlers.getInstitutionContractSummary(
+      adminRequest({contractId:id}));
+    assert.equal(usage.issued,200);
+    assert.equal(usage.everRedeemed,200);
+    assert.equal(usage.currentlyGranted,200);
+    assert.equal(usage.remainingToIssue,0);
 
     const already=await handlers.redeemInstitutionSeatCode(
       guardianRequest(guardians[0],{code:batch.codes[0],studentProfileId:profiles[0]}));
@@ -198,11 +210,15 @@ test("200 parallel code redemption transactions, ownership, retry and source iso
       guardianRequest(guardians[0],{studentProfileId:profiles[0]}));
     assert.deepEqual(independent,{active:true,googlePlay:true,institution:false});
     assert.equal(firestore.get("institutionContractsV1/"+id).data.seatsRevoked,1);
+    assert.equal((await handlers.getInstitutionContractSummary(
+      adminRequest({contractId:id}))).currentlyGranted,199);
     assert.equal(firestore.get("institutionRedemptionsV1/"+
       policy.codeHash(batch.codes[0])).data.status,"REVOKED");
     await handlers.updateInstitutionContractStatus(adminRequest({
       contractId:id,status:"SUSPENDED"
     }));
+    assert.equal((await handlers.getInstitutionContractSummary(
+      adminRequest({contractId:id}))).currentlyGranted,0);
     assert.equal((await handlers.getVerifiedPremiumAccess(guardianRequest(
       guardians[1],{studentProfileId:profiles[1]}))).active,false);
     assert.equal((await handlers.getVerifiedPremiumAccess(guardianRequest(

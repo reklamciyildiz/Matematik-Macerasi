@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "test": "node --test src/*.test.cjs",
-    "check": "node --check index.js && node --check src/policy.cjs"
+    "check": "node --check index.js && node --check institution-functions.cjs && node --check src/policy.cjs && node --check src/institution-policy.cjs"
   },
   "dependencies": {
     "firebase-admin": "^13.3.0",

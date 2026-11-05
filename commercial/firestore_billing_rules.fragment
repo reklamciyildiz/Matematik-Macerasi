@@ -8,3 +8,16 @@ match /billingTokensV1/{purchaseTokenHash} {
 match /parentPremiumEntitlementsV1/{parentUid} {
   allow read, write: if false;
 }
+
+match /institutionContractsV1/{contractId} {
+  allow read, write: if false;
+}
+match /institutionCodeBatchesV1/{batchId} {
+  allow read, write: if false;
+}
+match /institutionCodesV1/{codeHash} {
+  allow read, write: if false;
+}
+match /institutionAssignmentsV1/{parentUid} {
+  allow read, write: if false;
+}

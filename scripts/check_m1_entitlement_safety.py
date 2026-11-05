@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""M1 staging guard: no retail migration and no direct Firestore license writes."""
+from pathlib import Path
+root=Path(__file__).resolve().parents[1]
+app=root/"app/src/main/java/com/yigit033/matematikmacarasi"
+client=(app/"services/payments/PurchaseManager.kt").read_text(encoding="utf-8")
+codes=(app/"services/PremiumCodeValidator.kt").read_text(encoding="utf-8")
+ui=(app/"screens/SettingsScreen.kt").read_text(encoding="utf-8")
+legacy=(app/"services/FirebaseManager.kt").read_text(encoding="utf-8")
+policy=(app/"services/payments/PremiumEntitlementPolicy.kt").read_text(encoding="utf-8")
+server=(root/"commercial/functions/institution-functions.cjs").read_text(encoding="utf-8")
+institution=(root/"commercial/functions/src/institution-policy.cjs").read_text(encoding="utf-8")
+rules=(root/"commercial/firestore_billing_rules.fragment").read_text(encoding="utf-8")
+for expected in (
+    'private const val PREMIUM_SKU = "matematik_macerasi_premium"',
+    'override fun onPurchasesUpdated(',
+    'private fun handlePurchase(',
+    'private fun acknowledgePurchase(',
+    'fun restorePurchases()',
+    'fun buyPremium(activity:Activity)',
+    'savePremiumStatus(premiumFound)',
+    'PremiumEntitlementPolicy.hasAccess(',
+):
+    assert expected in client,expected
+for expected in ('legacyCodeActivated:Boolean','confirmedPlayPurchase:Boolean',
+                 'verifiedInstitution:Boolean=false'):
+    assert expected in policy,expected
+assert 'validateAndActivateCode' in codes
+assert 'DifferentCodeAlreadyActivated' in codes and 'DifferentCodeAlreadyActivated' in ui
+assert 'premium_codes' in legacy and 'code_activations' in legacy
+assert 'incrementCodeUsageAndRecordActivation' in legacy
+# Legacy RTDB activation is deliberately unchanged until an authenticated
+# migration; do not misrepresent it as atomic or publish the old rules.
+assert 'setValue(newCount)' in legacy
+assert 'MM_LICENSE_SIGNING_KEY' in server
+assert 'mmCommercialAdmin' in server and 'mmParentVerified' in server
+assert 'enforceAppCheck:true' in server
+assert 'tx.create(codes.doc(hashes[i])' in server
+assert 'tx.update(contractRef,{' in server and 'seatsIssued:FieldValue.increment(count)' in server
+assert 'policy.canIssue(' in server and 'policy.canRedeem(' in server
+assert 'policy.institutionActive(' in server
+assert 'policy.effectivePremium(' in server
+assert 'getVerifiedPremiumAccess' in server
+assert 'Google Play' not in server or 'Google Play' in server
+assert 'codeSecret.value()' in server
+assert 'function deterministicCode(' in institution
+for coll in ("billingTokensV1","parentPremiumEntitlementsV1",
+             "institutionContractsV1","institutionCodeBatchesV1",
+             "institutionCodesV1","institutionAssignmentsV1"):
+    assert f"match /{coll}/" in rules,coll
+assert rules.count("allow read, write: if false;")>=6
+assert (root/"app/src/test/java/com/yigit033/matematikmacarasi/services/payments/PremiumEntitlementPolicyTest.kt").exists()
+print("M1 staged license hardening, legacy entitlement preservation and private collections: PASS")

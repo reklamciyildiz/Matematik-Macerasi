@@ -115,8 +115,10 @@ Sunucu tarafına aşağıdaki callable fonksiyonlar eklendi; Firebase'e **deploy
   tekrar edilirse aynı kod paketi güvenle yeniden teslim edilir.
 - `redeemInstitutionSeatCode`: **Firebase Auth + App Check + güvenilir yönetici
   tarafından tanımlanan `mmParentVerified` claim** gerektirir. Firestore
-  transaction ile kod, kullanıcıya bağlı lisans ve sözleşme sayacı **atomik**
-  güncellenir. Cihaz kimliği öğrenci lisansı yerine kullanılmaz.
+  transaction ile kod, doğrulanmış veli altındaki çocuk profiline ait
+  lisans ve benzersiz kullanım kaydı **atomik** güncellenir. Kurumun ortak
+  sayaç belgesi her öğrenci aktivasyonunda güncellenmez; 200 paralel işlem
+  çakışmaları azaltılır. Cihaz kimliği öğrenci lisansı yerine kullanılmaz.
 - `revokeInstitutionSeatCode` ve `updateInstitutionContractStatus`:
   kurum lisansının iptali, askıya alınması. **Google Play satın alımına dokunmaz.**
 - `getVerifiedPremiumAccess`: Play satın alımının sunucu hakkı ile kurum
@@ -157,3 +159,20 @@ içermeyen kalıcı profil kimliğini gerektirir. Yetki anahtarı sunucuda
 birden fazla öğrenci lisansını kendi çocuklarına bağımsız atayabilir.
 `getVerifiedPremiumAccess` seçilen çocuk profil kimliğine göre
 kurum erişimini döndürür; velinin Google Play hakkı ise bağımsızdır.
+
+**Güvenli varsayılan:** `MM_M1_BACKEND_ENABLED` değişkeni açıkça `true`
+olmadıkça M1 çağrıları, lisans üretimi, RTDN ve zamanlanmış iade işlemleri
+etkinleşmez. Sadece GitHub kodu çekmek veya Firebase Functions'a yanlışlıkla
+deploy etmek M1'i otomatik olarak açmaz. İki eski Play müşterisinin hakkı,
+Android uygulama kodundaki mevcut Play Billing yolu üzerinden sürer.
+
+**Veli/çocuk doğrulaması:** Yeni kurum kodu kullanılmadan önce yönetici
+`setVerifiedStudentProfile` ile Firebase Auth'ta doğrulanmış veliye
+kişisel bilgi içermeyen öğrenci profil kimliğini bağlar. Ebeveynin gönderdiği
+rastgele kimlik kabul edilmez. Bu işlemin gerçek kurum/veli ilişkisi
+güvenilir operatör tarafından doğrulanmalıdır.
+
+**Güvenli raporlama:** `getInstitutionContractSummary` kayıtlı kod sayısı,
+kullanılmış, iptal ve kalan lisans sayısını yalnız ticari yöneticiye
+sunar. Kullanılmış lisans sayısı tek kurum sayaç belgesinden değil,
+kod bazındaki kayıtların okunmasıyla hesaplanır.

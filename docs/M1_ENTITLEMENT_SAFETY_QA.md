@@ -76,3 +76,62 @@ farklı çocuk profiline iki farklı kod tanımlayabilir. Aynı kod farklı
 adı/e-postası saklanmaz. Çocuk profil ID'si veli hesabına bağlı
 kalıcı kimlik olmalıdır; bunun Android/Cloud senkronu hâlâ M1
 canlı entegrasyonunda geliştirilmelidir.
+
+## M1 güvenli kapatma / üretim kabul testi (5 Kasım 2026)
+
+**Kod güvenliği** ve **canlı operasyon güvenliği** farklıdır. GitHub CI gerçek
+Firebase Auth, Firebase App Check, Firestore Emulator, Play API, Play Console
+satışları veya gerçek RTDB kurallarına erişemez.
+
+### Sunucu güvenliği ve kod düzeltmeleri
+
+- `MM_M1_BACKEND_ENABLED` ortam değişkeni varsayılan olarak **KAPALI**.
+  Yeni tüm callable ve iade bildirimleri bu bayrak açılmadan veritabanına yazmaz.
+- Kurum lisansı cihaz kimliğine değil, sunucuda güvenilir yönetici tarafından
+  doğrulanmış `(veli UID, çocuk profil kimliği)` eşleşmesine verilir.
+  Rastgele veya kullanıcı tarafından oluşturulmuş bir profil ID'si tek başına
+  Premium açmaz. `setVerifiedStudentProfile` yöneticilere özeldir.
+- 200 eşzamanlı etkinleştirmede kurum sözleşme belgesinin her seferinde
+  güncellenmesi kaldırıldı. Her kodun benzersiz `institutionRedemptionsV1`
+  kaydı işlem içinde oluşturulur. `getInstitutionContractSummary` sayıları
+  ledger'dan sorgular. Dolayısıyla merkezi sıcak sayaç sorunu azalır.
+- Kod üretiminin tekrar denenmesi aynı kod listesini döndürür; imzalama
+  secret'ı değişmişse yanlışlıkla başka liste verilmez.
+- Kurum kullanım raporu yöneticiye yetkili callable ile sunulur;
+  öğrenci/veli adı, e-posta veya sınıf kayıtlarına erişim vermez.
+- Node testleri gerçek fonksiyonları Firestore işlem simülatöründe
+  200 eşzamanlı kod/200 farklı profil/iptal/Play-ilişki senaryolarıyla
+  çalıştırır. **Bu testler gerçek Firestore Emulator testi değildir.**
+
+### Üretim ortamına geçiş için zorunlu kabul koşulları
+
+- [ ] Firebase RTDB/Firestore kuralları, mevcut `premium_codes`,
+      `code_activations` kayıtları ve yedekler read-only incelendi.
+- [ ] İki Play satışının aktif hakları Console'da doğrulandı. Gerçek token
+      veya ödeme kimliği sohbet, günlük kayıtları veya GitHub'a eklenmedi.
+- [ ] Firebase Auth doğrulanmış veli hesabı ve rol tabanlı ticari yönetici
+      hesabı gerçek ortamda oluşturuldu; App Check zorunluluğu test edildi.
+- [ ] Güvenlik kuralları için gerçek Firestore Emulator testleri geçti ve
+      bu şablon mevcut rules'a diğer koleksiyonlar silinmeden eklendi.
+- [ ] 200 paralel aktivasyon, 201. koltuk, tekrar deneme, askıya alma,
+      2 çocuk/1 veli, profili askıya alma **gerçek Emulator'da** geçti.
+- [ ] Google Play Developer API, satın alma onayı, iade/iptal ve Pub/Sub
+      RTDN ayrı test hesaplarında doğrulandı.
+- [ ] Android istemcinin yeni doğrulanmış hakkı çağıran yolu, eski Premium
+      sahiplerini düşürmeyen geçiş ve geri alma testleriyle tamamlandı.
+- [ ] Mağaza kuralları açısından kurum lisanslarının dijital içerik erişimi
+      için harici satış uygunluğu teyit edildi.
+- [ ] Ancak tüm maddeler geçilirse sunucu için
+      `MM_M1_BACKEND_ENABLED=true` **kontrollü test diliminde** açılabilir.
+
+### Geri alma (rollback)
+
+Bir anomali varsa `MM_M1_BACKEND_ENABLED=false` ile yeni sunucu işlemleri
+durdurulur. Eski Play satın alma, geri yükleme ve Firebase kod aktivasyon
+ekranı çalışmaya devam eder. Gerçek hakları toplu silme, SKU değiştirme,
+Realtime Database kayıtlarını taşıma veya satın alımları yeniden oluşturma
+gibi işlemler yapılmaz. Bu bayrak, yeni kodla aktif edilmiş hakların istemci
+tarafında nasıl ele alınacağını çözmez; o nedenle yeni istemciyi yayına
+almadan önce ayrıca test gerekir.
+
+**M1'in canlı tamamlanma durumu: DIŞ DOĞRULAMA GEREKİYOR.**

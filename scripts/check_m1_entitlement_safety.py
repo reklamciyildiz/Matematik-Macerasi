@@ -9,6 +9,7 @@ ui=(app/"screens/SettingsScreen.kt").read_text(encoding="utf-8")
 legacy=(app/"services/FirebaseManager.kt").read_text(encoding="utf-8")
 policy=(app/"services/payments/PremiumEntitlementPolicy.kt").read_text(encoding="utf-8")
 server=(root/"commercial/functions/institution-functions.cjs").read_text(encoding="utf-8")
+play_server=(root/"commercial/functions/index.js").read_text(encoding="utf-8")
 institution=(root/"commercial/functions/src/institution-policy.cjs").read_text(encoding="utf-8")
 rules=(root/"commercial/firestore_billing_rules.fragment").read_text(encoding="utf-8")
 for expected in (
@@ -41,13 +42,25 @@ assert 'policy.canIssue(' in server and 'policy.canRedeem(' in server
 assert 'policy.institutionActive(' in server
 assert 'policy.effectivePremium(' in server
 assert 'getVerifiedPremiumAccess' in server
-assert 'Google Play' not in server or 'Google Play' in server
+# All new write endpoints are disabled unless explicitly enabled.
+assert 'process.env.MM_M1_BACKEND_ENABLED!=="true"' in server
+assert 'process.env.MM_M1_BACKEND_ENABLED!=="true"' in play_server
+assert 'requireCommercialLaunch();' in play_server
+assert 'isVerifiedProfile(profileSnap.data(),uid)' in server
+assert 'getInstitutionContractSummary' in server
+assert 'setVerifiedStudentProfile' in server
+assert 'redemptions.doc(hash)' in server
+assert 'seatsRedeemed:FieldValue.increment(' not in server
+assert 'seatsRedeemed:FieldValue.increment(' not in play_server
+assert 'firstCodeHash' in server
+assert (root/"commercial/functions/src/institution-transactions.test.cjs").exists()
 assert 'codeSecret.value()' in server
 assert 'function deterministicCode(' in institution
 for coll in ("billingTokensV1","parentPremiumEntitlementsV1",
              "institutionContractsV1","institutionCodeBatchesV1",
-             "institutionCodesV1","institutionAssignmentsV1"):
+             "institutionCodesV1","institutionAssignmentsV1",
+             "parentStudentProfilesV1","institutionRedemptionsV1"):
     assert f"match /{coll}/" in rules,coll
-assert rules.count("allow read, write: if false;")>=6
+assert rules.count("allow read, write: if false;")>=8
 assert (root/"app/src/test/java/com/yigit033/matematikmacarasi/services/payments/PremiumEntitlementPolicyTest.kt").exists()
 print("M1 staged license hardening, legacy entitlement preservation and private collections: PASS")

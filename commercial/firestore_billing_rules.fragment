@@ -1,4 +1,4 @@
-// Add these TWO match blocks to the existing Firestore `match /databases/{database}/documents`.
+// Add these payment and institution match blocks to the existing Firestore `match /databases/{database}/documents`.
 // DO NOT replace your entire production Firestore rules with this fragment.
 // Server Firebase Admin SDK bypasses client rules; only authenticated
 // callable functions may expose entitlement status, never raw token records.
@@ -18,6 +18,12 @@ match /institutionCodeBatchesV1/{batchId} {
 match /institutionCodesV1/{codeHash} {
   allow read, write: if false;
 }
-match /institutionAssignmentsV1/{parentUid} {
+match /institutionAssignmentsV1/{seatKey} {
+  allow read, write: if false;
+}
+match /parentStudentProfilesV1/{guardianUid}/profiles/{studentProfileId} {
+  allow read, write: if false;
+}
+match /institutionRedemptionsV1/{codeHash} {
   allow read, write: if false;
 }

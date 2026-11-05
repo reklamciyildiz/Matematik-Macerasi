@@ -14,6 +14,7 @@
 const {onCall,HttpsError}=require("firebase-functions/v2/https");
 const {defineSecret}=require("firebase-functions/params");
 const {getFirestore,FieldValue}=require("firebase-admin/firestore");
+const {getAuth}=require("firebase-admin/auth");
 const policy=require("./src/institution-policy.cjs");
 
 const db=getFirestore();
@@ -23,6 +24,8 @@ const contracts=db.collection("institutionContractsV1");
 const batches=db.collection("institutionCodeBatchesV1");
 const codes=db.collection("institutionCodesV1");
 const assignments=db.collection("institutionAssignmentsV1");
+const studentProfiles=db.collection("parentStudentProfilesV1");
+const redemptions=db.collection("institutionRedemptionsV1");
 const googlePurchases=db.collection("parentPremiumEntitlementsV1");
 
 function requireLoggedIn(req){
@@ -49,10 +52,51 @@ function invalid(error){
     throw new HttpsError("invalid-argument","Geçersiz lisans bilgisi: "+error.message);
   throw error;
 }
-function safeInt(value) {
-  if(!Number.isSafeInteger(value)||value<0)return 0;
-  return value;
+/** The profile binding is issued by a trusted admin, never by child input. */
+function profileReference(uid,profileId) {
+  return studentProfiles.doc(uid).collection("profiles")
+    .doc(policy.validateStudentProfileId(profileId));
 }
+function isVerifiedProfile(record,uid){
+  return Boolean(record && record.guardianUid===uid && record.status==="ACTIVE" &&
+    record.verifiedByUid && record.studentProfileId);
+}
+
+/**
+ * Admin-managed parent/student binding, required before a school seat can
+ * be redeemed. The client's invented or renamed profile ID is not sufficient.
+ * No child's name, email, date of birth, or classroom is stored here.
+ */
+exports.setVerifiedStudentProfile=onCall({
+  region,enforceAppCheck:true,maxInstances:3,timeoutSeconds:30,
+},async req=>{
+  const adminUid=requireCommercialAdmin(req);
+  const guardianUid=req.data?.guardianUid;
+  const profileId=req.data?.studentProfileId;
+  const active=req.data?.active;
+  let ref;
+  try {
+    ref=profileReference(guardianUid,profileId);
+    if(typeof active!=="boolean")throw new Error("INVALID_STATUS");
+  }catch(e){invalid(e);}
+  const account=await getAuth().getUser(guardianUid);
+  if(account.disabled || account.customClaims?.mmParentVerified!==true)
+    throw new HttpsError("failed-precondition","Veli hesabı doğrulanmamış.");
+  await db.runTransaction(async tx=>{
+    const old=await tx.get(ref);
+    if(old.exists && (old.data().guardianUid!==guardianUid ||
+      old.data().studentProfileId!==profileId))
+      throw new HttpsError("failed-precondition","Profil başka bir kimlikle bağlı.");
+    // A real operator verifies parent/student relationship externally before
+    // calling this administrative operation. It cannot be self-served.
+    tx.set(ref,{
+      guardianUid,studentProfileId:profileId,
+      status:active?"ACTIVE":"SUSPENDED",verifiedByUid:adminUid,
+      updatedAt:FieldValue.serverTimestamp()
+    },{merge:true});
+  });
+  return {status:active?"ACTIVE":"SUSPENDED"};
+});
 
 /**
  * ADMIN ONLY. Business payment is recorded OUTSIDE the app. The invoice ref
@@ -80,7 +124,7 @@ exports.createInstitutionContract=onCall({
     tx.create(ref,{
       institutionName:fields.institutionName,
       invoiceReference:fields.invoiceReference,
-      seats:fields.seats,seatsIssued:0,seatsRedeemed:0,seatsRevoked:0,
+      seats:fields.seats,seatsIssued:0,seatsRevoked:0,
       status:"ACTIVE",expiresAtMs:fields.expiresAtMs,
       activateUntilMs:fields.activateUntilMs,
       createdByUid:uid,verifiedByUid:uid,paymentRecorded:true,
@@ -114,8 +158,8 @@ exports.issueInstitutionSeatCodes=onCall({
   const hashes=codeList.map(policy.codeHash);
   const batchId=policy.batchId(contractId,requestId);
   const contractRef=contracts.doc(contractId),batchRef=batches.doc(batchId);
-  let repeated=false;
-  await db.runTransaction(async tx=>{
+  const firstCodeHash=hashes[0];
+  const allocation=await db.runTransaction(async tx=>{
     // All reads BEFORE any writes.
     const [contractSnap,batchSnap]=await Promise.all([
       tx.get(contractRef),tx.get(batchRef)
@@ -125,10 +169,10 @@ exports.issueInstitutionSeatCodes=onCall({
     if(batchSnap.exists){
       const record=batchSnap.data();
       if(record.contractId!==contractId || record.requestId!==requestId ||
-         record.count!==count)
-        throw new HttpsError("already-exists","Paket isteği başka içerikle oluşturulmuş.");
-      repeated=true;
-      return;
+         record.count!==count || record.firstCodeHash!==firstCodeHash)
+        throw new HttpsError("already-exists",
+          "Paket isteği değişmiş veya imzalama anahtarı yenilenmiş.");
+      return {repeated:true};
     }
     if(!policy.canIssue(contractSnap.data(),count,Date.now()))
       throw new HttpsError("failed-precondition","Sözleşme aktif değil veya lisans kapasitesi doldu.");
@@ -139,16 +183,17 @@ exports.issueInstitutionSeatCodes=onCall({
       });
     }
     tx.create(batchRef,{
-      contractId,requestId,count,issuedByUid:req.auth.uid,
+      contractId,requestId,count,firstCodeHash,issuedByUid:req.auth.uid,
       createdAt:FieldValue.serverTimestamp()
     });
     tx.update(contractRef,{
       seatsIssued:FieldValue.increment(count),
       updatedAt:FieldValue.serverTimestamp()
     });
+    return {repeated:false};
   });
-  // Only the authorized admin receives plaintext ONCE per call; never log them.
-  return {contractId,batchId,count,alreadyIssued:repeated,codes:codeList};
+  // Only authorized commercial admins receive the plaintext codes.
+  return {contractId,batchId,count,alreadyIssued:allocation.repeated,codes:codeList};
 });
 
 /**
@@ -164,9 +209,11 @@ exports.redeemInstitutionSeatCode=onCall({
   try{hash=policy.codeHash(req.data?.code);}
   catch(e){invalid(e);}
   const codeRef=codes.doc(hash);
-  let seatKey;
-  try{seatKey=policy.assignmentKey(uid,req.data?.studentProfileId);}
-  catch(e){invalid(e);}
+  let seatKey,profileRef;
+  try{
+    seatKey=policy.assignmentKey(uid,req.data?.studentProfileId);
+    profileRef=profileReference(uid,req.data?.studentProfileId);
+  }catch(e){invalid(e);}
   const seatRef=assignments.doc(seatKey);
   let result;
   await db.runTransaction(async tx=>{
@@ -179,9 +226,13 @@ exports.redeemInstitutionSeatCode=onCall({
     try{contractId=policy.validateId(code.contractId);}
     catch{throw new HttpsError("failed-precondition","Lisans kaydı geçersiz.");}
     const contractRef=contracts.doc(contractId);
-    const [contractSnap,seatSnap]=await Promise.all([
-      tx.get(contractRef),tx.get(seatRef)
+    const [contractSnap,seatSnap,profileSnap]=await Promise.all([
+      tx.get(contractRef),tx.get(seatRef),tx.get(profileRef)
     ]);
+    if(!profileSnap.exists || !isVerifiedProfile(profileSnap.data(),uid) ||
+       profileSnap.data().studentProfileId!==req.data?.studentProfileId)
+      throw new HttpsError("permission-denied",
+        "Bu öğrenci profili veli hesabına doğrulanmış şekilde bağlı değil.");
     const contract=contractSnap.exists
       ? {id:contractId,...contractSnap.data()} : null;
     const seat=seatSnap.exists ? seatSnap.data() : null;
@@ -212,9 +263,11 @@ exports.redeemInstitutionSeatCode=onCall({
       expiresAtMs:contract.expiresAtMs,
       activatedAt:FieldValue.serverTimestamp()
     });
-    tx.update(contractRef,{
-      seatsRedeemed:FieldValue.increment(1),
-      updatedAt:FieldValue.serverTimestamp()
+    // Independent per-code ledger: 200 concurrent redemptions no longer
+    // contend to update the same contract counter document.
+    tx.create(redemptions.doc(hash),{
+      contractId,seatKey,status:"ACTIVE",
+      redeemedAt:FieldValue.serverTimestamp()
     });
     result={status:"REDEEMED",active:true};
   });
@@ -258,6 +311,9 @@ exports.revokeInstitutionSeatCode=onCall({
       });
     }
     if(code.status==="REDEEMED"){
+      tx.update(redemptions.doc(hash),{
+        status:"REVOKED",revokedAt:FieldValue.serverTimestamp()
+      });
       tx.update(contractRef,{
         seatsRevoked:FieldValue.increment(1),
         updatedAt:FieldValue.serverTimestamp()
@@ -311,11 +367,16 @@ exports.getVerifiedPremiumAccess=onCall({
       policy.assignmentKey(uid,req.data.studentProfileId));}
     catch(e){invalid(e);}
   }
-  const [playSnap,seatSnap]=await Promise.all([
+  const [playSnap,seatSnap,profileSnap]=await Promise.all([
     googlePurchases.doc(uid).get(),
-    seatRef?seatRef.get():Promise.resolve(null)
+    seatRef?seatRef.get():Promise.resolve(null),
+    seatRef?profileReference(uid,req.data.studentProfileId).get():Promise.resolve(null)
   ]);
-  const seat=seatSnap?.exists?seatSnap.data():null;
+  // A revoked/suspended child profile cannot retain institutional access.
+  const profileValid=profileSnap?.exists &&
+    isVerifiedProfile(profileSnap.data(),uid) &&
+    profileSnap.data().studentProfileId===req.data.studentProfileId;
+  const seat=seatSnap?.exists && profileValid?seatSnap.data():null;
   let contract=null;
   if(seat?.contractId){
     try{

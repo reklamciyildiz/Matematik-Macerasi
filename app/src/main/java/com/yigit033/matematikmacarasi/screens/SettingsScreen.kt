@@ -443,6 +443,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                                     Toast.makeText(context,"Premium erişimin etkin.",
                                         Toast.LENGTH_SHORT).show()
                                 }
+                                is PremiumCodeValidator.ValidationResult.DifferentCodeAlreadyActivated ->
+                                    codeError="Bu cihazda farklı bir Premium kod etkin. Yeni bir kodun aktarımı için destek gerekli."
                                 is PremiumCodeValidator.ValidationResult.InvalidCode ->
                                     codeError="Kod geçersiz. Lütfen kontrol et."
                                 is PremiumCodeValidator.ValidationResult.CodeExpired ->

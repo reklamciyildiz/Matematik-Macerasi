@@ -345,7 +345,10 @@ class PurchaseManager private constructor(
                     
                     // Premium kod aktivasyonu varsa onu da kontrol et!
                     val hasCodePremium = codeValidator.isCodePremium()
-                    val finalPremiumStatus = premiumFound || hasCodePremium
+                    val finalPremiumStatus = PremiumEntitlementPolicy.hasAccess(
+                        confirmedPlayPurchase=premiumFound,
+                        legacyCodeActivated=hasCodePremium
+                    )
                     
                     _premiumState.value = finalPremiumStatus
                     savePremiumStatus(premiumFound) // Sadece Google Play durumunu kaydet
@@ -397,9 +400,13 @@ class PurchaseManager private constructor(
                 }.forEach {acknowledgePurchase(it)}
                 val code=codeValidator.isCodePremium()
                 savePremiumStatus(play)
-                _premiumState.value=play||code
+                val hasAccess=PremiumEntitlementPolicy.hasAccess(
+                    confirmedPlayPurchase=play,
+                    legacyCodeActivated=code
+                )
+                _premiumState.value=hasAccess
                 _restoreState.value=when {
-                    play||code->RestoreState.Found(play,code)
+                    hasAccess->RestoreState.Found(play,code)
                     pending->RestoreState.Error(
                         "Ödeme beklemede. Google Play onayından sonra yeniden dene.")
                     else->RestoreState.NotFound

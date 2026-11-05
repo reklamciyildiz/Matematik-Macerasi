@@ -44,6 +44,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
         object CodeExpired : ValidationResult()
         object CodeLimitReached : ValidationResult()
         object AlreadyActivated : ValidationResult()
+        object DifferentCodeAlreadyActivated : ValidationResult()
         object NetworkError : ValidationResult()
         data class Error(val message: String) : ValidationResult()
     }
@@ -62,21 +63,21 @@ class PremiumCodeValidator private constructor(private val context: Context) {
         // Cihazın zaten bir kod aktive edip etmediğini kontrol et
         val existingActivation = firebaseManager.getDeviceActivation(deviceId)
         if (existingActivation != null) {
-            Log.d(TAG, "Cihaz $deviceId zaten ${existingActivation.code} kodunu aktive etmiş.")
+            Log.d(TAG, "Bu cihazda daha önce bir Premium kod etkinleştirilmiş.")
             // Eğer mevcut aktivasyon girilen kodla aynıysa, başarı say
             if (existingActivation.code == code) {
                 setPremiumCodeStatus(true, code)
                 return ValidationResult.AlreadyActivated
             } else {
                 // Farklı bir kodla zaten aktive edilmişse, yeni kodu kabul etme
-                return ValidationResult.AlreadyActivated
+                return ValidationResult.DifferentCodeAlreadyActivated
             }
         }
 
         val premiumCode = firebaseManager.getPremiumCodeDetails(code)
 
         if (premiumCode == null || !premiumCode.active) {
-            Log.w(TAG, "Geçersiz veya aktif olmayan kod: $code")
+            Log.w(TAG, "Geçersiz veya aktif olmayan Premium kod.")
             return ValidationResult.InvalidCode
         }
 
@@ -85,7 +86,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
         try {
             val expiryDate = dateFormat.parse(premiumCode.expiry_date)
             if (expiryDate != null && expiryDate.before(Date())) {
-                Log.w(TAG, "Kodun süresi dolmuş: $code")
+                Log.w(TAG, "Premium kodun süresi dolmuş.")
                 return ValidationResult.CodeExpired
             }
         } catch (e: Exception) {
@@ -95,7 +96,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
 
         // Kullanım limiti kontrolü
         if (premiumCode.max_uses != null && premiumCode.used_count >= premiumCode.max_uses) {
-            Log.w(TAG, "Kod kullanım limitine ulaşmış: $code")
+            Log.w(TAG, "Premium kod kullanım limitine ulaşmış.")
             return ValidationResult.CodeLimitReached
         }
 
@@ -104,10 +105,10 @@ class PremiumCodeValidator private constructor(private val context: Context) {
 
         return if (success) {
             setPremiumCodeStatus(true, code)
-            Log.d(TAG, "✅ Premium kod başarıyla aktive edildi: $code")
+            Log.d(TAG, "Premium kod başarıyla etkinleştirildi.")
             ValidationResult.Success
         } else {
-            Log.e(TAG, "❌ Kod aktivasyonu başarısız: $code - Firebase yazma izni kontrolü gerekli!")
+            Log.e(TAG, "Kod aktivasyonu başarısız. Firebase yazma izinlerini kontrol edin.")
             ValidationResult.Error("Firebase yazma hatası. Lütfen internet bağlantınızı kontrol edin.")
         }
     }
@@ -138,7 +139,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
                 if (activation != null) {
                     // Firebase'de aktivasyon var, local'e kaydet
                     setPremiumCodeStatus(true, activation.code)
-                    Log.d(TAG, "✅ Premium durumu Firebase'den senkronize edildi: ${activation.code}")
+                    Log.d(TAG, "Premium durumu Firebase'den senkronize edildi.")
                     
                     // PurchaseManager'ı da güncelle
                     PurchaseManager.getInstance(context).checkPremiumStatusAsync()
@@ -160,7 +161,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
             
             if (activation != null) {
                 setPremiumCodeStatus(true, activation.code)
-                Log.d(TAG, "✅ Premium durumu senkronize edildi: ${activation.code}")
+                Log.d(TAG, "Premium durumu senkronize edildi.")
                 true
             } else {
                 false

@@ -63,7 +63,7 @@ class FirebaseManager private constructor(private val context: Context) {
             // Cihazın zaten bir kod aktive edip etmediğini kontrol et
             val existingActivation = activationRef.get().await().getValue(CodeActivation::class.java)
             if (existingActivation != null) {
-                Log.d(TAG, "Cihaz $deviceId zaten ${existingActivation.code} kodunu aktive etmiş.")
+                Log.d(TAG, "Cihazda mevcut Premium kod aktivasyonu var.")
                 return false // Zaten aktive edilmiş
             }
 
@@ -72,12 +72,12 @@ class FirebaseManager private constructor(private val context: Context) {
             val codeData = snapshot.getValue(PremiumCode::class.java)
             
             if (codeData == null || !codeData.active) {
-                Log.e(TAG, "Kod bulunamadı veya aktif değil: $code")
+                Log.e(TAG, "Premium kod bulunamadı veya aktif değil.")
                 return false
             }
 
             if (codeData.max_uses != null && codeData.used_count >= codeData.max_uses) {
-                Log.e(TAG, "Kod kullanım limitine ulaşmış: $code")
+                Log.e(TAG, "Premium kod kullanım limiti dolu.")
                 return false
             }
 
@@ -85,7 +85,7 @@ class FirebaseManager private constructor(private val context: Context) {
             val newCount = codeData.used_count + 1
             try {
                 codeRef.child("used_count").setValue(newCount).await()
-                Log.d(TAG, "✅ Kod $code için kullanım sayısı artırıldı: $newCount")
+                Log.d(TAG, "Kod kullanım sayısı güncellendi.")
             } catch (e: Exception) {
                 Log.e(TAG, "❌ USED_COUNT YAZMA HATASI: ${e.message}", e)
                 throw Exception("Firebase'e yazma izni yok (used_count). Rules kontrol et!")
@@ -95,7 +95,7 @@ class FirebaseManager private constructor(private val context: Context) {
             val activation = CodeActivation(code, System.currentTimeMillis())
             try {
                 activationRef.setValue(activation).await()
-                Log.d(TAG, "✅ Cihaz $deviceId için aktivasyon kaydedildi.")
+                Log.d(TAG, "Cihaz aktivasyonu kaydedildi.")
             } catch (e: Exception) {
                 Log.e(TAG, "❌ AKTİVASYON KAYDETME HATASI: ${e.message}", e)
                 throw Exception("Firebase'e yazma izni yok (code_activations). Rules kontrol et!")

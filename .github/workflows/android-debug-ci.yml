@@ -143,6 +143,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_m1_entitlement_safety.py
 
+      - name: Stage Firebase RTDB security lockdown without breaking existing clients
+        shell: bash
+        run: python3 scripts/check_rtdb_lockdown_staging.py
+
       - name: S3.3 release safety source preflight
         shell: bash
         run: python3 scripts/check_s3_3_release_preflight.py

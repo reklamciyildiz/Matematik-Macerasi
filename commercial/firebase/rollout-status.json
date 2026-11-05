@@ -1,0 +1,19 @@
+{
+  "stage": "DRAFT_NOT_DEPLOYED",
+  "approvedForProduction": false,
+  "authRequiredForChildren": false,
+  "protectsPaths": [
+    "premium_codes",
+    "code_activations"
+  ],
+  "prerequisiteChecks": [
+    "Existing RTDB backup and current production rules saved",
+    "Accountless App Check protected code redemption and restore backend implemented",
+    "Previously activated code owners safely migrated or grandfathered",
+    "Updated Play distributed clients validated with REAL Firebase",
+    "Existing older app compatibility and minimum-version upgrade strategy approved",
+    "Firebase Emulator rules negative/positive access tests passing",
+    "Real Play Billing restore and two existing Premium purchases unaffected"
+  ],
+  "operationalWarning": "DO NOT publish these RTDB rules until prerequisites are independently verified."
+}

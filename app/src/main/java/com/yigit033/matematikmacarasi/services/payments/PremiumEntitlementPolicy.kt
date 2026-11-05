@@ -1,16 +1,16 @@
 package com.yigit033.matematikmacarasi.services.payments
 
 /**
- * Single entitlement decision; the legacy purchase and code storage are kept
- * unchanged until verified Firebase parent accounts are rolled out.
+ * Current user-facing Premium policy: retain the two existing, independent
+ * entitlements from Google Play Billing and legacy Firebase code activation.
  *
- * This is only a pure access decision — it never creates a grant and never
- * turns a locally supplied "institution" flag into a verified entitlement.
+ * No verified-parent account, institutional source or login requirement is
+ * introduced into the Android app. A future institutional design must go
+ * through its own security and migration review before being enabled.
  */
 object PremiumEntitlementPolicy {
     fun hasAccess(
-        confirmedPlayPurchase:Boolean,
-        legacyCodeActivated:Boolean,
-        verifiedInstitution:Boolean=false
-    ):Boolean = confirmedPlayPurchase || legacyCodeActivated || verifiedInstitution
+        confirmedPlayPurchase: Boolean,
+        legacyCodeActivated: Boolean
+    ): Boolean = confirmedPlayPurchase || legacyCodeActivated
 }

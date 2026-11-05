@@ -1,3 +1,15 @@
+## 5 Kasım 2026 kararı — Kurumsal ebeveyn hesap tasarımı devre dışı
+
+Bu belgede aşağıda tanımlanan kurum/veli hesabı mekanizması **geleceğe
+yönelik bir taslak** olarak saklanır, mevcut üründe uygulanmaz.
+`commercial/functions/index.js` artık `institution-functions.cjs`
+modülünü export etmez. Firebase Authentication kurulumu şu anda gerekmez.
+Öncelik eski iki Google Play satın alımını ve mevcut Firebase Premium kod
+aktivasyonunu etkilemeden güvenlik açıklarını azaltmaktır. Canlı RTDB
+kurallarının herkese açık izinleri ayrı bir uyumlu geçiş gerektirir.
+
+---
+
 # M1 — Google Play Ticari Güvenlik, Aşama 1 (sunucu temeli)
 
 Durum: **KOD HAZIR, CANLIDA ETKİN DEĞİL**. GitHub'da sunucu bileşeni vardır;

@@ -1,3 +1,31 @@
+## Kurumsal hesap gerektiren tasarım: ASKIDA (5 Kasım 2026)
+
+**Kullanıcı kararı:** Şu an Firebase Authentication, ebeveyn hesabı veya
+kurumsal hesaba bağlanmış lisans istemiyoruz.
+
+- `commercial/functions/institution-functions.cjs` ve
+  `commercial/functions/src/institution-policy.cjs` **gelecek için yalnız
+  referans kaynak kodu** olarak korunur.
+- `commercial/functions/index.js` artık bu fonksiyonları içe aktarmıyor
+  veya dışa aktarmıyor. Dolayısıyla normal Firebase Functions giriş
+  noktasından hiçbir kurumsal callable deploy edilmeyecek.
+- `PremiumEntitlementPolicy` yalnız bugünkü iki hakkı birleştirir:
+  doğrulanmış Google Play istemci satın alımı **veya** mevcut Firebase
+  Premium kod aktivasyonu. Üçüncü/kurumsal hak argümanı kaldırıldı.
+- Daha önce eklenen server `MM_M1_BACKEND_ENABLED` güvenlik anahtarı
+  ayrıca varsayılan olarak **kapalı** kalır.
+- Mevcut uygulama Firebase Auth gerektirmez. Authentication açmak,
+  veli hesabı oluşturmak veya kurumsal kod dağıtmak için bir işlem yoktur.
+- Eski kod aktivasyonunda tespit edilen açık Firebase RTDB kuralları
+  **aynen duruyor**; yeni sunucu kodunu askıya almak bu açığı düzeltmez.
+  Kuralları kullanıcıları kilitlemeden onaracak ayrı, hesapsız ve güvenli
+  geçiş planı hazırlanmalıdır.
+
+**Bu bölümün geri kalanı geçmişte denenmiş, ASKIDA olan tasarımdır.
+Canlı özellik veya zorunlu sonraki adımlar olarak yorumlanmamalıdır.**
+
+---
+
 # M1 — Gerçek kullanıcı haklarını koruyarak kurumsal lisansa geçiş
 
 Durum: **STAGING CODE READY; LIVE FIREBASE NOT CONNECTED**.

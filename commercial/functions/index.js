@@ -224,7 +224,10 @@ exports.reconcilePlayRefunds = onSchedule({
 });
 
 /**
- * The institution functions are staged behind verified admin/parent claims.
- * Existing Android Billing and Realtime Database activation remain unchanged.
+ * Institutional parent-account functions are intentionally NOT exported.
+ * They remain as dormant source-only experiments in institution-functions.cjs
+ * so an ordinary Firebase Functions deployment cannot publish them.
+ *
+ * Reconsider only after the product actually decides to require account
+ * identity, and after separate security/Play Console acceptance.
  */
-Object.assign(exports,require("./institution-functions.cjs"));

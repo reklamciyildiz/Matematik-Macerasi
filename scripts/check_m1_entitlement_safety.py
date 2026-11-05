@@ -23,9 +23,15 @@ for expected in (
     'PremiumEntitlementPolicy.hasAccess(',
 ):
     assert expected in client,expected
-for expected in ('legacyCodeActivated:Boolean','confirmedPlayPurchase:Boolean',
-                 'verifiedInstitution:Boolean=false'):
+for expected in ('legacyCodeActivated: Boolean','confirmedPlayPurchase: Boolean'):
     assert expected in policy,expected
+assert 'verifiedInstitution' not in policy
+assert 'return confirmedPlayPurchase || legacyCodeActivated' in policy
+# Dormant design must not be exported as callable Cloud Functions.
+assert 'Object.assign(exports,require("./institution-functions.cjs"))' not in play_server
+assert 'require("./institution-functions.cjs")' not in play_server
+assert 'exports.createInstitutionContract' not in play_server
+assert 'exports.redeemInstitutionSeatCode' not in play_server
 assert 'validateAndActivateCode' in codes
 assert 'DifferentCodeAlreadyActivated' in codes and 'DifferentCodeAlreadyActivated' in ui
 assert 'premium_codes' in legacy and 'code_activations' in legacy
@@ -63,4 +69,4 @@ for coll in ("billingTokensV1","parentPremiumEntitlementsV1",
     assert f"match /{coll}/" in rules,coll
 assert rules.count("allow read, write: if false;")>=8
 assert (root/"app/src/test/java/com/yigit033/matematikmacarasi/services/payments/PremiumEntitlementPolicyTest.kt").exists()
-print("M1 staged license hardening, legacy entitlement preservation and private collections: PASS")
+print("M1 dormant institutional design, unchanged Play + Firebase code rights and private collections: PASS")

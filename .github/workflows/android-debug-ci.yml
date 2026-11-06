@@ -151,6 +151,13 @@ jobs:
         shell: bash
         run: python3 scripts/check_rtdb_compatibility_hardening.py
 
+      - name: Test RTDB rules in real Firebase Emulator (not production)
+        shell: bash
+        timeout-minutes: 10
+        run: |
+          cd commercial/firebase/emulator
+          npx --yes firebase-tools@15.34.2 emulators:exec --only database --project demo-matematik-macerasi --non-interactive "node ../tests/realtime-database-rules.mjs"
+
       - name: S3.3 release safety source preflight
         shell: bash
         run: python3 scripts/check_s3_3_release_preflight.py

@@ -44,20 +44,20 @@ class DeviceIdManager private constructor(private val context: Context) {
             
             if (deviceId == null || deviceId == "9774d56d682e549c") { // Emulator veya bazı cihazlarda sabit ID
                 deviceId = UUID.randomUUID().toString()
-                Log.w(TAG, "Android ID kullanılamadı veya geçersiz, yeni UUID oluşturuldu: $deviceId")
+                Log.w(TAG, "Android ID kullanılamadı; özel UUID üretildi.")
             } else {
-                Log.d(TAG, "Android ID kullanıldı: $deviceId")
+                Log.d(TAG, "Android sistem kimliği kullanıldı.")
             }
             saveDeviceId(deviceId)
         } else {
-            Log.d(TAG, "Mevcut cihaz ID'si: $deviceId")
+            Log.d(TAG, "Önceden kayıtlı cihaz tanımlayıcısı kullanıldı.")
         }
         return deviceId
     }
 
     private fun saveDeviceId(deviceId: String) {
         sharedPrefs.edit().putString(KEY_DEVICE_ID, deviceId).apply()
-        Log.d(TAG, "Cihaz ID'si kaydedildi: $deviceId")
+        Log.d(TAG, "Cihaz tanımlayıcısı yerel olarak kaydedildi.")
     }
 
     /**

@@ -5,7 +5,9 @@ demo-matematik-macerasi project. No real credentials or data are accessed.
 There is deliberately no firebase.json at the repository root and NO
 production Firebase deploy job.
 
-From commercial/firebase/emulator, run:
+From commercial/firebase/emulator, run (copy only to isolated local test folder):
+
+    cp ../realtime-database.compatibility-hardening.rules.json rules-under-test.json
 
     npx --yes firebase-tools@15.34.2 emulators:exec --only database --project demo-matematik-macerasi --non-interactive "node ../tests/realtime-database-rules.mjs"
 

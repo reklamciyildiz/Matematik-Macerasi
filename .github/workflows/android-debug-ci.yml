@@ -200,4 +200,7 @@ jobs:
         shell: bash
         run: |
           cd commercial/firebase/emulator
+          # Copy the exact reviewed source into the isolated emulator project.
+          # Firebase CLI intentionally rejects rules outside the project folder.
+          cp ../realtime-database.compatibility-hardening.rules.json rules-under-test.json
           npx --yes firebase-tools@15.34.2 emulators:exec --only database --project demo-matematik-macerasi --non-interactive "node ../tests/realtime-database-rules.mjs"

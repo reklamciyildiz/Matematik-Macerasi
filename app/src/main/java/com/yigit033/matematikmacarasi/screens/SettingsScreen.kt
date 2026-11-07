@@ -420,7 +420,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                 Column(verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     Text("Sana verilen Premium kodunu gir. Yeni satın alma yapılmaz.")
                     OutlinedTextField(
-                        value=code,onValueChange={code=it.trim().take(64).uppercase();codeError=null},
+                        value=code,onValueChange={code=it.take(128);codeError=null},
                         singleLine=true,enabled=!verifying,
                         label={Text("Premium kod")},modifier=Modifier.fillMaxWidth())
                     if(verifying) CircularProgressIndicator(modifier=Modifier.size(22.dp))

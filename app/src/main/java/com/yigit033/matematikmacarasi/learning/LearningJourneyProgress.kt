@@ -28,7 +28,9 @@ class LearningJourneyProgress(context: Context) {
         prefs.getString("review_signal_$id", null)
             ?.let { value -> ReviewSignal.values().firstOrNull { it.name == value } }
     fun isReviewDue(id: String, now: Long = System.currentTimeMillis()): Boolean =
-        LearningReviewPolicy.due(completed(id), now, nextReviewAt(id))
+        LearningReviewPolicy.dueIncludingLegacy(
+            completed(id), runs(id), now, nextReviewAt(id)
+        )
     fun lastReviewComment(id: String): String? =
         prefs.getString("review_note_$id", null)
 

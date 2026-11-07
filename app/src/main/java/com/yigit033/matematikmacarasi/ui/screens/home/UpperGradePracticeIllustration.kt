@@ -92,9 +92,10 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp),
                 horizontalAlignment = Alignment.CenterHorizontally) {
                 (0 until total).chunked(8).forEach { row ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    // 8 tokens fit even inside a 320dp lesson card.
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         row.forEach { idx ->
-                            Box(Modifier.size(27.dp)
+                            Box(Modifier.size(22.dp)
                                 .background(
                                     if (idx < v[0]) yellow else blue,
                                     CircleShape)

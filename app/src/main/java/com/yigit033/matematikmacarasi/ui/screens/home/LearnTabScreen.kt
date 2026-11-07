@@ -126,6 +126,8 @@ fun LearnTabScreen(
     val next = if (last != null && !progress.completed(last.id)) last
         else lessons.firstOrNull { !progress.completed(it.id) } ?: last ?: lessons.firstOrNull()
     val completed = lessons.count { progress.completed(it.id) }
+    val reviewDueLessons = lessons.filter { progress.isReviewDue(it.id) }
+        .sortedBy { progress.nextReviewAt(it.id) }
     val listedTopics = if (showAllTopics) curriculum.topics else curriculum.topics.filter { it.playable }
     val topicsByArea = listedTopics.groupBy { it.area }
     val ageLine = when (curriculum.band) {
@@ -272,6 +274,50 @@ fun LearnTabScreen(
                 "Bu sayı yalnızca hazır kısa dersleri sayar; müfredatın tamamlanma oranı değildir.",
                 color = hubText, fontSize = 11.sp, lineHeight = 16.sp
             )
+        }
+
+        if (reviewDueLessons.isNotEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .background(Color(0xFF1D5368), RoundedCornerShape(19.dp))
+                    .border(1.dp, Color(0xFFE2B978), RoundedCornerShape(19.dp))
+                    .padding(15.dp),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.AutoStories, contentDescription = null,
+                        tint = hubGold, modifier = Modifier.size(21.dp))
+                    Spacer(Modifier.width(9.dp))
+                    Text("Tekrar Etme Zamanı", color = Color.White,
+                        fontSize = 17.sp, fontWeight = FontWeight.Bold)
+                }
+                Text(
+                    "Önceden tamamladığın kısa dersleri yeni sorularla tekrar edebilirsin. " +
+                        "Bu öneriler yalnızca cihazındaki denemelerden hesaplanır.",
+                    color = hubText, fontSize = 12.sp, lineHeight = 18.sp
+                )
+                reviewDueLessons.take(3).forEach { lesson ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .background(Color(0xFF133A56), RoundedCornerShape(13.dp))
+                            .clickable {
+                                selectedTopicId = GradeCurriculumCatalog
+                                    .topicForLesson(curriculum.grade, lesson.id)?.id
+                                selectedLessonId = lesson.id
+                            }
+                            .heightIn(min = 51.dp).padding(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(lesson.title, color = Color.White,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Text("Tekrar Et", color = hubGold,
+                            fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Filled.ChevronRight,
+                            contentDescription = "Dersi tekrar aç", tint = hubGold)
+                    }
+                }
+            }
         }
 
         Row(

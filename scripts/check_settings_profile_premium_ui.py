@@ -6,6 +6,7 @@ root=base/"app/src/main/java/com/yigit033/matematikmacarasi"
 settings=(root/"screens/SettingsScreen.kt").read_text(encoding="utf-8")
 host=(root/"screens/SettingsActivity.kt").read_text(encoding="utf-8")
 profile=(root/"profile/ProfileActivity.kt").read_text(encoding="utf-8")
+avatar=(root/"screens/AvatarStoreActivity.kt").read_text(encoding="utf-8")
 checks=[
     ("old purple stack removed","0xFFCE93D8" not in settings),
     ("readable section surface","color=SettingsPalette.panel" in settings),
@@ -31,6 +32,20 @@ checks=[
          "safeDrawingPadding()" in host),
     ("profile edge-to-edge","WindowCompat.setDecorFitsSystemWindows(window,false)" in profile and
          "safeDrawingPadding()" in profile),
+    ("avatar cutout-safe layout",".safeDrawingPadding()" in avatar and
+         "modifier = Modifier.padding(start = 5.dp)" in avatar and
+         ".size(52.dp)" in avatar),
+    ("profile accessible back area","contentDescription = \"Kaşif profilinden geri dön\"" in profile and
+         ".size(52.dp)" in profile),
+    ("settings accessible back area","Modifier.size(52.dp).clickable(onClick=onBackClick)" in settings),
+    ("no profile white surface panels","backgroundColor = Color.White" not in profile and
+         ".background(Color.White.copy(alpha" not in profile),
+    ("new personal info surface",'Text("Kaşif Bilgilerim"' in profile and
+         '"Sınıf düzeyi"' in profile),
+    ("compact statistics tiles",'Text("Macera İstatistiklerim"' in profile and
+         'modifier = Modifier.weight(1f)' in profile),
+    ("statistics details retained",'"Kazanılan Yıldız"' in profile and
+         '"Biten Oyunlar"' in profile and "StatisticsDetailPopup(" in profile),
 ]
 errors=[message for message,ok in checks if not ok]
 if errors:

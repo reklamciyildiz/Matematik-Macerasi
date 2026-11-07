@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.learning.Lesson
 import com.yigit033.matematikmacarasi.learning.LessonTeachingCatalog
 import com.yigit033.matematikmacarasi.learning.LessonNarrator
+import com.yigit033.matematikmacarasi.services.AudioService
 import com.yigit033.matematikmacarasi.learning.Skill
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
@@ -164,6 +165,7 @@ private fun PracticeLesson(
     val earlyReader = grade <= 2
     val script = remember(lesson.skill) { LessonTeachingCatalog.forSkill(lesson.skill) }
     val narrator = remember(lesson.id) { LessonNarrator(context) }
+    val sounds = remember(context) { AudioService.getInstance(context) }
     DisposableEffect(narrator) {
         onDispose { narrator.close() }
     }
@@ -189,6 +191,12 @@ private fun PracticeLesson(
     val q = remember(lesson.id, seed, index) {
         LearningPathCatalog.question(lesson, seed, index)
     }
+    val checkChoices = remember(lesson.id, seed) {
+        if (seed % 2L == 0L) script.check.choices else script.check.choices.reversed()
+    }
+    val correctConceptIndex = checkChoices.indexOf(
+        script.check.choices[script.check.correctIndex]
+    )
     val accuracy = 400 / (4 + wrong)
     val moveTo: (Int) -> Unit = { next ->
         narrator.stop()
@@ -392,11 +400,23 @@ private fun PracticeLesson(
                     color = Color(0xFF09283B), fontWeight = FontWeight.Bold)
             }
         } else if (stage == 1) {
-            // Guided discovery: child reveals one real mathematical step at a time.
+            // Guided discovery: image and large button are alternative targets.
+            val revealNext: () -> Unit = {
+                if (workedStep < script.steps.lastIndex) {
+                    narrator.stop()
+                    workedStep += 1
+                    progress.saveWorkedStep(lesson.id, workedStep)
+                    sounds.playTapSound()
+                }
+            }
             Text("Birlikte adım adım inceleyelim", color = Color.White,
                 fontSize = 17.sp, fontWeight = FontWeight.Bold)
             LessonTeachingIllustration(
-                script = script, grade = grade, revealedStep = workedStep
+                script = script,
+                grade = grade,
+                revealedStep = workedStep,
+                onRevealNext = if (workedStep < script.steps.lastIndex)
+                    revealNext else null
             )
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -415,11 +435,7 @@ private fun PracticeLesson(
             }
             if (workedStep < script.steps.lastIndex) {
                 Button(
-                    onClick = {
-                        narrator.stop()
-                        workedStep += 1
-                        progress.saveWorkedStep(lesson.id, workedStep)
-                    },
+                    onClick = revealNext,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 53.dp),
                     shape = RoundedCornerShape(13.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -443,23 +459,25 @@ private fun PracticeLesson(
                     Text(script.check.prompt, color = Color.White,
                         fontSize = if (earlyReader) 17.sp else 15.sp,
                         lineHeight = 22.sp)
-                    script.check.choices.forEachIndexed { choiceIndex, choice ->
+                    checkChoices.forEachIndexed { choiceIndex, choice ->
                         val chosen = conceptSelected == choiceIndex
                         OutlinedButton(
                             onClick = {
                                 conceptSelected = choiceIndex
-                                if (choiceIndex != script.check.correctIndex) {
+                                if (choiceIndex != correctConceptIndex) {
                                     conceptWrong++
+                                    sounds.playWrongSound()
                                     narrator.say(script.check.wrongHint)
                                 } else {
                                     progress.markConceptCheckPassed(lesson.id)
+                                    sounds.playCorrectSound()
                                     narrator.say(script.check.explanation)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 55.dp),
                             border = androidx.compose.foundation.BorderStroke(
                                 1.dp,
-                                if (chosen && choiceIndex == script.check.correctIndex)
+                                if (chosen && choiceIndex == correctConceptIndex)
                                     Color(0xFF7BE1C0)
                                 else if (chosen) Color(0xFFFFB997)
                                 else Color(0xFF5E93AB)
@@ -475,7 +493,7 @@ private fun PracticeLesson(
                         }
                     }
                     if (conceptSelected >= 0) {
-                        val rightChoice = conceptSelected == script.check.correctIndex
+                        val rightChoice = conceptSelected == correctConceptIndex
                         Text(
                             if (rightChoice) script.check.explanation
                             else script.check.wrongHint,
@@ -516,10 +534,12 @@ private fun PracticeLesson(
                                 if (choice == q.answer) {
                                     right = true
                                     feedback = q.explanation
+                                    sounds.playCorrectSound()
                                     narrator.stop()
                                 } else {
                                     wrong++
                                     progress.recordWrong(lesson.id)
+                                    sounds.playWrongSound()
                                     feedback = if (wrong > 1) script.check.wrongHint
                                     else "Bu henüz doğru değil. Sayıları yeniden incele."
                                     narrator.say(feedback)

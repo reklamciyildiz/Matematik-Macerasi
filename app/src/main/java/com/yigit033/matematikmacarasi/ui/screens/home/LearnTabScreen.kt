@@ -509,7 +509,7 @@ private fun CurriculumTopicDetail(
                                 fontWeight = FontWeight.Bold)
                             Text(
                                 if (lessonComplete(id)) "Tekrar çalış"
-                                else "Anlatım · Örnek · 4 soruluk pratik",
+                                else "Resimli anlatım · Adım adım örnek · Kavrama kontrolü",
                                 color = hubText, fontSize = 11.sp
                             )
                         }

@@ -1,5 +1,8 @@
 # Ö3 — Matematik Macerası ders anlatım motoru
 
+> **8 Kasım 2026 içerik güncellemesi:** Ö3 anlatım motoru 54 farklı kısa ders için kullanılabilir hâle getirildi; önceki pilot kapsam notları tarihsel bilgidir. 22 yeni konu girişinin konuya özel anlatımı, matematiksel modeli, soru üretimi ve kavrama kontrolü eklendi. Özellikle küçük sınıflarda soru ekranındaki görseller de gerçek sorunun parametreleriyle üretilir. Güncel test ve yayın sınırları: [Öğren Genişletmesi](LEARNING_EXPANSION_RELEASE_GATE.md). 54 kısa ders, bütün resmî MEB kazanımlarının tamamlandığı anlamına gelmez.
+
+
 **Tarih:** 7 Kasım 2026. **Kapsam:** Yalnızca mevcut oynanabilir kısa derslerin öğretim deneyimi; Ö1 müfredat taslağındaki henüz geliştirilmemiş konular *açık ders değildir*. Google Play AAB yayın onayı verilmemiştir.
 
 ## Eğitim deneyimi

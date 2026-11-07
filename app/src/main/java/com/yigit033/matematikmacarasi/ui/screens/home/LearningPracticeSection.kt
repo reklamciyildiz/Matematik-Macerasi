@@ -67,6 +67,11 @@ import com.yigit033.matematikmacarasi.games.sayiavi2.ForestAdventureActivity
 import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
 import com.yigit033.matematikmacarasi.games.basic.MultiplicationGameActivity
 import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
+import com.yigit033.matematikmacarasi.games.basic.SubtractionGameActivity
+import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
+import com.yigit033.matematikmacarasi.games.fractions.FractionCrystalsActivity
+import com.yigit033.matematikmacarasi.games.time.TimeTowerActivity
+import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import kotlinx.coroutines.delay
 
 @Composable
@@ -163,7 +168,7 @@ private fun PracticeLesson(
     val context = LocalContext.current
     val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
     val earlyReader = grade <= 2
-    val script = remember(lesson.skill) { LessonTeachingCatalog.forSkill(lesson.skill) }
+    val script = remember(lesson.id) { LessonTeachingCatalog.forLesson(lesson) }
     val narrator = remember(lesson.id) { LessonNarrator(context) }
     val sounds = remember(context) { AudioService.getInstance(context) }
     DisposableEffect(narrator) {
@@ -366,6 +371,16 @@ private fun PracticeLesson(
                 "add_10", "add_20" -> AdditionGameActivity::class.java
                 "multiply_intro", "multiply" -> MultiplicationGameActivity::class.java
                 "divisible_15" -> DivisionGameActivity::class.java
+                "g1_count20", "g2_place" -> SayiAvi2Activity::class.java
+                "g1_takeaway" -> SubtractionGameActivity::class.java
+                "g1_shapes", "g4_perimeter", "g5_area" ->
+                    GeometryCastleActivity::class.java
+                "g2_half", "g3_third", "g4_fraction", "g7_rational" ->
+                    FractionCrystalsActivity::class.java
+                "g2_clock" -> TimeTowerActivity::class.java
+                "g3_money" -> MarketSimulatorActivity::class.java
+                // No related deployed game for the remaining middle-school concepts:
+                // do not offer an unrelated game with misleading skill matching.
                 else -> null
             }
             if (target != null) {
@@ -382,10 +397,12 @@ private fun PracticeLesson(
                         color = Color.White, fontWeight = FontWeight.Bold)
                 }
             } else {
-                Button(
-                    onClick = { narrator.stop(); onNavigateToGames() },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                ) { Text("Matematik Oyunlarına Geç") }
+                Text(
+                    "Bu kazanımı doğrudan çalıştıran bir matematik oyunu henüz yok. " +
+                        "Dersi tekrar ederek farklı sorular deneyebilirsin.",
+                    color = HomeColors.TextSecondary,
+                    fontSize = 12.sp, lineHeight = 18.sp
+                )
             }
             OutlinedButton(
                 onClick = onBack,

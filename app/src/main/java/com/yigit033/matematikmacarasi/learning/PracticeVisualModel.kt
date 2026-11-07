@@ -8,7 +8,10 @@ package com.yigit033.matematikmacarasi.learning
 enum class PracticeVisualKind {
     ADD_GROUPS, TAKE_AWAY, COMPARE_GROUPS, THREE_BARS,
     TENS_AND_ONES, TWO_EQUAL_PARTS, THREE_EQUAL_PARTS,
-    FRACTION_PARTS, CLOCK_START, TRIANGLE, SQUARE, PERIMETER
+    FRACTION_PARTS, CLOCK_START, TRIANGLE, SQUARE, PERIMETER,
+    AREA_GRID, DATA_BARS, CHANCE_CHIPS, SIGNED_WALK, ALGEBRA_BALANCE,
+    POWER_FACTORS, RIGHT_TRIANGLE, VOLUME_LAYERS, MIRROR_POINTS, FACTOR_LISTS,
+    RATIO_GROUPS
 }
 
 data class PracticeVisualModel(
@@ -44,6 +47,7 @@ data class PracticeVisualModel(
         PracticeVisualKind.SQUARE -> "Dört kenarlı ve dört köşeli kare."
         PracticeVisualKind.PERIMETER ->
             "Kenarları ${values[0]} ve ${values[1]} birim olan dikdörtgen."
+        else -> description // Advanced models supply exact operands with their own caption.
     }
 }
 
@@ -110,7 +114,7 @@ object PracticeVisualFactory {
                 build(PracticeVisualKind.PERIMETER,
                     groups(text, """(?:Uzun kenarı|Kenarları) (\d+)(?:, kısa kenarı| ve) (\d+)"""),
                     "Dikdörtgenin karşılıklı eş kenarları")
-            else -> null
+            else -> UpperGradePracticeVisualFactory.forQuestion(lessonId, text)
         }
     }
 }

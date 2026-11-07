@@ -48,30 +48,39 @@ tam kilitleme kurallarını eski APK'lar kullanılmaya devam ederken yayımlamay
 ilk adımda `git fetch origin` ve `git switch feat/cloudflare-premium-license`
 kullan; kodlar main'e alınmadan `git pull main` yeterli değildir.
 
-## Aşama 2 — Gizli anahtarlar (BUNLARI BANA GÖNDERME)
+## Aşama 2 — Gizli anahtarlar ve Workers deploy (BUNLARI BANA GÖNDERME)
 
-Windows'ta OpenSSL (Git Bash veya OpenSSL kurulumuyla) kullan:
-
-```bash
-mkdir -p private
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out private/license-private.pem
-openssl pkey -in private/license-private.pem -pubout -out private/license-public.pem
-```
-
-32+ karakterlik rastgele CODE_PEPPER oluştur ve **güvenli bir parola kasasında**
-sakla (kaybedersek yeni kodları/revokeleri doğru hashleyemeyiz):
+Windows PowerShell üzerinde proje içindeki
+`commercial/cloudflare-premium` klasöründeyken:
 
 ```powershell
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-$env:CODE_PEPPER = "OLUSTURDUGUN_GIZLI_DEGER"
-$env:CODE_PEPPER | npx wrangler secret put CODE_PEPPER
-Get-Content -Raw private/license-private.pem | npx wrangler secret put LICENSE_PRIVATE_KEY
-Get-Content -Raw private/license-public.pem | npx wrangler secret put LICENSE_PUBLIC_KEY
-npx wrangler deploy
+git pull --ff-only origin main
+node scripts/generate-secrets.mjs
+npx wrangler deploy --secrets-file private/secrets.json
 ```
 
-Secret'ları GitHub'a, ekrana görüntü olarak veya sohbetlere gönderme. İşlem
-öncesinde `wrangler.toml`'daki gerçek D1 ID doğru olmalı.
+- Bu script Node.js'in kendi kripto araçlarıyla RSA-3072 özel/açık anahtarı ve
+  256-bit CODE_PEPPER üretir. Gizli değerleri terminale yazdırmaz.
+- `private/` gitignore kapsamındadır; yine de ayrı bir **şifreli, güvenli
+  yedek** al. Klasörü paylaşma, GitHub'a koyma, sohbetlere gönderme.
+- Deploy komutu bütün secret'ları kaynak kodla **aynı dağıtımda** Cloudflare'a
+  yükler. Ardışık `secret put` komutlarına veya OpenSSL kurulumuna gerek yok.
+- Başarılı dağıtımın `https://...workers.dev` adresini kaydet.
+- `npx wrangler secret list` yalnız **secret isimlerini** listeler;
+  gizli değerlerin kendisini göstermez.
+- `https://...workers.dev/health` yalnız Worker erişimini kontrol eder.
+  D1 tablolarını veya gerçek Premium aktivasyonunu doğrulamaz.
+- Aynı secret dosyası / anahtarlar kaybolursa mevcut kod özetleri ve
+  imzalı lisanslar geri döndürülemez; gelişigüzel yeniden üretme.
+
+Daha sonra yerel yönetim scriptlerini çalıştırırken:
+
+```powershell
+$env:CODE_PEPPER = (Get-Content -Raw private/code-pepper.txt).Trim()
+```
+
+Bu satırda CODE_PEPPER'ı **ekrana bastırma**. Veritabanına kod eklemeden
+önce aktivasyon ve kurtarma akışını test et.
 
 ## Aşama 3 — D1 kod oluşturma
 

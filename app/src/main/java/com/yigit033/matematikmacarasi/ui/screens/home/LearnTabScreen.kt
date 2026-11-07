@@ -2,8 +2,8 @@ package com.yigit033.matematikmacarasi.ui.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,33 +18,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoStories
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Construction
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class LearnTopicPreview(
-    val title: String,
-    val description: String,
-    val subtopics: List<String>
-)
+import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
 
 /**
- * "Öğren" Sekmesi Görünümü
- *
- * İnteraktif öğrenme modüllerinin durumunu dürüstçe sunar; sahte tamamlanma
- * veya çalışmayan butonlar içermez. Gelecek müfredatı önizletir.
+ * Student-first learning hub. Show activities that actually work, not a wall
+ * of placeholder modules. The parent report is available on demand so it
+ * doesn't push the first playable lesson below the fold.
  */
 @Composable
 fun LearnTabScreen(
@@ -52,249 +49,118 @@ fun LearnTabScreen(
     onNavigateToGames: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scrollState = rememberScrollState()
-
-    val topics = listOf(
-        LearnTopicPreview(
-            title = "Doğal Sayılar & Ritmik Sayma",
-            description = "Sayı basamakları, ileri-geri ritmik sayma ve sayı örüntülerini görselleştir.",
-            subtopics = listOf("100'e kadar ritmik sayma", "Basamak ve sayı değeri", "Sayı doğruları")
-        ),
-        LearnTopicPreview(
-            title = "Dört İşlem Stratejileri",
-            description = "Elden toplama, onluk bozarak çıkarma ve zihinden işlem ipuçları.",
-            subtopics = listOf("Toplama kolaylıkları", "Çıkarma püf noktaları", "Tahmin ve kontrol")
-        ),
-        LearnTopicPreview(
-            title = "Çarpım Tablosu Dünyası",
-            description = "Çarpma işlemini ezberlemek yerine görsel modeller ve mantıkla kavra.",
-            subtopics = listOf("Grup ve dizi modelleri", "9'lar parmak kuralı", "Çarpma hafıza kartları")
-        ),
-        LearnTopicPreview(
-            title = "Kesirler ve Görsel Parçalar",
-            description = "Bütün, yarım, çeyrek ve birim kesir kavramlarını pizza ve şekillerle öğren.",
-            subtopics = listOf("Eşit parçalara bölme", "Basit kesir modelleri", "Sayı doğrusunda kesirler")
-        ),
-        LearnTopicPreview(
-            title = "Geometri ve Uzamsal Düşünme",
-            description = "2D ve 3D geometrik cisimler, köşe, yüzey ve simetri kavramları.",
-            subtopics = listOf("Kare, dikdörtgen, üçgen", "Küp ve prizmalar", "Simetri çizgileri")
-        )
-    )
+    val lessons = LearningPathCatalog.forGrade(userClass)
+    val gradeNumber = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
+    val reviewOnly = gradeNumber >= 5
+    var reportExpanded by rememberSaveable { mutableStateOf(false) }
+    val shape = RoundedCornerShape(20.dp)
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Üst Başlık
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 12.dp)
+        Column(
+            modifier = Modifier.fillMaxWidth().background(
+                Color(0xFF174D69), shape
+            ).border(1.dp, Color(0xFF568DA7), shape).padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Filled.AutoStories,
-                contentDescription = null,
-                tint = HomeColors.StarAmber,
-                modifier = Modifier.size(28.dp)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.AutoStories, contentDescription = null,
+                    tint = HomeColors.StarAmber, modifier = Modifier.size(24.dp))
+                Spacer(Modifier.width(9.dp))
+                Text("Öğrenme Yolculuğum", color = Color.White,
+                    fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
+            }
+            Text(
+                (userClass.ifBlank { "1. Sınıf" }) + " · " +
+                    (if (reviewOnly) "Temel tekrar" else "Sınıfına uygun ilk dersler"),
+                color = HomeColors.StarGold, fontWeight = FontWeight.Bold, fontSize = 13.sp
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column {
+            Text(
+                "Önce kısa bir konuyu öğren, dört soruyla dene, sonra macerada uygula.",
+                color = Color(0xFFD5ECF2), fontSize = 13.sp, lineHeight = 19.sp
+            )
+            Text(
+                "${lessons.size} oynanabilir kısa ders · İlerlemen cihazında saklanır",
+                color = Color(0xFF9DEBDD), fontSize = 12.sp
+            )
+            if (reviewOnly) {
                 Text(
-                    text = "Öğrenme Portalı",
-                    color = HomeColors.TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    text = "Kısa dersler, gerçek alıştırmalar ve kazanım takibi",
-                    color = HomeColors.TextSecondary,
-                    fontSize = 13.sp
+                    "Bu sınıflarda henüz tam müfredat bulunmuyor; gösterilen içerik temel tekrar içindir.",
+                    color = Color(0xFFFFD89A), fontSize = 11.sp, lineHeight = 16.sp
                 )
             }
         }
 
-        // S3.2: visible at the top, not buried under lesson preview cards.
-        AdventureLearningReport(userClass = userClass, refreshKey = 0)
-        Spacer(modifier = Modifier.height(16.dp))
+        // Most useful action first: actual grade-aware playable practice.
         LearningPracticeSection(userClass = userClass)
-        Spacer(modifier = Modifier.height(20.dp))
 
-        // Gelecek dersler; içerik henüz kullanıma açılmadı.
-        // Bilgilendirme Bannerı
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(Color(0xFF1E3550))
-                .border(1.dp, HomeColors.StarAmber.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
-                .padding(14.dp)
+        // Parents can open deeper learning evidence without burying lessons.
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .background(HomeColors.CardSurface, RoundedCornerShape(17.dp))
+                .border(1.dp, HomeColors.CardBorderSubtle, RoundedCornerShape(17.dp))
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth()
+                    .clickable { reportExpanded = !reportExpanded }
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    imageVector = Icons.Filled.Construction,
-                    contentDescription = null,
-                    tint = HomeColors.StarAmber,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Yeni Dersler Hazırlanıyor",
-                        color = HomeColors.StarGold,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Yukarıdaki iki kısa ders kullanılabilir. Aşağıdaki geniş konu başlıkları henüz açılmadı.",
-                        color = HomeColors.TextSecondary,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.BarChart, contentDescription = null,
+                        tint = HomeColors.MagicCyan, modifier = Modifier.size(22.dp))
+                    Spacer(Modifier.width(10.dp))
+                    Column {
+                        Text("Gelişim Raporlarım", color = HomeColors.TextPrimary,
+                            fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Gerçek oyun denemeleri ve tekrar önerileri",
+                            color = HomeColors.TextSecondary, fontSize = 11.sp)
+                    }
                 }
+                Icon(Icons.Filled.ChevronRight,
+                    contentDescription = if (reportExpanded) "Raporu kapat" else "Raporu aç",
+                    tint = HomeColors.MagicCyan)
+            }
+            if (reportExpanded) {
+                AdventureLearningReport(userClass = userClass, refreshKey = 0)
+                Spacer(Modifier.height(8.dp))
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .background(Color(0xFF123B58), RoundedCornerShape(17.dp))
+                .border(1.dp, HomeColors.MagicCyan.copy(alpha = 0.35f),
+                    RoundedCornerShape(17.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
+        ) {
+            Text("Öğrendiğini Oyunda Kullan", color = Color.White,
+                fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text("Derslerin ardından matematik maceralarıyla farklı sorular çöz.",
+                color = HomeColors.TextSecondary, fontSize = 12.sp)
+            Button(
+                onClick = onNavigateToGames, modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = HomeColors.MagicCyan)
+            ) {
+                Icon(Icons.Filled.PlayArrow, contentDescription = null,
+                    tint = Color(0xFF09283B))
+                Spacer(Modifier.width(6.dp))
+                Text("Oyunlara Geç", color = Color(0xFF09283B),
+                    fontWeight = FontWeight.Bold)
+            }
+        }
 
         Text(
-            text = "Gelecek İçerikler",
-            color = HomeColors.TextAccentCyan,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
+            "Yeni konular hazır oldukça buraya eklenecek. Henüz oynanamayan " +
+                "dersleri tamamlanmış içerik gibi göstermiyoruz.",
+            color = HomeColors.TextSecondary, fontSize = 11.sp, lineHeight = 16.sp
         )
-
-        // Konular Listesi
-        topics.forEach { topic ->
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 6.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(HomeColors.CardSurface)
-                    .border(1.dp, HomeColors.CardBorderSubtle, RoundedCornerShape(16.dp))
-                    .padding(14.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = topic.title,
-                            color = HomeColors.TextPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(Color(0xFF263345))
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                        ) {
-                            Text(
-                                text = "Çok Yakında",
-                                color = HomeColors.TextMuted,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = topic.description,
-                        color = HomeColors.TextSecondary,
-                        fontSize = 12.sp,
-                        lineHeight = 15.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Alt Konu Etiketleri
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        topic.subtopics.take(2).forEach { sub ->
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .background(Color(0xFF0F2642))
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text(
-                                    text = "• $sub",
-                                    color = HomeColors.TextAccentCyan,
-                                    fontSize = 10.sp
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Oyunlara Yönlendirme Kartı
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(HomeColors.CardSurface)
-                .border(1.dp, HomeColors.MagicCyan.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                .padding(16.dp)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Pratik Yapmaya Devam Et!",
-                    color = HomeColors.TextPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "Derslerden sonra mevcut oyunlarda pratik yapmaya devam edebilirsin.",
-                    color = HomeColors.TextSecondary,
-                    fontSize = 12.sp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = onNavigateToGames,
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = HomeColors.MagicCyan
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        tint = Color(0xFF071426),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Oyunlara Git",
-                        color = Color(0xFF071426),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
     }
 }
-

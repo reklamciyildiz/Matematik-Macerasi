@@ -56,4 +56,19 @@ class LearningReviewPolicyTest {
         assertTrue(LearningReviewPolicy.due(true, dueAt, dueAt))
         assertEquals(3L * 86_400_000L, dueAt - t)
     }
+    @Test fun oldCompletersReceiveOneNonDestructiveReviewSuggestion() {
+        val today = 1_900_000_000_000L
+        assertTrue(LearningReviewPolicy.dueIncludingLegacy(
+            completed = true, runs = 1, now = today, savedDueTime = 0L))
+        assertFalse(LearningReviewPolicy.dueIncludingLegacy(
+            completed = false, runs = 1, now = today, savedDueTime = 0L))
+        assertFalse(LearningReviewPolicy.dueIncludingLegacy(
+            completed = true, runs = 0, now = today, savedDueTime = 0L))
+        val next = LearningReviewPolicy.nextReviewAt(today, 3)
+        assertFalse(LearningReviewPolicy.dueIncludingLegacy(
+            completed = true, runs = 2, now = today + 1, savedDueTime = next))
+        assertTrue(LearningReviewPolicy.dueIncludingLegacy(
+            completed = true, runs = 2, now = next, savedDueTime = next))
+    }
+
 }

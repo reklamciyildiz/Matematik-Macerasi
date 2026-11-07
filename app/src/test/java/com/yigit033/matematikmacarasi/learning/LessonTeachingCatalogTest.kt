@@ -9,7 +9,7 @@ class LessonTeachingCatalogTest {
     @Test fun everyExistingPilotLessonHasSafeThreePartTeachingAndAConceptualCheck() {
         for (grade in 1..8) {
             for (lesson in LearningPathCatalog.forGrade("$grade. Sınıf")) {
-                val script = LessonTeachingCatalog.forSkill(lesson.skill)
+                val script = LessonTeachingCatalog.forLesson(lesson)
                 assertTrue(script.headline.isNotBlank())
                 assertTrue(script.explanationFor(grade).isNotBlank())
                 assertTrue(script.steps.size in 3..5)

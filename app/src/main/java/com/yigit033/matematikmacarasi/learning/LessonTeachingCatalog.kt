@@ -5,7 +5,7 @@ enum class TeachingVisual {
     GROUPS, EQUAL_GROUPS, NUMBER_STEPS,
     TAKE_AWAY, PLACE_VALUE, FRACTION_BAR, SHAPE, CLOCK,
     BAR_CHART, AREA_GRID, PERIMETER, DECIMAL, EQUATION, FACTORS, POWER_CHAIN,
-    SYMMETRY, RIGHT_TRIANGLE, VOLUME_STACK
+    SYMMETRY, RIGHT_TRIANGLE, VOLUME_STACK, ANGLE
 }
 
 data class LessonConceptCheck(
@@ -45,7 +45,7 @@ data class LessonTeachingScript(
             TeachingVisual.DECIMAL, TeachingVisual.EQUATION,
             TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN,
             TeachingVisual.SYMMETRY, TeachingVisual.RIGHT_TRIANGLE,
-            TeachingVisual.VOLUME_STACK ->
+            TeachingVisual.VOLUME_STACK, TeachingVisual.ANGLE ->
                 require(groups.size >= 2 && groups.all { it in 1..20 } && sequence.isEmpty())
         }
     }

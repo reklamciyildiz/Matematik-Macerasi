@@ -461,25 +461,25 @@ internal fun AdvancedLessonIllustration(
                 val pivot = Offset(size.width * .35f, size.height * .82f)
                 val arm = minOf(size.width * .43f, size.height * .65f)
                 val angle = degrees * PI / 180.0
-                drawLine(cyan, pivot,
+                drawLine(sea, pivot,
                     Offset(pivot.x + arm, pivot.y),
                     5.dp.toPx(), cap = StrokeCap.Round)
-                drawLine(gold, pivot,
+                drawLine(amber, pivot,
                     Offset(pivot.x + (cos(angle) * arm).toFloat(),
                         pivot.y - (sin(angle) * arm).toFloat()),
                     5.dp.toPx(), cap = StrokeCap.Round)
                 if (degrees == 90) {
                     val square = 18.dp.toPx()
-                    drawLine(light,
+                    drawLine(ink,
                         Offset(pivot.x + square, pivot.y),
                         Offset(pivot.x + square, pivot.y - square),
                         2.dp.toPx())
-                    drawLine(light,
+                    drawLine(ink,
                         Offset(pivot.x + square, pivot.y - square),
                         Offset(pivot.x, pivot.y - square),
                         2.dp.toPx())
                 }
-                drawCircle(light, 4.dp.toPx(), pivot)
+                drawCircle(ink, 4.dp.toPx(), pivot)
             }
             Text(degrees.toString() + "° · " +
                 if (degrees < 90) "Dar açı" else "Dik açı",

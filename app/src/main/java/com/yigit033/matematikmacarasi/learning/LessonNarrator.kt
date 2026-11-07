@@ -45,9 +45,13 @@ class LessonNarrator(context: Context) {
                             tts.voices?.filter {
                                 it.locale.language == "tr" &&
                                     !it.isNetworkConnectionRequired
-                            }?.minByOrNull {
-                                if (it.locale.country.equals("TR", ignoreCase = true)) 0 else 1
-                            }
+                            }?.maxWithOrNull(
+                                compareBy<android.speech.tts.Voice> {
+                                    if (it.locale.country.equals("TR", ignoreCase = true))
+                                        1 else 0
+                                }.thenBy { it.quality }
+                                    .thenBy { -it.latency }
+                            )
                         }.getOrNull()
                         if (offlineVoice != null) {
                             available = tts.setVoice(offlineVoice) == TextToSpeech.SUCCESS

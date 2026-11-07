@@ -388,11 +388,14 @@ private fun PracticeLesson(
                 "divisible_15" -> DivisionGameActivity::class.java
                 "g1_count20", "g2_place" -> SayiAvi2Activity::class.java
                 "g1_takeaway" -> SubtractionGameActivity::class.java
-                "g1_shapes", "g4_perimeter", "g5_area" ->
+                "g1_shapes", "g2_corners", "g3_rectangle",
+                "g4_perimeter", "g5_area", "g5_angles",
+                "g6_polygon", "g7_mirror" ->
                     GeometryCastleActivity::class.java
                 "g2_half", "g3_third", "g4_fraction", "g7_rational" ->
                     FractionCrystalsActivity::class.java
-                "g2_clock" -> TimeTowerActivity::class.java
+                "g2_clock", "g4_time_units" ->
+                    TimeTowerActivity::class.java
                 "g3_money" -> MarketSimulatorActivity::class.java
                 // No related deployed game for the remaining middle-school concepts:
                 // do not offer an unrelated game with misleading skill matching.

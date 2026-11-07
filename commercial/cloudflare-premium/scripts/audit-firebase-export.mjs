@@ -9,6 +9,7 @@
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { validPremiumCode } from "../src/code-format.mjs";
 
 const filepath = process.argv[2] || "private/firebase-backup.json";
 let document;
@@ -56,7 +57,7 @@ console.log("Kodlar (gercek kodlar gizlenir):");
 
 for (const [index, [code, row]] of codeEntries.entries()) {
   const problems = [];
-  if (!/^[A-Za-z0-9_-]{6,128}$/.test(code) || !isObject(row)) {
+  if (!validPremiumCode(code) || !isObject(row)) {
     problems.push("GECERSIZ_KOD_VEYA_KAYIT");
     blockers++;
     console.log("Kod #" + (index+1) + ": " + problems.join(", "));

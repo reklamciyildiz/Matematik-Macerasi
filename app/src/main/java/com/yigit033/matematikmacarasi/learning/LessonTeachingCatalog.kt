@@ -4,7 +4,7 @@ package com.yigit033.matematikmacarasi.learning
 enum class TeachingVisual {
     GROUPS, EQUAL_GROUPS, NUMBER_STEPS,
     TAKE_AWAY, PLACE_VALUE, FRACTION_BAR, SHAPE, CLOCK,
-    BAR_CHART, AREA_GRID, EQUATION, FACTORS, POWER_CHAIN
+    BAR_CHART, AREA_GRID, PERIMETER, DECIMAL, EQUATION, FACTORS, POWER_CHAIN
 }
 
 data class LessonConceptCheck(
@@ -40,7 +40,8 @@ data class LessonTeachingScript(
             TeachingVisual.TAKE_AWAY, TeachingVisual.PLACE_VALUE,
             TeachingVisual.FRACTION_BAR, TeachingVisual.SHAPE,
             TeachingVisual.CLOCK, TeachingVisual.BAR_CHART,
-            TeachingVisual.AREA_GRID, TeachingVisual.EQUATION,
+            TeachingVisual.AREA_GRID, TeachingVisual.PERIMETER,
+            TeachingVisual.DECIMAL, TeachingVisual.EQUATION,
             TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN ->
                 require(groups.size >= 2 && groups.all { it in 1..20 } && sequence.isEmpty())
         }

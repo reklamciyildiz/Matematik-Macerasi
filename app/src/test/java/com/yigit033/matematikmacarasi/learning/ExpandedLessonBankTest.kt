@@ -62,10 +62,12 @@ class ExpandedLessonBankTest {
         assertEquals("−6 + 9 = 3", scripts["g6_signed"]!!.diagramCaption)
     }
 
-    @Test fun oldPilotLessonsRemainTheFirstEntryForEachGrade() {
-        assertEquals("count_2", LearningPathCatalog.forGrade("1. Sınıf").first().id)
-        assertEquals("count_3", LearningPathCatalog.forGrade("2. Sınıf").first().id)
-        assertEquals("multiply", LearningPathCatalog.forGrade("3. Sınıf").first().id)
-        assertEquals("divisible_15", LearningPathCatalog.forGrade("8. Sınıf").first().id)
+    @Test fun oldPilotLessonsRemainAccessibleAfterGradeFirstReordering() {
+        assertEquals("g1_count20", LearningPathCatalog.forGrade("1. Sınıf").first().id)
+        assertEquals("g2_place", LearningPathCatalog.forGrade("2. Sınıf").first().id)
+        assertEquals("g8_gcd", LearningPathCatalog.forGrade("8. Sınıf").first().id)
+        assertTrue(LearningPathCatalog.forGrade("1. Sınıf").any { it.id == "count_2" })
+        assertTrue(LearningPathCatalog.forGrade("2. Sınıf").any { it.id == "count_3" })
+        assertTrue(LearningPathCatalog.forGrade("8. Sınıf").any { it.id == "divisible_15" })
     }
 }

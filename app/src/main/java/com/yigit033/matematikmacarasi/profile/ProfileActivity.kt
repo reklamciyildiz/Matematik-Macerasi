@@ -565,31 +565,60 @@ fun ProfileScreen(
                                 fontWeight = FontWeight.ExtraBold)
                             Text("Kaşifini ve oyun deneyimini buradan düzenle.",
                                 fontSize = 12.sp,color = Color(0xFFBDD9EC))
-                            OutlinedButton(
-                                onClick = onAvatarStoreClick,
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                border = BorderStroke(1.dp,Color(0xFF69C8DC)),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color.White,
-                                    backgroundColor = Color(0xFF1C6083))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
-                                Icon(Icons.Default.Face,"Avatar",tint = Color.White)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Avatarımı Değiştir",color = Color.White)
-                            }
-                            OutlinedButton(
-                                onClick = onAppIconClick,
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                                border = BorderStroke(1.dp,Color(0xFF69C8DC)),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color.White,
-                                    backgroundColor = Color(0xFF1C6083))
-                            ) {
-                                Icon(Icons.Default.Palette,"Uygulama ikonu",tint = Color.White)
-                                Spacer(Modifier.width(8.dp))
-                                Text("Uygulama İkonunu Değiştir",color = Color.White)
+                                OutlinedButton(
+                                    onClick = onAvatarStoreClick,
+                                    modifier = Modifier.weight(1f).heightIn(min = 108.dp),
+                                    border = BorderStroke(1.dp, Color(0xFF69C8DC)),
+                                    shape = RoundedCornerShape(16.dp),
+                                    contentPadding = PaddingValues(horizontal = 7.dp, vertical = 12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color.White,
+                                        backgroundColor = Color(0xFF1B5978))
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        Icon(Icons.Default.Face, contentDescription = null,
+                                            tint = Color(0xFFFFD47B),
+                                            modifier = Modifier.size(26.dp))
+                                        Text("Avatar Galerisi", color = Color.White,
+                                            fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center, maxLines = 2)
+                                        Text("Karakterini seç",
+                                            color = Color(0xFFBDDCE9), fontSize = 10.sp,
+                                            textAlign = TextAlign.Center)
+                                    }
+                                }
+                                OutlinedButton(
+                                    onClick = onAppIconClick,
+                                    modifier = Modifier.weight(1f).heightIn(min = 108.dp),
+                                    border = BorderStroke(1.dp, Color(0xFF69C8DC)),
+                                    shape = RoundedCornerShape(16.dp),
+                                    contentPadding = PaddingValues(horizontal = 7.dp, vertical = 12.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = Color.White,
+                                        backgroundColor = Color(0xFF1B5978))
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        Icon(Icons.Default.Palette, contentDescription = null,
+                                            tint = Color(0xFFFFD47B),
+                                            modifier = Modifier.size(26.dp))
+                                        Text("İkon Stüdyosu", color = Color.White,
+                                            fontSize = 13.sp, fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center, maxLines = 2)
+                                        Text("Uygulamanı süsle",
+                                            color = Color(0xFFBDDCE9), fontSize = 10.sp,
+                                            textAlign = TextAlign.Center)
+                                    }
+                                }
                             }
                             Button(
                                 onClick = onSettingsClick,

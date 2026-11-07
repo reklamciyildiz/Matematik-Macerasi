@@ -347,17 +347,17 @@ private fun PracticeLesson(
  */
 @Composable
 private fun LessonVisualExample(lesson: Lesson, childText: Boolean) {
+    val isMultiply = lesson.skill == Skill.MULTIPLY ||
+        lesson.skill == Skill.MULTIPLY_INTRO
     val primary = when (lesson.skill) {
         Skill.ADD_10 -> 3
         Skill.ADD_20 -> 8
-        Skill.MULTIPLY, Skill.MULTIPLY_INTRO -> 3
         Skill.COUNT_2, Skill.COUNT_3, Skill.COUNT_4 -> 4
-        Skill.DIVISIBLE_15 -> 5
+        else -> 0
     }
     val secondary = when (lesson.skill) {
         Skill.ADD_10 -> 2
         Skill.ADD_20 -> 5
-        Skill.MULTIPLY, Skill.MULTIPLY_INTRO -> 4
         else -> 0
     }
     Column(
@@ -367,7 +367,23 @@ private fun LessonVisualExample(lesson: Lesson, childText: Boolean) {
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(11.dp)
     ) {
-        if (childText || secondary > 0) {
+        if (isMultiply) {
+            // 3 groups of 4 is 3 × 4, never a misleading 3 + 4 diagram.
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                repeat(3) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        repeat(4) {
+                            Box(Modifier.size(if (childText) 19.dp else 15.dp)
+                                .background(Color(0xFF76DDD6), CircleShape))
+                        }
+                    }
+                }
+            }
+        } else if (childText || secondary > 0) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,

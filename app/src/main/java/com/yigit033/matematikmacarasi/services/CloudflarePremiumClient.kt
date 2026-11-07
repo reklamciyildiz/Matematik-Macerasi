@@ -42,7 +42,8 @@ internal class CloudflarePremiumClient(private val context: Context) {
     }
 
     suspend fun activate(code: String): Result = withContext(Dispatchers.IO) {
-        if (code.length !in 6..128 || !code.matches(Regex("[A-Za-z0-9_-]+")))
+        if (code.length !in 6..128 || code.trim() != code ||
+            !code.matches(Regex("""[\p{L}\p{N}\p{M}\p{P}\p{S} ]+""")))
             return@withContext Result.Failure(Error.INVALID_CODE)
         val old = prefs.getString("signed_license", null)
         if (old != null && verify(old) != null)

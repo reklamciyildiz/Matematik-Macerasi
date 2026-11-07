@@ -1,7 +1,11 @@
 package com.yigit033.matematikmacarasi.learning
 
 /** Ö3 teaching scripts, not separate games. Authored for all playable pilot skills. */
-enum class TeachingVisual { GROUPS, EQUAL_GROUPS, NUMBER_STEPS }
+enum class TeachingVisual {
+    GROUPS, EQUAL_GROUPS, NUMBER_STEPS,
+    TAKE_AWAY, PLACE_VALUE, FRACTION_BAR, SHAPE, CLOCK,
+    BAR_CHART, AREA_GRID, EQUATION, FACTORS, POWER_CHAIN
+}
 
 data class LessonConceptCheck(
     val prompt: String,
@@ -32,7 +36,12 @@ data class LessonTeachingScript(
         require(earlyExplanation.isNotBlank() && laterExplanation.isNotBlank())
         when (visual) {
             TeachingVisual.NUMBER_STEPS -> require(sequence.size >= 4 && groups.isEmpty())
-            TeachingVisual.GROUPS, TeachingVisual.EQUAL_GROUPS ->
+            TeachingVisual.GROUPS, TeachingVisual.EQUAL_GROUPS,
+            TeachingVisual.TAKE_AWAY, TeachingVisual.PLACE_VALUE,
+            TeachingVisual.FRACTION_BAR, TeachingVisual.SHAPE,
+            TeachingVisual.CLOCK, TeachingVisual.BAR_CHART,
+            TeachingVisual.AREA_GRID, TeachingVisual.EQUATION,
+            TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN ->
                 require(groups.size >= 2 && groups.all { it in 1..20 } && sequence.isEmpty())
         }
     }
@@ -43,6 +52,11 @@ data class LessonTeachingScript(
 }
 
 object LessonTeachingCatalog {
+    fun forLesson(lesson: Lesson): LessonTeachingScript =
+        if (lesson.skill == Skill.EXTENDED)
+            ExpandedLessonTeachingCatalog.forLesson(lesson)
+        else forSkill(lesson.skill)
+
     fun forSkill(skill: Skill): LessonTeachingScript {
         fun check(prompt: String, right: String, wrong: String, explanation: String,
                   hint: String = "Gösterimdeki adımlara tekrar bak."): LessonConceptCheck =
@@ -129,6 +143,7 @@ object LessonTeachingCatalog {
                     "15'in katlarını sayı şeridinde gör."
                 )
             )
+            Skill.EXTENDED -> error("Use forLesson() for grade-specific expanded units")
         }
     }
 

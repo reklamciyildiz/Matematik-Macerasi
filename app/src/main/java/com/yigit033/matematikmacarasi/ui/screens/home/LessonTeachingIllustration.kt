@@ -143,7 +143,7 @@ internal fun LessonTeachingIllustration(
                                     .padding(horizontal = 8.dp, vertical = 9.dp),
                                 verticalArrangement = Arrangement.spacedBy(5.dp)
                             ) {
-                                itemCount.chunked(5).forEach { row ->
+                                (0 until itemCount).chunked(5).forEach { row ->
                                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                         row.forEach {
                                             if (early) {

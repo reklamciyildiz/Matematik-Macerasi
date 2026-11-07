@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.learning.PracticeVisualKind
+import com.yigit033.matematikmacarasi.learning.CounterArrangement
 import com.yigit033.matematikmacarasi.learning.PracticeVisualModel
 import kotlin.math.PI
 import kotlin.math.cos
@@ -258,7 +259,7 @@ private fun GroupOfObjects(
     val width = if (compact) 13.dp else if (grade <= 2) 22.dp else 19.dp
     val perRow = if (compact) 5 else 4
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        (0 until count).chunked(perRow).forEach { row ->
+        CounterArrangement.rows(count, perRow).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 row.forEach { idx ->
                     Box(Modifier.size(width),contentAlignment=Alignment.Center) {
@@ -271,10 +272,10 @@ private fun GroupOfObjects(
                         } else {
                             Box(Modifier.size(width)
                                 .background(
-                                    if (idx < removed) Color(0xFFB0ADB0) else cyan,
+                                    if (CounterArrangement.isRemoved(idx, count, removed)) Color(0xFFB0ADB0) else cyan,
                                     CircleShape))
                         }
-                        if (idx < removed) {
+                        if (CounterArrangement.isRemoved(idx, count, removed)) {
                             Canvas(Modifier.size(width)) {
                                 drawLine(Color(0xFFFFBC96),
                                     Offset(0f,size.height),

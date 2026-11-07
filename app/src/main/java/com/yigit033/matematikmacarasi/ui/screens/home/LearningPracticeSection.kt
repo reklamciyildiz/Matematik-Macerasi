@@ -28,6 +28,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -193,10 +196,19 @@ private fun PracticeLesson(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("← Konu Kitaplığına Dön", modifier = Modifier
-            .clickable { onBack() }.heightIn(min = 45.dp),
-            fontSize = 14.sp, color = HomeColors.MagicCyan,
-            fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .clickable(onClick = onBack)
+                .heightIn(min = 52.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Ders ekranından konu kitaplığına dön",
+                tint = HomeColors.MagicCyan)
+            Spacer(Modifier.width(9.dp))
+            Text("Konu Kitaplığına Dön", color = HomeColors.MagicCyan,
+                fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
         Text(lesson.title, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold,
             color = Color.White)
         Text(

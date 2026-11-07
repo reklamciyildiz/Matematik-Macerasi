@@ -32,13 +32,25 @@ object LearningPathCatalog {
         val div = Lesson("divisible_15", "Temel Tekrar: Bölünebilme",
             "3 ve 5'e kalansız bölünen sayılar, 15'in katlarıdır.",
             "15, 30, 45, 60", "15'er ilerleyerek ortak katları bul.", Skill.DIVISIBLE_15)
-        val existing = when {
-            grade <= 1 -> listOf(c2, a10)
-            grade == 2 -> listOf(c3, c4, a20, mulIntro)
-            grade in 3..4 -> listOf(mul, c3, c4)
-            else -> listOf(div, mul) // 5-8. sınıflar için açıkça temel tekrar
+        // Order teaches prerequisites first, not simply migration/creation time.
+        // IDs and previous completion state are unchanged.
+        val extended = ExpandedLessonCatalog.forGrade(grade)
+        fun e(id: String): Lesson = extended.first { it.id == id }
+        return when (grade) {
+            1 -> listOf(
+                e("g1_count20"), c2, a10, e("g1_takeaway"), e("g1_shapes")
+            )
+            2 -> listOf(
+                e("g2_place"), c3, c4, a20, mulIntro, e("g2_half"), e("g2_clock")
+            )
+            3 -> listOf(
+                mul, e("g3_third"), e("g3_money"), e("g3_chart"), c3, c4
+            )
+            4 -> listOf(
+                e("g4_fraction"), e("g4_perimeter"), e("g4_chart"), mul, c3, c4
+            )
+            else -> extended + listOf(div, mul) // Last two: foundational review
         }
-        return existing + ExpandedLessonCatalog.forGrade(grade)
     }
 
     /** Tek oturum boyunca aynı seed, aynı soru; yanlış seçenekler doğru cevap olamaz. */

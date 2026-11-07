@@ -62,6 +62,7 @@ import com.yigit033.matematikmacarasi.services.AudioService
 import com.yigit033.matematikmacarasi.learning.Skill
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import com.yigit033.matematikmacarasi.learning.PracticeVisualFactory
 import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
 import com.yigit033.matematikmacarasi.games.sayiavi2.ForestAdventureActivity
 import com.yigit033.matematikmacarasi.games.basic.AdditionGameActivity
@@ -210,6 +211,10 @@ private fun PracticeLesson(
     var finished by remember(lesson.id) { mutableStateOf(false) }
     val q = remember(lesson.id, seed, index) {
         LearningPathCatalog.question(lesson, seed, index)
+    }
+    val questionDiagram = remember(lesson.id, q.text) {
+        if (grade <= 4) PracticeVisualFactory.forQuestion(lesson.id, q.text)
+        else null
     }
     val checkChoices = remember(lesson.id, seed) {
         if (seed % 2L == 0L) script.check.choices else script.check.choices.reversed()
@@ -572,6 +577,11 @@ private fun PracticeLesson(
                 color = HomeColors.TextSecondary, fontSize = 13.sp)
             Text(q.text, fontWeight = FontWeight.ExtraBold, color = Color.White,
                 fontSize = if (earlyReader) 23.sp else 20.sp, lineHeight = 29.sp)
+            if (questionDiagram != null) {
+                PracticeQuestionIllustration(
+                    model = questionDiagram, grade = grade
+                )
+            }
             q.choices.chunked(2).forEach { choices ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),

@@ -24,6 +24,8 @@ class LessonNarrator(context: Context) {
     private val main = Handler(Looper.getMainLooper())
     private var speaker: TextToSpeech? = null
     private var closed = false
+    private var utteranceSerial = 0L
+    private var activeUtterance: String? = null
     var available by mutableStateOf(false)
         private set
     var loading by mutableStateOf(true)
@@ -62,7 +64,7 @@ class LessonNarrator(context: Context) {
                                     object : UtteranceProgressListener() {
                                         override fun onStart(utteranceId: String) {
                                             main.post {
-                                                if (!closed) {
+                                                if (!closed && utteranceId == activeUtterance) {
                                                     speaking = true
                                                     audio.onLessonNarrationChanged(true)
                                                 }
@@ -76,7 +78,8 @@ class LessonNarrator(context: Context) {
 
                                         private fun markStopped() {
                                             main.post {
-                                                if (!closed) {
+                                                if (!closed && utteranceId == activeUtterance) {
+                                                    activeUtterance = null
                                                     speaking = false
                                                     audio.onLessonNarrationChanged(false)
                                                 }
@@ -101,12 +104,18 @@ class LessonNarrator(context: Context) {
 
     fun say(text: String) {
         if (closed || !available || !audioAllowed || text.isBlank()) return
+        // QUEUE_FLUSH may invoke an older utterance's onStop AFTER
+        // the new one starts. Only callbacks for the current ID may
+        // change the audio state, or a lesson can advance mid-sentence.
+        val id = "mm-lesson-" + (++utteranceSerial)
+        activeUtterance = id
         audio.onLessonNarrationChanged(true)
         speaking = true
         val result = runCatching {
-            speaker?.speak(text.take(1200), TextToSpeech.QUEUE_FLUSH, null, "mm-lesson-narration")
+            speaker?.speak(text.take(1200), TextToSpeech.QUEUE_FLUSH, null, id)
         }.getOrNull()
-        if (result != TextToSpeech.SUCCESS) {
+        if (result != TextToSpeech.SUCCESS && activeUtterance == id) {
+            activeUtterance = null
             speaking = false
             audio.onLessonNarrationChanged(false)
         }
@@ -114,6 +123,7 @@ class LessonNarrator(context: Context) {
 
     fun stop() {
         if (closed) return
+        activeUtterance = null
         runCatching { speaker?.stop() }
         speaking = false
         audio.onLessonNarrationChanged(false)
@@ -122,6 +132,7 @@ class LessonNarrator(context: Context) {
     fun close() {
         if (closed) return
         closed = true
+        activeUtterance = null
         runCatching { speaker?.stop() }
         runCatching { speaker?.shutdown() }
         speaker = null

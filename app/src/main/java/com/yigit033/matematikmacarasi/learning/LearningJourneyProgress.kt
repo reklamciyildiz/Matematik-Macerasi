@@ -23,6 +23,18 @@ class LearningJourneyProgress(context: Context) {
     fun hints(id: String): Int = prefs.getInt("session_hints_$id", 0).coerceAtLeast(0)
     fun seed(id: String): Long = prefs.getLong("session_seed_$id", 0L)
 
+    /** Which illustrated example step was already read (0-based). */
+    fun workedStep(id: String): Int = prefs.getInt("worked_step_$id", 0).coerceIn(0, 5)
+    fun saveWorkedStep(id: String, step: Int) {
+        require(step in 0..5)
+        prefs.edit().putInt("worked_step_$id", step).apply()
+    }
+    fun conceptCheckPassed(id: String): Boolean =
+        prefs.getBoolean("concept_passed_$id", false)
+    fun markConceptCheckPassed(id: String) {
+        prefs.edit().putBoolean("concept_passed_$id", true).apply()
+    }
+
     fun open(id: String) {
         val editor = prefs.edit().putString("last_lesson_id", id)
         // A completed session remains in history but replay starts fresh.
@@ -31,6 +43,8 @@ class LearningJourneyProgress(context: Context) {
                 .putInt("index_$id", 0)
                 .putInt("session_wrong_$id", 0)
                 .putInt("session_hints_$id", 0)
+                .putInt("worked_step_$id", 0)
+                .putBoolean("concept_passed_$id", false)
                 .putLong("session_seed_$id", System.nanoTime().coerceAtLeast(1L))
         } else if (seed(id) == 0L) {
             editor.putLong("session_seed_$id", System.nanoTime().coerceAtLeast(1L))

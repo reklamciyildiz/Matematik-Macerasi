@@ -525,47 +525,100 @@ fun LearnTabScreen(
 }
 
 @Composable
-private fun CurriculumTopicCard(topic: CurriculumTopic, done: Int, count: Int,
-                                onClick: () -> Unit) {
-    val active = topic.playable
+private fun CurriculumTopicCard(
+    topic: CurriculumTopic,
+    done: Int,
+    count: Int,
+    onClick: () -> Unit
+) {
+    val accent = when (topic.area) {
+        TopicArea.NUMBERS -> Color(0xFF90DDF2)
+        TopicArea.OPERATIONS -> Color(0xFFFFD18A)
+        TopicArea.GEOMETRY -> Color(0xFFB9B0FA)
+        TopicArea.DATA -> Color(0xFF8EE1BE)
+        TopicArea.ALGEBRA -> Color(0xFFFFBAA2)
+        TopicArea.REVIEW -> Color(0xFFD2C8A7)
+    }
+    val icon = when (topic.area) {
+        TopicArea.GEOMETRY -> Icons.Filled.School
+        TopicArea.DATA -> Icons.Filled.BarChart
+        TopicArea.REVIEW -> Icons.Filled.CheckCircle
+        else -> Icons.Filled.AutoStories
+    }
     Row(
         modifier = Modifier.fillMaxWidth()
-            .background(if (active) Color(0xFF194D68) else Color(0xFF153750),
-                RoundedCornerShape(16.dp))
-            .border(1.dp,
-                if (active) Color(0xFF4D9A9F) else Color(0xFF345E78),
-                RoundedCornerShape(16.dp))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(Color(0xFF215A70), Color(0xFF123951))
+                ), RoundedCornerShape(18.dp)
+            )
+            .border(
+                1.dp, accent.copy(alpha = 0.48f),
+                RoundedCornerShape(18.dp)
+            )
             .clickable(onClick = onClick)
-            .padding(13.dp),
+            .heightIn(min = 82.dp)
+            .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(11.dp)
     ) {
         Box(
-            modifier = Modifier.size(41.dp)
-                .background(if (active) Color(0xFF2E777E) else Color(0xFF28506A),
-                    RoundedCornerShape(13.dp)),
+            modifier = Modifier.size(43.dp)
+                .background(
+                    accent.copy(alpha = 0.18f),
+                    RoundedCornerShape(13.dp)
+                )
+                .border(
+                    1.dp, accent.copy(alpha = 0.45f),
+                    RoundedCornerShape(13.dp)
+                ),
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                if (active) Icons.Filled.AutoStories else Icons.Filled.School,
-                contentDescription = null,
-                tint = if (active) hubCyan else Color(0xFF97B6C7)
-            )
+            Icon(icon, contentDescription = null,
+                tint = accent, modifier = Modifier.size(23.dp))
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+        Column(
+            Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Text(topic.title, color = Color.White,
                 fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(topic.summary, color = hubText, fontSize = 11.sp, lineHeight = 15.sp)
             Text(
-                if (active) done.toString() + "/" + count.toString() + " kısa ders · " +
-                    (if (done == count) "Tamamlandı" else "Oynanabilir")
-                else "Konu planlandı · Ders henüz hazırlanıyor",
-                color = if (active) hubCyan else Color(0xFFC4CAD0),
-                fontSize = 10.sp
+                topic.summary, color = hubText,
+                fontSize = 11.sp, lineHeight = 15.sp
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                LinearProgressIndicator(
+                    progress = { if (count == 0) 0f
+                        else done.toFloat() / count.toFloat() },
+                    modifier = Modifier.weight(1f).height(6.dp),
+                    color = accent,
+                    trackColor = Color(0xFF315D76)
+                )
+                Text(
+                    done.toString() + "/" + count.toString(),
+                    color = accent, fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+            Text(
+                when {
+                    count == 0 -> "Ders henüz eklenmedi"
+                    done == count -> "Kısa dersler tamamlandı · Tekrar et"
+                    else -> "Konuya giriş dersleri hazır"
+                },
+                color = accent, fontSize = 11.sp
             )
         }
-        Icon(Icons.Filled.ChevronRight, contentDescription = "Konuyu incele",
-            tint = if (active) hubCyan else Color(0xFF9FB9C8))
+        Icon(
+            Icons.Filled.ChevronRight,
+            contentDescription = "Konuyu incele: " + topic.title,
+            tint = accent, modifier = Modifier.size(22.dp)
+        )
     }
 }
 

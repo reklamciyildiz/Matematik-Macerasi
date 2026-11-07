@@ -258,7 +258,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                     }
                 }
                 if(isPremium) {
-                    Text("✓ Mevcut üyeliğin korunuyor. Tekrar satın alma gerekmez.",
+                    Text("✓ Premium erişimin korunuyor. Tekrar satın alma gerekmez.",
                         color=SettingsPalette.mint,fontSize=12.sp)
                 } else {
                     SettingsAction("Premium Özellikleri Aç",prominent=true,
@@ -279,16 +279,20 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
         SettingsSection("Free ve Premium","Nelerin ücretsiz olduğunu açıkça gör") {
             Text("ÜCRETSİZ",color=SettingsPalette.mint,
                 fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-            FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 matematik kararı")
-            FeatureLine("Temel oyunlar ve öğrenme raporu")
-            FeatureLine("Standart avatar ve uygulama ikonu")
+            FeatureLine("Temel matematik oyunları ve mevcut kısa dersler")
+            FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
+            FeatureLine("Labirent: günde 5 oyun")
+            FeatureLine("İlk 6 avatar (bazıları yıldızla açılır) ve standart ikon")
+            FeatureLine("Temel öğrenme raporları")
             HorizontalDivider(color=SettingsPalette.border)
             Text("PREMIUM",color=SettingsPalette.gold,
                 fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-            FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 matematik kararı",true)
+            FeatureLine("Tüm ücretsiz içerikler ve Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
             FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
-            FeatureLine("Özel avatarlar ve alternatif uygulama ikonları",true)
-            FeatureLine("Labirentte sınırsız oyun ve mevcut günlük bonuslar",true)
+            FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
+            FeatureLine("Labirentte sınırsız oyun, ek profil istatistikleri ve günlük bonus",true)
+            Text("Premium tek seferlik Google Play satın alımıdır; abonelik değildir.",
+                color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
             Text("Çocuk güvenliği denetimi süresince reklamlar tüm oyuncular için kapalıdır.",
                 color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
         }

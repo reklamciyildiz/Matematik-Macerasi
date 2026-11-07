@@ -4,6 +4,7 @@
  * LICENSE_PUBLIC_KEY (SPKI PEM); binding: DB; rate limit bindings.
  * No raw codes, personal identifiers or activation tokens are logged.
  */
+import { validPremiumCode } from "./code-format.mjs";
 const DAY = 86_400;
 const RECHECK = 60 * DAY;
 const GRACE = 7 * DAY;
@@ -33,9 +34,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 const invalid = (status = 400) => json({ error: "CODE_UNAVAILABLE" }, status);
 const validDevice = s => typeof s === "string" &&
   s.length >= 8 && s.length <= 128 && /^[a-zA-Z0-9_.:-]+$/.test(s);
-const validCode = s => typeof s === "string" &&
-  s.length >= 6 && s.length <= 128 &&
-  /^[A-Za-z0-9_-]+$/.test(s);
+const validCode = validPremiumCode;
 
 async function digestTag(value) {
   return hex(await crypto.subtle.digest("SHA-256", encoder.encode(value)));

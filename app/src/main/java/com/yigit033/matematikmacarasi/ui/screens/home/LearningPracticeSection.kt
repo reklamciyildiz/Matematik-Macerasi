@@ -212,9 +212,10 @@ private fun PracticeLesson(
     val q = remember(lesson.id, seed, index) {
         LearningPathCatalog.question(lesson, seed, index)
     }
-    val questionDiagram = remember(lesson.id, q.text) {
-        if (grade <= 4) PracticeVisualFactory.forQuestion(lesson.id, q.text)
-        else null
+    // Upper grades still benefit from concise concept diagrams, not the
+    // full decorative early-reader treatment used in first grade.
+    val questionDiagram = remember(lesson.id, q.text, grade) {
+        PracticeVisualFactory.forQuestion(lesson.id, q.text)
     }
     val checkChoices = remember(lesson.id, seed) {
         if (seed % 2L == 0L) script.check.choices else script.check.choices.reversed()

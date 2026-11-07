@@ -608,247 +608,243 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Light contrast reading surfaces for profile editing
+                    // Personalization panel: compact, accessible and consistent
+                    // with the dark fantasy-ocean world. No white HTML-like forms.
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        elevation = 2.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        backgroundColor = Color.White
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 7.dp),
+                        elevation = 3.dp,
+                        shape = RoundedCornerShape(22.dp),
+                        backgroundColor = Color(0xFF153E5B),
+                        border = BorderStroke(1.dp, Color(0xFF467D99))
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
+                            modifier = Modifier.fillMaxWidth().padding(17.dp),
+                            verticalArrangement = Arrangement.spacedBy(11.dp)
                         ) {
-                            // Başlık
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = "Kişisel Bilgiler",
-                                    tint = Color(0xFF2196F3),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Kişisel Bilgiler",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1565C0)
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
+                                        .background(Color(0xFF255E79)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.Person, contentDescription = null,
+                                        tint = Color(0xFFFFD782), modifier = Modifier.size(23.dp))
+                                }
+                                Spacer(Modifier.width(11.dp))
+                                Column {
+                                    Text("Kaşif Bilgilerim", color = Color.White,
+                                        fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                                    Text("İsmini ve öğrenme seviyeni düzenle",
+                                        color = Color(0xFFB7D6E4), fontSize = 11.sp)
+                                }
                             }
-                            
-                            // İsim alanı
+
                             OutlinedTextField(
                                 value = userName,
-                                onValueChange = { 
+                                onValueChange = {
                                     userName = it
                                     onNameChange(it)
                                 },
-                                label = { 
-                                    Text(
-                                        "Ad - Soyad",
-                                        color = Color(0xFF2196F3),
-                                        fontSize = 14.sp
-                                    ) 
+                                label = {
+                                    Text("Kaşif adın (takma ad)", fontSize = 12.sp)
                                 },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
+                                placeholder = {
+                                    Text("Örn. Matematik Kaşifi",
+                                        color = Color(0xFF8DB5C7), fontSize = 13.sp)
+                                },
+                                singleLine = true,
                                 leadingIcon = {
-                                    Icon(
-                                        imageVector = Icons.Default.Person,
-                                        contentDescription = "İsim",
-                                        tint = Color(0xFF2196F3)
-                                    )
+                                    Icon(Icons.Default.Face, contentDescription = null,
+                                        tint = Color(0xFF84DDD7))
                                 },
+                                modifier = Modifier.fillMaxWidth(),
                                 colors = TextFieldDefaults.outlinedTextFieldColors(
-                                    focusedBorderColor = Color(0xFF2196F3),
-                                    unfocusedBorderColor = Color(0xFFBDBDBD),
-                                    backgroundColor = Color.White,
-                                    focusedLabelColor = Color(0xFF2196F3),
-                                    unfocusedLabelColor = Color(0xFF757575),
-                                    cursorColor = Color(0xFF2196F3)
+                                    textColor = Color.White,
+                                    focusedBorderColor = Color(0xFF72DCD6),
+                                    unfocusedBorderColor = Color(0xFF5584A0),
+                                    backgroundColor = Color(0xFF0E304A),
+                                    focusedLabelColor = Color(0xFFB6F1E6),
+                                    unfocusedLabelColor = Color(0xFFB5D6E5),
+                                    cursorColor = Color(0xFF72DCD6)
                                 ),
-                                shape = RoundedCornerShape(12.dp)
+                                shape = RoundedCornerShape(14.dp)
                             )
-                            
-                            // Sınıf seçici
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
-                            ) {
+
+                            Box(modifier = Modifier.fillMaxWidth()) {
                                 OutlinedTextField(
                                     value = selectedClass,
                                     onValueChange = { },
-                                    label = { 
-                                        Text(
-                                            "Sınıf",
-                                            color = Color(0xFF2196F3),
-                                            fontSize = 14.sp
-                                        ) 
-                                    },
+                                    label = { Text("Sınıf düzeyi", fontSize = 12.sp) },
                                     readOnly = true,
+                                    leadingIcon = {
+                                        Icon(Icons.Default.School, contentDescription = null,
+                                            tint = Color(0xFF84DDD7))
+                                    },
                                     trailingIcon = {
                                         Icon(
-                                            imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                            contentDescription = "Sınıf Seçimi",
-                                            modifier = Modifier.clickable { expanded = !expanded },
-                                            tint = Color(0xFF2196F3)
+                                            if (expanded) Icons.Default.KeyboardArrowUp
+                                            else Icons.Default.KeyboardArrowDown,
+                                            contentDescription = null,
+                                            tint = Color(0xFFB6E9F0)
                                         )
                                     },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = Icons.Default.School,
-                                            contentDescription = "Sınıf",
-                                            tint = Color(0xFF2196F3)
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { expanded = !expanded },
+                                    modifier = Modifier.fillMaxWidth(),
                                     colors = TextFieldDefaults.outlinedTextFieldColors(
-                                        focusedBorderColor = Color(0xFF2196F3),
-                                        unfocusedBorderColor = Color(0xFFBDBDBD),
-                                        backgroundColor = Color.White,
-                                        focusedLabelColor = Color(0xFF2196F3),
-                                        unfocusedLabelColor = Color(0xFF757575),
-                                        cursorColor = Color(0xFF2196F3)
+                                        textColor = Color.White,
+                                        focusedBorderColor = Color(0xFF72DCD6),
+                                        unfocusedBorderColor = Color(0xFF5584A0),
+                                        backgroundColor = Color(0xFF0E304A),
+                                        focusedLabelColor = Color(0xFFB6F1E6),
+                                        unfocusedLabelColor = Color(0xFFB5D6E5),
+                                        cursorColor = Color(0xFF72DCD6)
                                     ),
-                                    shape = RoundedCornerShape(12.dp)
+                                    shape = RoundedCornerShape(14.dp)
                                 )
-                                
+                                // Whole class selector is a reliable touch target,
+                                // not only the tiny chevron.
+                                Box(
+                                    Modifier.matchParentSize()
+                                        .clickable { expanded = true }
+                                )
                                 DropdownMenu(
                                     expanded = expanded,
                                     onDismissRequest = { expanded = false },
-                                    modifier = Modifier
-                                        .fillMaxWidth(0.9f)
-                                        .background(Color.White)
-                                        .border(
-                                            width = 1.dp,
-                                            color = Color(0xFFBDBDBD),
-                                            shape = RoundedCornerShape(8.dp)
-                                        )
+                                    modifier = Modifier.background(Color(0xFF173F5D))
+                                        .border(1.dp, Color(0xFF508EAA),
+                                            RoundedCornerShape(12.dp))
                                 ) {
                                     classOptions.forEach { option ->
-                                        DropdownMenuItem(
-                                            onClick = {
-                                                selectedClass = option
-                                                onClassChange(option)
-                                                expanded = false
-                                            }
-                                        ) {
+                                        DropdownMenuItem(onClick = {
+                                            selectedClass = option
+                                            onClassChange(option)
+                                            expanded = false
+                                        }) {
                                             Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(8.dp)
+                                                Modifier.fillMaxWidth()
+                                                    .clip(RoundedCornerShape(9.dp))
                                                     .background(
-                                                        if (option == selectedClass) Color(0xFFE3F2FD) else Color.White,
-                                                        RoundedCornerShape(4.dp)
+                                                        if (option == selectedClass)
+                                                            Color(0xFF2A6580)
+                                                        else Color.Transparent
                                                     )
+                                                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                                                verticalAlignment = Alignment.CenterVertically
                                             ) {
                                                 if (option == selectedClass) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.Check,
+                                                    Icon(Icons.Default.Check,
                                                         contentDescription = null,
-                                                        tint = Color(0xFF2196F3),
-                                                        modifier = Modifier.size(16.dp)
-                                                    )
-                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                        tint = Color(0xFFFFD782),
+                                                        modifier = Modifier.size(17.dp))
+                                                    Spacer(Modifier.width(7.dp))
                                                 }
-                                                
-                                                Text(
-                                                    text = option,
-                                                    color = if (option == selectedClass) Color(0xFF2196F3) else Color.Black
-                                                )
+                                                Text(option, color = Color.White,
+                                                    fontWeight = if (option == selectedClass)
+                                                        FontWeight.Bold else FontWeight.Normal)
                                             }
                                         }
                                     }
                                 }
                             }
+                            Text(
+                                "Sınıfı değiştirince öğrenme patikandaki dersler de buna göre güncellenir. Önceki oyun kayıtların silinmez.",
+                                color = Color(0xFFB6D5E2), fontSize = 11.sp,
+                                lineHeight = 16.sp
+                            )
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // İstatistikler Kartı - Tek kart ama premium durumuna göre içeriği değişiyor
+
+                    Spacer(modifier = Modifier.height(9.dp))
+
+                    // Compact two-column explorer statistics. The source and
+                    // premium-gating semantics remain unchanged.
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp),
-                        elevation = 2.dp,
-                        shape = RoundedCornerShape(16.dp),
-                        backgroundColor = Color.White
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 7.dp),
+                        elevation = 3.dp,
+                        shape = RoundedCornerShape(22.dp),
+                        backgroundColor = Color(0xFF153E5B),
+                        border = BorderStroke(1.dp, Color(0xFF467D99))
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp)
+                            modifier = Modifier.fillMaxWidth().padding(17.dp),
+                            verticalArrangement = Arrangement.spacedBy(11.dp)
                         ) {
-                            // Başlık
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
+                                        .background(Color(0xFF255E79)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.BarChart, contentDescription = null,
+                                        tint = Color(0xFFFFD782),
+                                        modifier = Modifier.size(23.dp))
+                                }
+                                Spacer(Modifier.width(11.dp))
+                                Column {
+                                    Text("Macera İstatistiklerim", color = Color.White,
+                                        fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
+                                    Text("Gerçek oyun kayıtlarına dayalı özet",
+                                        color = Color(0xFFB7D6E4), fontSize = 11.sp)
+                                }
+                            }
                             Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 16.dp)
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(9.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.BarChart,
-                                    contentDescription = "İstatistikler",
-                                    tint = Color(0xFF2196F3),
-                                    modifier = Modifier.size(24.dp)
+                                StatisticsItemModern(
+                                    iconRes = R.drawable.ic_star,
+                                    title = "Kazanılan Yıldız",
+                                    value = gameStatisticsService.getTotalEarnedStars().toString(),
+                                    color = Color(0xFFFFD47B),
+                                    isPremium = true,
+                                    modifier = Modifier.weight(1f)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "İstatistikler",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1565C0)
+                                StatisticsItemModern(
+                                    iconRes = R.drawable.ic_timer,
+                                    title = "Oyun Süresi",
+                                    value = formattedPlayTime,
+                                    color = Color(0xFF84D7F4),
+                                    isPremium = isPremium,
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
-                            
-                            // Toplam Yıldız her kullanıcı için görünür
-                            StatisticsItemModern(
-                                iconRes = R.drawable.ic_star,
-                                title = "Toplam Yıldız",
-                                value = gameStatisticsService.getTotalEarnedStars().toString(),
-                                color = Color(0xFFF9A825),
-                                isPremium = true // Yıldız sayısı her zaman görünür - premium kontrolü yok
-                            )
-                            
-                            // Diğer istatistikler premium kontrolüne tabi
-                            StatisticsItemModern(
-                                iconRes = R.drawable.ic_timer,
-                                title = "Oyun Süresi",
-                                value = formattedPlayTime,
-                                color = Color(0xFF42A5F5),
-                                isPremium = isPremium
-                            )
-                            
-                            StatisticsItemModern(
-                                iconRes = R.drawable.ic_gamepad,
-                                title = "Tamamlanan Oyun",
-                                value = completedGamesCount.toString(),
-                                color = Color(0xFF66BB6A),
-                                isPremium = isPremium
-                            )
-                            
-                            StatisticsItemModern(
-                                iconRes = R.drawable.ic_favorite,
-                                title = "Favori Oyun",
-                                value = favoriteGame,
-                                color = Color(0xFFEC407A),
-                                isPremium = isPremium
-                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(9.dp)
+                            ) {
+                                StatisticsItemModern(
+                                    iconRes = R.drawable.ic_gamepad,
+                                    title = "Biten Oyunlar",
+                                    value = completedGamesCount.toString(),
+                                    color = Color(0xFF8CE3BF),
+                                    isPremium = isPremium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                StatisticsItemModern(
+                                    iconRes = R.drawable.ic_favorite,
+                                    title = "Favori Oyun",
+                                    value = favoriteGame,
+                                    color = Color(0xFFFFB4C6),
+                                    isPremium = isPremium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (!isPremium) {
+                                Text(
+                                    "Oyun süresi, biten oyunlar ve favori oyun detayları Premium ile açılır.",
+                                    color = Color(0xFFFFD78A), fontSize = 11.sp,
+                                    lineHeight = 16.sp
+                                )
+                            } else {
+                                Text(
+                                    "Bir istatistiğe dokunarak oyunlarına göre ayrıntıyı incele.",
+                                    color = Color(0xFFB5D6E3), fontSize = 11.sp
+                                )
+                            }
                         }
                     }
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
+
+                    Spacer(modifier = Modifier.height(13.dp))
+
                     // Kaydet butonu
                     Button(
                         onClick = onSaveClick,
@@ -856,8 +852,8 @@ fun ProfileScreen(
                             .fillMaxWidth()
                             .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color(0xFF2196F3),
-                            contentColor = Color.White
+                            backgroundColor = Color(0xFFFFD47B),
+                            contentColor = Color(0xFF102D44)
                         ),
                         shape = RoundedCornerShape(28.dp),
                         elevation = ButtonDefaults.elevation(
@@ -872,7 +868,7 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "KAYDET",
+                            text = "DEĞİŞİKLİKLERİ KAYDET",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )

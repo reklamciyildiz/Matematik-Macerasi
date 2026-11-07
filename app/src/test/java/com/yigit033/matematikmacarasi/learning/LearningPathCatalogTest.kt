@@ -11,7 +11,7 @@ class LearningPathCatalogTest {
         assertTrue(LearningPathCatalog.forGrade("2. Sınıf").any { it.id == "count_4" })
         assertTrue(LearningPathCatalog.forGrade("2. Sınıf").any { it.id == "multiply_intro" })
         assertTrue(LearningPathCatalog.forGrade("3. Sınıf").any { it.id == "count_4" })
-        assertEquals("multiply", LearningPathCatalog.forGrade("3. Sınıf").first().id)
+        assertEquals("g3_three_digit", LearningPathCatalog.forGrade("3. Sınıf").first().id)
         assertEquals("g7_rational", LearningPathCatalog.forGrade("7. Sınıf").first().id)
     }
     @Test fun gradeTwoMultiplicationIntroUsesSmallEqualGroups() {

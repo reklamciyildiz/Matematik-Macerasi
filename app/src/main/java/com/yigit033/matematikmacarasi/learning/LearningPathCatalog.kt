@@ -3,7 +3,7 @@ package com.yigit033.matematikmacarasi.learning
 import kotlin.random.Random
 
 /** P2 pilot içerikleri: sınıfa ait bütün müfredatın karşılığı değildir. */
-enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY_INTRO, MULTIPLY, DIVISIBLE_15 }
+enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY_INTRO, MULTIPLY, DIVISIBLE_15, EXTENDED }
 data class Lesson(val id: String, val title: String, val teaching: String, val example: String,
     val hint: String, val skill: Skill)
 data class PracticeQuestion(val text: String, val choices: List<Int>, val answer: Int, val explanation: String) {
@@ -32,17 +32,21 @@ object LearningPathCatalog {
         val div = Lesson("divisible_15", "Temel Tekrar: Bölünebilme",
             "3 ve 5'e kalansız bölünen sayılar, 15'in katlarıdır.",
             "15, 30, 45, 60", "15'er ilerleyerek ortak katları bul.", Skill.DIVISIBLE_15)
-        return when {
+        val existing = when {
             grade <= 1 -> listOf(c2, a10)
             grade == 2 -> listOf(c3, c4, a20, mulIntro)
             grade in 3..4 -> listOf(mul, c3, c4)
             else -> listOf(div, mul) // 5-8. sınıflar için açıkça temel tekrar
         }
+        return existing + ExpandedLessonCatalog.forGrade(grade)
     }
 
     /** Tek oturum boyunca aynı seed, aynı soru; yanlış seçenekler doğru cevap olamaz. */
     fun question(lesson: Lesson, seed: Long, index: Int): PracticeQuestion {
         require(index in 0..3)
+        if (lesson.skill == Skill.EXTENDED) {
+            return ExpandedLessonQuestionBank.question(lesson, seed, index)
+        }
         val random = Random(seed + index * 7919L)
         val text: String
         val answer: Int
@@ -92,6 +96,7 @@ object LearningPathCatalog {
                 explanation = "$answer, 15'in katı olduğu için ikisine de tam bölünür."
                 wrong = listOf(answer + 1, answer + 3, answer + 5)
             }
+            Skill.EXTENDED -> error("Extended lessons have a separate question bank")
         }
         val values = (listOf(answer) + wrong).distinct().toMutableList()
         var filler = answer + 1

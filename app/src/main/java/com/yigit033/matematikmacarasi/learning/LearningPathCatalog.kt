@@ -3,7 +3,7 @@ package com.yigit033.matematikmacarasi.learning
 import kotlin.random.Random
 
 /** P2 pilot içerikleri: sınıfa ait bütün müfredatın karşılığı değildir. */
-enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY_INTRO, MULTIPLY, DIVISIBLE_15, EXTENDED }
+enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY_INTRO, MULTIPLY, DIVISIBLE_15, EXTENDED, TOPIC_STARTER }
 data class Lesson(val id: String, val title: String, val teaching: String, val example: String,
     val hint: String, val skill: Skill)
 data class PracticeQuestion(val text: String, val choices: List<Int>, val answer: Int, val explanation: String) {
@@ -32,25 +32,20 @@ object LearningPathCatalog {
         val div = Lesson("divisible_15", "Temel Tekrar: Bölünebilme",
             "3 ve 5'e kalansız bölünen sayılar, 15'in katlarıdır.",
             "15, 30, 45, 60", "15'er ilerleyerek ortak katları bul.", Skill.DIVISIBLE_15)
-        // Order teaches prerequisites first, not simply migration/creation time.
-        // IDs and previous completion state are unchanged.
-        val extended = ExpandedLessonCatalog.forGrade(grade)
-        fun e(id: String): Lesson = extended.first { it.id == id }
-        return when (grade) {
-            1 -> listOf(
-                e("g1_count20"), c2, a10, e("g1_takeaway"), e("g1_shapes")
-            )
-            2 -> listOf(
-                e("g2_place"), c3, c4, a20, mulIntro, e("g2_half"), e("g2_clock")
-            )
-            3 -> listOf(
-                mul, e("g3_third"), e("g3_money"), e("g3_chart"), c3, c4
-            )
-            4 -> listOf(
-                e("g4_fraction"), e("g4_perimeter"), e("g4_chart"), mul, c3, c4
-            )
-            else -> extended + listOf(div, mul) // Last two: foundational review
+        // Every open topic has a real starter lesson. Arrange by its
+        // instructional topic order, not the age of its implementation.
+        val legacy = listOf(c2,c3,c4,a10,a20,mulIntro,mul,div)
+        val available = (legacy + ExpandedLessonCatalog.forGrade(grade) +
+            TopicStarterCatalog.forGrade(grade)).associateBy { it.id }
+        val topics = if (grade <= 4) primaryTopics(grade) else secondaryTopics(grade)
+        val orderedIds = topics.flatMap { topic ->
+            val suffix = topic.id.removePrefix("g" + grade + "_")
+            topic.lessonIds +
+                ExpandedLessonCatalog.lessonIdsForTopic(grade, suffix) +
+                TopicStarterCatalog.lessonIdsForTopic(grade, suffix)
         }
+        require(orderedIds.isNotEmpty() && orderedIds.distinct().size == orderedIds.size)
+        return orderedIds.map { id -> requireNotNull(available[id]) }
     }
 
     /** Tek oturum boyunca aynı seed, aynı soru; yanlış seçenekler doğru cevap olamaz. */
@@ -58,6 +53,9 @@ object LearningPathCatalog {
         require(index in 0..3)
         if (lesson.skill == Skill.EXTENDED) {
             return ExpandedLessonQuestionBank.question(lesson, seed, index)
+        }
+        if (lesson.skill == Skill.TOPIC_STARTER) {
+            return TopicStarterQuestionBank.question(lesson, seed, index)
         }
         val random = Random(seed + index * 7919L)
         val text: String
@@ -108,7 +106,8 @@ object LearningPathCatalog {
                 explanation = "$answer, 15'in katı olduğu için ikisine de tam bölünür."
                 wrong = listOf(answer + 1, answer + 3, answer + 5)
             }
-            Skill.EXTENDED -> error("Extended lessons have a separate question bank")
+            Skill.EXTENDED, Skill.TOPIC_STARTER ->
+                error("Specialised lessons use their own question bank")
         }
         val values = (listOf(answer) + wrong).distinct().toMutableList()
         var filler = answer + 1

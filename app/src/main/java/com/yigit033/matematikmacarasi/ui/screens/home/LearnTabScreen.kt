@@ -27,6 +27,10 @@ import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -82,7 +86,8 @@ fun LearnTabScreen(
     var selectedTopicId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var selectedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var reportExpanded by rememberSaveable(userClass) { mutableStateOf(false) }
-    var showAllTopics by rememberSaveable(userClass) { mutableStateOf(false) }
+    var showRemainingOnly by rememberSaveable(userClass) { mutableStateOf(false) }
+    var topicQuery by rememberSaveable(userClass) { mutableStateOf("") }
     val homeScroll = rememberScrollState()
     var revision by remember { mutableIntStateOf(0) }
 
@@ -128,7 +133,16 @@ fun LearnTabScreen(
     val completed = lessons.count { progress.completed(it.id) }
     val reviewDueLessons = lessons.filter { progress.isReviewDue(it.id) }
         .sortedBy { progress.nextReviewAt(it.id) }
-    val listedTopics = if (showAllTopics) curriculum.topics else curriculum.topics.filter { it.playable }
+    val grade = curriculum.grade
+    val searchText = topicQuery.trim().lowercase(java.util.Locale.forLanguageTag("tr-TR"))
+    val listedTopics = curriculum.topics.filter { topic ->
+        val unfinished = topic.lessonIds.any { !progress.completed(it) }
+        val matches = searchText.isBlank() ||
+            (topic.title + " " + topic.summary + " " + topic.area.label + " " +
+                topic.outcomes.joinToString(" ")).lowercase(
+                java.util.Locale.forLanguageTag("tr-TR")).contains(searchText)
+        matches && (!showRemainingOnly || unfinished)
+    }
     val topicsByArea = listedTopics.groupBy { it.area }
     val ageLine = when (curriculum.band) {
         InstructionBand.VISUAL_AUDIO -> "Önce gör, sonra birlikte dene."
@@ -185,7 +199,7 @@ fun LearnTabScreen(
                 color = hubText, fontSize = 12.sp
             )
             Text(
-                "Konu listesi öğrenme hedeflerimizi gösterir; gri işaretli dersler henüz açılmadı.",
+                "Her konu için en az bir başlangıç dersi mevcut. Bunlar tüm müfredat kazanımlarının tamamı değildir.",
                 color = Color(0xFFBBD7E6), fontSize = 11.sp, lineHeight = 16.sp
             )
         }
@@ -320,36 +334,115 @@ fun LearnTabScreen(
             }
         }
 
-        Row(
+        Column(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    if (showAllTopics) "Konu Kitaplığım" else "Şimdi Öğrenebileceklerim",
-                    color = Color.White, fontSize = 19.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
-                Text(
-                    if (showAllTopics) "Planlanan ve hazır konular"
-                    else "Oynanabilir kısa dersler",
-                    color = hubText, fontSize = 11.sp
+            Text("Konu Kitaplığım",
+                color = Color.White, fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold)
+            Text(
+                "Sınıfına uygun başlangıç derslerini konu başlıklarına göre keşfet.",
+                color = hubText, fontSize = 12.sp, lineHeight = 17.sp
+            )
+            if (grade >= 3) {
+                OutlinedTextField(
+                    value = topicQuery,
+                    onValueChange = { topicQuery = it.take(80) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    placeholder = {
+                        Text("Konu, kavram veya kazanım ara",
+                            color = hubText, fontSize = 13.sp)
+                    },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Search, contentDescription = null,
+                            tint = hubCyan)
+                    },
+                    trailingIcon = {
+                        if (topicQuery.isNotBlank()) {
+                            Box(
+                                modifier = Modifier.size(48.dp)
+                                    .clickable { topicQuery = "" },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Filled.Close,
+                                    contentDescription = "Aramayı temizle",
+                                    tint = hubCyan)
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(15.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = hubCyan,
+                        unfocusedBorderColor = Color(0xFF5088A5),
+                        focusedContainerColor = hubOcean,
+                        unfocusedContainerColor = hubOcean
+                    )
                 )
             }
-            Box(
-                modifier = Modifier.background(Color(0xFF285D79), RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0xFF4D91AB), RoundedCornerShape(12.dp))
-                    .clickable { showAllTopics = !showAllTopics }
-                    .heightIn(min = 44.dp)
-                    .padding(horizontal = 11.dp),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(9.dp)
             ) {
+                listOf(false to "Tüm Konular", true to "Henüz Bitirmediklerim")
+                    .forEach { (remaining, label) ->
+                        Box(
+                            modifier = Modifier.weight(1f)
+                                .background(
+                                    if (showRemainingOnly == remaining)
+                                        Color(0xFF287586) else hubOcean,
+                                    RoundedCornerShape(13.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    if (showRemainingOnly == remaining)
+                                        hubCyan else Color(0xFF466D83),
+                                    RoundedCornerShape(13.dp)
+                                )
+                                .clickable { showRemainingOnly = remaining }
+                                .heightIn(min = 48.dp)
+                                .padding(horizontal = 8.dp, vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(label, color = Color.White,
+                                fontSize = if (grade <= 2) 12.sp else 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        }
+                    }
+            }
+            Text(
+                listedTopics.size.toString() + " konu gösteriliyor · " +
+                    lessons.size.toString() + " kullanılabilir kısa ders",
+                color = hubText, fontSize = 11.sp
+            )
+        }
+
+        if (listedTopics.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .background(hubOcean, RoundedCornerShape(17.dp))
+                    .padding(19.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text("Bu filtrede konu bulunamadı",
+                    color = Color.White, fontWeight = FontWeight.Bold)
                 Text(
-                    if (showAllTopics) "Hazır Dersler" else "Tüm Konular",
-                    color = hubCyan, fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold
+                    "Arama kelimesini değiştirebilir veya tüm konuları gösterebilirsin.",
+                    color = hubText, fontSize = 12.sp
                 )
+                Button(
+                    onClick = { topicQuery = ""; showRemainingOnly = false },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = hubCyan)
+                ) {
+                    Text("Tüm Konuları Göster", color = hubOcean,
+                        fontWeight = FontWeight.Bold)
+                }
             }
         }
 

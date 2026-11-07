@@ -43,6 +43,7 @@ import com.yigit033.matematikmacarasi.services.GameStatisticsService
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import android.util.Log
 import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
+import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
 import com.yigit033.matematikmacarasi.services.StarManager
 import android.app.Activity
 import android.widget.Toast
@@ -247,6 +248,15 @@ fun ProfileScreen(
     var userName by remember { mutableStateOf(name) }
     var selectedClass by remember { mutableStateOf(currentClass) }
     var expanded by remember { mutableStateOf(false) }
+
+    // Honest lesson progress is available to Free and Premium users alike.
+    val lessonProgressPrefs = remember(currentContext) {
+        currentContext.getSharedPreferences("p2_learning_pilot_v1", Context.MODE_PRIVATE)
+    }
+    val classLessons = remember(selectedClass) { LearningPathCatalog.forGrade(selectedClass) }
+    val finishedLessons = classLessons.count {
+        lessonProgressPrefs.getBoolean("done_${it.id}", false)
+    }
     
     // İstatistikleri al
     val totalScore = gameStatisticsService.getTotalScore()
@@ -493,6 +503,46 @@ fun ProfileScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Real grade-aware learning progress, not fabricated achievements.
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        elevation = 3.dp,
+                        shape = RoundedCornerShape(19.dp),
+                        backgroundColor = Color(0xFF174767),
+                        border = BorderStroke(1.dp, Color(0xFF508FA9))
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(17.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.AutoStories, contentDescription = null,
+                                    tint = Color(0xFFFFD47B), modifier = Modifier.size(24.dp))
+                                Spacer(Modifier.width(9.dp))
+                                Text("Öğrenme Yolculuğum", color = Color.White,
+                                    fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
+                            }
+                            Text(
+                                "${selectedClass} · ${finishedLessons} / ${classLessons.size} kısa ders tamamlandı",
+                                color = Color(0xFFD6EAF3), fontSize = 13.sp
+                            )
+                            LinearProgressIndicator(
+                                progress = if (classLessons.isEmpty()) 0f
+                                    else finishedLessons.toFloat() / classLessons.size,
+                                modifier = Modifier.fillMaxWidth().height(7.dp)
+                                    .clip(RoundedCornerShape(10.dp)),
+                                color = Color(0xFF74E4D5),
+                                backgroundColor = Color(0xFF315F78)
+                            )
+                            Text(
+                                if (selectedClass.substringBefore(".").trim().toIntOrNull()?.let { it >= 5 } == true)
+                                    "Şimdilik temel tekrar dersleri sunuluyor; tam sınıf müfredatı değildir."
+                                else "Kısa derslerini Öğren bölümünde sürdürebilirsin.",
+                                color = Color(0xFFB8D9E5), fontSize = 11.sp
+                            )
+                        }
+                    }
+
                     // Bu sayfalar zaten projede mevcut; profil üzerinden tek yerde bulunurlar.
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),

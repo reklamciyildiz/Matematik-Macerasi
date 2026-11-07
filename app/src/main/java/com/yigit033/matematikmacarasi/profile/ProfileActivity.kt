@@ -890,131 +890,76 @@ private fun StatisticsItemModern(
     title: String,
     value: String,
     color: Color,
-    isPremium: Boolean
+    isPremium: Boolean,
+    modifier: Modifier = Modifier
 ) {
-    // Popup görüntüleme durumu
     var showDetailPopup by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val gameStatisticsService = remember { com.yigit033.matematikmacarasi.services.GameStatisticsService(context) }
-    
+    val gameStatisticsService = remember(context) {
+        com.yigit033.matematikmacarasi.services.GameStatisticsService(context)
+    }
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .clickable(enabled = isPremium) {
-                if (isPremium) {
-                    showDetailPopup = true
-                } else {
-                    // Premium olmayan kullanıcılar için bir şey yapma
-                    // Zaten isPremium kontrolü ile tıklama engellenmiş olacak
-                }
-            },
-        elevation = 1.dp,
-        shape = RoundedCornerShape(8.dp),
-        backgroundColor = Color.White,
-        border = BorderStroke(
-            width = 1.dp,
-            color = Color(0xFFEEEEEE)
-        )
+        modifier = modifier.heightIn(min = 142.dp)
+            .clickable(enabled = isPremium) { showDetailPopup = true },
+        shape = RoundedCornerShape(17.dp),
+        backgroundColor = Color(0xFF0D2C46),
+        border = BorderStroke(1.dp,
+            if (isPremium) Color(0xFF427C99) else Color(0xFF355672)),
+        elevation = 2.dp
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            // Ana içerik
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                // İkon arka planı
                 Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(color.copy(alpha = 0.1f)),
+                    modifier = Modifier.size(38.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(color.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         painter = painterResource(id = iconRes),
-                        contentDescription = title,
+                        contentDescription = null,
                         tint = color,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
-                
-                Spacer(modifier = Modifier.width(16.dp))
-                
-                // Başlık ve değer
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = title,
-                        fontSize = 14.sp,
-                        color = Color(0xFF757575)
-                    )
-                    
-                    // Premium değilse gizli değer göster
-                    Text(
-                        text = if (isPremium) value else "●●●●",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF212121)
-                    )
-                }
-                
-                // Tıklanabilir olduğunu gösteren sağ ikon
-                if (isPremium) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowRight,
-                        contentDescription = "Detayları Göster",
-                        tint = color,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Icon(
+                    imageVector = if (isPremium) Icons.Default.KeyboardArrowRight
+                                  else Icons.Default.Lock,
+                    contentDescription = if (isPremium) "Ayrıntıları göster"
+                                         else "Premium gerekir",
+                    tint = if (isPremium) Color(0xFFAED8E9) else Color(0xFFFFD47B),
+                    modifier = Modifier.size(19.dp)
+                )
             }
-            
-            // Premium badge - sadece premium olmayan kullanıcılar için
-            if (!isPremium) {
-                // Premium kilit overlay'i
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(Color.White.copy(alpha = 0.6f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .background(
-                                color = Color(0xFFFFF59D),
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Premium",
-                            tint = Color(0xFF7B6608),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Premium Özellik",
-                            color = Color(0xFF7B6608),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                color = Color(0xFFB9D8E6),
+                fontWeight = FontWeight.Medium,
+                maxLines = 2
+            )
+            Text(
+                text = if (isPremium) value else "Premium ile açılır",
+                fontSize = if (isPremium) 17.sp else 11.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = if (isPremium) Color.White else Color(0xFFFFD47B),
+                maxLines = 2
+            )
         }
     }
-    
+
     // Her istatistik kartı için uygun detay popup'ını göster
     if (showDetailPopup && isPremium) {
         when (title) {
-            "Toplam Yıldız" -> {
+            "Toplam Yıldız", "Kazanılan Yıldız" -> {
                 val starsPerGame = gameStatisticsService.getStarsPerGameDetails()
                 StatisticsDetailPopup(
                     title = "Oyunlara Göre Yıldız Dağılımı",
@@ -1047,7 +992,7 @@ private fun StatisticsItemModern(
                 Log.d("ProfileActivity", "Süre dağılımı: $timePerGame")
             }
             
-            "Tamamlanan Oyun" -> {
+            "Tamamlanan Oyun", "Biten Oyunlar" -> {
                 val gamesCount = gameStatisticsService.getGamePlayCountDetails()
                 StatisticsDetailPopup(
                     title = "Tamamlanan Oyun Sayıları",

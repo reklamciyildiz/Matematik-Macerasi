@@ -6,13 +6,13 @@ import org.junit.Test
 
 class LearningPathCatalogTest {
     @Test fun lessonsAdaptToGradeWithoutPretendingToBeFullCurriculum() {
-        assertEquals("count_2", LearningPathCatalog.forGrade("1. Sınıf").first().id)
-        assertEquals("count_3", LearningPathCatalog.forGrade("2. Sınıf").first().id)
+        assertEquals("g1_count20", LearningPathCatalog.forGrade("1. Sınıf").first().id)
+        assertEquals("g2_place", LearningPathCatalog.forGrade("2. Sınıf").first().id)
         assertTrue(LearningPathCatalog.forGrade("2. Sınıf").any { it.id == "count_4" })
         assertTrue(LearningPathCatalog.forGrade("2. Sınıf").any { it.id == "multiply_intro" })
         assertTrue(LearningPathCatalog.forGrade("3. Sınıf").any { it.id == "count_4" })
         assertEquals("multiply", LearningPathCatalog.forGrade("3. Sınıf").first().id)
-        assertEquals("divisible_15", LearningPathCatalog.forGrade("7. Sınıf").first().id)
+        assertEquals("g7_rational", LearningPathCatalog.forGrade("7. Sınıf").first().id)
     }
     @Test fun gradeTwoMultiplicationIntroUsesSmallEqualGroups() {
         val intro = LearningPathCatalog.forGrade("2. Sınıf").first { it.id == "multiply_intro" }

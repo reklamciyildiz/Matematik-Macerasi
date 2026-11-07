@@ -17,6 +17,20 @@ android {
         versionCode 14
         versionName "1.2.1"
 
+        // Intentionally disabled until Cloudflare D1 is provisioned, legacy
+        // rights have been migrated, and real-device acceptance tests pass.
+        def cloudflareEnabled = (project.findProperty('MM_USE_CLOUDFLARE') ?: 'false').toString() == 'true'
+        def cloudflareUrl = (project.findProperty('MM_CLOUDFLARE_URL') ?: '').toString()
+        def cloudflarePublicKey = (project.findProperty('MM_CLOUDFLARE_PUBLIC_KEY_B64') ?: '').toString()
+        if (cloudflareEnabled && (!cloudflareUrl.matches('https://[A-Za-z0-9.-]+(/[A-Za-z0-9/_-]*)?') ||
+                !cloudflarePublicKey.matches('[A-Za-z0-9+/=]{200,}'))) {
+            throw new GradleException('Cloudflare mode requires a valid HTTPS URL and public RSA key.')
+        }
+        buildConfigField 'boolean', 'MM_USE_CLOUDFLARE', cloudflareEnabled.toString()
+        buildConfigField 'String', 'MM_CLOUDFLARE_URL', '"' + cloudflareUrl + '"'
+        buildConfigField 'String', 'MM_CLOUDFLARE_PUBLIC_KEY_B64', '"' + cloudflarePublicKey + '"'
+
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -52,6 +66,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.5.1'

@@ -111,14 +111,14 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
             Canvas(Modifier.fillMaxWidth().height(105.dp)) {
                 val baseline = size.height * .67f
                 val xzero = size.width * .42f
-                val step = size.width * .023f
-                val start = xzero - v[0] * step
-                val end = start + v[1] * step
+                val tickWidth = size.width * .023f
+                val start = xzero - v[0] * tickWidth
+                val end = start + v[1] * tickWidth
                 drawLine(pale,
                     Offset(size.width * .06f, baseline),
                     Offset(size.width * .94f, baseline), 2.dp.toPx())
                 for (n in -14..20 step 2) {
-                    val x = xzero + n * step
+                    val x = xzero + n * tickWidth
                     if (x in size.width * .05f..size.width * .95f) {
                         drawLine(pale.copy(alpha = .6f),
                             Offset(x, baseline - 5.dp.toPx()),

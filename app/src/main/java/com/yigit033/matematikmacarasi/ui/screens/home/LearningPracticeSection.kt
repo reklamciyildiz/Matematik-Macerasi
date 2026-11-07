@@ -30,6 +30,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,6 +56,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.learning.Lesson
+import com.yigit033.matematikmacarasi.learning.LessonTeachingCatalog
+import com.yigit033.matematikmacarasi.learning.LessonNarrator
 import com.yigit033.matematikmacarasi.learning.Skill
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
@@ -152,8 +160,15 @@ private fun PracticeLesson(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    // A saved phase and a saved seed/index make "continue learning" real.
-    // The existing completion key is preserved for history and profile cards.
+    val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
+    val earlyReader = grade <= 2
+    val script = remember(lesson.skill) { LessonTeachingCatalog.forSkill(lesson.skill) }
+    val narrator = remember(lesson.id) { LessonNarrator(context) }
+    DisposableEffect(narrator) {
+        onDispose { narrator.close() }
+    }
+
+    // Old lesson completion / question session keys remain fully compatible.
     var stage by remember(lesson.id) {
         progress.open(lesson.id)
         mutableIntStateOf(progress.stage(lesson.id).coerceIn(0, 2))
@@ -162,43 +177,70 @@ private fun PracticeLesson(
     var index by remember(lesson.id) { mutableIntStateOf(progress.questionIndex(lesson.id)) }
     var wrong by remember(lesson.id) { mutableIntStateOf(progress.wrong(lesson.id)) }
     var hints by remember(lesson.id) { mutableIntStateOf(progress.hints(lesson.id)) }
+    var workedStep by remember(lesson.id) {
+        mutableIntStateOf(progress.workedStep(lesson.id).coerceIn(0, script.steps.lastIndex))
+    }
+    var conceptSelected by remember(lesson.id) { mutableIntStateOf(-1) }
+    var conceptWrong by remember(lesson.id) { mutableIntStateOf(0) }
     var hinted by remember(lesson.id, index) { mutableStateOf(false) }
     var right by remember(lesson.id, index) { mutableStateOf(false) }
     var feedback by remember(lesson.id, index) { mutableStateOf("") }
     var finished by remember(lesson.id) { mutableStateOf(false) }
-    val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
-    val childText = grade <= 2
-    val q = remember(lesson.id, seed, index) { LearningPathCatalog.question(lesson, seed, index) }
+    val q = remember(lesson.id, seed, index) {
+        LearningPathCatalog.question(lesson, seed, index)
+    }
     val accuracy = 400 / (4 + wrong)
     val moveTo: (Int) -> Unit = { next ->
+        narrator.stop()
         stage = next
         progress.setStage(lesson.id, next)
     }
+    val speechText = when {
+        finished -> "Ders tamamlandı. Dört soruluk çalışmanı bitirdin."
+        stage == 0 -> script.headline + ". " + script.explanationFor(grade)
+        stage == 1 -> script.steps[workedStep]
+        else -> q.text
+    }
 
+    // Young readers get a narrated first pass; older students can request audio.
+    // No speech runs if Effects/Sound is disabled in the app settings.
+    LaunchedEffect(narrator.available, stage, workedStep, index, finished) {
+        if (earlyReader && narrator.available && narrator.audioAllowed &&
+            !finished && stage in 0..2) {
+            narrator.say(speechText)
+        }
+    }
+    // Correct responses advance automatically; bad attempts do not count as learning.
     LaunchedEffect(right, index, finished) {
         if (right && !finished) {
-            delay(1200)
+            delay(1250)
             if (index == 3) {
                 onFinish(wrong, hints)
                 finished = true
             } else {
-                index++
+                index += 1
                 progress.setQuestionIndex(lesson.id, index)
             }
         }
     }
 
     Column(
-        modifier = modifier.fillMaxWidth().verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .background(Color(0xFF153D5B), RoundedCornerShape(22.dp))
-            .border(1.dp, Color(0xFF4B9BAA), RoundedCornerShape(22.dp))
-            .padding(16.dp),
+        modifier = modifier.fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 15.dp, vertical = 12.dp)
+            .background(
+                androidx.compose.ui.graphics.Brush.verticalGradient(
+                    listOf(Color(0xFF174765), Color(0xFF0E2D48))
+                ),
+                RoundedCornerShape(23.dp)
+            )
+            .border(1.dp, Color(0xFF508FA6), RoundedCornerShape(23.dp))
+            .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
-                .clickable(onClick = onBack)
+                .clickable(onClick = { narrator.stop(); onBack() })
                 .heightIn(min = 52.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -209,38 +251,88 @@ private fun PracticeLesson(
             Text("Konu Kitaplığına Dön", color = HomeColors.MagicCyan,
                 fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
-        Text(lesson.title, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold,
-            color = Color.White)
-        Text(
-            when {
-                finished -> "KISA DERS TAMAMLANDI"
-                stage == 0 -> "1 / 3 · KONUYU ÖĞREN"
-                stage == 1 -> "2 / 3 · ÇÖZÜMLÜ ÖRNEK"
-                else -> "3 / 3 · SIRA SENDE"
-            },
-            color = Color(0xFFFFD887), fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Text(lesson.title, fontSize = if (earlyReader) 23.sp else 21.sp,
+            fontWeight = FontWeight.ExtraBold, color = Color.White)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                when {
+                    finished -> "DERS TAMAMLANDI"
+                    stage == 0 -> "1/3 · KONUYU ANLA"
+                    stage == 1 -> "2/3 · ÖRNEĞİ İNCELE"
+                    else -> "3/3 · KAVRAMA KONTROLÜ"
+                },
+                modifier = Modifier.weight(1f),
+                color = Color(0xFFFFD887), fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+            OutlinedButton(
+                onClick = {
+                    if (narrator.speaking) narrator.stop()
+                    else narrator.say(speechText)
+                },
+                enabled = narrator.available && narrator.audioAllowed,
+                modifier = Modifier.heightIn(min = 46.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 12.dp, vertical = 5.dp),
+                border = androidx.compose.foundation.BorderStroke(
+                    1.dp, Color(0xFF75B8CC)
+                ),
+                shape = RoundedCornerShape(15.dp)
+            ) {
+                Icon(
+                    when {
+                        narrator.speaking -> Icons.Filled.Stop
+                        narrator.available && narrator.audioAllowed -> Icons.Filled.VolumeUp
+                        else -> Icons.Filled.VolumeOff
+                    },
+                    contentDescription = if (narrator.speaking) "Seslendirmeyi durdur"
+                        else "Ders metnini sesli dinle",
+                    tint = HomeColors.MagicCyan, modifier = Modifier.size(19.dp)
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(if (narrator.speaking) "Durdur" else "Dinle",
+                    color = HomeColors.MagicCyan, fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold)
+            }
+        }
+        if (!narrator.loading && !narrator.available) {
+            Text(
+                "Türkçe çevrimdışı ses bu cihazda yüklü değil. Metni okuyabilirsin; seslendirme için cihazın metin okuma ayarlarından Türkçe çevrimdışı ses yükleyebilirsin.",
+                color = Color(0xFFC2D8E5), fontSize = 11.sp,
+                lineHeight = 15.sp
+            )
+        } else if (!narrator.audioAllowed) {
+            Text("Ses, uygulamanın Ses Efektleri ayarından kapalı.",
+                color = Color(0xFFC2D8E5), fontSize = 11.sp)
+        }
+
         LinearProgressIndicator(
             progress = { when {
                 finished -> 1f
-                stage == 0 -> 0.10f
-                stage == 1 -> 0.36f
-                else -> 0.65f + index / 4f * 0.35f
+                stage == 0 -> 0.12f
+                stage == 1 -> .32f + .25f *
+                    (workedStep + 1).toFloat() / script.steps.size.toFloat()
+                else -> .62f + .38f * index.toFloat() / 4f
             } },
             modifier = Modifier.fillMaxWidth(),
             color = HomeColors.MagicCyan, trackColor = Color(0xFF2E5271)
         )
 
         if (finished) {
-            Text("Ders tamamlandı", color = HomeColors.MagicCyan,
+            Text("Kısa ders tamamlandı", color = HomeColors.MagicCyan,
                 fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
             Text("4 soru · " + wrong + " yanlış deneme · " + hints + " ipucu",
                 color = Color.White, fontSize = 14.sp)
-            Text("Bu oturumdaki doğru hamle oranı: " + accuracy + "%",
+            Text("Bu çalışmadaki doğru hamle oranı: " + accuracy + "%",
                 color = Color.White, fontSize = 14.sp)
-            Text("Bu sonuç konunun tamamen öğrenildiğini kanıtlamaz.",
-                color = HomeColors.TextSecondary, fontSize = 12.sp)
+            Text(
+                "Bu sonuç tek başına konuyu tamamen öğrendiğin anlamına gelmez.",
+                color = HomeColors.TextSecondary, fontSize = 12.sp, lineHeight = 17.sp
+            )
             val target = when (lesson.id) {
                 "count_2", "count_3" -> SayiAvi2Activity::class.java
                 "count_4" -> ForestAdventureActivity::class.java
@@ -251,81 +343,199 @@ private fun PracticeLesson(
             }
             if (target != null) {
                 Button(
-                    onClick = { context.startActivity(Intent(context, target)) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 51.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E)),
-                    shape = RoundedCornerShape(13.dp)
+                    onClick = {
+                        narrator.stop()
+                        context.startActivity(Intent(context, target))
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E))
                 ) {
-                    Text("Öğrendiğini İlgili Oyunda Uygula", color = Color.White)
+                    Text("Öğrendiğini İlgili Oyunda Uygula",
+                        color = Color.White, fontWeight = FontWeight.Bold)
                 }
             } else {
                 Button(
-                    onClick = onNavigateToGames,
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 51.dp)
+                    onClick = { narrator.stop(); onNavigateToGames() },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
                 ) { Text("Matematik Oyunlarına Geç") }
             }
-            Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = onBack,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp)
+            ) {
                 Text("Konu Kitaplığına Dön")
             }
         } else if (stage == 0) {
-            Text(lesson.teaching, color = Color.White,
-                fontSize = if (childText) 18.sp else 15.sp,
-                lineHeight = if (childText) 27.sp else 22.sp)
-            LessonVisualExample(lesson, childText)
-            Text(
-                if (childText) "Sayıları ve grupları incele. Hazır olunca örneğe geç."
-                else "Anlatımı inceleyip örnek üzerinden mantığı birlikte kur.",
-                color = HomeColors.TextSecondary, fontSize = 13.sp
+            // Exposition: explain a single mathematical idea with visual evidence.
+            Text(script.explanationFor(grade), color = Color.White,
+                fontSize = if (earlyReader) 18.sp else if (grade <= 4) 16.sp else 15.sp,
+                lineHeight = if (earlyReader) 27.sp else 22.sp)
+            LessonTeachingIllustration(
+                script = script, grade = grade,
+                revealedStep = script.steps.lastIndex, showComplete = true
             )
-            Button(onClick = { moveTo(1) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                shape = RoundedCornerShape(13.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = HomeColors.MagicCyan)) {
-                Text("Adım Adım Örneğe Geç", color = Color(0xFF09283B),
-                    fontWeight = FontWeight.Bold)
+            Text(
+                if (earlyReader) "Resme bak, nesneleri say ve birlikte düşün."
+                else "Modelin her bölümünü gözlemle, işlemin nedenini düşün.",
+                color = HomeColors.TextSecondary,
+                fontSize = 13.sp, lineHeight = 19.sp
+            )
+            Button(
+                onClick = { moveTo(1) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 55.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = HomeColors.MagicCyan)
+            ) {
+                Text("Adım Adım Çözüme Geç",
+                    color = Color(0xFF09283B), fontWeight = FontWeight.Bold)
             }
         } else if (stage == 1) {
-            Text("Örneği birlikte inceleyelim", color = Color.White,
-                fontWeight = FontWeight.Bold, fontSize = 17.sp)
-            LessonVisualExample(lesson, childText)
-            Text("Örnek: " + lesson.example, color = HomeColors.MagicCyan,
-                fontSize = if (childText) 20.sp else 17.sp,
-                fontWeight = FontWeight.Bold)
-            Text(lesson.hint, color = Color.White, fontSize = 14.sp, lineHeight = 21.sp)
-            Button(onClick = { moveTo(2) },
-                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                shape = RoundedCornerShape(13.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = HomeColors.MagicCyan)) {
-                Text("Şimdi Ben Deneyeyim", color = Color(0xFF09283B),
-                    fontWeight = FontWeight.Bold)
+            // Guided discovery: child reveals one real mathematical step at a time.
+            Text("Birlikte adım adım inceleyelim", color = Color.White,
+                fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            LessonTeachingIllustration(
+                script = script, grade = grade, revealedStep = workedStep
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .background(Color(0xFF245775), RoundedCornerShape(14.dp))
+                    .padding(13.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    "ADIM " + (workedStep + 1) + " / " + script.steps.size,
+                    color = Color(0xFFFFD887),
+                    fontSize = 11.sp, fontWeight = FontWeight.Bold
+                )
+                Text(script.steps[workedStep], color = Color.White,
+                    fontSize = if (earlyReader) 17.sp else 15.sp,
+                    lineHeight = if (earlyReader) 24.sp else 21.sp)
+            }
+            if (workedStep < script.steps.lastIndex) {
+                Button(
+                    onClick = {
+                        narrator.stop()
+                        workedStep += 1
+                        progress.saveWorkedStep(lesson.id, workedStep)
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 53.dp),
+                    shape = RoundedCornerShape(13.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = HomeColors.MagicCyan)
+                ) {
+                    Text("Sonraki Çözüm Adımını Göster",
+                        color = Color(0xFF09283B), fontWeight = FontWeight.Bold)
+                }
+            } else {
+                // Actual conceptual check is about the mathematical relationship,
+                // not merely picking the result of a calculation.
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Color(0xFF11354F), RoundedCornerShape(17.dp))
+                        .border(1.dp, Color(0xFF438695), RoundedCornerShape(17.dp))
+                        .padding(13.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    Text("Anladım mı?", fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFFFFD887), fontSize = 16.sp)
+                    Text(script.check.prompt, color = Color.White,
+                        fontSize = if (earlyReader) 17.sp else 15.sp,
+                        lineHeight = 22.sp)
+                    script.check.choices.forEachIndexed { choiceIndex, choice ->
+                        val chosen = conceptSelected == choiceIndex
+                        OutlinedButton(
+                            onClick = {
+                                conceptSelected = choiceIndex
+                                if (choiceIndex != script.check.correctIndex) {
+                                    conceptWrong++
+                                    narrator.say(script.check.wrongHint)
+                                } else {
+                                    progress.markConceptCheckPassed(lesson.id)
+                                    narrator.say(script.check.explanation)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 55.dp),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (chosen && choiceIndex == script.check.correctIndex)
+                                    Color(0xFF7BE1C0)
+                                else if (chosen) Color(0xFFFFB997)
+                                else Color(0xFF5E93AB)
+                            ),
+                            shape = RoundedCornerShape(13.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (chosen) Color(0xFF2C6073)
+                                else Color(0xFF1A4663)
+                            )
+                        ) {
+                            Text(choice, color = Color.White,
+                                fontSize = 13.sp, lineHeight = 18.sp)
+                        }
+                    }
+                    if (conceptSelected >= 0) {
+                        val rightChoice = conceptSelected == script.check.correctIndex
+                        Text(
+                            if (rightChoice) script.check.explanation
+                            else script.check.wrongHint,
+                            color = if (rightChoice) Color(0xFF91E3D5)
+                            else Color(0xFFFFCCAC),
+                            fontSize = 13.sp, lineHeight = 19.sp
+                        )
+                        if (rightChoice) {
+                            Button(
+                                onClick = { moveTo(2) },
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 55.dp),
+                                shape = RoundedCornerShape(13.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = HomeColors.MagicCyan)
+                            ) {
+                                Text("Kısa Alıştırmaya Geç", color = Color(0xFF09283B),
+                                    fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
             }
         } else {
-            Text("Soru " + (index + 1) + " / 4", color = HomeColors.TextSecondary,
-                fontSize = 13.sp)
-            Text(q.text, fontWeight = FontWeight.ExtraBold,
-                color = Color.White, fontSize = if (childText) 23.sp else 21.sp,
-                lineHeight = 29.sp)
+            // Four varied, deterministic questions, retaining the previous
+            // system's auto-advance and saved seed/attempt counters.
+            Text("Soru " + (index + 1) + " / 4",
+                color = HomeColors.TextSecondary, fontSize = 13.sp)
+            Text(q.text, fontWeight = FontWeight.ExtraBold, color = Color.White,
+                fontSize = if (earlyReader) 23.sp else 20.sp, lineHeight = 29.sp)
             q.choices.chunked(2).forEach { choices ->
-                Row(modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
                     choices.forEach { choice ->
                         Button(
                             onClick = {
                                 if (choice == q.answer) {
                                     right = true
                                     feedback = q.explanation
+                                    narrator.stop()
                                 } else {
                                     wrong++
                                     progress.recordWrong(lesson.id)
-                                    feedback = "Bir daha dene. İstersen ipucu kullan."
+                                    feedback = if (wrong > 1) script.check.wrongHint
+                                    else "Bu henüz doğru değil. Sayıları yeniden incele."
+                                    narrator.say(feedback)
                                 }
                             },
-                            enabled = !right, modifier = Modifier.weight(1f)
-                                .heightIn(min = 57.dp),
+                            enabled = !right,
+                            modifier = Modifier.weight(1f).heightIn(min = 59.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFF285C82)),
+                                containerColor = if (right && choice == q.answer)
+                                    Color(0xFF1C8D78) else Color(0xFF285C82)
+                            ),
                             shape = RoundedCornerShape(13.dp)
-                        ) { Text(choice.toString(), fontSize = 21.sp, color = Color.White) }
+                        ) {
+                            Text(choice.toString(), fontSize = 21.sp,
+                                color = Color.White)
+                        }
                     }
                 }
             }
@@ -334,88 +544,33 @@ private fun PracticeLesson(
                     else Color(0xFFFFD1AE), fontSize = 14.sp, lineHeight = 20.sp)
             }
             if (!right && !hinted) {
-                Text("İpucu Göster", modifier = Modifier.clickable {
-                    hinted = true
-                    hints++
-                    progress.recordHint(lesson.id)
-                }.heightIn(min = 45.dp), color = HomeColors.MagicCyan,
-                    fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            }
-            if (hinted && !right) Text(lesson.hint,
-                color = Color.White, fontSize = 13.sp, lineHeight = 19.sp)
-            if (right) Text(
-                "Doğru! " + (if (index == 3) "Dersin tamamlanıyor…"
-                             else "Sonraki soruya geçiliyor…"),
-                color = HomeColors.MagicCyan, fontSize = 13.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
-
-/** Concept visualization, not a second game. For young readers it uses big,
- * high-contrast counters; older students see the same concise mathematical model.
- * Spoken explanations and richer diagrams belong to the follow-on Ö3 content phase.
- */
-@Composable
-private fun LessonVisualExample(lesson: Lesson, childText: Boolean) {
-    val isMultiply = lesson.skill == Skill.MULTIPLY ||
-        lesson.skill == Skill.MULTIPLY_INTRO
-    val primary = when (lesson.skill) {
-        Skill.ADD_10 -> 3
-        Skill.ADD_20 -> 8
-        Skill.COUNT_2, Skill.COUNT_3, Skill.COUNT_4 -> 4
-        else -> 0
-    }
-    val secondary = when (lesson.skill) {
-        Skill.ADD_10 -> 2
-        Skill.ADD_20 -> 5
-        else -> 0
-    }
-    Column(
-        modifier = Modifier.fillMaxWidth()
-            .background(Color(0xFF0F2F49), RoundedCornerShape(17.dp))
-            .border(1.dp, Color(0xFF386F86), RoundedCornerShape(17.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(11.dp)
-    ) {
-        if (isMultiply) {
-            // 3 groups of 4 is 3 × 4, never a misleading 3 + 4 diagram.
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                repeat(3) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                        repeat(4) {
-                            Box(Modifier.size(if (childText) 19.dp else 15.dp)
-                                .background(Color(0xFF76DDD6), CircleShape))
-                        }
-                    }
+                OutlinedButton(
+                    onClick = {
+                        hinted = true
+                        hints++
+                        progress.recordHint(lesson.id)
+                        narrator.say(lesson.hint)
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, Color(0xFF5EAFC3)
+                    ),
+                    shape = RoundedCornerShape(13.dp)
+                ) {
+                    Text("İpucu Göster", color = HomeColors.MagicCyan,
+                        fontWeight = FontWeight.Bold)
                 }
             }
-        } else if (childText || secondary > 0) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                repeat(primary.coerceAtMost(8)) {
-                    Box(Modifier.padding(2.dp).size(if (childText) 21.dp else 14.dp)
-                        .background(Color(0xFFFFD782), CircleShape))
-                }
-                if (secondary > 0) {
-                    Text(" + ", color = Color.White, fontSize = 19.sp)
-                    repeat(secondary) {
-                        Box(Modifier.padding(2.dp).size(if (childText) 21.dp else 14.dp)
-                            .background(Color(0xFF76DDD6), CircleShape))
-                    }
-                }
+            if (hinted && !right) {
+                Text(lesson.hint, color = Color.White,
+                    fontSize = 13.sp, lineHeight = 19.sp)
+            }
+            if (right) {
+                Text("Doğru! " + (if (index == 3) "Dersin tamamlanıyor…"
+                     else "Sonraki soruya geçiliyor…"),
+                    color = HomeColors.MagicCyan, fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold)
             }
         }
-        Text(lesson.example, modifier = Modifier.fillMaxWidth(),
-            color = Color(0xFFFFD782), fontSize = if (childText) 20.sp else 16.sp,
-            fontWeight = FontWeight.ExtraBold)
     }
 }

@@ -117,7 +117,7 @@ test("signed token renews after 60 days, and a revoked code cannot renew", async
     assert.equal(renewed.status, 200); // expired token can still prove original activation
     const otherDevice = await call(env, "/v1/renew",
       { license: first.data.license, deviceId: "device-FAKE" });
-    assert.equal(otherDevice.status, 400);
+    assert.equal(otherDevice.status, 401);
     env.DB.codes.get(hash).status = "revoked";
     const revoked = await call(env, "/v1/renew",
       { license: renewed.data.license, deviceId: "device-0001" });
@@ -133,7 +133,7 @@ test("tampered token and throttling are rejected", async () => {
     { code, deviceId: "device-0001" })).data.license;
   const tampered = token.slice(0, -3) + "AAA";
   assert.equal((await call(env, "/v1/renew",
-    { license: tampered, deviceId: "device-0001" })).status, 400);
+    { license: tampered, deviceId: "device-0001" })).status, 401);
   env.REDEEM_LIMITER = { limit: async () => ({ success: false }) };
   assert.equal((await call(env, "/v1/activate",
     { code, deviceId: "device-0004" })).status, 429);

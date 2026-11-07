@@ -3,22 +3,28 @@
 **Öğretim yılı:** 2026–2027 · **Ürün:** Android / Kotlin / Compose  
 **Kapsam:** Ö1+Ö2+Ö3 üzerine yapılan ilk çok-sınıflı içerik, görsel model ve adaptif tekrar paketi.
 
-## 1. Sınıfa göre gerçekten oynanabilir içerik
+## 1. Sınıfa göre gerçekten oynanabilir içerik — 8 Kasım 2026 güncellemesi
 
-| Sınıf | Önceki kısa ders | Yeni özgün ders | Toplam sunulan kısa ders |
-|---|---:|---:|---:|
-| 1 | 2 | 3 | 5 |
-| 2 | 4 | 3 | 7 |
-| 3 | 3 | 3 | 6 |
-| 4 | 3 | 3 | 6 |
-| 5 | 2 temel tekrar | 3 sınıfa özgü | 5 |
-| 6 | 2 temel tekrar | 3 sınıfa özgü | 5 |
-| 7 | 2 temel tekrar | 3 sınıfa özgü | 5 |
-| 8 | 2 temel tekrar | 3 sınıfa özgü | 5 |
+| Sınıf | Önceki kısa ders | İlk genişletme | Yeni konu girişleri | Açılabilir kısa ders |
+|---|---:|---:|---:|---:|
+| 1 | 2 | 3 | 2 | 7 |
+| 2 | 4 | 3 | 2 | 9 |
+| 3 | 3 | 3 | 2 | 8 |
+| 4 | 3 | 3 | 2 | 8 |
+| 5 | 2 temel tekrar | 3 | 4 | 9 |
+| 6 | 2 temel tekrar | 3 | 3 | 8 |
+| 7 | 2 temel tekrar | 3 | 4 | 9 |
+| 8 | 2 temel tekrar | 3 | 3 | 8 |
 
-**24 yeni benzersiz ders + 8 eski benzersiz ders = 32 ayrı kısa ders kimliği**, farklı sınıflarda yeniden sunulan eski içeriklerle toplam 44 sınıf/ders gösterimi. Her yeni dersin kendi matematiksel anlatımı, gerçek hesaplama üreten 4 soruluk pratik bankası ve *neden* soran kavrama kontrolü bulunur.
+**54 farklı kısa ders kimliği:** 8 eski ders + 24 sınıfa özgü ders + 22 yeni konu giriş dersi. Eski derslerin birden fazla sınıfta sunulmasıyla toplam **66 sınıf/ders gösterimi** vardır. 1–8. sınıflardaki **59 konu kartının** her birinde en az bir açılabilir kısa ders bulunur; dördü 5–8. sınıf temel tekrar kartlarıdır.
 
-Bu rakam **MEB kazanımlarının tamamını karşıladığımız anlamına gelmez**. Her konuya ait bütün alt kazanımları, dönem/kazanım sırasını, uzman değerlendirmelerini ve gerçek öğrenme sonuçlarını henüz kapsamaz.
+**Bu, 59 konu ailesinin bütün alt kazanımlarının tamamlandığı anlamına gelmez.** Bir konu başlığında tek giriş dersi olması, MEB öğretim programındaki tüm öğrenme çıktılarının işlenmesi değildir. Resmî kazanım kodları ve tam yıllık plan henüz eğitim uzmanı tarafından eşleştirilip onaylanmadı. Play Store tanıtımında "tam MEB müfredatı" denmemelidir.
+
+Yeni içerik ile birlikte:
+- 22 giriş dersinin her biri özgün bir anlatım, matematiksel model ve 4 soruluk değişken problem ailesi içerir.
+- Soruya özel resimler, sabit çözümlü örneği göstermek yerine ilgili sorunun **gerçek sayılarından** üretilir; desteklenmeyen biçimler çizim uydurmadan metinle devam eder.
+- Konu arama (3–8. sınıf), tamamlanmamış dersleri filtreleme, kategori renkleri, ilerleme çizgileri ve 48dp+ dokunma hedefleri eklendi.
+- Yeni yansıma, dik üçgen, hacim ve açı diagramları konu anlatımını doğru görselleştirecek şekilde tasarlandı.
 
 ## 2. Özgün konuya uygun diyagram türleri
 
@@ -49,6 +55,9 @@ Bu rakam **MEB kazanımlarının tamamını karşıladığımız anlamına gelme
 ## 4. Ürün kabul matrisi / yayın blokajları
 
 ### Kod doğrulama (GitHub CI)
+- [x] 22 yeni konu giriş dersi, 22 soru bankası ailesi ve konu eşlemesi eklendi
+- [x] 54 farklı kısa ders için açılış akışı sağlandı
+- [x] Üretilen gerçek soru sayılarına bağlı küçük sınıf görselleri ve regresyon testleri eklendi
 - [x] 24 ders kimliği, sınıf ve konu eşlemesi eklendi
 - [x] 24 yeni hesaplama üreten sorular ve özel açıklamalar eklendi
 - [x] 24 aşamalı, kavram sorulu anlatım senaryosu eklendi
@@ -69,7 +78,9 @@ Bu rakam **MEB kazanımlarının tamamını karşıladığımız anlamına gelme
 - ExpandedLessonCatalog: 24 sınıf ve konu eşleşmesi
 - ExpandedLessonQuestionBank: 24 özgün, seeded sayısal soru tipi
 - LessonTeachingCatalog + ExpandedLessonTeachingCatalog: kavram anlatımı ve yanlış anlama kontrolü
-- LessonTeachingIllustration + AdvancedLessonIllustration: yaşa uygun vektörel diyagram
+- LessonTeachingIllustration + AdvancedLessonIllustration + PracticeQuestionIllustration: yaşa ve soru sayılarına uygun vektörel diyagram
+- TopicStarterCatalog + TopicStarterQuestionBank: 22 yeni giriş dersi, anlatım senaryosu ve değişken soru ailesi
+- PracticeVisualFactory: soru metninden güvenli görsel model kurma, bilinmeyen şablonda gösterimi kapatma
 - LearningJourneyProgress + LearningReviewPolicy: kayıt koruma ve tekrar önerisi
 - LearnTabScreen: konu kitaplığı, gerçek hazır dersler, kaldığın yer, tekrar önerileri
 - LearningPracticeSection: üç aşama, seslendirme, dokunma, kavrama kontrolü ve ilgili mevcut oyun

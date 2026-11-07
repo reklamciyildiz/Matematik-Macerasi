@@ -4,7 +4,8 @@ package com.yigit033.matematikmacarasi.learning
 enum class TeachingVisual {
     GROUPS, EQUAL_GROUPS, NUMBER_STEPS,
     TAKE_AWAY, PLACE_VALUE, FRACTION_BAR, SHAPE, CLOCK,
-    BAR_CHART, AREA_GRID, PERIMETER, DECIMAL, EQUATION, FACTORS, POWER_CHAIN
+    BAR_CHART, AREA_GRID, PERIMETER, DECIMAL, EQUATION, FACTORS, POWER_CHAIN,
+    SYMMETRY, RIGHT_TRIANGLE, VOLUME_STACK
 }
 
 data class LessonConceptCheck(
@@ -42,7 +43,9 @@ data class LessonTeachingScript(
             TeachingVisual.CLOCK, TeachingVisual.BAR_CHART,
             TeachingVisual.AREA_GRID, TeachingVisual.PERIMETER,
             TeachingVisual.DECIMAL, TeachingVisual.EQUATION,
-            TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN ->
+            TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN,
+            TeachingVisual.SYMMETRY, TeachingVisual.RIGHT_TRIANGLE,
+            TeachingVisual.VOLUME_STACK ->
                 require(groups.size >= 2 && groups.all { it in 1..20 } && sequence.isEmpty())
         }
     }
@@ -53,10 +56,11 @@ data class LessonTeachingScript(
 }
 
 object LessonTeachingCatalog {
-    fun forLesson(lesson: Lesson): LessonTeachingScript =
-        if (lesson.skill == Skill.EXTENDED)
-            ExpandedLessonTeachingCatalog.forLesson(lesson)
-        else forSkill(lesson.skill)
+    fun forLesson(lesson: Lesson): LessonTeachingScript = when (lesson.skill) {
+        Skill.EXTENDED -> ExpandedLessonTeachingCatalog.forLesson(lesson)
+        Skill.TOPIC_STARTER -> TopicStarterCatalog.forLesson(lesson)
+        else -> forSkill(lesson.skill)
+    }
 
     fun forSkill(skill: Skill): LessonTeachingScript {
         fun check(prompt: String, right: String, wrong: String, explanation: String,
@@ -144,7 +148,8 @@ object LessonTeachingCatalog {
                     "15'in katlarını sayı şeridinde gör."
                 )
             )
-            Skill.EXTENDED -> error("Use forLesson() for grade-specific expanded units")
+            Skill.EXTENDED, Skill.TOPIC_STARTER ->
+                error("Use forLesson() for grade-specific lessons")
         }
     }
 

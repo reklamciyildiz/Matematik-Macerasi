@@ -455,11 +455,47 @@ internal fun AdvancedLessonIllustration(
                 color = amber, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
 
+        TeachingVisual.ANGLE -> {
+            val degrees = if (phase >= 1) v[1] else v[0]
+            Canvas(Modifier.fillMaxWidth().height(153.dp)) {
+                val pivot = Offset(size.width * .35f, size.height * .82f)
+                val arm = minOf(size.width * .43f, size.height * .65f)
+                val angle = degrees * PI / 180.0
+                drawLine(cyan, pivot,
+                    Offset(pivot.x + arm, pivot.y),
+                    5.dp.toPx(), cap = StrokeCap.Round)
+                drawLine(gold, pivot,
+                    Offset(pivot.x + (cos(angle) * arm).toFloat(),
+                        pivot.y - (sin(angle) * arm).toFloat()),
+                    5.dp.toPx(), cap = StrokeCap.Round)
+                if (degrees == 90) {
+                    val square = 18.dp.toPx()
+                    drawLine(light,
+                        Offset(pivot.x + square, pivot.y),
+                        Offset(pivot.x + square, pivot.y - square),
+                        2.dp.toPx())
+                    drawLine(light,
+                        Offset(pivot.x + square, pivot.y - square),
+                        Offset(pivot.x, pivot.y - square),
+                        2.dp.toPx())
+                }
+                drawCircle(light, 4.dp.toPx(), pivot)
+            }
+            Text(degrees.toString() + "° · " +
+                if (degrees < 90) "Dar açı" else "Dik açı",
+                color = amber, fontSize = 16.sp,
+                fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        }
+
         TeachingVisual.RIGHT_TRIANGLE -> {
             Canvas(Modifier.fillMaxWidth().height(168.dp)) {
+                // Preserve the displayed 3:4 leg ratio; arbitrary viewport
+                // aspect ratios must not distort the teaching geometry.
+                val unit = minOf(size.width * .64f / 4f,
+                    size.height * .70f / 3f)
                 val origin = Offset(size.width * .20f, size.height * .85f)
-                val up = Offset(origin.x, size.height * .14f)
-                val right = Offset(size.width * .80f, origin.y)
+                val up = Offset(origin.x, origin.y - 3f * unit)
+                val right = Offset(origin.x + 4f * unit, origin.y)
                 val triangle = Path().apply {
                     moveTo(origin.x, origin.y)
                     lineTo(up.x, up.y)

@@ -1,6 +1,8 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -22,6 +24,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -49,6 +54,7 @@ internal fun LessonTeachingIllustration(
     grade: Int,
     revealedStep: Int,
     showComplete: Boolean = false,
+    onRevealNext: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val early = grade <= 2
@@ -56,6 +62,13 @@ internal fun LessonTeachingIllustration(
     val shape = RoundedCornerShape(20.dp)
     Column(
         modifier = modifier.fillMaxWidth()
+            .then(
+                if (onRevealNext != null) Modifier
+                    .semantics { contentDescription = "Resme dokunarak sonraki işlem adımını gör" }
+                    .clickable(onClick = onRevealNext, role = Role.Button)
+                else Modifier
+            )
+            .animateContentSize()
             .background(
                 Brush.verticalGradient(listOf(Color(0xFF1B5873), Color(0xFF0C304E))),
                 shape
@@ -177,6 +190,12 @@ internal fun LessonTeachingIllustration(
                     }
                 }
             }
+        }
+        if (onRevealNext != null) {
+            Text("Resme dokunarak sonraki adımı göster",
+                color = cyan, fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center)
         }
         if (showComplete || revealedStep >= script.steps.lastIndex) {
             Box(

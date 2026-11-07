@@ -359,6 +359,13 @@ private fun PracticeLesson(
                     " kez yeniden denendi",
                 color = Color(0xFFE1DBA6), fontSize = 12.sp
             )
+            progress.lastReviewComment(lesson.id)?.let { note ->
+                Text(
+                    "Sonraki çalışma önerisi: " + note,
+                    color = Color(0xFFAFDFD8), fontSize = 12.sp,
+                    lineHeight = 18.sp
+                )
+            }
             Text("Bu çalışmadaki doğru hamle oranı: " + accuracy + "%",
                 color = Color.White, fontSize = 14.sp)
             Text(

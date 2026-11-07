@@ -139,6 +139,11 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
         }
 
         PracticeVisualKind.ALGEBRA_BALANCE -> {
+            val equation = model.description.substringAfter("Eşit. ")
+                .substringBefore(" eşitliğinde")
+                .substringBefore(" denkleminde")
+                .trim()
+            val sides = equation.split("=").map { it.trim() }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -150,8 +155,9 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
                         .border(1.dp, teal, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Bilinmeyen x", color = pale, fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold)
+                    Text(sides.firstOrNull().orEmpty(), color = pale,
+                        fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center)
                 }
                 Text("=", color = yellow, fontSize = 24.sp,
                     fontWeight = FontWeight.Bold)
@@ -161,8 +167,8 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
                         .border(1.dp, blue, RoundedCornerShape(12.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Eşitlik", color = pale, fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold)
+                    Text(sides.getOrElse(1) { "?" }, color = pale,
+                        fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 }
             }
             Text("Eşitlik bozulmadan iki tarafa aynı işlem uygulanır.",

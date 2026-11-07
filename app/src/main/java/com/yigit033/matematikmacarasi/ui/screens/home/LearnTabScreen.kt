@@ -123,7 +123,8 @@ fun LearnTabScreen(
         return
     }
     val last = progress.lastLesson()?.let { id -> lessons.firstOrNull { it.id == id } }
-    val next = last ?: lessons.firstOrNull { !progress.completed(it.id) } ?: lessons.firstOrNull()
+    val next = if (last != null && !progress.completed(last.id)) last
+        else lessons.firstOrNull { !progress.completed(it.id) } ?: last ?: lessons.firstOrNull()
     val completed = lessons.count { progress.completed(it.id) }
     val listedTopics = if (showAllTopics) curriculum.topics else curriculum.topics.filter { it.playable }
     val topicsByArea = listedTopics.groupBy { it.area }

@@ -139,6 +139,29 @@ test("signed token renews after 60 days, and a revoked code cannot renew", async
   } finally { Date.now = original; }
 });
 
+test("expired code blocks new devices while preserving previously activated devices", async () => {
+  const env = setup();
+  const code = "MM-LEGACY-EXPIRED";
+  const hash = await seed(env, code, 8);
+  env.DB.codes.get(hash).expires_on = "2020-01-01";
+  env.DB.codes.get(hash).used_count = 2;
+  const originalDevice = "device-0001";
+  const deviceHash = await hashValue(env, "device", originalDevice);
+  env.DB.activations.set(deviceHash, {
+    code_hash: hash, activation_id: "existing-activation",
+    status: "active", activated_at: 1600000000, last_verified_at: 1600000000
+  });
+  const existing = await call(env, "/v1/activate", { code, deviceId: originalDevice });
+  assert.equal(existing.status, 200);
+  const renewed = await call(env, "/v1/renew",
+    { license: existing.data.license, deviceId: originalDevice });
+  assert.equal(renewed.status, 200);
+  const another = await call(env, "/v1/activate",
+    { code, deviceId: "device-0003" });
+  assert.equal(another.status, 400);
+  assert.equal(env.DB.codes.get(hash).used_count, 2);
+});
+
 test("tampered token and throttling are rejected", async () => {
   const env = setup();
   const code = "MM-TAMPER-TEST-CODE";

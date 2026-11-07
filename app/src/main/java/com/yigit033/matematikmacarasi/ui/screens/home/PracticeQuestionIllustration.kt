@@ -254,9 +254,11 @@ internal fun PracticeQuestionIllustration(
 private fun GroupOfObjects(
     count: Int, grade: Int, compact: Boolean, removed: Int = 0
 ) {
-    val width = if (compact) 16.dp else if (grade <= 2) 27.dp else 21.dp
+    // On a 320dp device, two early-grade groups still fit beside "+".
+    val width = if (compact) 13.dp else if (grade <= 2) 22.dp else 19.dp
+    val perRow = if (compact) 5 else 4
     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        (0 until count).chunked(5).forEach { row ->
+        (0 until count).chunked(perRow).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                 row.forEach { idx ->
                     Box(Modifier.size(width),contentAlignment=Alignment.Center) {

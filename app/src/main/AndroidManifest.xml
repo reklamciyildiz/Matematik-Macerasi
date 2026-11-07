@@ -18,6 +18,14 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Android 11+ package visibility: allow finding system TTS engines.
+         Offline Turkish voices are selected at runtime; no TTS permission needed. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:name=".modules.MatematikMacerasiApp"
         android:allowBackup="true"

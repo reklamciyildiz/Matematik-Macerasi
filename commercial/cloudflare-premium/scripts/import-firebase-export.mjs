@@ -21,7 +21,7 @@ const rowCount = new Map();
 const safeDate = d => (!d || d === "") ? null :
   /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : (()=>{throw new Error("Bad expiry date")})();
 const cleanCount = x => Number.isSafeInteger(x) && x >= 0 ? x : (()=>{throw new Error("Bad usage count")})();
-const lines = ["-- REVIEW ALL LEGACY COUNTS/OWNERS BEFORE APPLYING", "BEGIN TRANSACTION;"];
+const lines = ["-- REVIEW ALL LEGACY COUNTS/OWNERS BEFORE APPLYING; D1 wraps file imports in its own transaction."];
 for (const [device, activation] of Object.entries(activations)) {
   if (!activation || typeof activation.code !== "string" || !Object.hasOwn(codes, activation.code))
     throw new Error("Unknown code in existing device activation");
@@ -52,7 +52,7 @@ VALUES (${quote(hash("device",device))},${quote(randomUUID())},
 ${quote(hash("code",activation.code))},'active',${ts},${ts});
 `);
 }
-lines.push("COMMIT;");
+// D1 rejects explicit BEGIN/COMMIT in wrangler d1 execute --file.
 writeFileSync(outputPath, lines.join("\n")+"\n", {flag:"wx", mode:0o600});
 console.log("Prepared SQL (contains hashes, not raw codes): "+outputPath);
 console.log("Codes: "+Object.keys(codes).length+"; activations: "+Object.keys(activations).length);

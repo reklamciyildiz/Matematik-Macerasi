@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { generateKeyPairSync, randomBytes } from "node:crypto";
-import worker, { hashValue, verifyLicense } from "../src/index.mjs";
+import worker, { hashValue, verifyLicense, validCode } from "../src/index.mjs";
 
 const keys = generateKeyPairSync("rsa", { modulusLength: 2048,
   publicKeyEncoding: { type: "spki", format: "pem" },
@@ -76,6 +76,20 @@ async function seed(env, code, max_uses = 2) {
   env.DB.codes.set(hash, { used_count: 0, max_uses, status: "active", expires_on: null });
   return hash;
 }
+
+test("legacy printable code formats are accepted, non-printable formats are rejected", async () => {
+  assert.equal(validCode("MM+12@AB"), true);
+  assert.equal(validCode("ABC DEF8"), true);
+  assert.equal(validCode("ÖĞREN123"), true);
+  assert.equal(validCode("ABC\\nDEF8"), false);
+  assert.equal(validCode(" ABCDEF8"), false);
+  const env = setup();
+  const code = "MM+12@AB";
+  await seed(env, code, 1);
+  const reply = await call(env, "/v1/activate", { code, deviceId: "device-0001" });
+  assert.equal(reply.status, 200);
+  assert.ok((await verifyLicense(env, reply.data.license))?.activation);
+});
 
 test("first activation grants a signature that verifies, duplicate does not consume another seat", async () => {
   const env = setup();

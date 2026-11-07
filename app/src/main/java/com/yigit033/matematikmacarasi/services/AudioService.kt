@@ -64,6 +64,7 @@ class AudioService private constructor(private val context: Context) {
     private var released = false
     @Volatile private var appForeground = false
     @Volatile private var gameplayActive = false
+    @Volatile private var lessonNarrationActive = false
     @Volatile private var musicEnabled = prefs.getBoolean(KEY_MUSIC_ENABLED, true)
     @Volatile private var effectsEnabled = prefs.getBoolean(KEY_SOUND_ENABLED, true)
     @Volatile private var musicVolume =
@@ -103,7 +104,21 @@ class AudioService private constructor(private val context: Context) {
     }
 
     private fun currentMusicVolume(): Float =
-        if (musicEnabled) musicVolume * (if (gameplayActive) .53f else 1f) else 0f
+        if (musicEnabled) musicVolume *
+            (if (gameplayActive) .53f else 1f) *
+            (if (lessonNarrationActive) .24f else 1f)
+        else 0f
+
+    /**
+     * Momentarily reduce (not stop) the continuing adventure theme while the
+     * accessibility/TTS lesson speaker reads a teaching step.
+     */
+    fun onLessonNarrationChanged(active: Boolean) {
+        onMain {
+            lessonNarrationActive = active
+            if (!released) musicPlayer?.volume = currentMusicVolume()
+        }
+    }
 
     private fun prepareMusic() {
         if (released || musicPrepared) return

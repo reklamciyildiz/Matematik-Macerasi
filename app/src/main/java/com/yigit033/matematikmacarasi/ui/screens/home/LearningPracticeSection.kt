@@ -169,6 +169,18 @@ private fun PracticeLesson(
     DisposableEffect(narrator) {
         onDispose { narrator.close() }
     }
+    val lessonLifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lessonLifecycleOwner, narrator) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE || event == Lifecycle.Event.ON_STOP) {
+                narrator.stop()
+            }
+        }
+        lessonLifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lessonLifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     // Old lesson completion / question session keys remain fully compatible.
     var stage by remember(lesson.id) {
@@ -335,6 +347,13 @@ private fun PracticeLesson(
                 fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
             Text("4 soru · " + wrong + " yanlış deneme · " + hints + " ipucu",
                 color = Color.White, fontSize = 14.sp)
+            Text(
+                if (progress.conceptErrors(lesson.id) == 0)
+                    "Kavram sorusu: ilk denemede doğru"
+                else "Kavram sorusu: " + progress.conceptErrors(lesson.id) +
+                    " kez yeniden denendi",
+                color = Color(0xFFE1DBA6), fontSize = 12.sp
+            )
             Text("Bu çalışmadaki doğru hamle oranı: " + accuracy + "%",
                 color = Color.White, fontSize = 14.sp)
             Text(
@@ -466,6 +485,7 @@ private fun PracticeLesson(
                                 conceptSelected = choiceIndex
                                 if (choiceIndex != correctConceptIndex) {
                                     conceptWrong++
+                                    progress.recordConceptError(lesson.id)
                                     sounds.playWrongSound()
                                     narrator.say(script.check.wrongHint)
                                 } else {

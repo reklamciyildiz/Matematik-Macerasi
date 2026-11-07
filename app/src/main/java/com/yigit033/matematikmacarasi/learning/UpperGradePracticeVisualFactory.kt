@@ -69,7 +69,9 @@ object UpperGradePracticeVisualFactory {
                     "g7_equation" -> read(text, """(\d+)x \+ (\d+) = (\d+)""")
                     else -> read(text, """(\d+)\(x \+ (\d+)\) = (\d+)""")
                 } ?: return null
-                caption = "Denklemin iki tarafı eşit. ${text.substringBefore("denkleminde").trim()}"
+                caption = "Denklemin iki tarafı eşit. " + text
+                    .substringBefore("denkleminde")
+                    .substringBefore("eşitliğinde").trim()
             }
             "g8_power" -> {
                 kind = PracticeVisualKind.POWER_FACTORS

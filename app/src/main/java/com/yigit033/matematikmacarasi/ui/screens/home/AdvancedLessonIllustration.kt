@@ -1,6 +1,7 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,6 +18,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,6 +31,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -33,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.learning.LessonTeachingScript
 import com.yigit033.matematikmacarasi.learning.TeachingVisual
+import com.yigit033.matematikmacarasi.learning.FractionSelectionPolicy
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -55,6 +63,11 @@ internal fun AdvancedLessonIllustration(
 ) {
     val v = script.groups
     val phase = if (complete) script.steps.lastIndex else step
+    // A child can paint/unpaint equal parts in the guided lesson.
+    // This state is exploratory and never changes completion, payment or scores.
+    var paintedParts by remember(script.headline) {
+        mutableStateOf(emptySet<Int>())
+    }
     when (script.visual) {
         TeachingVisual.TAKE_AWAY -> {
             val total = v[0]
@@ -137,34 +150,58 @@ internal fun AdvancedLessonIllustration(
         TeachingVisual.FRACTION_BAR -> {
             val chosen = v[0]
             val denominator = v[1]
-            Text("Bir bütün " + denominator + " eş parça", color = ink,
-                fontSize = 13.sp, textAlign = TextAlign.Center)
+            Text(
+                if (complete) "Örnek: " + chosen + "/" + denominator
+                else "Parçalara dokunup " + chosen + "/" + denominator +
+                    " kesrini kendin boya",
+                color = ink, fontSize = 13.sp, textAlign = TextAlign.Center
+            )
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .background(base, RoundedCornerShape(12.dp)).padding(7.dp),
                 horizontalArrangement = Arrangement.spacedBy(3.dp)
             ) {
-                repeat(denominator) { i ->
-                    val highlight = phase >= 1 && i < chosen
+                repeat(denominator) { part ->
+                    val highlight = if (complete) part < chosen
+                        else part in paintedParts
                     Box(
                         modifier = Modifier.weight(1f)
                             .height(if (grade <= 3) 88.dp else 65.dp)
+                            .semantics {
+                                contentDescription = (part + 1).toString() +
+                                    ". eş parça; " +
+                                    (if (highlight) "boyalı" else "boyasız")
+                            }
+                            .clickable(enabled = !complete) {
+                                paintedParts = FractionSelectionPolicy.toggle(
+                                    paintedParts, part, denominator)
+                            }
                             .background(
                                 if (highlight) sea else Color(0xFF35637A),
                                 RoundedCornerShape(7.dp)
                             )
                             .border(1.dp,
                                 if (highlight) amber else outline,
-                                RoundedCornerShape(7.dp))
-                    )
+                                RoundedCornerShape(7.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!complete) {
+                            Text(if (highlight) "✓" else "",
+                                color = base, fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold)
+                        }
+                    }
                 }
             }
-            if (phase >= 1) {
-                Text(chosen.toString() + "/" + denominator +
-                    " · Seçili parça sayısı: " + chosen,
-                    color = amber, fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center)
-            }
+            Text(
+                if (complete) chosen.toString() + "/" + denominator +
+                    " · Örnekteki boyalı parçalar"
+                else paintedParts.size.toString() + "/" + denominator +
+                    " boyalı · Hedef " + chosen + "/" + denominator,
+                color = amber, fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                fontSize = 13.sp
+            )
         }
 
         TeachingVisual.SHAPE -> {

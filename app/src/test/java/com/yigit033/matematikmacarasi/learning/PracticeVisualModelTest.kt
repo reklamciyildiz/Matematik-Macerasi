@@ -58,4 +58,24 @@ class PracticeVisualModelTest {
         assertNull(PracticeVisualFactory.forQuestion("g4_fraction",
             "Kesirleri karşılaştır"))
     }
+    @Test fun talkbackDescriptionUsesLiveQuestionCounts() {
+        val take=PracticeVisualFactory.forQuestion(
+            "g1_takeaway", "9 elmadan 6 elma ayrılırsa kaç elma kalır?"
+        )!!
+        assertTrue(take.accessibilityText().contains("9 nesneden 6"))
+        val newQuestion=PracticeVisualFactory.forQuestion(
+            "g1_takeaway", "7 elmadan 2 elma ayrılırsa kaç elma kalır?"
+        )!!
+        assertTrue(newQuestion.accessibilityText().contains("7 nesneden 2"))
+        val bars=PracticeVisualFactory.forQuestion(
+            "g4_chart", "Grafikte A=4, B=6, C=3. Toplam kaçtır?"
+        )!!
+        assertTrue(bars.accessibilityText().contains("A grubu: 4"))
+        assertTrue(bars.accessibilityText().contains("C grubu: 3"))
+        val time=PracticeVisualFactory.forQuestion(
+            "g2_clock", "Saat 7 iken 2 saat sonra saat kaç olur?"
+        )!!
+        assertTrue(time.accessibilityText().contains("Saat 7"))
+    }
+
 }

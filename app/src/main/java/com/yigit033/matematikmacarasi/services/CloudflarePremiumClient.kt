@@ -128,7 +128,7 @@ internal class CloudflarePremiumClient(private val context: Context) {
         return prefs.edit().putString("signed_license", token).commit()
     }
 
-    private fun verify(token: String): Claims? = try {
+    private fun verify(token: String): Claims? {\n        return try {
         if (token.length !in 64..4000) return null
         val parts = token.split(".")
         if (parts.size != 3) return null
@@ -152,8 +152,13 @@ internal class CloudflarePremiumClient(private val context: Context) {
         if (issued > now() + 120 || check <= issued || exp <= check ||
             exp - check != 7L * 86400L || check - issued != 60L * 86400L) return null
         Claims(check, exp)
-    } catch (_: Exception) {
-        null
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun resetForTests() {
+        prefs.edit().remove("signed_license").apply()
     }
 
     private fun deviceTag(id: String): String {

@@ -211,17 +211,17 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
         .padding(horizontal=16.dp,vertical=15.dp),
         verticalArrangement=Arrangement.spacedBy(14.dp)) {
 
-        Row(Modifier.fillMaxWidth().heightIn(min=54.dp),
+        Row(Modifier.fillMaxWidth().heightIn(min=62.dp),
             verticalAlignment=Alignment.CenterVertically,
             horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             Surface(
-                modifier=Modifier.size(46.dp).clickable(onClick=onBackClick),
+                modifier=Modifier.size(52.dp).clickable(onClick=onBackClick),
                 color=Color(0xFF215979),
                 shape=CircleShape,
                 border=BorderStroke(1.dp,SettingsPalette.border)) {
                 Box(contentAlignment=Alignment.Center){
                     Icon(Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription="Profile dön",
+                        contentDescription="Ayarlardan profile geri dön",
                         tint=Color.White,modifier=Modifier.size(24.dp))
                 }
             }

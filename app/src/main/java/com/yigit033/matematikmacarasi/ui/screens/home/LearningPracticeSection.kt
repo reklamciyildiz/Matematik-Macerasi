@@ -200,6 +200,9 @@ private fun PracticeLesson(
         mutableIntStateOf(progress.workedStep(lesson.id).coerceIn(0, script.steps.lastIndex))
     }
     var conceptSelected by remember(lesson.id) { mutableIntStateOf(-1) }
+    var conceptPassed by remember(lesson.id) {
+        mutableStateOf(progress.conceptCheckPassed(lesson.id))
+    }
     var conceptWrong by remember(lesson.id) { mutableIntStateOf(0) }
     var hinted by remember(lesson.id, index) { mutableStateOf(false) }
     var right by remember(lesson.id, index) { mutableStateOf(false) }
@@ -514,6 +517,7 @@ private fun PracticeLesson(
                                     narrator.say(script.check.wrongHint)
                                 } else {
                                     progress.markConceptCheckPassed(lesson.id)
+                                    conceptPassed = true
                                     sounds.playCorrectSound()
                                     narrator.say(script.check.explanation)
                                 }
@@ -536,8 +540,9 @@ private fun PracticeLesson(
                                 fontSize = 13.sp, lineHeight = 18.sp)
                         }
                     }
-                    if (conceptSelected >= 0) {
-                        val rightChoice = conceptSelected == correctConceptIndex
+                    if (conceptSelected >= 0 || conceptPassed) {
+                        val rightChoice = conceptPassed ||
+                            conceptSelected == correctConceptIndex
                         Text(
                             if (rightChoice) script.check.explanation
                             else script.check.wrongHint,

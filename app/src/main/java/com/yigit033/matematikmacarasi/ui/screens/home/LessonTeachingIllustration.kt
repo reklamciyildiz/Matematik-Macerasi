@@ -190,6 +190,12 @@ internal fun LessonTeachingIllustration(
                     }
                 }
             }
+            else -> AdvancedLessonIllustration(
+                script = script,
+                grade = grade,
+                step = revealedStep,
+                complete = showComplete
+            )
         }
         if (onRevealNext != null) {
             Text("Resme dokunarak sonraki adımı göster",

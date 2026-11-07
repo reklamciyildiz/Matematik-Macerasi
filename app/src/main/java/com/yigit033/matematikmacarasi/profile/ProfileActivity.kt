@@ -293,25 +293,32 @@ fun ProfileScreen(
                 )
         )
         
-        Column(modifier = Modifier.fillMaxSize()) {
-            // Toolbar
+        Column(modifier = Modifier.fillMaxSize().padding(top = 6.dp)) {
+            // Safe-area aware header: the parent already applies system insets.
             TopAppBar(
-                title = { 
-                    Text(
-                        "Kaşif Profilim",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 20.sp
-                    ) 
+                title = {
+                    Column {
+                        Text("Kaşif Profilim", color = Color.White,
+                            fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                        Text("Macera kimliğin ve ilerlemen",
+                            color = Color(0xFFAEDAE8), fontSize = 11.sp)
+                    }
                 },
                 backgroundColor = Color.Transparent,
                 elevation = 0.dp,
                 navigationIcon = {
-                    IconButton(onClick = onSaveClick) {
+                    IconButton(
+                        onClick = onSaveClick,
+                        modifier = Modifier.padding(start = 5.dp).size(52.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF245B77))
+                            .border(1.dp, Color(0xFF5F9CB5), CircleShape)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Geri",
-                            tint = Color.White
+                            contentDescription = "Kaşif profilinden geri dön",
+                            tint = Color.White,
+                            modifier = Modifier.size(25.dp)
                         )
                     }
                 }

@@ -43,10 +43,12 @@ class GradeCurriculumCatalogTest {
             for (lesson in actual) {
                 assertNotNull(GradeCurriculumCatalog.topicForLesson(grade, lesson))
             }
+            assertEquals(3, ExpandedLessonCatalog.forGrade(grade).size)
             if (grade >= 5) {
-                assertTrue(curriculum.topics.filter { it.playable }
-                    .all { it.area == TopicArea.REVIEW })
-                assertFalse(curriculum.topics.any {
+                assertTrue(curriculum.topics.any {
+                    it.playable && it.area == TopicArea.REVIEW
+                })
+                assertTrue(curriculum.topics.any {
                     it.playable && it.area != TopicArea.REVIEW
                 })
             }

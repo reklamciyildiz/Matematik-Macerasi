@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.android.billingclient.api.*
+import com.yigit033.matematikmacarasi.BuildConfig
 import com.yigit033.matematikmacarasi.services.PremiumCodeValidator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -450,6 +451,15 @@ class PurchaseManager private constructor(
                 return DEBUG_PREMIUM
             }
             
+            // In Cloudflare mode, the union state is NOT an entitlement authority:
+            // it may be stale after license expiry or server-side revocation.
+            // Always recompute code access from the signed JWT and Play cache.
+            if (BuildConfig.MM_USE_CLOUDFLARE) {
+                val current = isPremiumSync()
+                if (_premiumState.value != current) _premiumState.value = current
+                return current
+            }
+
             // Önce local cache kontrolü yaparak hızlı sonuç döndür
             val cachedValue = _premiumState.value
             
@@ -532,6 +542,13 @@ class PurchaseManager private constructor(
                 return DEBUG_PREMIUM
             }
             
+            // In Cloudflare mode, an old aggregate _premiumState=true can
+            // outlive a revoked/expired license. Only an offline-valid signed
+            // code license OR the cached Play purchase grants access.
+            if (BuildConfig.MM_USE_CLOUDFLARE) {
+                return getPremiumStatus() || codeValidator.isCodePremium()
+            }
+
             // Önce cache kontrolü yap
             if (_premiumState.value) {
                 return true

@@ -57,7 +57,7 @@ internal fun PracticeQuestionIllustration(
         modifier = modifier.fillMaxWidth()
             .background(Color(0xFF174B65), RoundedCornerShape(17.dp))
             .border(1.dp, Color(0xFF508EA5), RoundedCornerShape(17.dp))
-            .semantics { contentDescription = model.description }
+            .semantics { contentDescription = model.accessibilityText() }
             .padding(13.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -237,10 +237,16 @@ internal fun PracticeQuestionIllustration(
             }
             PracticeVisualKind.PERIMETER -> {
                 Canvas(Modifier.size(width=210.dp,height=125.dp)) {
-                    val p=Offset(size.width*.10f,size.height*.13f)
-                    val dims=Size(size.width*.80f,size.height*.73f)
-                    drawRect(Color(0xFF275F78),p,dims)
-                    drawRect(cyan,p,dims,style=Stroke(4.dp.toPx()))
+                    // Preserve actual dimensions so a 9×2 problem is not
+                    // illustrated as a nearly square rectangle.
+                    val scale = minOf(size.width*.84f/v[0],
+                        size.height*.72f/v[1])
+                    val w=v[0]*scale
+                    val h=v[1]*scale
+                    val offset=Offset((size.width-w)/2f,(size.height-h)/2f)
+                    val dims=Size(w,h)
+                    drawRect(Color(0xFF275F78),offset,dims)
+                    drawRect(cyan,offset,dims,style=Stroke(4.dp.toPx()))
                 }
                 Text("Uzun kenar " + v[0] + " · Kısa kenar " + v[1],
                     color = gold, fontSize = 13.sp,

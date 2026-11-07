@@ -52,6 +52,27 @@ Yeni içerik ile birlikte:
 - Tamamlama kaydı, en iyi hamle oranı, tekrar sayısı, kavrama sorusu yanlışları ve kullanılan ipuçları **cihazda** saklanır; eski oyuncu hakları değiştirilmez.
 - **Tekrar önerisi:** Hata ve ipucu kullanımına bağlı olarak 1/2/3/7 gün sonra dersin tekrarını sunar. Başarıyı **ustalık kanıtı** olarak adlandırmaz.
 
+## 3.1. 8 Kasım kalite sertleştirmesi
+
+- **Gerçek veriyle görsel doğruluk:** Birden fazla satırda çizilen nesnelerde çıkarılan miktar global indeksle sayılıyor. 1–100 arası her nesne miktarı, 0–N çıkarma ve 1–12 arası satır genişliği için ayrı otomatik regresyon var.
+- **Küçük sınıf sesli erişimi:** Konu anlatımına ek olarak çözümlü örneğin kavrama sorusu/seçenekleri ve alıştırmanın seçenekleri de Türkçe cihaz içi TTS'ye veriliyor. Sesli metin uzunluğuna göre öğretim açıklamasının bitmesi beklenip kavrama kontrolünden kısa alıştırmaya otomatik ilerleniyor. Sonraki/sıradaki butonu zorunlu değil.
+- **Ses yarışları:** QUEUE_FLUSH ile eski konuşmanın onStop bildirimi yeni konuşmayı durdurmasın diye her sesli okuma ayrı benzersiz utterance ID ile kontrol ediliyor.
+- **Eski kullanıcılar:** Daha önce bitirilmiş, tekrar zamanı kayıtlı olmayan derslere güvenli bir ilk tekrar önerisi sunuluyor. Başarı ve Premium hakları değiştirilmiyor.
+- **Üst sınıf alıştırma görselleri:** 5–8. sınıflarda seçilmiş 20 kazanım için alan ızgarası, veri sütunu, olasılık sonuçları, negatif sayı şeridi, denklem dengesi, tekrar eden üs çarpanları, dik üçgen, prizma katları, yansıma, ortak bölenler ve nicelik oranları gibi veriye bağlı küçük modeller eklendi.
+- **Görsel erişilebilirliği:** TalkBack etiketleri görselin ne anlattığını ve problemde kullanılan gerçek nesne/sayı miktarlarını içeriyor; rastgele önceki örneğin alt metni kullanılmıyor.
+- **Doğru ölçek:** Dikdörtgen kenar oranları soru parametrelerinden hesaplanıyor.
+- **Uygunluk:** Yaş grubuna göre görsel yoğunluğu ayarlanıyor. Cihazın offline Türkçe TTS sesi yoksa metinli deneyim devam ediyor. Kaydedilmiş profesyonel ses dosyaları dahil edilmiş değil.
+
+### Son Android cihaz kabul senaryoları
+
+1. 1. sınıfta 9 elmadan 6 çıkarma sorusunda tam altı nesnenin üstünün çizildiğini, kalan nesnelerin alt satırlarda yanlış işaretlenmediğini doğrula.
+2. 1. sınıfta sesli anlatım açıkken kavrama sorusu ve cevaplarının okunduğunu; doğru cevaptan sonra herhangi bir butona basmadan alıştırmaya geçildiğini kontrol et.
+3. Seslendirme sürerken geri dön, başka dersi aç; eski ses ve durdurma callback'lerinin yeni dersi susturmadığını doğrula.
+4. 2. sınıfta yarım, 4. sınıfta kesir ve çevre; 6. sınıfta eksi sıcaklık ve cebir; 8. sınıfta dik üçgen, EBOB ve hacim görsellerini gerçek soru sayılarıyla karşılaştır.
+5. Uygulamayı dersin ortasında kapatıp aç: aynı konu, aşama, soru ve ipuçları tutarlı olmalı. Sonra dersi tekrar açınca farklı oturum soruları gelmeli.
+6. 320/360/412 dp ekranlarda, yazı büyütmede ve TalkBack ile seslendirme kapalı/açık durumlarını ayrı ayrı dene.
+7. Mevcut ücretli hakları/oyun ödüllerini ve Cloudflare Premium'u yeniden test et; Öğren güncellemesi bunların davranışını değiştirmemeli.
+
 ## 4. Ürün kabul matrisi / yayın blokajları
 
 ### Kod doğrulama (GitHub CI)
@@ -63,6 +84,9 @@ Yeni içerik ile birlikte:
 - [x] 24 aşamalı, kavram sorulu anlatım senaryosu eklendi
 - [x] Sınıfa uygun görsel modeller eklendi
 - [x] Cihaz içi tekrar önerisi ve eski kayıt uyumluluğu eklendi
+- [x] Eski uygulama sürümlerinin tamamlanan dersleri için tek seferlik tekrar görünürlüğü eklendi
+- [x] Üst sınıflar için canlı soruya bağlı görseller ve binlerce örneği doğrulayan testler eklendi
+- [x] Satır kaymasında çıkarma nesnelerini doğru sayan testler ve yaşa uygun sesli seçenek akışı eklendi
 - [ ] **Son commit için CI yeşil** (kesin kanıt CI sayfasında kontrol edilecek)
 - [ ] Android emülatör gerçek UI ve ses/dokunma testi
 - [ ] Gerçek cihazda 320/360/412 dp ve font ölçeği / TalkBack kontrolü
@@ -80,7 +104,9 @@ Yeni içerik ile birlikte:
 - LessonTeachingCatalog + ExpandedLessonTeachingCatalog: kavram anlatımı ve yanlış anlama kontrolü
 - LessonTeachingIllustration + AdvancedLessonIllustration + PracticeQuestionIllustration: yaşa ve soru sayılarına uygun vektörel diyagram
 - TopicStarterCatalog + TopicStarterQuestionBank: 22 yeni giriş dersi, anlatım senaryosu ve değişken soru ailesi
-- PracticeVisualFactory: soru metninden güvenli görsel model kurma, bilinmeyen şablonda gösterimi kapatma
+- PracticeVisualFactory + UpperGradePracticeVisualFactory: soru metninden güvenli görsel model kurma, bilinmeyen şablonda gösterimi kapatma
+- CounterArrangement: çok satırlı nesne görsellerinde doğru çıkarma indekslemesi
+- UpperGradePracticeIllustration: üst sınıflara uygun ölçülü vektör gösterimi
 - LearningJourneyProgress + LearningReviewPolicy: kayıt koruma ve tekrar önerisi
 - LearnTabScreen: konu kitaplığı, gerçek hazır dersler, kaldığın yer, tekrar önerileri
 - LearningPracticeSection: üç aşama, seslendirme, dokunma, kavrama kontrolü ve ilgili mevcut oyun

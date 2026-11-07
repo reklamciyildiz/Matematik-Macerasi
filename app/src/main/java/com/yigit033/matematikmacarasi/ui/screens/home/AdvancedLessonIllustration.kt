@@ -420,6 +420,103 @@ internal fun AdvancedLessonIllustration(
                 color = amber, fontSize = 12.sp)
         }
 
+        TeachingVisual.SYMMETRY -> {
+            Canvas(Modifier.fillMaxWidth().height(150.dp)) {
+                val middle = size.width / 2f
+                val baseline = size.height * .75f
+                drawLine(amber,
+                    Offset(middle, size.height * .08f),
+                    Offset(middle, size.height * .93f),
+                    strokeWidth = 2.5.dp.toPx())
+                val left = Path().apply {
+                    moveTo(middle - size.width * .15f, size.height * .2f)
+                    lineTo(middle - size.width * .32f, baseline)
+                    lineTo(middle - size.width * .08f, baseline)
+                    close()
+                }
+                drawPath(left, sea)
+                drawPath(left, ink, style = Stroke(2.dp.toPx()))
+                if (phase >= 1) {
+                    val right = Path().apply {
+                        moveTo(middle + size.width * .15f, size.height * .2f)
+                        lineTo(middle + size.width * .32f, baseline)
+                        lineTo(middle + size.width * .08f, baseline)
+                        close()
+                    }
+                    drawPath(right, Color(0xFF7E9DE3))
+                    drawPath(right, ink, style = Stroke(2.dp.toPx()))
+                    // Equal distances from the vertical symmetry axis.
+                    drawLine(amber, Offset(middle - size.width * .15f,
+                        size.height * .2f), Offset(middle + size.width * .15f,
+                        size.height * .2f), strokeWidth = 1.5.dp.toPx())
+                }
+            }
+            Text("Ortadaki çizgiye göre karşılıklı noktalar eş uzaklıktadır.",
+                color = amber, fontSize = 12.sp, textAlign = TextAlign.Center)
+        }
+
+        TeachingVisual.RIGHT_TRIANGLE -> {
+            Canvas(Modifier.fillMaxWidth().height(168.dp)) {
+                val origin = Offset(size.width * .20f, size.height * .85f)
+                val up = Offset(origin.x, size.height * .14f)
+                val right = Offset(size.width * .80f, origin.y)
+                val triangle = Path().apply {
+                    moveTo(origin.x, origin.y)
+                    lineTo(up.x, up.y)
+                    lineTo(right.x, right.y)
+                    close()
+                }
+                drawPath(triangle, Color(0xFF275A7A))
+                drawPath(triangle, sea, style = Stroke(width = 4.dp.toPx()))
+                val boxSize = 18.dp.toPx()
+                val square = Path().apply {
+                    moveTo(origin.x, origin.y - boxSize)
+                    lineTo(origin.x + boxSize, origin.y - boxSize)
+                    lineTo(origin.x + boxSize, origin.y)
+                }
+                drawPath(square, amber, style = Stroke(2.dp.toPx()))
+            }
+            Row(Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly) {
+                Text("Dik kenar: 3", color = ink, fontSize = 13.sp)
+                Text("Dik kenar: 4", color = ink, fontSize = 13.sp)
+                if (phase >= 1) Text("Hipotenüs: 5", color = amber,
+                    fontSize = 13.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        TeachingVisual.VOLUME_STACK -> {
+            val columns = v[0]
+            val rows = v[1]
+            val layers = v[2]
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                repeat(if (phase >= 1) layers else 1) { layer ->
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        repeat(rows) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                repeat(columns) {
+                                    Box(Modifier.size(25.dp)
+                                        .background(
+                                            if (layer % 2 == 0) sea
+                                            else Color(0xFF7A99E1),
+                                            RoundedCornerShape(4.dp))
+                                        .border(1.dp, Color(0xFF1D5471),
+                                            RoundedCornerShape(4.dp)))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Text(
+                "Taban: " + (columns * rows) +
+                    " birim kare · Kat sayısı: " + layers +
+                    " · Hacim: " + (columns * rows * layers) + " birim küp",
+                color = amber, fontSize = 12.sp, textAlign = TextAlign.Center
+            )
+        }
+
         else -> Unit // Legacy NUMBER_STEPS and GROUPS render separately.
     }
 }

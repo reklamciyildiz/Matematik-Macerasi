@@ -82,6 +82,8 @@ fun LearnTabScreen(
     var selectedTopicId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var selectedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var reportExpanded by rememberSaveable(userClass) { mutableStateOf(false) }
+    var showAllTopics by rememberSaveable(userClass) { mutableStateOf(false) }
+    val homeScroll = rememberScrollState()
     var revision by remember { mutableIntStateOf(0) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -123,7 +125,8 @@ fun LearnTabScreen(
     val last = progress.lastLesson()?.let { id -> lessons.firstOrNull { it.id == id } }
     val next = last ?: lessons.firstOrNull { !progress.completed(it.id) } ?: lessons.firstOrNull()
     val completed = lessons.count { progress.completed(it.id) }
-    val topicsByArea = curriculum.topics.groupBy { it.area }
+    val listedTopics = if (showAllTopics) curriculum.topics else curriculum.topics.filter { it.playable }
+    val topicsByArea = listedTopics.groupBy { it.area }
     val ageLine = when (curriculum.band) {
         InstructionBand.VISUAL_AUDIO -> "Önce gör, sonra birlikte dene."
         InstructionBand.VISUAL_GUIDED -> "Örnekleri incele, adım adım uygula."
@@ -131,7 +134,7 @@ fun LearnTabScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState())
+        modifier = modifier.fillMaxSize().verticalScroll(homeScroll)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
@@ -157,7 +160,7 @@ fun LearnTabScreen(
                         tint = hubGold, modifier = Modifier.size(27.dp))
                 }
                 Spacer(Modifier.width(12.dp))
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text("Matematik Kitaplığım", color = Color.White,
                         fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                     Text(userClass.ifBlank { "1. Sınıf" } + " · " + ageLine,
@@ -270,8 +273,38 @@ fun LearnTabScreen(
             )
         }
 
-        Text("Konu Kitaplığım", color = Color.White,
-            fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    if (showAllTopics) "Konu Kitaplığım" else "Şimdi Öğrenebileceklerim",
+                    color = Color.White, fontSize = 19.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    if (showAllTopics) "Planlanan ve hazır konular"
+                    else "Oynanabilir kısa dersler",
+                    color = hubText, fontSize = 11.sp
+                )
+            }
+            Box(
+                modifier = Modifier.background(Color(0xFF285D79), RoundedCornerShape(12.dp))
+                    .border(1.dp, Color(0xFF4D91AB), RoundedCornerShape(12.dp))
+                    .clickable { showAllTopics = !showAllTopics }
+                    .heightIn(min = 44.dp)
+                    .padding(horizontal = 11.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    if (showAllTopics) "Hazır Dersler" else "Tüm Konular",
+                    color = hubCyan, fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
 
         topicsByArea.forEach { (area, topics) ->
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {

@@ -17,6 +17,34 @@ data class PracticeVisualModel(
     val description: String
 ) {
     init { require(values.isNotEmpty() && values.all { it >= 0 }) }
+
+    /** Equivalent information for learners using TalkBack.
+     * The narration is calculated from the current problem, never a stock caption.
+     */
+    fun accessibilityText(): String = when (kind) {
+        PracticeVisualKind.ADD_GROUPS ->
+            "${values[0]} nesnelik bir grup ve ${values[1]} nesnelik ikinci grup."
+        PracticeVisualKind.TAKE_AWAY ->
+            "${values[0]} nesneden ${values[1]} tanesinin üzeri çizilmiş."
+        PracticeVisualKind.COMPARE_GROUPS ->
+            "A grubu ${values[0]} nesne; B grubu ${values[1]} nesne."
+        PracticeVisualKind.THREE_BARS ->
+            values.mapIndexed { index, n -> "${'A' + index} grubu: $n" }.joinToString(". ")
+        PracticeVisualKind.TENS_AND_ONES ->
+            "${values[0]} onluk, ${values[1]} birlik."
+        PracticeVisualKind.TWO_EQUAL_PARTS ->
+            "${values[0]} nesne iki eş gruba ayrılmış."
+        PracticeVisualKind.THREE_EQUAL_PARTS ->
+            "${values[0]} nesne üç eş gruba ayrılmış."
+        PracticeVisualKind.FRACTION_PARTS ->
+            "${values[0]} nesnenin ${values[1]} bölü ${values[2]} kesri."
+        PracticeVisualKind.CLOCK_START ->
+            "Saat ${values[0]} sıfır sıfırı gösteren saat kadranı."
+        PracticeVisualKind.TRIANGLE -> "Üç kenarlı ve üç köşeli üçgen."
+        PracticeVisualKind.SQUARE -> "Dört kenarlı ve dört köşeli kare."
+        PracticeVisualKind.PERIMETER ->
+            "Kenarları ${values[0]} ve ${values[1]} birim olan dikdörtgen."
+    }
 }
 
 object PracticeVisualFactory {

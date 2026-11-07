@@ -81,7 +81,7 @@ test("legacy printable code formats are accepted, non-printable formats are reje
   assert.equal(validCode("MM+12@AB"), true);
   assert.equal(validCode("ABC DEF8"), true);
   assert.equal(validCode("ÖĞREN123"), true);
-  assert.equal(validCode("ABC\\nDEF8"), false);
+  assert.equal(validCode("ABC" + String.fromCharCode(10) + "DEF8"), false);
   assert.equal(validCode(" ABCDEF8"), false);
   const env = setup();
   const code = "MM+12@AB";

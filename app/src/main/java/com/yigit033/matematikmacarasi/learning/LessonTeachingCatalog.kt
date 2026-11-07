@@ -37,6 +37,9 @@ data class LessonTeachingScript(
         require(earlyExplanation.isNotBlank() && laterExplanation.isNotBlank())
         when (visual) {
             TeachingVisual.NUMBER_STEPS -> require(sequence.size >= 4 && groups.isEmpty())
+            TeachingVisual.ANGLE -> require(
+                groups.size == 2 && groups.all { it in 1..180 } && sequence.isEmpty()
+            )
             TeachingVisual.GROUPS, TeachingVisual.EQUAL_GROUPS,
             TeachingVisual.TAKE_AWAY, TeachingVisual.PLACE_VALUE,
             TeachingVisual.FRACTION_BAR, TeachingVisual.SHAPE,
@@ -45,7 +48,7 @@ data class LessonTeachingScript(
             TeachingVisual.DECIMAL, TeachingVisual.EQUATION,
             TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN,
             TeachingVisual.SYMMETRY, TeachingVisual.RIGHT_TRIANGLE,
-            TeachingVisual.VOLUME_STACK, TeachingVisual.ANGLE ->
+            TeachingVisual.VOLUME_STACK ->
                 require(groups.size >= 2 && groups.all { it in 1..20 } && sequence.isEmpty())
         }
     }

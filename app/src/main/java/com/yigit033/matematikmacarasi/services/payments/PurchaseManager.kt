@@ -1,13 +1,6 @@
 package com.yigit033.matematikmacarasi.services.payments
 
 import android.app.Activity
-import android.app.AlertDialog
-import android.os.SystemClock
-import android.text.InputType
-import android.widget.CheckBox
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
 import android.content.Context
 import android.util.Log
@@ -78,7 +71,6 @@ class PurchaseManager private constructor(
         object NotFound:RestoreState()
         data class Error(val message:String):RestoreState()
     }
-    private var adultGateShowing=false
     private var billingConnecting=false
     
     // Satın alma durumu için LiveData
@@ -621,64 +613,23 @@ class PurchaseManager private constructor(
      * Bu metod, kullanıcı arayüzünden kolayca çağrılabilir.
      */
     fun buyPremium(activity:Activity) {
-        if(isPremiumSync()) {
-            _purchaseStatus.value=PurchaseStatus.AlreadyOwned
-            Toast.makeText(activity,"Premium erişimin zaten etkin.",Toast.LENGTH_SHORT).show()
+        if (activity.isFinishing || activity.isDestroyed) return
+        if (isPremiumSync()) {
+            _purchaseStatus.value = PurchaseStatus.AlreadyOwned
+            Toast.makeText(activity, "Premium erişimin zaten etkin.", Toast.LENGTH_SHORT).show()
             return
         }
-        if(adultGateShowing || activity.isFinishing || activity.isDestroyed) return
-        val question=AdultPurchaseChallenge.create(
-            (SystemClock.elapsedRealtime() xor System.nanoTime()).toInt())
-        val answer=EditText(activity).apply {
-            inputType=InputType.TYPE_CLASS_NUMBER
-            hint="İşlemin sonucu"
-        }
-        val consent=CheckBox(activity).apply {
-            text="Yetişkin olduğumu ve ödeme ekranına geçebileceğimi onaylıyorum."
-        }
-        val prompt=TextView(activity).apply {
-            text="Bu bölüm yetişkinler içindir.\n\n"+question.prompt
-            textSize=18f
-        }
-        val layout=LinearLayout(activity).apply {
-            orientation=LinearLayout.VERTICAL
-            val pad=(20*resources.displayMetrics.density).toInt()
-            setPadding(pad,pad,pad,pad)
-            addView(prompt);addView(answer);addView(consent)
-        }
-        adultGateShowing=true
-        val dialog=AlertDialog.Builder(activity)
-            .setTitle("Yetişkin Bölgesi")
-            .setMessage("Devam Et düğmesi Google Play ödeme ekranına yönlendirebilir.")
-            .setView(layout)
-            .setNegativeButton("Vazgeç"){_,_->}
-            .setPositiveButton("Devam Et",null)
-            .create()
-        dialog.setOnDismissListener { adultGateShowing=false }
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                if(AdultPurchaseChallenge.accepted(
-                        question,answer.text.toString(),consent.isChecked)) {
-                    dialog.dismiss()
-                    startPurchaseAfterAdultGate(activity)
-                } else {
-                    answer.error="Doğru işlem ve yetişkin onayı gerekli."
-                }
-            }
-        }
-        runCatching { dialog.show() }.onFailure {
-            adultGateShowing=false
-            Log.e(TAG,"Could not open adult purchase gate",it)
-        }
+        // Direct Google Play Billing launch: no app-specific adult challenge.
+        // Play Store and family-account purchase approvals still apply.
+        startPurchase(activity)
     }
 
-    private fun startPurchaseAfterAdultGate(activity:Activity) {
+    private fun startPurchase(activity:Activity) {
         if(activity.isFinishing || activity.isDestroyed) return
         if(isPremiumSync()) {
             _purchaseStatus.value=PurchaseStatus.AlreadyOwned
             return
         }
-        Log.d(TAG,"Adult purchase gate accepted")
         
         // Önce temel kontrolleri yap
         try {

@@ -128,7 +128,8 @@ internal class CloudflarePremiumClient(private val context: Context) {
         return prefs.edit().putString("signed_license", token).commit()
     }
 
-    private fun verify(token: String): Claims? {\n        return try {
+    private fun verify(token: String): Claims? {
+        return try {
         if (token.length !in 64..4000) return null
         val parts = token.split(".")
         if (parts.size != 3) return null

@@ -46,32 +46,14 @@ class AvatarService(private val context: Context) {
             }
         }
         
-        // ** Düzeltme: Yüklenen ID'leri temizle **
-        try {
-            val purchaseManager = com.yigit033.matematikmacarasi.services.payments.PurchaseManager.getInstance(context)
-            val isPremium = purchaseManager.isPremiumSync() 
-            Log.d("AvatarService", "Başlangıçta premium durum kontrolü: $isPremium")
-            
-            // Eğer kullanıcı premium DEĞİLSE, premium avatar ID'lerini (7-15) setten çıkar
-            if (!isPremium) {
-                val initialCount = tempUnlockedIds.size
-                tempUnlockedIds.removeAll { it in 7..15 }
-                if (tempUnlockedIds.size < initialCount) {
-                    Log.w("AvatarService", "Premium olmayan kullanıcı için SharedPreferences'ten premium avatarlar temizlendi.")
-                    // ** Düzeltme: Temizlenmiş ID'leri tekrar SharedPreferences'e kaydet **
-                    prefs.edit().putStringSet("unlocked_avatar_ids", tempUnlockedIds.map { it.toString() }.toSet()).apply()
-                }
-            }
-            // Not: Kullanıcı premium ise, ID'leri olduğu gibi bırakıyoruz. Kilidi açma mantığı yıldız kontrolünü zaten yapıyor.
-        } catch (e: Exception) {
-            Log.e("AvatarService", "Premium durumu kontrol edilirken hata, avatar ID temizleme atlandı: ${e.message}", e)
-            // Hata durumunda ID'leri olduğu gibi bırak, varsayılan olarak devam et
-        }
-
-        // Temizlenmiş ID'leri asıl sete ata
+        // Preserve paid/star-unlocked avatar ownership across offline starts and
+        // delayed Play / Cloudflare entitlement refreshes. A temporary Free
+        // state must NEVER destructively remove previously unlocked IDs.
+        // Premium visibility and selection are enforced at the point of use.
         _unlockedAvatarIds.clear()
         _unlockedAvatarIds.addAll(tempUnlockedIds)
-        
+        _unlockedAvatarIds.add(1) // Default avatar is always available.
+
         // Avatarları yükle
         loadAvatars()
         
@@ -328,17 +310,16 @@ class AvatarService(private val context: Context) {
                 return false
             }
             
-            // Değişiklik gerekli mi kontrol et
-            if (_currentAvatarId == avatarId) {
-                // Zaten seçili, işlem başarılı
-                return true
-            }
-            
-            // Premium avatar cannot be selected on Free even if previously
-            // unlocked with stars. Honor the existing offline entitlement cache.
-            if(avatarId>6 && !com.yigit033.matematikmacarasi.services.payments
+            // Premium avatar cannot be selected on Free, even when it was
+            // previously unlocked. Check BEFORE the already-selected shortcut.
+            if (avatarId > 6 && !com.yigit033.matematikmacarasi.services.payments
                     .PurchaseManager.getInstance(context).isPremiumSync()) {
                 return false
+            }
+
+            // Değişiklik gerekli mi kontrol et
+            if (_currentAvatarId == avatarId) {
+                return true
             }
 
             // Avatarı güncelle

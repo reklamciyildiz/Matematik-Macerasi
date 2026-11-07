@@ -60,6 +60,7 @@ Yeni içerik ile birlikte:
 - **Eski kullanıcılar:** Daha önce bitirilmiş, tekrar zamanı kayıtlı olmayan derslere güvenli bir ilk tekrar önerisi sunuluyor. Başarı ve Premium hakları değiştirilmiyor.
 - **Üst sınıf alıştırma görselleri:** 5–8. sınıflarda seçilmiş 20 kazanım için alan ızgarası, veri sütunu, olasılık sonuçları, negatif sayı şeridi, denklem dengesi, tekrar eden üs çarpanları, dik üçgen, prizma katları, yansıma, ortak bölenler ve nicelik oranları gibi veriye bağlı küçük modeller eklendi.
 - **Görsel erişilebilirliği:** TalkBack etiketleri görselin ne anlattığını ve problemde kullanılan gerçek nesne/sayı miktarlarını içeriyor; rastgele önceki örneğin alt metni kullanılmıyor.
+- **Dokunarak kesir keşfi:** Kesir anlatımının rehberli örneğinde öğrenci eş parçalara dokunarak boyayabilir veya geri alabilir; seçili pay gerçek zamanlı gösterilir. Bu bağımsız bir oyun veya ödül kapısı değil, dersin içindeki matematik aracıdır.
 - **Doğru ölçek:** Dikdörtgen kenar oranları soru parametrelerinden hesaplanıyor.
 - **Uygunluk:** Yaş grubuna göre görsel yoğunluğu ayarlanıyor. Cihazın offline Türkçe TTS sesi yoksa metinli deneyim devam ediyor. Kaydedilmiş profesyonel ses dosyaları dahil edilmiş değil.
 

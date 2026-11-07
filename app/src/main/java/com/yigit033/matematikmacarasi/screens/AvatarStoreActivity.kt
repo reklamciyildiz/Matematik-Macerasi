@@ -534,7 +534,13 @@ fun AvatarStoreScreen(
             )
         }
         
-        Column(modifier = Modifier.fillMaxSize()) {
+        // Keep all interactive content beneath status bar / camera cutout
+        // while the dark ocean background still fills the entire window.
+        Column(
+            modifier = Modifier.fillMaxSize()
+                .safeDrawingPadding()
+                .padding(top = 6.dp)
+        ) {
             // Toolbar
             TopAppBar(
                 title = { 
@@ -542,15 +548,25 @@ fun AvatarStoreScreen(
                         "Avatar Mağazası",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
+                        fontSize = 20.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier.padding(start = 5.dp)
+                            .size(52.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF245B77))
+                            .border(1.dp, Color(0xFF5F9CB5), CircleShape)
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Geri",
-                            tint = Color.White
+                            contentDescription = "Avatar mağazasından geri dön",
+                            tint = Color.White,
+                            modifier = Modifier.size(25.dp)
                         )
                     }
                 },

@@ -50,7 +50,12 @@ object GradeCurriculumCatalog {
     }
     fun forGrade(grade: Int): GradeCurriculum {
         require(grade in 1..8)
-        val topics = if (grade <= 4) primaryTopics(grade) else secondaryTopics(grade)
+        val base = if (grade <= 4) primaryTopics(grade) else secondaryTopics(grade)
+        val topics = base.map { topic ->
+            val suffix = topic.id.removePrefix("g" + grade + "_")
+            topic.copy(lessonIds = topic.lessonIds +
+                ExpandedLessonCatalog.lessonIdsForTopic(grade, suffix))
+        }
         val pilotIds = LearningPathCatalog.forGrade("$grade. Sınıf").map { it.id }.toSet()
         require(topics.flatMap { it.lessonIds }.toSet() == pilotIds) {
             "Every pilot must be mapped to its grade's curriculum"

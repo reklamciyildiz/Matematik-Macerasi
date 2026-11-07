@@ -1,7 +1,8 @@
 package com.yigit033.matematikmacarasi.services
 
 import android.content.Context
-import android.util.Log\nimport com.yigit033.matematikmacarasi.BuildConfig
+import android.util.Log
+import com.yigit033.matematikmacarasi.BuildConfig
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import com.yigit033.matematikmacarasi.utils.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +22,8 @@ class PremiumCodeValidator private constructor(private val context: Context) {
 
     private val TAG = "PremiumCodeValidator"
     private val firebaseManager by lazy { FirebaseManager.getInstance(context) }
-    private val deviceIdManager by lazy { DeviceIdManager.getInstance(context) }\n    private val cloudflare by lazy { CloudflarePremiumClient(context) }
+    private val deviceIdManager by lazy { DeviceIdManager.getInstance(context) }
+    private val cloudflare by lazy { CloudflarePremiumClient(context) }
     private val sharedPrefs = context.getSharedPreferences("premium_code_prefs", Context.MODE_PRIVATE)
 
     companion object {

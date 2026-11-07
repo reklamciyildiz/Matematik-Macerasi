@@ -3,11 +3,11 @@ main = "src/index.mjs"
 compatibility_date = "2026-10-01"
 workers_dev = true
 
-# Replace this value ONLY after running wrangler d1 create.
+# Cloudflare D1 database created in the owner's Free account.
 [[d1_databases]]
 binding = "DB"
 database_name = "matematik-macerasi-premium"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "278757f5-3ff1-490e-854d-d7eb6898f296"
 migrations_dir = "migrations"
 
 # Approximate, per-Cloudflare-datacenter abuse protection; not an identity proof.

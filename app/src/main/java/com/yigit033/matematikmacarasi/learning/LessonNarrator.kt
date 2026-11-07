@@ -71,12 +71,12 @@ class LessonNarrator(context: Context) {
                                             }
                                         }
 
-                                        override fun onDone(utteranceId: String) = markStopped()
-                                        override fun onError(utteranceId: String) = markStopped()
+                                        override fun onDone(utteranceId: String) = markStopped(utteranceId)
+                                        override fun onError(utteranceId: String) = markStopped(utteranceId)
                                         override fun onStop(utteranceId: String, interrupted: Boolean) =
-                                            markStopped()
+                                            markStopped(utteranceId)
 
-                                        private fun markStopped() {
+                                        private fun markStopped(utteranceId: String) {
                                             main.post {
                                                 if (!closed && utteranceId == activeUtterance) {
                                                     activeUtterance = null

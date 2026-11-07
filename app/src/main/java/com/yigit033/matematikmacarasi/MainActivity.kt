@@ -100,6 +100,7 @@ import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import android.util.Log
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -254,8 +255,9 @@ class MainActivity : ComponentActivity() {
             purchaseManager = PurchaseManager.getInstance(this)
             Log.d("MainActivity", "PurchaseManager başlatıldı")
             
-            // Firebase'den premium kod durumunu senkronize et (uygulama silme-yükleme durumu için)
-            syncPremiumCodeFromFirebase()
+            // Legacy APKs keep Firebase restore. In Cloudflare mode onResume
+            // handles license renewal and one-time code migration instead.
+            if (!BuildConfig.MM_USE_CLOUDFLARE) syncPremiumCodeFromFirebase()
             
             // AdManager'ı başlat
             adManager = AdManager.getInstance(this)
@@ -336,6 +338,24 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         lastResumeTime = System.currentTimeMillis()
+
+        // Recheck every time the app returns to the foreground. The client
+        // performs network renewal only after the signed token's day-60 mark,
+        // and keeps the 7-day offline grace period on transient failures.
+        if (BuildConfig.MM_USE_CLOUDFLARE) {
+            lifecycleScope.launch {
+                try {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        PremiumCodeValidator.getInstance(this@MainActivity)
+                            .checkAndSyncPremiumStatus()
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Cloudflare Premium check unavailable: ${e.javaClass.simpleName}")
+                } finally {
+                    purchaseManager?.refreshPremiumState()
+                }
+            }
+        }
         
         // Oyunlardan geri dönüldüğünde müziğin kesintisiz devam etmesi için
         val continueMusicFromGame = intent.getBooleanExtra("continue_music", false)

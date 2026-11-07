@@ -2,6 +2,7 @@ package com.yigit033.matematikmacarasi.services
 
 import android.content.Context
 import android.util.Log
+import com.yigit033.matematikmacarasi.BuildConfig
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import com.yigit033.matematikmacarasi.utils.NetworkUtils
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +23,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
     private val TAG = "PremiumCodeValidator"
     private val firebaseManager by lazy { FirebaseManager.getInstance(context) }
     private val deviceIdManager by lazy { DeviceIdManager.getInstance(context) }
+    private val cloudflare by lazy { CloudflarePremiumClient(context) }
     private val sharedPrefs = context.getSharedPreferences("premium_code_prefs", Context.MODE_PRIVATE)
 
     companion object {
@@ -56,6 +58,24 @@ class PremiumCodeValidator private constructor(private val context: Context) {
         if (!NetworkUtils.isInternetAvailable(context)) {
             Log.e(TAG, "İnternet bağlantısı yok.")
             return ValidationResult.NetworkError
+        }
+
+        if (BuildConfig.MM_USE_CLOUDFLARE) {
+            return when (val result = cloudflare.activate(code)) {
+                is CloudflarePremiumClient.Result.Success -> {
+                    PurchaseManager.getInstance(context).refreshPremiumState()
+                    ValidationResult.Success
+                }
+                is CloudflarePremiumClient.Result.Failure -> when (result.reason) {
+                    CloudflarePremiumClient.Error.INVALID_CODE -> ValidationResult.InvalidCode
+                    CloudflarePremiumClient.Error.ALREADY_ACTIVE -> ValidationResult.DifferentCodeAlreadyActivated
+                    CloudflarePremiumClient.Error.RATE_LIMITED ->
+                        ValidationResult.Error("Çok fazla deneme yapıldı. Bir dakika sonra tekrar dene.")
+                    CloudflarePremiumClient.Error.NETWORK -> ValidationResult.NetworkError
+                    CloudflarePremiumClient.Error.UNAVAILABLE ->
+                        ValidationResult.Error("Premium doğrulama servisine ulaşılamıyor.")
+                }
+            }
         }
 
         val deviceId = deviceIdManager.getDeviceId()
@@ -118,6 +138,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
      * SADECE local cache'den okur, Firebase sync manuel olarak yapılmalı!
      */
     fun isCodePremium(): Boolean {
+        if (BuildConfig.MM_USE_CLOUDFLARE) return cloudflare.isPremiumOffline()
         // Sadece local cache kontrol et, sync yapma!
         val localPremium = sharedPrefs.getBoolean(KEY_IS_CODE_PREMIUM, false)
         if (localPremium) {
@@ -131,6 +152,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
      * Bu fonksiyon arka planda çalışır, kullanıcıyı bekletmez.
      */
     private fun syncPremiumStatusFromFirebase() {
+        if (BuildConfig.MM_USE_CLOUDFLARE) return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val deviceId = deviceIdManager.getDeviceId()
@@ -155,6 +177,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
      * Uygulama başlangıcında veya ayarlar ekranında kullanılabilir.
      */
     suspend fun checkAndSyncPremiumStatus(): Boolean {
+        if (BuildConfig.MM_USE_CLOUDFLARE) return cloudflare.checkAndSync()
         return try {
             val deviceId = deviceIdManager.getDeviceId()
             val activation = firebaseManager.getDeviceActivation(deviceId)
@@ -200,6 +223,7 @@ class PremiumCodeValidator private constructor(private val context: Context) {
      */
     fun resetCodePremiumStatus() {
         setPremiumCodeStatus(false)
+        if (BuildConfig.MM_USE_CLOUDFLARE) cloudflare.resetForTests()
         deviceIdManager.resetDeviceId()
         Log.w(TAG, "Premium kod durumu sıfırlandı (geliştirici tarafından).")
     }

@@ -13,7 +13,8 @@ object ExpandedLessonQuestionBank {
         val explain: String
         when (lesson.id) {
             "g1_count20" -> {
-                val n=pick(1,10); answer=10+n
+                // Both endpoints are part of the declared 10–20 concept.
+                val n=pick(0,11); answer=10+n
                 prompt="10 nesneye $n nesne eklenirse toplam kaç olur?"
                 explain="Bir onluk ve $n birlik, $answer eder."
             }

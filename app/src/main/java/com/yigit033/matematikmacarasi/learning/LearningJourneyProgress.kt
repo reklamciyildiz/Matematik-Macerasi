@@ -23,6 +23,16 @@ class LearningJourneyProgress(context: Context) {
     fun hints(id: String): Int = prefs.getInt("session_hints_$id", 0).coerceAtLeast(0)
     fun seed(id: String): Long = prefs.getLong("session_seed_$id", 0L)
 
+    fun nextReviewAt(id: String): Long = prefs.getLong("review_due_$id", 0L)
+    fun lastReviewSignal(id: String): ReviewSignal? =
+        prefs.getString("review_signal_$id", null)
+            ?.let { value -> ReviewSignal.values().firstOrNull { it.name == value } }
+    fun isReviewDue(id: String, now: Long = System.currentTimeMillis()): Boolean =
+        LearningReviewPolicy.due(completed(id), now, nextReviewAt(id))
+    fun lastReviewComment(id: String): String? =
+        prefs.getString("review_note_$id", null)
+
+
     /** Which illustrated example step was already read (0-based). */
     fun workedStep(id: String): Int = prefs.getInt("worked_step_$id", 0).coerceIn(0, 5)
     fun saveWorkedStep(id: String, step: Int) {
@@ -78,12 +88,26 @@ class LearningJourneyProgress(context: Context) {
 
     fun complete(id: String, wrong: Int, hints: Int) {
         val accuracy = 400 / (4 + wrong.coerceAtLeast(0))
+        val advice = LearningReviewPolicy.recommend(
+            LearningSessionEvidence(
+                wrong.coerceAtLeast(0), hints.coerceAtLeast(0),
+                conceptErrors(id), runs(id),
+                prefs.getInt("clean_streak_$id", 0).coerceAtLeast(0)
+            )
+        )
+        val now = System.currentTimeMillis()
         prefs.edit()
             .putBoolean("done_$id", true)
             .putInt("best_$id", maxOf(best(id) ?: 0, accuracy))
             .putInt("runs_$id", runs(id) + 1)
             .putInt("last_wrong_$id", wrong)
             .putInt("last_hints_$id", hints)
+            .putLong("last_completed_$id", now)
+            .putLong("review_due_$id",
+                LearningReviewPolicy.nextReviewAt(now, advice.waitDays))
+            .putString("review_signal_$id", advice.signal.name)
+            .putString("review_note_$id", advice.explanation)
+            .putInt("clean_streak_$id", advice.cleanStreak)
             .putInt("phase_$id", 3)
             .apply()
     }

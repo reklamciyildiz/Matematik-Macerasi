@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -39,6 +40,7 @@ import com.yigit033.matematikmacarasi.learning.Lesson
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
 import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
 import com.yigit033.matematikmacarasi.games.sayiavi2.ForestAdventureActivity
+import kotlinx.coroutines.delay
 
 /** Eski yıldız ve Premium anahtarlarını değiştirmeyen ayrı ders kaydı. */
 private class PilotProgress(context: Context) {
@@ -136,6 +138,20 @@ private fun PracticeLesson(lesson: Lesson, onBack: () -> Unit, onFinish: (Int, I
     var finished by remember(lesson.id) { mutableStateOf(false) }
     val q = remember(lesson.id, seed, index) { LearningPathCatalog.question(lesson, seed, index) }
     val percentage = 400 / (4 + wrong)
+    // Correct answers advance automatically; tapping Next after every question
+    // would interrupt the short learning loop. Delay keeps the explanation
+    // readable and cancels safely if the student leaves this lesson.
+    LaunchedEffect(right, index, finished) {
+        if (right && !finished) {
+            delay(1150)
+            if (index == 3) {
+                onFinish(wrong, hints)
+                finished = true
+            } else {
+                index++
+            }
+        }
+    }
     Column(modifier = Modifier.fillMaxWidth()
         .background(Color(0xFF173654), RoundedCornerShape(18.dp))
         .border(1.dp, HomeColors.MagicCyan.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
@@ -197,16 +213,11 @@ private fun PracticeLesson(lesson: Lesson, onBack: () -> Unit, onFinish: (Int, I
             }, color = HomeColors.MagicCyan, fontSize = 13.sp)
             if (hinted && !right) Text(lesson.hint,
                 color = HomeColors.TextPrimary, fontSize = 13.sp)
-            if (right) Button(
-                onClick = {
-                    if (index == 3) {
-                        onFinish(wrong, hints)
-                        finished = true
-                    } else index++
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0F766E))
-            ) { Text(if (index == 3) "Dersi Tamamla" else "Sonraki Soru") }
+            if (right) Text(
+                if (index == 3) "Harika, dersin tamamlanıyor…" else "Doğru! Sonraki soruya geçiliyor…",
+                color = HomeColors.MagicCyan, fontSize = 13.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

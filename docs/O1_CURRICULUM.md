@@ -1,4 +1,7 @@
 # Ö1 — Matematik Macerası 1–8. Sınıf Konu/Kazanım Mimari Kararı
+
+> **8 Kasım 2026 içerik güncellemesi:** 1–8. sınıfta 59 konu/temel-tekrar kartının her biri artık en az bir özgün kısa derse açılıyor; toplam 54 farklı kısa ders (66 sınıf/ders gösterimi) bulunuyor. Aşağıdaki 7 Kasım pilot tablosu **tarihsel ilk kapsam**tır, güncel içeriğin tamamı değildir. En güncel kapsam ve yayın sınırları için [Öğren Genişletmesi](LEARNING_EXPANSION_RELEASE_GATE.md) dosyasına bakın. Bu, MEB'in bütün alt kazanımlarını kapsadığımız anlamına gelmez.
+
 **Tarih:** 7 Kasım 2026 · **Öğretim yılı:** 2026–2027
 **Durum:** Konu/çıktı planlama indeksi kodda var; **tam resmî kazanım eşlemesi, kitap içerikleri ve tüm derslerin geliştirilmesi henüz tamamlanmadı.**
 

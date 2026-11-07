@@ -270,7 +270,16 @@ fun AvatarStoreScreen(
     onBackClick: () -> Unit,
     onAvatarChanged: (Int) -> Unit
 ) {
-    val avatars = remember { avatarService.avatars }
+    // Read the current catalog on recomposition: unlocking an avatar updates
+    // AvatarService, and a remembered snapshot would keep cards falsely locked.
+    val avatars = avatarService.avatars
+    var avatarFilter by remember { mutableStateOf("Tümü") }
+    val visibleAvatars = when (avatarFilter) {
+        "Ücretsiz" -> avatars.filter { it.id <= 6 }
+        "Premium" -> avatars.filter { it.id > 6 }
+        "Açtıklarım" -> avatars.filter { it.isUnlocked }
+        else -> avatars
+    }
     val currentAvatarId = remember { mutableStateOf(avatarService.getCurrentAvatar().id) }
     
     // Yıldız sayısını izlemek için bir mutableState
@@ -480,9 +489,9 @@ fun AvatarStoreScreen(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF800080), // Mor (uygulamanın ana tema rengi - üst)
-                            Color(0xFF5D35A0), // Mor-Mavi geçiş
-                            Color(0xFF4169E1)  // Mavi (alt)
+                            Color(0xFF0C3655), // Home / profile ocean palette
+                            Color(0xFF102F4B),
+                            Color(0xFF061D33)
                         )
                     )
                 )
@@ -574,23 +583,48 @@ fun AvatarStoreScreen(
                 }
             )
             
-            // Başlık
-            Text(
-                text = "Avatar Seçin",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-                    .background(
-                        color = Color.White.copy(alpha = 0.2f),
-                        shape = RoundedCornerShape(4.dp)
-                    )
-                    .padding(vertical = 8.dp),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = Color.White
-            )
-            
+            // Compact collector hero: no empty/full-width decorative banner.
+            Column(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .background(Color(0xFF164965), RoundedCornerShape(20.dp))
+                    .border(1.dp, Color(0xFF5D91A8), RoundedCornerShape(20.dp))
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(7.dp)
+            ) {
+                Text("Avatar Seçin", color = Color.White,
+                    fontSize = 23.sp, fontWeight = FontWeight.ExtraBold)
+                Text("Kaşifini kişiselleştir. Yıldızlarınla avatar aç; Premium karakterler için Premium hakkı gerekir.",
+                    color = Color(0xFFC9E5EC), fontSize = 12.sp, lineHeight = 17.sp)
+                Text("${avatars.count { it.isUnlocked }} / ${avatars.size} avatar açık" +
+                    if (isPremium) "  ·  Premium aktif" else "  ·  9 Premium karakter",
+                    color = Color(0xFFFFD783), fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold)
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                listOf("Tümü", "Ücretsiz", "Premium", "Açtıklarım").forEach { filter ->
+                    val active = avatarFilter == filter
+                    Box(
+                        modifier = Modifier.weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (active) Color(0xFFFFD783) else Color(0xFF244A65))
+                            .clickable { avatarFilter = filter }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(filter, fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (active) Color(0xFF102B40) else Color.White,
+                            maxLines = 1)
+                    }
+                }
+            }
+
             // Avatar grid
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -599,7 +633,7 @@ fun AvatarStoreScreen(
                     .fillMaxSize()
                     .padding(bottom = 16.dp)
             ) {
-                items(avatars) { avatar ->
+                items(visibleAvatars, key = { it.id }) { avatar ->
                         AvatarItem(
                             avatar = avatar,
                             isSelected = avatar.id == currentAvatarId.value,
@@ -610,10 +644,12 @@ fun AvatarStoreScreen(
                                 // Avatar kilidini aç veya seç
                                 if (avatar.isUnlocked) {
                                     // Eğer avatar zaten açıksa, seçimi güncelle
-                                        avatarService.setCurrentAvatar(avatar.id)
-                                        onAvatarChanged(avatar.id)
-                                    // Kullanıcıya bildir
-                                    Toast.makeText(context, "${avatar.name} seçildi", Toast.LENGTH_SHORT).show()
+                                        if (avatarService.setCurrentAvatar(avatar.id)) {
+                                            onAvatarChanged(avatar.id)
+                                            Toast.makeText(context, "${avatar.name} seçildi", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            Toast.makeText(context, "Bu avatar için Premium erişimi gerekli.", Toast.LENGTH_SHORT).show()
+                                        }
                                 } else {
                                     // Satın alma için detay kontrolünü yap
                                     selectedAvatarForInfo = avatar
@@ -1924,274 +1960,80 @@ fun AvatarItem(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    // Kart rengi ve kenarlık rengi
-    val cardColor = if (isSelected) Color(0xFFE3F2FD) else Color.White
-    val borderColor = if (isSelected) Color(0xFF2196F3) else Color(0xFFE0E0E0)
-    
-    // Kilitli avatarlar için arka plan rengi
-    val backgroundTint = when {
-        !avatar.isUnlocked -> Color(0xFFF5F5F5) // Daha soluk bir arka plan
-        isSelected -> Color(0xFFE3F2FD)  // Seçili avatarlar için hafif mavi
-        else -> Color.White
+    val premium = avatar.id > 6
+    val edge = when {
+        isSelected -> Color(0xFFFFD783)
+        premium -> Color(0xFF6693AF)
+        else -> Color(0xFF3E7897)
     }
-    
     Card(
-        modifier = Modifier
-            .padding(10.dp)
-            .fillMaxWidth()
-            .aspectRatio(0.85f) // Biraz daha uzun kart
-            .clip(RoundedCornerShape(20.dp))
-            .clickable(onClick = onClick)
-            .border(
-                width = if (isSelected) 3.dp else 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(20.dp)
-            ),
-        backgroundColor = backgroundTint,
-        elevation = if (isSelected) 8.dp else 4.dp
+        modifier = Modifier.fillMaxWidth()
+            .padding(5.dp)
+            .heightIn(min = 208.dp)
+            .border(if (isSelected) 2.dp else 1.dp, edge, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        backgroundColor = if (isSelected) Color(0xFF1B5574) else Color(0xFF123B58),
+        elevation = if (isSelected) 7.dp else 2.dp
     ) {
-        Box {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Top
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(7.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
             ) {
-                // Avatar resmi container
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .padding(4.dp)
-                        .clip(CircleShape)
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0xFFE1F5FE),
-                                    Color(0xFFB3E5FC)
-                                )
-                            )
-                        )
-                        .border(
-                            width = 2.dp,
-                            color = if (isSelected) Color(0xFF2196F3) else Color(0xFFBDBDBD),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    // Avatar görünümü
-                    AnimatedAvatarView(
-                        avatar = avatar,
-                            modifier = Modifier.size(72.dp),
-                        contentDescription = avatar.name
-                        )
-                        
-                    // Kilit overlay'i
-                    if (!avatar.isUnlocked) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xAA000000), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_lock),
-                                contentDescription = "Kilitli",
-                                tint = Color.White,
-                                modifier = Modifier.size(36.dp)
-                            )
-                        }
-                    } 
-                }
-                
-                Spacer(modifier = Modifier.height(6.dp))
-                
-                // Avatar adı - daima görünür olacak şekilde
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = if (isSelected) Color(0x1A2196F3) else Color(0x1A000000),
-                            shape = RoundedCornerShape(8.dp)
-                        )
-                        .padding(vertical = 4.dp, horizontal = 4.dp),
-                    contentAlignment = Alignment.Center
-                ) {
                 Text(
-                    text = avatar.name,
-                        fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    color = if (isSelected) Color(0xFF2196F3) else Color(0xFF424242)
+                    when {
+                        isSelected -> "SEÇİLİ"
+                        premium -> "PREMIUM"
+                        else -> "KAŞİF"
+                    },
+                    color = if (isSelected || premium) Color(0xFFFFD783) else Color(0xFFB2E8EE),
+                    fontSize = 10.sp, fontWeight = FontWeight.ExtraBold
                 )
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Premium rozeti - Premium avatarlar için (id > 6)
-                if (avatar.id > 6) {
+            }
+            Box(
+                modifier = Modifier.size(90.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(listOf(
+                            if (premium) Color(0xFF356B87) else Color(0xFF2B7991),
+                            Color(0xFF082A45)
+                        ))
+                    )
+                    .border(2.dp, edge.copy(alpha = .8f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedAvatarView(avatar = avatar,
+                    modifier = Modifier.size(78.dp), contentDescription = avatar.name)
+                if (!avatar.isUnlocked) {
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .background(
-                                color = Color(0xFFFFF9C4), // Açık sarı arka plan
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(vertical = 2.dp, horizontal = 6.dp),
+                        modifier = Modifier.align(Alignment.BottomEnd).size(27.dp)
+                            .clip(CircleShape).background(Color(0xFF082A45)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_premium),
-                                contentDescription = "Premium",
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Text(
-                                text = "Premium",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF795548)
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Durum bilgisi: seçili, seç butonu veya kilitli bilgisi
-                if (avatar.isUnlocked) {
-                    if (isSelected) {
-                        // Seçili durum gösterge kutusu
-                        Box(
-                            modifier = Modifier
-                                .padding(vertical = 2.dp)
-                                .background(
-                                    color = Color(0xFF4CAF50),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Seçili",
-                                color = Color.White,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                    // Kilitli olmayan ve seçili olmayan avatarlar için gri "seç" butonu
-                    else {
-                        Box(
-                            modifier = Modifier
-                                .padding(vertical = 4.dp)
-                                .border(
-                                    width = 1.dp,
-                                    color = Color(0xFF9E9E9E),
-                                    shape = RoundedCornerShape(8.dp)
-                                )
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Seç",
-                                color = Color(0xFF9E9E9E),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-                    }
-                } else {
-                    // Kilitli avatarlar için yıldız fiyatı
-                    Box(
-                        modifier = Modifier
-                            .padding(vertical = 4.dp)
-                            .background(
-                                color = if (avatar.id > 6) Color(0xFFE1BEE7) else Color(0xFFFFF9C4), // Premium avatarlar için mor tint
-                                shape = RoundedCornerShape(8.dp)
-                            )
-                            .padding(horizontal = 12.dp, vertical = 4.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
-                        ) {
-                            // Premium için kilit ikonu, normal için yıldız ikonu
-                            if (avatar.id > 6) {
-                                Icon(
-                                    imageVector = Icons.Default.Lock,
-                                    contentDescription = "Premium Gerekli",
-                                    tint = Color(0xFF9C27B0),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            } else {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Yıldız",
-                                tint = Color(0xFFFFC107),
-                                    modifier = Modifier.size(16.dp)
-                            )
-                            }
-                            
-                            Spacer(modifier = Modifier.width(4.dp))
-                            
-                            Text(
-                                text = if (avatar.id > 6) "Gerekli" else "${avatar.price}",
-                                color = if (avatar.id > 6) Color(0xFF9C27B0) else Color(0xFF795548),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                        Icon(Icons.Filled.Lock, contentDescription = "Kilitli",
+                            tint = Color.White, modifier = Modifier.size(17.dp))
                     }
                 }
             }
-            
-            // Seçili avatar için köşede tik işareti
-            if (avatar.isUnlocked && isSelected) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .size(28.dp)
-                        .background(Color(0xFF4CAF50), CircleShape)
-                        .border(1.dp, Color.White, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Check,
-                        contentDescription = "Seçildi",
-                        tint = Color.White,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
-            
-            // Premium işareti köşede - Sadece ID > 6 olanlar için
-            if (avatar.id > 6 && !avatar.isUnlocked) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(8.dp)
-                        .size(28.dp)
-                        .background(Color(0xFF9C27B0), CircleShape)
-                        .border(1.dp, Color.White, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_premium),
-                        contentDescription = "Premium Gerekli",
-                        tint = Color(0xFFFFD700),
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+            Text(avatar.name, color = Color.White, fontSize = 13.sp,
+                fontWeight = FontWeight.Bold, maxLines = 2,
+                overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            Text(
+                when {
+                    isSelected -> "Kullanılıyor"
+                    avatar.isUnlocked -> "Seçmek için dokun"
+                    avatar.price <= 0 -> "Ücretsiz"
+                    else -> "${avatar.price} yıldız ile aç"
+                },
+                fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
+                color = if (isSelected) Color(0xFFFFD783) else Color(0xFFC3E0EC),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -4,6 +4,7 @@
 // applying the resulting SQL to production.
 import { createHmac, randomUUID } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import { validPremiumCode } from "../src/code-format.mjs";
 const [sourcePath, outputPath] = process.argv.slice(2);
 const pepper = process.env.CODE_PEPPER;
 if (!sourcePath || !outputPath || !pepper || pepper.length < 32 ||
@@ -30,7 +31,7 @@ for (const [device, activation] of Object.entries(activations)) {
   rowCount.set(activation.code, (rowCount.get(activation.code) || 0) + 1);
 }
 for (const [code, data] of Object.entries(codes)) {
-  if (!/^[A-Za-z0-9_-]{6,128}$/.test(code)) throw new Error("Legacy code has unsafe format: manually review");
+  if (!validPremiumCode(code)) throw new Error("Legacy code has unsafe format: manually review");
   const max = data.max_uses == null ? null : cleanCount(data.max_uses);
   if (max === 0) throw new Error("Zero max_uses found");
   const used = Math.max(cleanCount(data.used_count ?? 0), rowCount.get(code) || 0);

@@ -1,0 +1,26 @@
+name = "matematik-macerasi-premium"
+main = "src/index.mjs"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Replace this value ONLY after running wrangler d1 create.
+[[d1_databases]]
+binding = "DB"
+database_name = "matematik-macerasi-premium"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Approximate, per-Cloudflare-datacenter abuse protection; not an identity proof.
+[[ratelimits]]
+name = "REDEEM_LIMITER"
+namespace_id = "1001"
+  [ratelimits.simple]
+  limit = 30
+  period = 60
+
+[[ratelimits]]
+name = "RENEW_LIMITER"
+namespace_id = "1002"
+  [ratelimits.simple]
+  limit = 120
+  period = 60

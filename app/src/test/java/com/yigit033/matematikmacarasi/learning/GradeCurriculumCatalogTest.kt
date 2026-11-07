@@ -32,14 +32,14 @@ class GradeCurriculumCatalogTest {
         assertEquals(InstructionBand.EXPLANATION_DIAGRAM, GradeCurriculumCatalog.band(8))
     }
 
-    @Test fun onlyExistingPilotLessonsAreMarkedPlayable() {
+    @Test fun everyPlannedTopicNowHasAFoundationalLesson() {
         for (grade in 1..8) {
             val curriculum = GradeCurriculumCatalog.forGrade(grade)
             val actual = LearningPathCatalog.forGrade("$grade. Sınıf").map { it.id }.toSet()
             val displayed = curriculum.topics.flatMap { it.lessonIds }
             assertEquals(actual, displayed.toSet())
             assertEquals(displayed.size, displayed.distinct().size)
-            assertTrue(curriculum.topics.any { !it.playable })
+            assertTrue(curriculum.topics.all { it.playable })
             for (lesson in actual) {
                 assertNotNull(GradeCurriculumCatalog.topicForLesson(grade, lesson))
             }

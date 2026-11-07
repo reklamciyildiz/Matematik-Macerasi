@@ -52,4 +52,13 @@ object LearningReviewPolicy {
 
     fun due(completed: Boolean, now: Long, savedDueTime: Long): Boolean =
         completed && savedDueTime > 0L && now >= savedDueTime
+
+    /** Old installed versions recorded completion, not review timestamps.
+     * Suggest a one-time review rather than silently losing those lessons.
+     * Once reviewed, a proper due timestamp replaces this legacy fallback.
+     */
+    fun dueIncludingLegacy(
+        completed: Boolean, runs: Int, now: Long, savedDueTime: Long
+    ): Boolean = due(completed, now, savedDueTime) ||
+        (completed && runs > 0 && savedDueTime <= 0L)
 }

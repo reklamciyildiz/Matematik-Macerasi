@@ -30,10 +30,13 @@ purchase=read("services/payments/PurchaseManager.kt")
 require('PREMIUM_SKU = "matematik_macerasi_premium"' in purchase,
         "legacy non-consumable Premium product ID changed")
 require("private fun launchPurchaseFlow(" in purchase,
-        "purchase checkout can bypass central adult gate")
-require("AdultPurchaseChallenge.accepted" in purchase and
-        "startPurchaseAfterAdultGate(" in purchase,
-        "central adult approval absent")
+        "purchase checkout bypasses central purchase entry")
+require("fun buyPremium(activity:Activity)" in purchase and
+        "startPurchase(activity)" in purchase and
+        "private fun startPurchase(activity:Activity)" in purchase,
+        "direct Google Play purchase entry is missing")
+require("if (isPremiumSync())" in purchase,
+        "repeat purchase should be blocked for existing Premium")
 require("fun restorePurchases()" in purchase and "val restoreState:" in purchase,
         "explicit restore result channel missing")
 require("Purchase.PurchaseState.PURCHASED" in purchase and
@@ -79,5 +82,5 @@ require("initializeAdMob()" not in application,
 if checks:
     for x in checks:print("ERROR:",x)
     raise SystemExit(1)
-print("PASS: S3.3 entitlement, adult gate, restoration UI, ads off, legacy SKU, debug activity")
+print("PASS: S3.3 entitlement, direct Play flow, restoration UI, ads off, legacy SKU, debug activity")
 print("NOTE: Play Console declarations, AAB signing, purchase token backend verification and child SDK review remain external acceptance gates")

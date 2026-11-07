@@ -54,7 +54,8 @@ object GradeCurriculumCatalog {
         val topics = base.map { topic ->
             val suffix = topic.id.removePrefix("g" + grade + "_")
             topic.copy(lessonIds = topic.lessonIds +
-                ExpandedLessonCatalog.lessonIdsForTopic(grade, suffix))
+                ExpandedLessonCatalog.lessonIdsForTopic(grade, suffix) +
+                TopicStarterCatalog.lessonIdsForTopic(grade, suffix))
         }
         val pilotIds = LearningPathCatalog.forGrade("$grade. Sınıf").map { it.id }.toSet()
         require(topics.flatMap { it.lessonIds }.toSet() == pilotIds) {

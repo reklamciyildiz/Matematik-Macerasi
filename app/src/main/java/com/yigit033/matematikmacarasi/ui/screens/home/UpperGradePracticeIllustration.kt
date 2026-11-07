@@ -173,8 +173,7 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalArrangement = Arrangement.Center
             ) {
                 repeat(v[1]) { index ->
                     if (index > 0) {

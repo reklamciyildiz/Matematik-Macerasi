@@ -31,6 +31,11 @@ class LearningJourneyProgress(context: Context) {
     }
     fun conceptCheckPassed(id: String): Boolean =
         prefs.getBoolean("concept_passed_$id", false)
+    fun conceptErrors(id: String): Int =
+        prefs.getInt("concept_errors_$id", 0).coerceAtLeast(0)
+    fun recordConceptError(id: String) {
+        prefs.edit().putInt("concept_errors_$id", conceptErrors(id) + 1).apply()
+    }
     fun markConceptCheckPassed(id: String) {
         prefs.edit().putBoolean("concept_passed_$id", true).apply()
     }
@@ -45,6 +50,7 @@ class LearningJourneyProgress(context: Context) {
                 .putInt("session_hints_$id", 0)
                 .putInt("worked_step_$id", 0)
                 .putBoolean("concept_passed_$id", false)
+                .putInt("concept_errors_$id", 0)
                 .putLong("session_seed_$id", System.nanoTime().coerceAtLeast(1L))
         } else if (seed(id) == 0L) {
             editor.putLong("session_seed_$id", System.nanoTime().coerceAtLeast(1L))

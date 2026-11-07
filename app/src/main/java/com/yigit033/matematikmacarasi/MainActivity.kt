@@ -346,7 +346,7 @@ class MainActivity : ComponentActivity() {
             lifecycleScope.launch {
                 try {
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                        PremiumCodeValidator.getInstance(this@MainActivity)
+                        com.yigit033.matematikmacarasi.services.PremiumCodeValidator.getInstance(this@MainActivity)
                             .checkAndSyncPremiumStatus()
                     }
                 } catch (e: Exception) {

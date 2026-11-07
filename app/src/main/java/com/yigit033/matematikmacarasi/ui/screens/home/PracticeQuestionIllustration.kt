@@ -253,6 +253,7 @@ internal fun PracticeQuestionIllustration(
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center)
             }
+            else -> UpperGradePracticeIllustration(model)
         }
     }
 }

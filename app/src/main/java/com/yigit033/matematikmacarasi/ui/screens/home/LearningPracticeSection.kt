@@ -231,8 +231,22 @@ private fun PracticeLesson(
     val speechText = when {
         finished -> "Ders tamamlandı. Dört soruluk çalışmanı bitirdin."
         stage == 0 -> script.headline + ". " + script.explanationFor(grade)
+        stage == 1 && workedStep == script.steps.lastIndex ->
+            script.steps[workedStep] + ". " + script.check.prompt +
+                ". Seçenekler: " + checkChoices.joinToString(". ")
         stage == 1 -> script.steps[workedStep]
-        else -> q.text
+        else -> q.text + ". Seçenekler: " +
+            q.choices.joinToString(", ") { it.toString() }
+    }
+
+    // Allow concept feedback to finish speaking before automatically moving on.
+    // Correct answers are not another mandatory "Next" button.
+    LaunchedEffect(stage, conceptPassed, workedStep, narrator.speaking) {
+        if (stage == 1 && conceptPassed &&
+            workedStep == script.steps.lastIndex && !narrator.speaking) {
+            delay(if (earlyReader) 2600L else 1850L)
+            moveTo(2)
+        }
     }
 
     // Young readers get a narrated first pass; older students can request audio.
@@ -531,6 +545,7 @@ private fun PracticeLesson(
                                 }
                             },
                             modifier = Modifier.fillMaxWidth().heightIn(min = 55.dp),
+                            enabled = !conceptPassed,
                             border = androidx.compose.foundation.BorderStroke(
                                 1.dp,
                                 if (chosen && choiceIndex == correctConceptIndex)
@@ -559,16 +574,11 @@ private fun PracticeLesson(
                             fontSize = 13.sp, lineHeight = 19.sp
                         )
                         if (rightChoice) {
-                            Button(
-                                onClick = { moveTo(2) },
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 55.dp),
-                                shape = RoundedCornerShape(13.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = HomeColors.MagicCyan)
-                            ) {
-                                Text("Kısa Alıştırmaya Geç", color = Color(0xFF09283B),
-                                    fontWeight = FontWeight.Bold)
-                            }
+                            Text(
+                                "Anladın! Açıklamadan sonra alıştırmaya otomatik geçilecek.",
+                                color = Color(0xFF91E3D5),
+                                fontSize = 12.sp, lineHeight = 18.sp
+                            )
                         }
                     }
                 }

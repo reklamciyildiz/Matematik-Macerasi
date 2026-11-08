@@ -93,7 +93,7 @@ fun LearnTabScreen(
     val migration = remember(context) { LearningAccessMigration(context) }
     val grandfathered = remember(context) { migration.grandfatheredIds() }
     val grade = curriculum.grade
-    val isPremium = remember(purchaseFlow, userClass) { purchaseManager.isPremiumSync() }
+    val isPremium = purchaseManager.isPremiumSync()
     val canOpen: (String) -> Boolean = { id ->
         LearningAccessPolicy.accessible(grade, id,
             purchaseManager.isPremiumSync(), grandfathered)
@@ -159,8 +159,10 @@ fun LearnTabScreen(
         return
     }
     val last = progress.lastLesson()?.let { id -> lessons.firstOrNull { it.id == id } }
-    val next = if (last != null && !progress.completed(last.id)) last
-        else lessons.firstOrNull { !progress.completed(it.id) } ?: last ?: lessons.firstOrNull()
+    val next = if (last != null && !progress.completed(last.id) && canOpen(last.id)) last
+        else lessons.firstOrNull { !progress.completed(it.id) && canOpen(it.id) }
+            ?: lessons.firstOrNull { !progress.completed(it.id) }
+            ?: last ?: lessons.firstOrNull()
     val completed = lessons.count { progress.completed(it.id) }
     val reviewDueLessons = lessons.filter { progress.isReviewDue(it.id) }
         .sortedBy { progress.nextReviewAt(it.id) }
@@ -283,8 +285,8 @@ fun LearnTabScreen(
                     shape = RoundedCornerShape(13.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = hubGold)
                 ) {
-                    Text("Derse Devam Et", color = Color(0xFF09283D),
-                        fontWeight = FontWeight.ExtraBold)
+                    Text(if (canOpen(next.id)) "Derse Devam Et" else "Premium Dersi İncele",
+                        color = Color(0xFF09283D), fontWeight = FontWeight.ExtraBold)
                     Spacer(Modifier.width(5.dp))
                     Icon(Icons.Filled.ChevronRight, contentDescription = null,
                         tint = Color(0xFF09283D))
@@ -632,7 +634,7 @@ private fun CurriculumTopicCard(
                     trackColor = Color(0xFF315D76)
                 )
                 Text(
-                    done.toString() + "/" + count.toString(),
+                    "Ders " + done + "/" + count,
                     color = accent, fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold
                 )
@@ -642,7 +644,7 @@ private fun CurriculumTopicCard(
                     count == 0 -> "Ders henüz eklenmedi"
                     lockedCount == count -> "Premium · Ön izleme açık"
                     lockedCount > 0 -> "${count - lockedCount} açık · $lockedCount Premium ders"
-                    done == count -> "Kısa dersler tamamlandı · Tekrar et"
+                    done == count -> "Giriş dersleri bitti · Konu tamamlanmadı"
                     else -> "Konuya giriş dersleri hazır"
                 },
                 color = accent, fontSize = 11.sp
@@ -741,7 +743,7 @@ private fun CurriculumTopicDetail(
                             Text(
                                 if (!accessible) "Premium · Yetişkin seçeneklerini inceleyebilir"
                                  else if (lessonComplete(id)) "Tekrar çalış"
-                                 else "Ücretsiz · Resimli anlatım · Kavrama kontrolü",
+                                 else "Ders açık · Resimli anlatım · Kavrama kontrolü",
                                 color = hubText, fontSize = 11.sp
                             )
                         }

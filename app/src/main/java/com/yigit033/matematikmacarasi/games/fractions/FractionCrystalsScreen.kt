@@ -1,6 +1,11 @@
 package com.yigit033.matematikmacarasi.games.fractions
 
 import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
+import com.yigit033.matematikmacarasi.games.common.PremiumChallengePause
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -148,10 +153,22 @@ fun FractionCrystalsScreen(
 ) {
     val context=LocalContext.current
     val audio=remember(context) { AudioService.getInstance(context) }
+    val purchaseManager=remember(context){PurchaseManager.getInstance(context)}
+    val premiumFlow by purchaseManager.premiumState.collectAsState()
+    val hasPremium=premiumFlow || purchaseManager.isPremiumSync()
+    fun openPremiumSettings() {
+        context.startActivity(Intent(context,SettingsActivity::class.java))
+    }
     var run by remember { mutableStateOf(store.load()) }
     var chosenDifficulty by remember { mutableIntStateOf(if(grade<=3) 0 else 1) }
     var message by remember { mutableStateOf("") }
     var positive by remember { mutableStateOf(true) }
+    if(run.seed>0L && !run.finished &&
+        !PremiumGameModePolicy.canStart("fractions",run.difficulty,hasPremium)) {
+        PremiumChallengePause(onSettings={openPremiumSettings()},onExit=onExit)
+        return
+    }
+
     val scroll=rememberScrollState()
     val task=remember(run.seed,run.index,run.grade,run.difficulty) { store.task(run) }
     BackHandler { onExit() }
@@ -249,14 +266,21 @@ fun FractionCrystalsScreen(
             Text("Zorluk seç",color=gold,fontWeight=FontWeight.Black,fontSize=17.sp)
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
                 FractionCrystalEngine.difficultyNames.forEachIndexed { index,label ->
-                    ChooseCrystal(label,selected=chosenDifficulty==index,
-                        modifier=Modifier.weight(1f)) { chosenDifficulty=index }
+                    val locked=!PremiumGameModePolicy.canStart("fractions",index,hasPremium)
+                    ChooseCrystal(if(locked)"🔒 "+label else label,
+                        selected=chosenDifficulty==index,modifier=Modifier.weight(1f)) {
+                        if(locked)openPremiumSettings() else chosenDifficulty=index
+                    }
                 }
             }
             Button(onClick={
+                if(!PremiumGameModePolicy.canStart("fractions",chosenDifficulty,hasPremium)) {
+                    openPremiumSettings()
+                } else {
                 val started=store.newRun(grade,chosenDifficulty)
                 if(started!=null) {run=started;message="";audio.playQuestCompleteSound()}
                 else {positive=false;message=store.lastError}
+                }
             },modifier=Modifier.fillMaxWidth().heightIn(min=58.dp),
                 colors=ButtonDefaults.buttonColors(containerColor=gold,contentColor=navy),
                 shape=RoundedCornerShape(18.dp)){

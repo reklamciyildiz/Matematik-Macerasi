@@ -1,6 +1,11 @@
 package com.yigit033.matematikmacarasi.games.pattern
 
 import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
+import com.yigit033.matematikmacarasi.games.common.PremiumChallengePause
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -181,12 +186,24 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
     onExit:()->Unit,onCompleted:(PatternRun)->Unit) {
     val context=LocalContext.current
     val audio=remember(context){AudioService.getInstance(context)}
+    val purchaseManager=remember(context){PurchaseManager.getInstance(context)}
+    val premiumFlow by purchaseManager.premiumState.collectAsState()
+    val hasPremium=premiumFlow || purchaseManager.isPremiumSync()
+    fun openPremiumSettings() {
+        context.startActivity(Intent(context,SettingsActivity::class.java))
+    }
     var run by remember { mutableStateOf(store.load()) }
     var difficulty by rememberSaveable { mutableIntStateOf(
         if(profileGrade<=2)0 else 1) }
     var message by remember { mutableStateOf("") }
     var positive by remember { mutableStateOf(true) }
     var restart by remember { mutableStateOf(false) }
+
+    if(run.seed>0L && !run.finished &&
+        !PremiumGameModePolicy.canStart("pattern_forest",run.difficulty,hasPremium)) {
+        PremiumChallengePause(onSettings={openPremiumSettings()},onExit=onExit)
+        return
+    }
     var dragBounds by remember(run.seed,run.index) {
         mutableStateOf<Rect?>(null)
     }
@@ -283,6 +300,10 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
         }
     }
     fun start() {
+        if(!PremiumGameModePolicy.canStart("pattern_forest",difficulty,hasPremium)) {
+            openPremiumSettings()
+            return
+        }
         val next=store.start(profileGrade,difficulty)
         if(next!=null) {
             run=next;message="";audio.playQuestCompleteSound()
@@ -390,15 +411,18 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
                 fontWeight=FontWeight.Black)
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 PatternForestEngine.difficultyLabels.forEachIndexed { i,label ->
+                    val locked=!PremiumGameModePolicy.canStart("pattern_forest",i,hasPremium)
                     Surface(modifier=Modifier.weight(1f).heightIn(min=54.dp)
-                        .clickable{difficulty=i;audio.playTapSound()},
+                        .clickable{if(locked)openPremiumSettings() else {
+                            difficulty=i;audio.playTapSound()
+                        }},
                         shape=RoundedCornerShape(15.dp),
                         color=if(i==difficulty)Color(0xFF387C84) else Color(0xFF205477),
                         border=BorderStroke(if(i==difficulty)2.dp else 1.dp,
                             if(i==difficulty)ForestPalette.gold
                             else ForestPalette.jade.copy(alpha=.6f))) {
                         Box(Modifier.padding(8.dp),contentAlignment=Alignment.Center) {
-                            Text(label,color=ForestPalette.cream,
+                            Text(if(locked)"🔒 "+label else label,color=ForestPalette.cream,
                                 fontWeight=FontWeight.Black)
                         }
                     }

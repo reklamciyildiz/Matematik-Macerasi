@@ -19,7 +19,7 @@ class PremiumFeaturePolicyTest {
             assertFalse(PremiumFeaturePolicy.allowed(feature,false))
             assertTrue(PremiumFeaturePolicy.allowed(feature,true))
         }
-        assertEquals(10,PremiumFeaturePolicy.features.size)
+        assertEquals(11,PremiumFeaturePolicy.features.size)
         assertTrue(PremiumFeature.FULL_LEARNING_LIBRARY in PremiumFeaturePolicy.features)
     }
 }

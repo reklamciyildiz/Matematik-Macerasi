@@ -1,6 +1,11 @@
 package com.yigit033.matematikmacarasi.games.time
 
 import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
+import com.yigit033.matematikmacarasi.games.common.PremiumChallengePause
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
@@ -110,12 +115,24 @@ fun TimeTowerScreen(
 ) {
     val context=LocalContext.current
     val audio=remember(context){AudioService.getInstance(context)}
+    val purchaseManager=remember(context){PurchaseManager.getInstance(context)}
+    val premiumFlow by purchaseManager.premiumState.collectAsState()
+    val hasPremium=premiumFlow || purchaseManager.isPremiumSync()
+    fun openPremiumSettings() {
+        context.startActivity(Intent(context,SettingsActivity::class.java))
+    }
     var run by remember { mutableStateOf(store.load()) }
     var choiceDifficulty by rememberSaveable { mutableIntStateOf(if(profileGrade<=2)0 else 1) }
     var message by remember { mutableStateOf("") }
     var success by remember { mutableStateOf(true) }
     var confirmRestart by remember { mutableStateOf(false) }
     var selectedHand by remember(run.seed,run.index) { mutableStateOf(ClockHand.MINUTE) }
+    if(run.seed>0L && !run.finished &&
+        !PremiumGameModePolicy.canStart("time_tower",run.difficulty,hasPremium)) {
+        PremiumChallengePause(onSettings={openPremiumSettings()},onExit=onExit)
+        return
+    }
+
     val scroll=rememberScrollState()
     val challenge=remember(run.seed,run.index,run.grade,run.difficulty) {
         store.challenge(run)
@@ -202,6 +219,10 @@ fun TimeTowerScreen(
         }
     }
     fun begin() {
+        if(!PremiumGameModePolicy.canStart("time_tower",choiceDifficulty,hasPremium)) {
+            openPremiumSettings()
+            return
+        }
         val fresh=store.start(profileGrade,choiceDifficulty)
         if(fresh!=null) {
             run=fresh;message=""
@@ -305,10 +326,14 @@ fun TimeTowerScreen(
             Text("ZORLUK SEÇ",color=TimeStyle.gold,fontWeight=FontWeight.Black)
             Row(horizontalArrangement=Arrangement.spacedBy(7.dp)){
                 TimeTowerEngine.difficultyNames.forEachIndexed { idx,label->
-                    TimeTile(label,selected=choiceDifficulty==idx,
+                    val locked=!PremiumGameModePolicy.canStart("time_tower",idx,hasPremium)
+                    TimeTile(if(locked)"🔒 "+label else label,
+                        selected=choiceDifficulty==idx,
                         modifier=Modifier.weight(1f)) {
-                        choiceDifficulty=idx
-                        audio.playTapSound()
+                        if(locked)openPremiumSettings() else {
+                            choiceDifficulty=idx
+                            audio.playTapSound()
+                        }
                     }
                 }
             }

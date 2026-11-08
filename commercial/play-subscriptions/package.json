@@ -1,0 +1,8 @@
+{
+  "name": "matematik-macerasi-play-subscription-policy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs"
+  }
+}

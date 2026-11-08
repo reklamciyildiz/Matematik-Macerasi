@@ -100,7 +100,8 @@ internal class PlaySubscriptionClient(private val context: Context) {
         return response.token()
     }
 
-    private fun verifyLease(token:String,expectedPurchase:String?):Boolean = try {
+    private fun verifyLease(token:String,expectedPurchase:String?):Boolean {
+        return try {
         if(token.length !in 100..4000)return false
         val parts=token.split(".")
         if(parts.size!=3)return false
@@ -126,7 +127,8 @@ internal class PlaySubscriptionClient(private val context: Context) {
         val exp=body.getLong("exp")
         val now=System.currentTimeMillis()/1000L
         iat>0 && iat<=now+120L && exp>now && exp>iat && exp-iat<=86400L
-    } catch(_:Exception) { false }
+        } catch(_:Exception) { false }
+    }
 
     private fun digest(value:String):String=MessageDigest.getInstance("SHA-256")
         .digest(value.toByteArray(Charsets.UTF_8))

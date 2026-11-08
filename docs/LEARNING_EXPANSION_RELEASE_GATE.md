@@ -1,5 +1,7 @@
 # Matematik Macerası — Öğren Ürün Genişletmesi / Yayın Öncesi Kanıt Kaydı
 
+> **Ö6 ilerleme notu (8 Kasım 2026):** Bu dosya 54 kısa derslik *Ö3 genişletmesi*nin tarihsel QA kaydıdır. Yeni 18 Ö6 derinleşme dersi ve mevcut Premium hakkıyla freemium erişim eklendikten sonraki güncel kapsam **72 farklı kısa ders** olmuştur. En güncel kabul kapıları ve satış koşulları için [Ö6 — Ders Derinliği ve Premium](O6_DEEP_CURRICULUM_FREEMIUM_RELEASE_GATES.md) dosyasını temel alın. Bütün MEB alt kazanımları eksiksiz değildir.
+
 **Öğretim yılı:** 2026–2027 · **Ürün:** Android / Kotlin / Compose  
 **Kapsam:** Ö1+Ö2+Ö3 üzerine yapılan ilk çok-sınıflı içerik, görsel model ve adaptif tekrar paketi.
 

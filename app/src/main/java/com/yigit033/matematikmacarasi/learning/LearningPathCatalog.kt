@@ -10,6 +10,9 @@ data class PracticeQuestion(val text: String, val choices: List<Int>, val answer
     init { require(choices.size == 4 && choices.distinct().size == 4 && answer in choices) }
 }
 object LearningPathCatalog {
+    fun practiceQuestionCount(lesson: Lesson): Int =
+        if (lesson.skill == Skill.DEEP_DIVE) 8 else 4
+
     fun forGrade(userClass: String): List<Lesson> {
         val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
         val c2 = Lesson("count_2", "İkişer Ritmik Sayma", "Her yeni sayıya ulaşmak için 2 ekle.",
@@ -52,7 +55,7 @@ object LearningPathCatalog {
 
     /** Tek oturum boyunca aynı seed, aynı soru; yanlış seçenekler doğru cevap olamaz. */
     fun question(lesson: Lesson, seed: Long, index: Int): PracticeQuestion {
-        require(index in 0..3)
+        require(index in 0 until practiceQuestionCount(lesson))
         if (lesson.skill == Skill.EXTENDED) {
             return ExpandedLessonQuestionBank.question(lesson, seed, index)
         }

@@ -1,0 +1,58 @@
+name: Android R8 optimized QA build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/build.gradle"
+      - "app/proguard-rules.pro"
+      - ".github/workflows/android-r8-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-r8-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Install Android API 36
+        shell: bash
+        run: |
+          SDK_MANAGER="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDK_MANAGER" ]; then SDK_MANAGER="$(command -v sdkmanager || true)"; fi
+          if [ -z "$SDK_MANAGER" ] || [ ! -x "$SDK_MANAGER" ]; then exit 1; fi
+          yes | "$SDK_MANAGER" --licenses >/dev/null || true
+          "$SDK_MANAGER" "platforms;android-36" "build-tools;36.0.0"
+      - name: Compile-only Firebase config (NEVER deploy)
+        shell: bash
+        run: |
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": {"project_number":"123456789012","project_id":"ci-build-only","storage_bucket":"ci-build-only.appspot.com"},
+            "client": [{"client_info":{"mobilesdk_app_id":"1:123456789012:android:0000000000000000","android_client_info":{"package_name":"com.yigit033.matematikmacarasi"}},"oauth_client":[],"api_key":[{"current_key":"CI_ONLY_NOT_VALID"}],"services":{"appinvite_service":{"other_platform_oauth_client":[]}}}],
+            "configuration_version":"1"
+          }
+          JSON
+          cat >> gradle.properties <<'PROPS'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
+          org.gradle.workers.max=2
+          kotlin.daemon.jvmargs=-Xmx1024m
+          PROPS
+      - name: Compile optimized QA variant (not publishable)
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon :app:assembleR8Qa
+      - name: Locate R8 mapping
+        shell: bash
+        run: |
+          test -f app/build/outputs/mapping/r8Qa/mapping.txt
+          echo "::notice::Minified QA APK and mapping generated; not a safe production-release verdict."

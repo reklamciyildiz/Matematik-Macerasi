@@ -63,6 +63,16 @@ android {
         debug {
             minifyEnabled false
         }
+        // CI-only-style minified QA variant: debug signing, original package.
+        // NEVER upload this APK to Play; it is not a release artifact.
+        r8Qa {
+            initWith release
+            signingConfig signingConfigs.debug
+            minifyEnabled true
+            shrinkResources true
+            matchingFallbacks = ['release']
+            versionNameSuffix '-r8qa'
+        }
     }
 
     compileOptions {

@@ -18,7 +18,7 @@ class LearningJourneyProgress(context: Context) {
     fun runs(id: String): Int = prefs.getInt("runs_$id", 0)
     fun lastLesson(): String? = prefs.getString("last_lesson_id", null)
     fun stage(id: String): Int = prefs.getInt("phase_$id", 0).coerceIn(0, 3)
-    fun questionIndex(id: String): Int = prefs.getInt("index_$id", 0).coerceIn(0, 3)
+    fun questionIndex(id: String): Int = prefs.getInt("index_$id", 0).coerceIn(0, 7)
     fun wrong(id: String): Int = prefs.getInt("session_wrong_$id", 0).coerceAtLeast(0)
     fun hints(id: String): Int = prefs.getInt("session_hints_$id", 0).coerceAtLeast(0)
     fun seed(id: String): Long = prefs.getLong("session_seed_$id", 0L)
@@ -76,7 +76,7 @@ class LearningJourneyProgress(context: Context) {
     }
 
     fun setQuestionIndex(id: String, next: Int) {
-        require(next in 0..3)
+        require(next in 0..7)
         prefs.edit().putInt("index_$id", next).apply()
     }
 
@@ -88,8 +88,9 @@ class LearningJourneyProgress(context: Context) {
         prefs.edit().putInt("session_hints_$id", hints(id) + 1).apply()
     }
 
-    fun complete(id: String, wrong: Int, hints: Int) {
-        val accuracy = 400 / (4 + wrong.coerceAtLeast(0))
+    fun complete(id: String, wrong: Int, hints: Int, totalQuestions: Int = 4) {
+        require(totalQuestions in 4..8)
+        val accuracy = 100 * totalQuestions / (totalQuestions + wrong.coerceAtLeast(0))
         val advice = LearningReviewPolicy.recommend(
             LearningSessionEvidence(
                 wrong.coerceAtLeast(0), hints.coerceAtLeast(0),

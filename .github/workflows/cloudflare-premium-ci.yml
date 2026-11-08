@@ -28,4 +28,5 @@ jobs:
         with:
           node-version: "22"
       - run: node --check scripts/smoke-live-import.mjs
+      - run: node --check scripts/prepare-readonly-d1-audit.mjs
       - run: node --test tests/*.test.mjs

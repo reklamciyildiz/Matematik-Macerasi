@@ -5,7 +5,7 @@ enum class TeachingVisual {
     GROUPS, EQUAL_GROUPS, NUMBER_STEPS,
     TAKE_AWAY, PLACE_VALUE, FRACTION_BAR, SHAPE, CLOCK,
     BAR_CHART, AREA_GRID, PERIMETER, DECIMAL, EQUATION, FACTORS, POWER_CHAIN,
-    SYMMETRY, RIGHT_TRIANGLE, VOLUME_STACK, ANGLE
+    SYMMETRY, RIGHT_TRIANGLE, VOLUME_STACK, ANGLE, MULTIPLES
 }
 
 data class LessonConceptCheck(
@@ -48,7 +48,7 @@ data class LessonTeachingScript(
             TeachingVisual.DECIMAL, TeachingVisual.EQUATION,
             TeachingVisual.FACTORS, TeachingVisual.POWER_CHAIN,
             TeachingVisual.SYMMETRY, TeachingVisual.RIGHT_TRIANGLE,
-            TeachingVisual.VOLUME_STACK ->
+            TeachingVisual.VOLUME_STACK, TeachingVisual.MULTIPLES ->
                 require(groups.size >= 2 && groups.all { it in 1..20 } && sequence.isEmpty())
         }
     }
@@ -62,6 +62,7 @@ object LessonTeachingCatalog {
     fun forLesson(lesson: Lesson): LessonTeachingScript = when (lesson.skill) {
         Skill.EXTENDED -> ExpandedLessonTeachingCatalog.forLesson(lesson)
         Skill.TOPIC_STARTER -> TopicStarterCatalog.forLesson(lesson)
+        Skill.DEEP_DIVE -> DeepLessonTeachingCatalog.forLesson(lesson)
         else -> forSkill(lesson.skill)
     }
 
@@ -151,7 +152,7 @@ object LessonTeachingCatalog {
                     "15'in katlarını sayı şeridinde gör."
                 )
             )
-            Skill.EXTENDED, Skill.TOPIC_STARTER ->
+            Skill.EXTENDED, Skill.TOPIC_STARTER, Skill.DEEP_DIVE ->
                 error("Use forLesson() for grade-specific lessons")
         }
     }

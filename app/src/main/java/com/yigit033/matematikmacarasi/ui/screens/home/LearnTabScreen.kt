@@ -93,7 +93,9 @@ fun LearnTabScreen(
     val migration = remember(context) { LearningAccessMigration(context) }
     val grandfathered = remember(context) { migration.grandfatheredIds() }
     val grade = curriculum.grade
-    val isPremium = purchaseManager.isPremiumSync()
+    // The reactive Play/Cloudflare flow invalidates this local snapshot
+    // after purchase restoration, without trusting stale union state.
+    val isPremium = remember(purchaseFlow) { purchaseManager.isPremiumSync() }
     val canOpen: (String) -> Boolean = { id ->
         LearningAccessPolicy.accessible(grade, id,
             purchaseManager.isPremiumSync(), grandfathered)

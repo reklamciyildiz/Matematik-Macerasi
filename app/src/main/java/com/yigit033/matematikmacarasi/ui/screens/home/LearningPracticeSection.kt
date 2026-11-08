@@ -42,6 +42,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -95,10 +96,17 @@ fun LearningPracticeSection(
     val grade = userClass.substringBefore(".").trim().toIntOrNull()?.coerceIn(1, 8) ?: 1
     var selectedId by remember(userClass, startLessonId) { mutableStateOf(startLessonId) }
     var version by remember { mutableIntStateOf(0) }
+    // Observe entitlement changes even when this lesson is opened directly.
+    // The lifecycle revision also covers a restored Play/Cloudflare license.
+    val premiumState by purchaseManager.premiumState.collectAsState()
+    val hasPremium = remember(premiumState, version) { purchaseManager.isPremiumSync() }
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) version++
+            if (event == Lifecycle.Event.ON_RESUME) {
+                purchaseManager.refreshPremiumState()
+                version++
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
@@ -111,7 +119,7 @@ fun LearningPracticeSection(
         }
         BackHandler { back() }
         if (!LearningAccessPolicy.accessible(
-                grade, selected.id, purchaseManager.isPremiumSync(),
+                grade, selected.id, hasPremium,
                 migratedAccess.grandfatheredIds()
             )
         ) {
@@ -160,11 +168,13 @@ fun LearningPracticeSection(
                     Text("${i + 1}. ${lesson.title}", fontWeight = FontWeight.Bold,
                         fontSize = 14.sp, color = HomeColors.TextPrimary)
                     val open = LearningAccessPolicy.accessible(
-                        grade, lesson.id, purchaseManager.isPremiumSync(),
+                        grade, lesson.id, hasPremium,
                         migratedAccess.grandfatheredIds()
                     )
                     Text(
-                        if (!open) "Premium" else if (done) "Tekrar" else "Ücretsiz",
+                        if (!open) "Premium" else if (done) "Tekrar"
+                        else if (lesson.id in LearningAccessPolicy.freeLessonIds(grade)) "Ücretsiz"
+                        else "Erişim açık",
                         color = if (open) HomeColors.MagicCyan else Color(0xFFFFD78B),
                         fontSize = 12.sp
                     )
@@ -392,7 +402,7 @@ private fun PracticeLesson(
                 stage == 0 -> 0.12f
                 stage == 1 -> .32f + .25f *
                     (workedStep + 1).toFloat() / script.steps.size.toFloat()
-                else -> .62f + .38f * index.toFloat() / 4f
+                else -> .62f + .38f * index.toFloat() / totalQuestions.toFloat()
             } },
             modifier = Modifier.fillMaxWidth(),
             color = HomeColors.MagicCyan, trackColor = Color(0xFF2E5271)

@@ -1,0 +1,31 @@
+name: Play subscription entitlement policy tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "commercial/play-subscriptions/**"
+      - ".github/workflows/play-subscription-policy.yml"
+  pull_request:
+    paths:
+      - "commercial/play-subscriptions/**"
+      - ".github/workflows/play-subscription-policy.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  server-policy-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: commercial/play-subscriptions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check trusted policy syntax
+        run: node --check src/entitlement.mjs
+      - name: Subscription state regression vectors
+        run: npm test

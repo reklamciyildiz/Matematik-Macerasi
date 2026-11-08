@@ -29,7 +29,8 @@ class LearningPathCatalogTest {
                 assertEquals(4, q.choices.size)
                 assertEquals(4, q.choices.distinct().size)
                 assertEquals(1, q.choices.count { it == q.answer })
-                assertTrue(q.answer > 0)
+                // Coordinate reflections legitimately have negative answers.
+                assertTrue(q.answer in -1000..10000)
                 assertEquals(q, LearningPathCatalog.question(lesson, seed, i))
             }
         }

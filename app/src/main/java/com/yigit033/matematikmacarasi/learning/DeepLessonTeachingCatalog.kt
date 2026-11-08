@@ -26,7 +26,7 @@ object DeepLessonTeachingCatalog {
                 "Birlikte on nesne var."),
             "7'yi 10 yapmak için hangi işlem gerekir?",
             "Üç nesne eklemek.","Üç nesne çıkarmak.",
-            "7 + 3 = 10 olduğu için üç nesne eklenir."),
+            "7 + 3 = 10 olduğu için üç nesne eklenir.")
 
         "g1_compare_data" -> script(TeachingVisual.BAR_CHART,
             "Fazla olanları bul","Altı ve dört nesneyi yan yana koy.",
@@ -37,7 +37,7 @@ object DeepLessonTeachingCatalog {
             "Farkı bulmak için neyi yapmalıyız?",
             "Büyük miktardan küçüğü çıkarmalıyız.",
             "Grupların hepsini toplamalıyız.",
-            "İki grubun ortak kısmı eşleşir; fazlalık iki nesnedir."),
+            "İki grubun ortak kısmı eşleşir; fazlalık iki nesnedir.")
 
         "g2_quarter" -> script(TeachingVisual.FRACTION_BAR,
             "Bir Bütünün Çeyreği","Bütünü dört eş parçaya böl. Birini boya.",
@@ -47,7 +47,7 @@ object DeepLessonTeachingCatalog {
                 "Dört parçadan birini boya."),
             "Çeyreği gösteren parça nasıl olmalıdır?",
             "Dört eş parçadan biri.","İstediğimiz büyüklükte herhangi bir parça.",
-            "Bir bölü dört ifadesinde bütün dört eş parçaya ayrılır."),
+            "Bir bölü dört ifadesinde bütün dört eş parçaya ayrılır.")
 
         "g2_hundred_place" -> script(TeachingVisual.EQUATION,
             "Yüzlük, Onluk, Birlik","Bir yüzlük yüz tane birliktir.",
@@ -57,7 +57,7 @@ object DeepLessonTeachingCatalog {
                 "Üç birlik ekleyince 123 oluşur."),
             "123 sayısındaki 2 neyi anlatır?",
             "İki onluğu yani 20'yi.","İki yüzlüğü.",
-            "2, onlar basamağındadır: değeri 20'dir."),
+            "2, onlar basamağındadır: değeri 20'dir.")
 
         "g3_share_equal" -> script(TeachingVisual.EQUAL_GROUPS,
             "Herkese Eşit Dağıt","Üç çocuğa altışar nesne verelim.",
@@ -68,7 +68,7 @@ object DeepLessonTeachingCatalog {
             "Eşit paylaşmada nasıl gruplar oluşturulur?",
             "Her gruptaki nesne sayısı eşit olur.",
             "Bir gruba diğerinden daha çok nesne konur.",
-            "18'i üçe bölerken her çocuk altı nesne alır."),
+            "18'i üçe bölerken her çocuk altı nesne alır.")
 
         "g3_quarter_of_set" -> script(TeachingVisual.FRACTION_BAR,
             "Bir Nesne Grubunun Dörtte Biri","Yirmi nesneyi dört eş gruba ayır.",
@@ -79,7 +79,7 @@ object DeepLessonTeachingCatalog {
             "Yirminin dörtte biri ne anlama gelir?",
             "Dört eş gruptan birinin büyüklüğü.",
             "Yirmiye dört eklenmesi.",
-            "Bütün dört eş parçaya ayrılır ve bir parça alınır."),
+            "Bütün dört eş parçaya ayrılır ve bir parça alınır.")
 
         "g4_same_denominator" -> script(TeachingVisual.FRACTION_BAR,
             "Paydaları Eşit Kesirler","Sekiz eş parçanın üçünü ve beşini karşılaştır.",
@@ -91,7 +91,7 @@ object DeepLessonTeachingCatalog {
             "Paydalar aynı olduğunda kesir nasıl karşılaştırılır?",
             "Payı büyük olan daha büyüktür.",
             "Payı küçük olan daha büyüktür.",
-            "Birçok eş parçadan daha fazlasını almak daha büyük bir miktardır."),
+            "Birçok eş parçadan daha fazlasını almak daha büyük bir miktardır.")
 
         "g4_two_step" -> script(TeachingVisual.GROUPS,
             "Önce Gruplar, Sonra Eklenenler","Üç kutuda dörder kalem var. Beş kalem daha geldi.",
@@ -103,7 +103,7 @@ object DeepLessonTeachingCatalog {
             "İki adımlı problemde önce neyi bulmalıyız?",
             "Kutulardaki kalemlerin toplamını.",
             "Sadece sonradan gelen beş kalemi.",
-            "Bütün kutulardaki kalemler bulunmadan toplam bilinemez."),
+            "Bütün kutulardaki kalemler bulunmadan toplam bilinemez.")
 
         "g5_parentheses" -> script(TeachingVisual.GROUPS,
             "Parantezin Önceliği","Üç ile dördü topla; sonra ikiyle çarp.",
@@ -113,7 +113,7 @@ object DeepLessonTeachingCatalog {
                 "İki tane yediyi topla: on dört."),
             "Parantez varsa hangi işlem önce yapılır?",
             "Parantezin içindeki işlem.","Parantezin dışındaki işlem.",
-            "Parantez önceliklidir; sonra dışarıdaki çarpma yapılır."),
+            "Parantez önceliklidir; sonra dışarıdaki çarpma yapılır.")
 
         "g5_tenths_add" -> script(TeachingVisual.DECIMAL,
             "Onda Birleri Topla","Bir tam ve iki onda bire üç onda bir ekle.",
@@ -125,7 +125,7 @@ object DeepLessonTeachingCatalog {
             "Onda birleri toplarken neyi birleştiririz?",
             "Aynı basamak değerindeki parçaları.",
             "Ondalık virgüllerini.",
-            "Onda birler, onda birlerle toplanır."),
+            "Onda birler, onda birlerle toplanır.")
 
         "g6_absolute_value" -> script(TeachingVisual.NUMBER_STEPS,
             "Sıfıra Uzaklığı Bul","Eksi sekiz, sıfırdan sekiz birim uzakta.",
@@ -135,7 +135,7 @@ object DeepLessonTeachingCatalog {
                 "Sıfıra uzaklığı sekiz birimdir."),
             "Negatif bir sayının mutlak değeri neden pozitif olur?",
             "Uzaklık negatif olamaz.","Negatif işaret hep eksi kalır.",
-            "Mutlak değer yönü değil uzaklığın büyüklüğünü gösterir."),
+            "Mutlak değer yönü değil uzaklığın büyüklüğünü gösterir.")
 
         "g6_pattern_rule" -> script(TeachingVisual.NUMBER_STEPS,
             "Ardışık Terimlerin Kuralı","İki, beş, sekiz, on bir: her seferinde üç eklenir.",
@@ -147,7 +147,7 @@ object DeepLessonTeachingCatalog {
             "Sabit artışlı örüntüde sonraki terim nasıl bulunur?",
             "Bir önceki terime ortak fark eklenir.",
             "Her zaman ikiyle çarpılır.",
-            "Fark aynı kaldığında aynı sayıyı ekleriz."),
+            "Fark aynı kaldığında aynı sayıyı ekleriz.")
 
         "g7_fraction_sum" -> script(TeachingVisual.FRACTION_BAR,
             "Payları Birleştir, Paydayı Koru","Sekiz eş parçanın ikisiyle üçü birleşir.",
@@ -159,7 +159,7 @@ object DeepLessonTeachingCatalog {
             "Paydaları eşit kesirleri toplarken ne sabit kalır?",
             "Payda, yani eş parça büyüklüğü.",
             "Pay ve paydayı birlikte toplarız.",
-            "Bütün hâlâ sekiz eş parçaya bölündüğü için payda sekizdir."),
+            "Bütün hâlâ sekiz eş parçaya bölündüğü için payda sekizdir.")
 
         "g7_percent_quarter" -> script(TeachingVisual.FRACTION_BAR,
             "Yüzde 25 = Dörtte Bir","Dört eş parçadan birini boya.",
@@ -169,7 +169,7 @@ object DeepLessonTeachingCatalog {
                 "Dörde bölünmüş bütünde bir parçadır."),
             "Yüzde yirmi beş neye eşittir?",
             "Bir bölü dört.","Bir bölü iki.",
-            "25/100 kesri 1/4 olarak sadeleşir."),
+            "25/100 kesri 1/4 olarak sadeleşir.")
 
         "g8_lcm" -> script(TeachingVisual.MULTIPLES,
             "Katları Kesiştir","On ikinin ve on sekizin katlarını sırayla yaz.",
@@ -181,7 +181,7 @@ object DeepLessonTeachingCatalog {
             "EKOK hesaplanırken hangi ortak kat seçilir?",
             "Sıfırdan büyük en küçük ortak kat.",
             "Sayıların en büyük ortak böleni.",
-            "Ortak katlar iki sayının da katıdır; en küçüğü EKOK'tur."),
+            "Ortak katlar iki sayının da katıdır; en küçüğü EKOK'tur.")
 
         "g8_square_root" -> script(TeachingVisual.AREA_GRID,
             "Karesinden Kareköküne","Yedi satır, yedi sütun birim kare düşün.",
@@ -192,7 +192,7 @@ object DeepLessonTeachingCatalog {
             "Karekök 49 neden 7'dir?",
             "7 × 7 = 49 olduğu için.",
             "49'u yediye eklediğimiz için.",
-            "Pozitif karekök, karesi verilen sayıya eşit olan negatif olmayan sayıdır."),
+            "Pozitif karekök, karesi verilen sayıya eşit olan negatif olmayan sayıdır.")
 
         "g8_linear_value" -> script(TeachingVisual.EQUATION,
             "x'in Değerini Yerine Koy","x dört, katsayı üç ve sabit iki.",
@@ -203,7 +203,7 @@ object DeepLessonTeachingCatalog {
             "Doğrusal ifadede x yerine 4 yazmak ne demektir?",
             "3x ifadesini 3 × 4 olarak hesaplamak.",
             "3x ifadesinde 3'ü silmek.",
-            "3x, üç ile x'in çarpımıdır."),
+            "3x, üç ile x'in çarpımıdır.")
 
         "g8_coordinate_mirror" -> script(TeachingVisual.SYMMETRY,
             "Koordinat Düzleminde Yansıma","Nokta sağdaysa yansıması soldadır.",

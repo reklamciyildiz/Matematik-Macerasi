@@ -51,7 +51,12 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            // R8 is opt-in for a QA build; production defaults to the known
+            // stable path until minified games/Billing/code restore pass tests.
+            def r8Qa = (project.findProperty('MM_R8_RELEASE_ENABLED') ?: 'false')
+                .toString() == 'true'
+            minifyEnabled r8Qa
+            shrinkResources r8Qa
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }

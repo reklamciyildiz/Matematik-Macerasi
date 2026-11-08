@@ -23,3 +23,12 @@ No one may promote a subscription to permanent ownership.
 Before live launch: implement authenticated purchase-token registration (with Play Integrity / equivalent abuse controls and stable parent account), verify token & package via Android Publisher API, bind token to the proper account, persist expiration and state securely, handle RTDN with Google Pub/Sub authentication, idempotent acknowledgement, refunds and voided purchases, migration, restored devices, no personal data in client logs, and offline entitlement TTL. Run internal Play license-tester purchases and negative test cases.
 
 Changing an Android Gradle flag alone **must not** enable paid subscription sales.
+
+Server-side Play Developer API integration first boundary:
+`src/google-play-verifier.mjs` and `tests/google-play-verifier.test.mjs`.
+This code fetches a Google-signed **verified** subscriptionsv2 response using
+server-only OAuth credentials. It does **not** grant entitlement to a player,
+acknowledge purchases, store tokens, handle RTDN or make live subscription
+sales possible. Never expose a service account private key in the Android APK.
+
+Pricing and Play Console checklist: `docs/PLAY_SUBSCRIPTIONS_ROLLOUT_TR_2026_11_08.md`.

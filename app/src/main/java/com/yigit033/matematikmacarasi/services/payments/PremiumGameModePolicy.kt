@@ -18,6 +18,7 @@ object PremiumGameModePolicy {
         "fractions"->"fraction_crystals_free_checkpoint_v1"
         "time_tower"->"time_tower_free_checkpoint_v1"
         "pattern_forest"->"pattern_forest_free_checkpoint_v1"
+        "geometry"->"geometry_castle_free_checkpoint_v1"
         else->error("Unknown game: "+gameId)
     }
     fun requiresPremium(gameId:String,difficulty:Int):Boolean =

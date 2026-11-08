@@ -40,6 +40,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.yigit033.matematikmacarasi.services.AudioService
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -347,8 +351,15 @@ fun GeometryCastleScreen(
 ) {
     val context=LocalContext.current
     val audio=remember(context){AudioService.getInstance(context)}
-    var run by remember { mutableStateOf(store.load()) }
-    var tier by remember { mutableStateOf(suggestedTier) }
+    val purchase=remember(context){PurchaseManager.getInstance(context)}
+    val premiumFlow by purchase.premiumState.collectAsState()
+    val hasPremium=premiumFlow || purchase.isPremiumSync()
+    fun upgrade(){context.startActivity(Intent(context,SettingsActivity::class.java))}
+    var run by remember(store) { mutableStateOf(store.load()) }
+    var tier by remember(store) {
+        mutableStateOf(if(hasPremium)suggestedTier else LearningTier.TEMEL)
+    }
+    LaunchedEffect(hasPremium) { if(!hasPremium)tier=LearningTier.TEMEL }
     var feedback by remember { mutableStateOf("") }
     var showExit by remember { mutableStateOf(false) }
     var feedbackPositive by remember { mutableStateOf(true) }
@@ -500,13 +511,22 @@ fun GeometryCastleScreen(
                     LearningTier.entries.forEach { value ->
                         OutlinedButton(
                             modifier=Modifier.weight(1f).heightIn(min=48.dp),
-                            onClick={tier=value},
+                            onClick={
+                                if(!PremiumGameModePolicy.canStart(
+                                        "geometry",value.ordinal,hasPremium))upgrade()
+                                else tier=value
+                            },
                             border=androidx.compose.foundation.BorderStroke(1.5.dp,
                                 if(tier==value) Gold else Mint.copy(alpha=.55f)),
                             colors=ButtonDefaults.outlinedButtonColors(
                                 containerColor=if(tier==value) Gold else Panel,
                                 contentColor=if(tier==value) Ink else Color.White)
-                        ) {Text(tierLabel(value),fontSize=12.sp)}
+                        ) {
+                            val locked=!PremiumGameModePolicy.canStart(
+                                "geometry",value.ordinal,hasPremium)
+                            Text(if(locked)"🔒 "+tierLabel(value) else tierLabel(value),
+                                fontSize=12.sp)
+                        }
                     }
                 }
                 Text("4 dünya · 20 etkileşimli görev · Çevrimdışı",
@@ -528,9 +548,13 @@ fun GeometryCastleScreen(
                     }
                 }
                 CastleAction("Kaleye Gir ▶") {
-                    val started=store.begin(tier,profileGrade)
-                    if(started!=null) {run=started;feedback=""}
-                    else feedback="Yeni keşif kaydedilemedi."
+                    if(!PremiumGameModePolicy.canStart(
+                            "geometry",tier.ordinal,hasPremium)) upgrade()
+                    else {
+                        val started=store.begin(tier,profileGrade)
+                        if(started!=null) {run=started;feedback=""}
+                        else feedback="Yeni keşif kaydedilemedi."
+                    }
                 }
                 OutlinedButton(onClick={showCollection=true},
                     modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),

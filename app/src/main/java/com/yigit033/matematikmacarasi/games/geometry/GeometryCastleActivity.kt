@@ -7,6 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
 import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.games.basic.GradeAwareOperationPolicy
 import com.yigit033.matematikmacarasi.services.PlayerProfileService
@@ -40,19 +46,32 @@ class GeometryCastleActivity : ComponentActivity() {
             return
         }
         setContent {
+            val purchase=remember { PurchaseManager.getInstance(this) }
+            val premiumState by purchase.premiumState.collectAsState()
+            val hasPremium=premiumState || purchase.isPremiumSync()
+            val savedPrimary=progress.load()
+            val preservePaid=savedPrimary.seed>0L &&
+                PremiumGameModePolicy.requiresPremium("geometry",savedPrimary.tier.ordinal) &&
+                !hasPremium
+            val basicStore=remember {
+                GeometryCastleProgressStore(this,
+                    PremiumGameModePolicy.freeCheckpointStore("geometry"))
+            }
+            val currentStore=if(preservePaid)basicStore else progress
             MatematikMacerasiTheme {
                 Surface(modifier=Modifier.fillMaxSize()) {
                     GeometryCastleScreen(
-                        store=progress,
+                        store=currentStore,
                         profileGrade=GradeAwareOperationPolicy.grade(
                             PlayerProfileService.getInstance(this).getUserClass()),
-                        suggestedTier=AdaptiveLearningStore(this).progress(
-                            AdventureSkill.GEOMETRY).currentTier,
+                        suggestedTier=if(!hasPremium) LearningTier.TEMEL
+                            else AdaptiveLearningStore(this).progress(
+                                AdventureSkill.GEOMETRY).currentTier,
                         onExit={finish()},
                         onCompleted={run ->
                     com.yigit033.matematikmacarasi.services.AudioService
                         .getInstance(this).playVictorySound()
-                    deliverCompletion(run)
+                    deliverCompletion(run,currentStore)
                 }
                     )
                 }
@@ -60,11 +79,13 @@ class GeometryCastleActivity : ComponentActivity() {
         }
     }
 
-    private fun deliverCompletion(run: CastleRun) {
+    private fun deliverCompletion(
+        run: CastleRun,completedStore:GeometryCastleProgressStore=progress
+    ) {
         if (!run.finished) return
-        recoverFirstReward()
-        if(run.errors==0 && run.hints==0) progress.clearWeakShape()
-        if(progress.markDailyDelivered(run.seed)) {
+        recoverFirstReward(completedStore)
+        if(run.errors==0 && run.hints==0) completedStore.clearWeakShape()
+        if(completedStore.markDailyDelivered(run.seed)) {
             runCatching {
                 DailyTaskManager.getInstance(this).recordCompletedGameTask(
                     GameType.SHAPE_RECOGNITION,intent.getIntExtra("daily_task_id",-1))
@@ -75,7 +96,7 @@ class GeometryCastleActivity : ComponentActivity() {
                     level=run.tier.ordinal+1,
                     score=if(run.attempts==0) 0 else
                         ((run.attempts-run.errors)*100/run.attempts),
-                    stars=if(run.completedRuns==1 && progress.rewardRecorded()) 1 else 0,
+                    stars=if(run.completedRuns==1 && completedStore.rewardRecorded()) 1 else 0,
                     gameStartTime=run.seed,
                     taskId=intent.getIntExtra("daily_task_id",-1)
                 )
@@ -89,10 +110,11 @@ class GeometryCastleActivity : ComponentActivity() {
         }.onFailure { Log.w(TAG,"Adaptif öğrenme kaydı alınamadı",it) }
     }
 
-    private fun recoverFirstReward() {
-        if (!progress.hasEverCompleted() || progress.rewardRecorded()) return
+    private fun recoverFirstReward(completedStore:GeometryCastleProgressStore=progress) {
+        if (!completedStore.hasEverCompleted() || completedStore.rewardRecorded()) return
         if(stars.addStars(REWARD_ID,1)) {
-            if(progress.markRewardRecorded()) EventBus.updateStars(stars.getDisplayStars())
+            if(completedStore.markRewardRecorded())
+                EventBus.updateStars(stars.getDisplayStars())
         } else Log.w(TAG,"İlk bitirme yıldızı cihazdaki sonraki girişte tekrar denenecek")
     }
 }

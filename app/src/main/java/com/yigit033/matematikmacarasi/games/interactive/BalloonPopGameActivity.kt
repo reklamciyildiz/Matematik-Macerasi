@@ -48,6 +48,7 @@ class BalloonPopGameActivity:ComponentActivity() {
         stars=StarManager.getInstance(applicationContext)
         statistics=GameStatisticsHelper(applicationContext)
         chooseEntitledStore()
+        run=store.load()
         run?.takeIf {it.completed}?.let {deliver(it)}
         val grade=GradePolicy.parse(
             PlayerProfileService.getInstance(this).getUserClass())

@@ -54,6 +54,7 @@ class SpaceMathAdventureActivity:ComponentActivity() {
             statistics=GameStatisticsHelper(applicationContext)
             adaptive=AdaptiveLearningStore(this)
             chooseEntitledStore()
+            run=store.load()
             run?.takeIf {it.completed}?.let(::deliver)
         }.onFailure {
             Log.e(TAG,"Failed to open space game",it)

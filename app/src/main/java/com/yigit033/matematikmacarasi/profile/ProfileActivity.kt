@@ -243,7 +243,9 @@ fun ProfileScreen(
     val currentAvatarId = EventBus.currentAvatarId.collectAsState()
     
     // Avatar ID'sine göre avatarı al
-    val currentAvatar = remember(currentAvatarId.value) { avatarService.getCurrentAvatar() }
+    val currentAvatar = remember(currentAvatarId.value, isPremium) {
+        avatarService.getCurrentAvatar()
+    }
     
     var userName by remember { mutableStateOf(name) }
     var selectedClass by remember { mutableStateOf(currentClass) }

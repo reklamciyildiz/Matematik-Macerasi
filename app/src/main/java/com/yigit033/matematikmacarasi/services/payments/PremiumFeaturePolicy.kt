@@ -21,21 +21,3 @@ object PremiumFeaturePolicy {
     fun canEnterMarketShop(index:Int,isPremium:Boolean):Boolean =
         index in 0 until marketShopCount(isPremium)
 }
-
-/**
- * An adult confirmation gate limits accidental child purchase entry.
- * A maths question is a deterrent only; it cannot establish identity or age.
- * Play's own purchase approval/authentication still applies at checkout.
- */
-object AdultPurchaseChallenge {
-    data class Question(val left:Int,val right:Int) {
-        val answer: Int get() = left*right
-        val prompt:String get() = "$left × $right = ?"
-    }
-    fun create(seed:Int):Question {
-        val value=seed.toLong().and(0x7fffffffL)
-        return Question(12+(value%13).toInt(),7+((value/13)%9).toInt())
-    }
-    fun accepted(question:Question,answer:String,adultConfirmed:Boolean):Boolean =
-        adultConfirmed && answer.trim().toIntOrNull()==question.answer
-}

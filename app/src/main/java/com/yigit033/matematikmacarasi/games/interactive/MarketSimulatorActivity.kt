@@ -1,12 +1,14 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
 import android.os.Bundle
+import android.content.Intent
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
@@ -48,13 +50,17 @@ class MarketSimulatorActivity : ComponentActivity() {
 
         setContent {
             val premiumFlow by purchaseManager.premiumState.collectAsState()
+            // Observe changes but never trust a stale OR'ed aggregate flag.
+            @Suppress("UNUSED_VARIABLE") val entitlementRevision = premiumFlow
+            val hasPremium = purchaseManager.isPremiumSync()
             MatematikMacerasiTheme {
                 Surface(Modifier.fillMaxSize()) {
                     MarketAdventureScreen(
                         store=store,
                         stallStore=stallStore,
-                        hasPremium=premiumFlow || purchaseManager.isPremiumSync(),
+                        hasPremium=hasPremium,
                         onUpgrade={purchaseManager.buyPremium(this)},
+                        onRestore={startActivity(Intent(this,SettingsActivity::class.java))},
                         suggestedTier=AdaptiveLearningStore(this).progress(
                             AdventureSkill.MARKET).currentTier,
                         onExit={finish()},
@@ -67,6 +73,11 @@ class MarketSimulatorActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if(::purchaseManager.isInitialized) purchaseManager.checkPremiumStatusAsync()
     }
 
     private fun recoverReward() {

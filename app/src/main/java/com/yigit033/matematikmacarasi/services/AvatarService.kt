@@ -285,6 +285,12 @@ class AvatarService(private val context: Context) {
      */
     fun getCurrentAvatar(): Avatar {
         return try {
+            // Keep the unlocked choice on disk, but never display a Premium
+            // avatar when its entitlement is missing or temporarily unverified.
+            if (_currentAvatarId > 6 &&
+                !com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+                    .getInstance(context).isPremiumSync()
+            ) return getAvatarById(1)
             getAvatarById(_currentAvatarId)
         } catch (e: Exception) {
             Log.e("AvatarService", "Mevcut avatar alınırken hata: ${e.message}", e)

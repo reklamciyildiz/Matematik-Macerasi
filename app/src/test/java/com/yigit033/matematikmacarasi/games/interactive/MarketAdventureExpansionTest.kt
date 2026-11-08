@@ -187,4 +187,27 @@ class MarketAdventureExpansionTest {
         val wrong=run.copy(basket=listOf(MarketLine(99999,2)))
         assertFalse(MarketAdventureEngine.valid(wrong))
     }
+
+    @Test fun savedPremiumCheckpointsRequireEntitlementButKeepProgress() {
+        val premium=MarketAdventureRun(seed=95L,contentVersion=3,
+            phase=MarketAdventurePhase.SHOP,premiumJourney=true)
+        val paidShop=premium.copy(singleShop=true,startShop=8)
+        val legacyPaid=premium.copy(contentVersion=2)
+        val free=premium.copy(premiumJourney=false)
+        val freeShop=premium.copy(singleShop=true,startShop=2)
+        val legacyFree=premium.copy(contentVersion=1)
+        for(run in listOf(premium,paidShop,legacyPaid)) {
+            assertTrue(MarketAdventureEngine.requiresPremiumEntitlement(run))
+            assertFalse(MarketAdventureEngine.canResume(run,false))
+            assertTrue(MarketAdventureEngine.canResume(run,true))
+        }
+        for(run in listOf(free,freeShop,legacyFree)) {
+            assertFalse(MarketAdventureEngine.requiresPremiumEntitlement(run))
+            assertTrue(MarketAdventureEngine.canResume(run,false))
+        }
+        assertFalse(MarketAdventureEngine.canResume(premium.copy(seed=0L),true))
+        assertFalse(MarketAdventureEngine.canResume(premium.copy(
+            phase=MarketAdventurePhase.COMPLETE),true))
+        assertEquals(95L,premium.seed)
+    }
 }

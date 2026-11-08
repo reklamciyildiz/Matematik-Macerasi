@@ -210,7 +210,14 @@ class DailyTaskManager private constructor(private val context: Context) {
     private fun generateDailyTasks(): List<DailyTask> {
         val random = Random()
         val tasks = mutableListOf<DailyTask>()
-        val availableGameTypes = GameType.values().toMutableList() // Shape now opens playable Geometry Castle
+        // Newly issued quests must be grade-appropriate; do not wipe an
+        // existing day's quest progress after a class change.
+        val gradeLabel=context.getSharedPreferences("user_prefs",Context.MODE_PRIVATE)
+            .getString("user_class","1. Sınıf").orEmpty()
+        val grade=gradeLabel.substringBefore('.').trim().toIntOrNull()
+            ?.coerceIn(1,8) ?: 1
+        val availableGameTypes=DailyQuestGradePolicy.eligibleForGrade(grade)
+            .toMutableList()
         val usedGameTypes = HashSet<GameType>()
         var taskId = 1
         

@@ -62,6 +62,19 @@ object MarketAdventureEngine {
     const val PREMIUM_DECISIONS = 24
     const val EXPANDED_VISITS = com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy.PREMIUM_MARKET_SHOPS
     const val FREE_VISITS = MarketPremiumCatalog.FREE_SHOPS
+
+    /** Checkpoint access is derived from the stored run, never just its button. */
+    fun requiresPremiumEntitlement(run: MarketAdventureRun): Boolean = when {
+        run.contentVersion >= 3 && run.singleShop -> run.startShop >= FREE_VISITS
+        run.contentVersion >= 3 -> run.premiumJourney
+        run.contentVersion == 2 -> true // legacy six-shop Premium journey
+        else -> false
+    }
+
+    fun canResume(run: MarketAdventureRun, hasPremium: Boolean): Boolean =
+        run.seed > 0L && !run.finished &&
+            (hasPremium || !requiresPremiumEntitlement(run))
+
     fun visitCount(run: MarketAdventureRun): Int = when {
         run.contentVersion>=3 && run.singleShop -> 1
         run.contentVersion>=3 -> if(run.premiumJourney) EXPANDED_VISITS else FREE_VISITS

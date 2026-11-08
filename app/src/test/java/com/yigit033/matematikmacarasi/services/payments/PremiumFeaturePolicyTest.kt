@@ -22,18 +22,4 @@ class PremiumFeaturePolicyTest {
         assertEquals(10,PremiumFeaturePolicy.features.size)
         assertTrue(PremiumFeature.FULL_LEARNING_LIBRARY in PremiumFeaturePolicy.features)
     }
-
-    @Test fun adultPurchaseChallengeNeverAcceptsWrongOrUnconfirmedAnswers() {
-        for(seed in listOf(0,1,2,13,27,99,Int.MIN_VALUE,Int.MAX_VALUE)) {
-            val q=AdultPurchaseChallenge.create(seed)
-            assertTrue(q.left in 12..24)
-            assertTrue(q.right in 7..15)
-            assertFalse(AdultPurchaseChallenge.accepted(q,q.answer.toString(),false))
-            assertFalse(AdultPurchaseChallenge.accepted(q,(q.answer+1).toString(),true))
-            assertFalse(AdultPurchaseChallenge.accepted(q,"",true))
-            assertFalse(AdultPurchaseChallenge.accepted(q,"banana",true))
-            assertTrue(AdultPurchaseChallenge.accepted(q,q.answer.toString(),true))
-            assertTrue(AdultPurchaseChallenge.accepted(q," ${q.answer} ",true))
-        }
-    }
 }

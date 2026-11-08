@@ -211,6 +211,7 @@ fun MarketAdventureScreen(
     stallStore:MarketStallStore,
     hasPremium:Boolean,
     onUpgrade:()->Unit,
+    onRestore:()->Unit,
     suggestedTier:LearningTier,
     onExit:()->Unit,
     onCompletion:(MarketAdventureRun)->Unit
@@ -225,9 +226,23 @@ fun MarketAdventureScreen(
     var showStall by remember { mutableStateOf(false) }
     var showAllShops by rememberSaveable { mutableStateOf(false) }
     val scroll=rememberScrollState()
+    val premiumRunBlocked = !hasPremium &&
+        MarketAdventureEngine.requiresPremiumEntitlement(run)
+    LaunchedEffect(premiumRunBlocked) {
+        if(premiumRunBlocked) {
+            showLobby = true
+            showStall = false
+        }
+    }
     LaunchedEffect(run.seed,run.visit,run.phase,showLobby) { scroll.scrollTo(0) }
 
     fun persist(next:MarketAdventureRun):Boolean {
+        if(!hasPremium && MarketAdventureEngine.requiresPremiumEntitlement(next)) {
+            showLobby=true
+            isPositive=false
+            message="Premium erişimi doğrulanamadı. Kaydedilmiş oyunun korunuyor."
+            return false
+        }
         if(!store.save(next)) {
             message="Kaydetme başarısız. Lütfen yeniden dene."
             isPositive=false
@@ -249,6 +264,7 @@ fun MarketAdventureScreen(
         } else start(tier,shopIndex)
     }
     fun chooseMoney(amount:Int) {
+        if(premiumRunBlocked) return
         val current=run
         if(current.phase==MarketAdventurePhase.PAYMENT) {
             val next=MarketAdventureEngine.choosePayment(current,amount)
@@ -301,7 +317,7 @@ fun MarketAdventureScreen(
         dismissButton={TextButton(onClick={pendingNewRun=null}) {Text("Vazgeç")}}
     )
     val scene=MarketAdventureEngine.scenario(run)
-    val stage=if(showLobby) MarketAdventurePhase.WELCOME else run.phase
+    val stage=if(showLobby || premiumRunBlocked) MarketAdventurePhase.WELCOME else run.phase
     Column(
         Modifier.fillMaxSize().background(
             Brush.verticalGradient(listOf(
@@ -365,10 +381,17 @@ fun MarketAdventureScreen(
                                 if(run.singleShop) "Hızlı Oyun"
                                 else "${run.visit+1}/${MarketAdventureEngine.visitCount(run)}. mağaza",
                                 color=Color.White,fontSize=14.sp)
-                            Text("Sepetin ve matematik ilerlemen korunuyor.",
-                                color=cream,fontSize=12.sp)
-                            MarketAction("▶ Kaldığım Yerden Devam Et") {
-                                showLobby=false;message=""
+                            val canResume = MarketAdventureEngine.canResume(run,hasPremium)
+                            Text(
+                                if(canResume) "Sepetin ve matematik ilerlemen korunuyor."
+                                else "Kaydedilmiş Premium maceran korunuyor. Ayarlar bölümünden " +
+                                    "satın alımını geri yükleyerek devam edebilirsin.",
+                                color=cream,fontSize=12.sp
+                            )
+                            MarketAction(if(canResume) "▶ Kaldığım Yerden Devam Et"
+                                else "🔒 Premium Hakkını Kontrol Et") {
+                                if(canResume) {showLobby=false;message=""}
+                                else onRestore()
                             }
                         }
                     }

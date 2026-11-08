@@ -1,4 +1,4 @@
-# S3.3 — Free/Premium, ebeveyn satın alma kapısı, geri yükleme ve Play yayın güvenliği
+# S3.3 — Free/Premium, Google Play satın alma, geri yükleme ve yayın güvenliği
 
 **Durum (1 Kasım 2026):** Kodlama ve Android CI kabulüne sunuldu. **Play Store üretim yayımlama onayı verilmedi.** Canlı Play Console, ödeme hesabı, uygulama imzası ve saha testleri olmadan bunların başarılı olduğunu iddia etmeyin.
 
@@ -14,19 +14,19 @@ Mevcut `PurchaseManager` ve değişmeyen **tek seferlik, tüketilmeyen Google Pl
 | Öğrenme raporu | Dört oyun becerisinin temel raporu | Aynı rapor; önceki profilin ek istatistikleri |
 | Avatarlar | İlk 6 avatar | 7–15 numaralı özel avatarlar **yıldızla ayrıca açılır** |
 | Uygulama ikonu | Varsayılan | Robot / Uzay seçenekleri |
-| Matematik Labirenti | Mevcut günlük limit | Sınırsız |
-| Günlük bonus | Standart ödüller | Mevcut Premium yıldız bonusu |
+| Matematik Labirenti | Günde 5 yeni oturum | Sınırsız |
+| Günlük bonus | 5–7 günlük görev ve standart ödüller | Aynı görevler + günlük 5 yıldız |
 | Reklam | **Geçici olarak kapalı** | **Geçici olarak kapalı** |
 
 Bu tablo, ücretlendirmeden önce anlaşılır biçimde Ayarlar'da gösterilir. `PremiumFeaturePolicy` tek paylaşılan erişim matrisidir ve Pazar mağazaları onun sayılarını kullanır. Oyun skorları ve kayıtları ayrı korunur.
 
 **Dikkat:** Kullanıcı dilinde "Premium üyelik" denilse de mevcut Play ürünü **abonelik değil, tek seferlik kalıcı erişim ürünüdür**. Play Console'daki ürün tanımı ve mağaza fiyatı doğrulanmalıdır.
 
-## Ebeveyn kapısı ve satın alma
+## Google Play satın alma akışı
 
 - `PurchaseManager.buyPremium(Activity)` artık **tek merkezi satın alma kapısıdır**. Settings, Profile, Market, Avatar Store gibi ekranlar aynı fonksiyona gider.
-- Doğrudan `launchPurchaseFlow` artık `private`. Çocuk yanlışlıkla ödeme sayfasına ulaşmasın diye önce değişken çarpma sorusu ve ayrı yetişkin onay kutusu olan dialog gösterilir. Vazgeç işlem başlatmaz.
-- **Bu matematik testi gerçek yaş/kimlik doğrulaması değildir.** Amacı istem dışı tıklamayı engellemektir; Google Play Family Link satın alma onayları ve Play ödeme kimlik doğrulaması ayrıca çalışmalıdır. Çocuğa para harcamayı teşvik eden yanılgılı ödül/geri sayım ekranı eklenmez.
+- `launchPurchaseFlow` `private` kalır. `buyPremium()` uygulama içinde ekstra matematik sorusu veya yetişkin onay ekranı açmadan Google Play satın alma akışına gider.
+- Google Play'in kendi kimlik doğrulaması ve Family Link onayları mevcut hesap ayarlarına göre çalışır; ürünün Play Families uygunluğu gerçek cihaz ve mağaza denetiminde ayrıca doğrulanmalıdır.
 - Premium etkinse `buyPremium` yeniden ödeme başlatmaz. Eski Pazar'daki sabit 17×8 kapısı kaldırıldı.
 - `Purchase.PurchaseState.PENDING` için Premium verilmez; yalnız `PURCHASED` durumu hak kazandırır ve onaylanmamış satın almalar `acknowledgePurchase` ile bildirilmeye devam eder.
 - **Önemli güvenlik sınırı:** Bu uygulama şu anda satın alma tokenlarını Google Play Developer API kullanan **bağımsız güvenilir backend üzerinde doğrulamıyor**. Client-only doğrulama manipülasyona açıktır. Ölçekli ticari yayımlama için sunucu doğrulaması, tekrar kullanım kontrolleri ve güvenilir hak kaydı ayrı zorunlu kabul kapısıdır. Acknowledge işlemleri Play belgesindeki süre içinde doğrulanmalıdır.
@@ -35,7 +35,7 @@ Bu tablo, ücretlendirmeden önce anlaşılır biçimde Ayarlar'da gösterilir. 
 
 Ayarlar → **Satın Alma ve Geri Yükleme → Satın Alımları Geri Yükle**
 
-1. İşlem yeni satın alma başlatmaz, ücret çekmez, ebeveyn kapısı istemez.
+1. İşlem yeni satın alma başlatmaz veya ücret çekmez.
 2. Google Play Billing INAPP ürünleri tekrar sorgulanır; kayıtlar arasında doğru ürün `PURCHASED` ise hak yeniden yüklenir. Onay gerektiren kayıt için acknowledge tetiklenir.
 3. Premium kodu da değerlendirilir; yalnız Play satın alımı yok diye etkin Premium kodu kaybolmaz.
 4. Yükleniyor / Play bulundu / kodla Premium / satın alma bulunamadı / bekleyen ödeme / bağlantı hatası durumları kullanıcıya açıklanır.
@@ -68,7 +68,7 @@ Bu sürümde:
 
 1. **Free** yeni cihaz: 3 mağaza açık, 7'si Premium; tezgâh kapalı; üç ücretsiz avatar dışı kilitler tutarlı (ilk 6 avatar yıldız gerektirebilir). Öğrenme raporu ücretsiz.
 2. **Premium** mevcut cihaz: 10 mağaza, tezgâh, robot/uzay ikonu, ücretli avatarların yıldızla kilit açması; hiçbir hak tekrar satın alım istememeli.
-3. **Satın al:** Settings, Profile, Market, Avatar Store üzerinden satın alma çağrısı her seferinde ebeveyn kapısına gider. Yanlış sonuç veya onaysız deneme Google Play'i açmamalı; doğru sonuçtan sonra gerçek Play ödeme kimlik doğrulaması devam etmeli.
+3. **Satın al:** Settings, Profile, Market ve Avatar Store aynı `buyPremium` çağrısına gider. Ayrı uygulama içi yetişkin sorusu yoktur; gerçek Play onayı, iptal ve bekleyen işlem test edilir.
 4. **Geri yükle:** Satın alım olan test hesabı → Play bulundu. Diğer hesap → bulunamadı. Premium kod kullanıcıları → kod etkin. Uçak modu → bağlantı hatası, eski cached Premium silinmemeli.
 5. **Bekleyen ödeme:** Beklemedeyken hak yok; Play `PURCHASED` dönmeden açılmamalı.
 6. **Eski kayıt:** market/geometri/öğrenme ilerlemesi, yıldızlar, avatar seçimleri, ikon tercihleri ve günlük bonuslar kaybolmamalı.

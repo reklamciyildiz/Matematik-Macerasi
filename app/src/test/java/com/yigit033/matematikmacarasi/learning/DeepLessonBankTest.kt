@@ -29,7 +29,7 @@ class DeepLessonBankTest {
 
     @Test fun generatedDeepProblemsHaveOneAnswerAndReplayDeterministically() {
         for (unit in DeepLessonCatalog.all()) {
-            for (seed in 1L..160L) for (i in 0..3) {
+            for (seed in 1L..160L) for (i in 0..7) {
                 val q=DeepLessonQuestionBank.question(unit.lesson,seed,i)
                 assertEquals(4,q.choices.size)
                 assertEquals(4,q.choices.distinct().size)
@@ -42,7 +42,7 @@ class DeepLessonBankTest {
 
     @Test fun gradeEightNewSkillsHaveIndependentlyVerifiedMath() {
         val lessons=DeepLessonCatalog.forGrade(8).associateBy{it.id}
-        for (seed in 1L..200L) for (i in 0..3) {
+        for (seed in 1L..200L) for (i in 0..7) {
             for (id in lessons.keys) {
                 val q=DeepLessonQuestionBank.question(lessons.getValue(id),seed,i)
                 val expected = when(id) {

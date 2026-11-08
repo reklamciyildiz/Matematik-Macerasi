@@ -8,6 +8,9 @@ import { evaluateVerifiedSubscription } from "./entitlement.mjs";
 
 export const PACKAGE_NAME = "com.yigit033.matematikmacarasi";
 const SCOPE = "https://www.googleapis.com/auth/androidpublisher";
+export const INTEGRITY_SCOPE = "https://www.googleapis.com/auth/playintegrity";
+export const PUBSUB_SCOPE = "https://www.googleapis.com/auth/pubsub";
+const SAFE_SCOPES = new Set([SCOPE,INTEGRITY_SCOPE,PUBSUB_SCOPE]);
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const encoder = new TextEncoder();
 const b64url = bytes => {
@@ -40,13 +43,14 @@ function importPrivateKey(pem) {
 /** Server-side credential exchange. Never package this key in Android. */
 export async function createGoogleAccessToken(account, {
   fetchImpl = fetch,
-  nowMs = Date.now(),
+  nowMs = Date.now(), scope = SCOPE,
 } = {}) {
   const valid = serviceAccountInfo(account);
   if (!Number.isFinite(nowMs) || nowMs < 0) throw new Error("INVALID_CLOCK");
+  if (!SAFE_SCOPES.has(scope)) throw new Error("UNSUPPORTED_GOOGLE_SCOPE");
   const issued = Math.floor(nowMs / 1000);
   const unsigned = jwtPart({alg:"RS256",typ:"JWT"}) + "." +
-    jwtPart({iss:valid.client_email,scope:SCOPE,aud:TOKEN_URL,
+    jwtPart({iss:valid.client_email,scope,aud:TOKEN_URL,
       iat:issued,exp:issued+3000});
   const key = await importPrivateKey(valid.private_key);
   const signature = b64url(new Uint8Array(await crypto.subtle.sign(

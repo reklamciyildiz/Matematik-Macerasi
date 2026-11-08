@@ -74,6 +74,7 @@ import com.yigit033.matematikmacarasi.games.basic.DivisionGameActivity
 import com.yigit033.matematikmacarasi.games.basic.SubtractionGameActivity
 import com.yigit033.matematikmacarasi.games.geometry.GeometryCastleActivity
 import com.yigit033.matematikmacarasi.games.fractions.FractionCrystalsActivity
+import com.yigit033.matematikmacarasi.games.pattern.PatternForestActivity
 import com.yigit033.matematikmacarasi.games.time.TimeTowerActivity
 import com.yigit033.matematikmacarasi.games.interactive.MarketSimulatorActivity
 import kotlinx.coroutines.delay
@@ -425,20 +426,23 @@ private fun PracticeLesson(
             val target = when (lesson.id) {
                 "count_2", "count_3" -> SayiAvi2Activity::class.java
                 "count_4" -> ForestAdventureActivity::class.java
-                "add_10", "add_20" -> AdditionGameActivity::class.java
+                "add_10", "add_20", "g1_make_ten" -> AdditionGameActivity::class.java
                 "multiply_intro", "multiply" -> MultiplicationGameActivity::class.java
-                "divisible_15" -> DivisionGameActivity::class.java
+                "divisible_15", "g3_share_equal" -> DivisionGameActivity::class.java
                 "g1_count20", "g2_place" -> SayiAvi2Activity::class.java
                 "g1_takeaway" -> SubtractionGameActivity::class.java
                 "g1_shapes", "g2_corners", "g3_rectangle",
                 "g4_perimeter", "g5_area", "g5_angles",
-                "g6_polygon", "g7_mirror" ->
+                "g6_polygon", "g7_mirror", "g8_coordinate_mirror" ->
                     GeometryCastleActivity::class.java
-                "g2_half", "g3_third", "g4_fraction", "g7_rational" ->
+                "g2_half", "g3_third", "g4_fraction", "g7_rational",
+                "g2_quarter", "g3_quarter_of_set", "g4_same_denominator",
+                "g7_fraction_sum" ->
                     FractionCrystalsActivity::class.java
                 "g2_clock", "g4_time_units" ->
                     TimeTowerActivity::class.java
                 "g3_money" -> MarketSimulatorActivity::class.java
+                "g6_pattern_rule" -> PatternForestActivity::class.java
                 // No related deployed game for the remaining middle-school concepts:
                 // do not offer an unrelated game with misleading skill matching.
                 else -> null

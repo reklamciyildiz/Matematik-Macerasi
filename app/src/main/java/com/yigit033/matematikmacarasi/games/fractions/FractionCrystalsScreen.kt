@@ -160,7 +160,12 @@ fun FractionCrystalsScreen(
         context.startActivity(Intent(context,SettingsActivity::class.java))
     }
     var run by remember { mutableStateOf(store.load()) }
-    var chosenDifficulty by remember { mutableIntStateOf(if(grade<=3) 0 else 1) }
+    var chosenDifficulty by remember {
+        mutableIntStateOf(PremiumGameModePolicy.defaultDifficulty(grade,hasPremium))
+    }
+    LaunchedEffect(hasPremium) {
+        if(!hasPremium)chosenDifficulty=0
+    }
     var message by remember { mutableStateOf("") }
     var positive by remember { mutableStateOf(true) }
     var showFreeBasic by remember { mutableStateOf(false) }

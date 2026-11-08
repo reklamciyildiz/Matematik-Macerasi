@@ -193,8 +193,12 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
         context.startActivity(Intent(context,SettingsActivity::class.java))
     }
     var run by remember { mutableStateOf(store.load()) }
-    var difficulty by rememberSaveable { mutableIntStateOf(
-        if(profileGrade<=2)0 else 1) }
+    var difficulty by rememberSaveable {
+        mutableIntStateOf(PremiumGameModePolicy.defaultDifficulty(profileGrade,hasPremium))
+    }
+    LaunchedEffect(hasPremium) {
+        if(!hasPremium)difficulty=0
+    }
     var message by remember { mutableStateOf("") }
     var positive by remember { mutableStateOf(true) }
     var restart by remember { mutableStateOf(false) }

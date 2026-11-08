@@ -7,6 +7,9 @@ package com.yigit033.matematikmacarasi.services.payments
 object PremiumGameModePolicy {
     private val advancedGames=setOf("fractions","time_tower","pattern_forest")
     const val FIRST_PREMIUM_DIFFICULTY_INDEX=1
+    /** Free users should never land on a locked default difficulty. */
+    fun defaultDifficulty(grade:Int,hasPremium:Boolean):Int =
+        if(!hasPremium || grade<=2)0 else 1
     /** Separate storage only when a prior Premium checkpoint is inaccessible.
      * Basic progress then remains playable and the paid checkpoint untouched.
      */

@@ -122,7 +122,12 @@ fun TimeTowerScreen(
         context.startActivity(Intent(context,SettingsActivity::class.java))
     }
     var run by remember { mutableStateOf(store.load()) }
-    var choiceDifficulty by rememberSaveable { mutableIntStateOf(if(profileGrade<=2)0 else 1) }
+    var choiceDifficulty by rememberSaveable {
+        mutableIntStateOf(PremiumGameModePolicy.defaultDifficulty(profileGrade,hasPremium))
+    }
+    LaunchedEffect(hasPremium) {
+        if(!hasPremium)choiceDifficulty=0
+    }
     var message by remember { mutableStateOf("") }
     var success by remember { mutableStateOf(true) }
     var confirmRestart by remember { mutableStateOf(false) }

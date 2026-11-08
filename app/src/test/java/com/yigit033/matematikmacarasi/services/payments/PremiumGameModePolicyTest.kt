@@ -32,6 +32,13 @@ class PremiumGameModePolicyTest {
         }
         assertTrue(slots.keys.map(PremiumGameModePolicy::freeCheckpointStore).distinct().size==3)
     }
+    @Test fun defaultDifficultyNeverPointsFreeUsersAtLockedModes() {
+        for(grade in 1..8) {
+            assertTrue(PremiumGameModePolicy.defaultDifficulty(grade,false)==0)
+            assertTrue(PremiumGameModePolicy.defaultDifficulty(grade,true)==
+                if(grade<=2)0 else 1)
+        }
+    }
     @Test fun otherGamesRemainFreeAndSchoolGradeIsNotLocked() {
         for(id in listOf("add","subtract","geometry","hunt","forest","space","balloon"))
             for(difficulty in 0..2) {

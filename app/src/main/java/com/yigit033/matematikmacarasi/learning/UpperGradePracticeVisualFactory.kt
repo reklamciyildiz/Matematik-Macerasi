@@ -94,6 +94,33 @@ object UpperGradePracticeVisualFactory {
                 values = read(text, """simetri eksenine (\d+) birim uzakta""") ?: return null
                 caption = "Bir nokta simetri eksenine ${values[0]} birim uzaklıkta."
             }
+            "g8_lcm" -> {
+                kind = PracticeVisualKind.MULTIPLES_LISTS
+                values = read(text, """(\d+) ve (\d+) sayılarının EKOK""")
+                    ?: return null
+                caption = "${values[0]} ve ${values[1]} sayılarının pozitif katlarını karşılaştır."
+            }
+            "g8_square_root" -> {
+                kind = PracticeVisualKind.AREA_GRID
+                val square = read(text, """√(\d+) kaçtır""")?.firstOrNull() ?: return null
+                val side = kotlin.math.sqrt(square.toDouble()).toInt()
+                if (side * side != square) return null
+                values = listOf(side, side)
+                caption = "Toplam $square birim kareden oluşan eş kenarlı bir kare."
+            }
+            "g8_linear_value" -> {
+                kind = PracticeVisualKind.LINEAR_INPUT
+                values = read(text, """y = (\d+)x \+ (\d+) ve x = (\d+)""")
+                    ?: return null
+                caption = "Denklem: y = ${values[0]}x + ${values[1]}; x yerine ${values[2]} konulacak."
+            }
+            "g8_coordinate_mirror" -> {
+                kind = PracticeVisualKind.MIRROR_POINTS
+                values = read(text,
+                    """A\((\d+), (\d+)\) noktası y eksenine yansıtılırsa""")
+                    ?: return null
+                caption = "Başlangıç noktası A(${values[0]}, ${values[1]}). Dikey y eksenine göre yansıtılıyor."
+            }
             "g8_gcd" -> {
                 kind = PracticeVisualKind.FACTOR_LISTS
                 values = read(text, """(\d+) ve (\d+) sayılarının EBOB""") ?: return null

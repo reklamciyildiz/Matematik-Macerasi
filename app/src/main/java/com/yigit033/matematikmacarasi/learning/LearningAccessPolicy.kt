@@ -14,9 +14,15 @@ object LearningAccessPolicy {
         require(grade in 1..8)
         val topics = GradeCurriculumCatalog.forGrade(grade).topics
             .filter { it.area != TopicArea.REVIEW && it.lessonIds.isNotEmpty() }
-        return topics.mapNotNull { it.lessonIds.firstOrNull() }
-            .take(FREE_INTRO_LESSONS_PER_GRADE)
-            .toSet()
+        val first = topics.firstOrNull() ?: return emptySet()
+        // Show the teaching experience in two separate mathematical strands.
+        // E.g. numbers + operations, not two adjacent number chapters.
+        val second = topics.firstOrNull { it.area != first.area }
+            ?: topics.firstOrNull { it.id != first.id }
+        return listOfNotNull(
+            first.lessonIds.firstOrNull(),
+            second?.lessonIds?.firstOrNull()
+        ).take(FREE_INTRO_LESSONS_PER_GRADE).toSet()
     }
 
     fun accessible(

@@ -314,7 +314,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
         SettingsSection("Free ve Premium","Nelerin ücretsiz olduğunu açıkça gör") {
             Text("ÜCRETSİZ",color=SettingsPalette.mint,
                 fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-            FeatureLine("Temel matematik oyunları")
+            FeatureLine("Dört işlem: seçilen sınıfa uygun Temel zorluk")
+            FeatureLine("Orman Keşfi ve Antik Tapınak öğretici maceraları")
             FeatureLine("Kesir Kristalleri, Zaman Kulesi ve Örüntü Ormanı: Temel seviye")
             FeatureLine("Her sınıfta iki farklı konudan ücretsiz başlangıç dersi")
             FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
@@ -327,6 +328,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
             FeatureLine("Tüm ücretsiz içerikler ve Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
             FeatureLine("Öğren: 1–8. sınıf mevcut kısa ders kütüphanesi ve derinleşme dersleri",true)
             FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
+            FeatureLine("Dört işlem ve Karışık Mod: Orta, Zor, Çok Zor, Uzman",true)
             FeatureLine("Kesir, Zaman ve Örüntü oyunlarında Orta ve Zor seviyeler",true)
             FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
             FeatureLine("Labirentte sınırsız oyun, ek profil istatistikleri ve günlük bonus",true)

@@ -5,7 +5,8 @@ package com.yigit033.matematikmacarasi.services.payments
  * NEVER deleted when an entitlement changes.
  */
 object PremiumGameModePolicy {
-    private val advancedGames=setOf("fractions","time_tower","pattern_forest")
+    private val advancedGames=setOf("fractions","time_tower","pattern_forest",
+        "operations","geometry","balloon","space","hunt")
     const val FIRST_PREMIUM_DIFFICULTY_INDEX=1
     /** Free users should never land on a locked default difficulty. */
     fun defaultDifficulty(grade:Int,hasPremium:Boolean):Int =
@@ -21,6 +22,9 @@ object PremiumGameModePolicy {
     }
     fun requiresPremium(gameId:String,difficulty:Int):Boolean =
         gameId in advancedGames && difficulty>=FIRST_PREMIUM_DIFFICULTY_INDEX
+    /** Five arithmetic operation difficulties share the same paywall policy. */
+    fun allowsArithmeticDifficulty(difficulty:Int,hasPremium:Boolean):Boolean =
+        canStart("operations",difficulty,hasPremium)
     fun canStart(gameId:String,difficulty:Int,hasPremium:Boolean):Boolean =
         hasPremium || !requiresPremium(gameId,difficulty)
 }

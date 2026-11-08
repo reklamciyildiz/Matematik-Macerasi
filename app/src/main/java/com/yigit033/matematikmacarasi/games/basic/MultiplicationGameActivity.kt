@@ -4,6 +4,9 @@ import android.app.Dialog
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import android.os.Handler
 import android.os.Looper
 import android.view.ViewGroup
@@ -460,6 +463,13 @@ class MultiplicationGameActivity : BaseGameActivity() {
     }
     
     private fun initializeGameWithDifficulty(difficulty: DifficultyLevel) {
+        if(!PremiumGameModePolicy.allowsArithmeticDifficulty(
+                difficulty.ordinal,PurchaseManager.getInstance(this).isPremiumSync())) {
+            showDifficultySelection=true
+            showGameSummary=false
+            startActivity(Intent(this,SettingsActivity::class.java))
+            return
+        }
         try {
         // Zorluk seviyesine göre oyun parametrelerini ayarla
         when (difficulty) {

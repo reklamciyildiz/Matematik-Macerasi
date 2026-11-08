@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +25,12 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.models.DifficultyLevel
 import com.yigit033.matematikmacarasi.services.PlayerProfileService
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 private val indigo=Color(0xFF081836)
 private val light=Color(0xFFF5FDFF)
@@ -34,6 +41,9 @@ fun PremiumOperationDifficultySelect(
     onDifficultySelected:(DifficultyLevel)->Unit
 ){
     val context=LocalContext.current
+    val purchase=remember(context){PurchaseManager.getInstance(context)}
+    val entitlement by purchase.premiumState.collectAsState()
+    val hasPremium=entitlement || purchase.isPremiumSync()
     val grade=GradeAwareOperationPolicy.grade(
         PlayerProfileService.getInstance(context).getUserClass())
     val op=when{
@@ -85,8 +95,12 @@ fun PremiumOperationDifficultySelect(
                 "Usta Pilot","Galaksi Ustası")
             val colors=listOf(Color(0xFF15C889),Color(0xFF1FAAD9),
                 Color(0xFF7267DE),Color(0xFFE484A1),Color(0xFFDAA23D))
+            val locked=!PremiumGameModePolicy.allowsArithmeticDifficulty(index,hasPremium)
             Surface(
-                onClick={onDifficultySelected(difficulty)},
+                onClick={
+                    if(locked)context.startActivity(Intent(context,SettingsActivity::class.java))
+                    else onDifficultySelected(difficulty)
+                },
                 modifier=Modifier.fillMaxWidth().heightIn(min=88.dp),
                 shape=RoundedCornerShape(17.dp),
                 color=Color(0xFF172D61),
@@ -104,14 +118,14 @@ fun PremiumOperationDifficultySelect(
                         }
                     }
                     Column(Modifier.weight(1f)){
-                        Text(labels[index],color=light,
+                        Text(if(locked)"🔒 "+labels[index]+" · Premium" else labels[index]+" · Free",color=light,
                             fontSize=16.sp,fontWeight=FontWeight.Bold)
                         Text(if(op==OperationKind.ADD || op==OperationKind.SUBTRACT)
                             "$cap'e kadar sonuç"
                             else "${grade}. sınıfa uygun işlem grupları",
                             color=Color(0xFFB8DDF0),fontSize=12.sp)
                     }
-                    Text("▶",color=gold,fontSize=23.sp)
+                    Text(if(locked)"🔒" else "▶",color=gold,fontSize=23.sp)
                 }
             }
         }

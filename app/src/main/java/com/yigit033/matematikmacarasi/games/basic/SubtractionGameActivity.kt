@@ -1,6 +1,9 @@
 package com.yigit033.matematikmacarasi.games.basic
 
 import android.os.Bundle
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -338,6 +341,13 @@ class SubtractionGameActivity : BaseGameActivity() {
     }
     
     private fun initializeGameWithDifficulty(difficulty: com.yigit033.matematikmacarasi.models.DifficultyLevel) {
+        if(!PremiumGameModePolicy.allowsArithmeticDifficulty(
+                difficulty.ordinal,PurchaseManager.getInstance(this).isPremiumSync())) {
+            showDifficultySelection=true
+            showGameSummary=false
+            startActivity(Intent(this,SettingsActivity::class.java))
+            return
+        }
         try {
             // Zorluk seviyesine göre oyun parametrelerini ayarla
             when (difficulty) {

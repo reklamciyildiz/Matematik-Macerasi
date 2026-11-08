@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.models.DifficultyLevel
 import com.yigit033.matematikmacarasi.services.PlayerProfileService
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import kotlin.random.Random
 
@@ -55,12 +58,19 @@ class OperationsHubActivity:ComponentActivity(){
     override fun onCreate(savedInstanceState:Bundle?){
         super.onCreate(savedInstanceState)
         val prefs=getSharedPreferences("operation_hub_v1",MODE_PRIVATE)
+        val purchase=PurchaseManager.getInstance(this)
         val grade=GradeAwareOperationPolicy.grade(
             PlayerProfileService.getInstance(this).getUserClass())
         setContent {
             MatematikMacerasiTheme {
                 var mixed by rememberSaveable {mutableStateOf(false)}
                 var difficulty by rememberSaveable {mutableStateOf(DifficultyLevel.EASY)}
+                val premiumFlow by purchase.premiumState.collectAsState()
+                val hasPremium=premiumFlow || purchase.isPremiumSync()
+                LaunchedEffect(hasPremium) {
+                    if(!PremiumGameModePolicy.allowsArithmeticDifficulty(
+                            difficulty.ordinal,hasPremium)) difficulty=DifficultyLevel.EASY
+                }
                 var last by remember {mutableStateOf(
                     OperationKind.entries.firstOrNull{
                         it.name==prefs.getString("last_operation",null)
@@ -79,7 +89,9 @@ class OperationsHubActivity:ComponentActivity(){
                     startActivity(Intent(this,clazz))
                 }
                 if(mixed) MixedOperationSession(
-                    grade=grade,difficulty=difficulty,
+                    grade=grade,difficulty=if(
+                        PremiumGameModePolicy.allowsArithmeticDifficulty(
+                            difficulty.ordinal,hasPremium))difficulty else DifficultyLevel.EASY,
                     onBack={mixed=false}
                 ) else {
                     Column(
@@ -188,7 +200,13 @@ class OperationsHubActivity:ComponentActivity(){
                             Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                                 tierRow.forEach { item ->
                                     OutlinedButton(
-                                        onClick={difficulty=item},
+                                        onClick={
+                                            if(!PremiumGameModePolicy.allowsArithmeticDifficulty(
+                                                    item.ordinal,hasPremium))
+                                                startActivity(Intent(this@OperationsHubActivity,
+                                                    SettingsActivity::class.java))
+                                            else difficulty=item
+                                        },
                                         modifier=Modifier.weight(1f).heightIn(min=50.dp),
                                         shape=RoundedCornerShape(14.dp),
                                         contentPadding=PaddingValues(horizontal=4.dp),
@@ -202,6 +220,8 @@ class OperationsHubActivity:ComponentActivity(){
                                         )
                                     ){
                                         Text(
+                                            (if(!PremiumGameModePolicy.allowsArithmeticDifficulty(
+                                                    item.ordinal,hasPremium))"🔒 " else "")+
                                             when(item){
                                                 DifficultyLevel.EASY->"Temel"
                                                 DifficultyLevel.MEDIUM->"Orta"

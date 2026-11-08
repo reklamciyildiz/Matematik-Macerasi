@@ -39,8 +39,15 @@ class PremiumGameModePolicyTest {
                 if(grade<=2)0 else 1)
         }
     }
+    @Test fun arithmeticOffersFullBasicWithoutBuyingButAdvancedRequiresPremium() {
+        assertTrue(PremiumGameModePolicy.allowsArithmeticDifficulty(0,false))
+        for (level in 1..4) {
+            assertFalse(PremiumGameModePolicy.allowsArithmeticDifficulty(level,false))
+            assertTrue(PremiumGameModePolicy.allowsArithmeticDifficulty(level,true))
+        }
+    }
     @Test fun otherGamesRemainFreeAndSchoolGradeIsNotLocked() {
-        for(id in listOf("add","subtract","geometry","hunt","forest","space","balloon"))
+        for(id in listOf("add","subtract","forest"))
             for(difficulty in 0..2) {
                 assertTrue(PremiumGameModePolicy.canStart(id,difficulty,false))
             }

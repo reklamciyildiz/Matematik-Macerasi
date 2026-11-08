@@ -19,7 +19,8 @@ class PremiumFeaturePolicyTest {
             assertFalse(PremiumFeaturePolicy.allowed(feature,false))
             assertTrue(PremiumFeaturePolicy.allowed(feature,true))
         }
-        assertEquals(9,PremiumFeaturePolicy.features.size)
+        assertEquals(10,PremiumFeaturePolicy.features.size)
+        assertTrue(PremiumFeature.FULL_LEARNING_LIBRARY in PremiumFeaturePolicy.features)
     }
 
     @Test fun adultPurchaseChallengeNeverAcceptsWrongOrUnconfirmedAnswers() {

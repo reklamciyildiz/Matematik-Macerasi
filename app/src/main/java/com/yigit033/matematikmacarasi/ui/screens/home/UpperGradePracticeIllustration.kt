@@ -50,7 +50,7 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
                 repeat(v[1]) { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                         repeat(v[0]) { col ->
-                            Box(Modifier.size(15.dp)
+                            Box(Modifier.size(if (v[0] >= 12) 12.dp else 15.dp)
                                 .background(
                                     if ((row + col) % 2 == 0) teal else blue,
                                     RoundedCornerShape(3.dp)))
@@ -258,7 +258,9 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
         PracticeVisualKind.MIRROR_POINTS -> {
             Canvas(Modifier.fillMaxWidth().height(110.dp)) {
                 val middle=size.width*.5f
-                val y=size.height*.55f
+                val y=if (v.size>=2)
+                    size.height*(.82f - v[1].toFloat().coerceIn(0f,10f)*.055f)
+                else size.height*.55f
                 val dist=minOf(v[0].toFloat()*size.width*.018f,
                     size.width*.35f)
                 drawLine(yellow,

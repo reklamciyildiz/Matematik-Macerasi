@@ -279,7 +279,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
         SettingsSection("Free ve Premium","Nelerin ücretsiz olduğunu açıkça gör") {
             Text("ÜCRETSİZ",color=SettingsPalette.mint,
                 fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-            FeatureLine("Temel matematik oyunları ve mevcut kısa dersler")
+            FeatureLine("Temel matematik oyunları")
+            FeatureLine("Her sınıfta iki farklı konudan ücretsiz başlangıç dersi")
             FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
             FeatureLine("Labirent: günde 5 oyun")
             FeatureLine("İlk 6 avatar (bazıları yıldızla açılır) ve standart ikon")
@@ -288,6 +289,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
             Text("PREMIUM",color=SettingsPalette.gold,
                 fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
             FeatureLine("Tüm ücretsiz içerikler ve Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
+            FeatureLine("Öğren: 1–8. sınıf mevcut kısa ders kütüphanesi ve derinleşme dersleri",true)
             FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
             FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
             FeatureLine("Labirentte sınırsız oyun, ek profil istatistikleri ve günlük bonus",true)

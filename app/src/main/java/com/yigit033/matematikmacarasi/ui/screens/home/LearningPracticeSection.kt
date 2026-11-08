@@ -62,6 +62,9 @@ import com.yigit033.matematikmacarasi.services.AudioService
 import com.yigit033.matematikmacarasi.learning.Skill
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import com.yigit033.matematikmacarasi.learning.LearningAccessPolicy
+import com.yigit033.matematikmacarasi.learning.LearningAccessMigration
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import com.yigit033.matematikmacarasi.learning.PracticeVisualFactory
 import com.yigit033.matematikmacarasi.games.sayiavi2.SayiAvi2Activity
 import com.yigit033.matematikmacarasi.games.sayiavi2.ForestAdventureActivity
@@ -86,6 +89,9 @@ fun LearningPracticeSection(
     val context = LocalContext.current
     val store = remember(context) { LearningJourneyProgress(context) }
     val lessons = remember(userClass) { LearningPathCatalog.forGrade(userClass) }
+    val purchaseManager = remember(context) { PurchaseManager.getInstance(context) }
+    val migratedAccess = remember(context) { LearningAccessMigration(context) }
+    val grade = userClass.substringBefore(".").trim().toIntOrNull()?.coerceIn(1, 8) ?: 1
     var selectedId by remember(userClass, startLessonId) { mutableStateOf(startLessonId) }
     var version by remember { mutableIntStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -103,6 +109,15 @@ fun LearningPracticeSection(
             else selectedId = null
         }
         BackHandler { back() }
+        if (!LearningAccessPolicy.accessible(
+                grade, selected.id, purchaseManager.isPremiumSync(),
+                migratedAccess.grandfatheredIds()
+            )
+        ) {
+            LearningPremiumBlockedScreen(
+                lessonName = selected.title, onBack = back, modifier = modifier)
+            return
+        }
         PracticeLesson(selected, userClass, store,
             onBack = back,
             onFinish = { wrong, hints ->
@@ -135,12 +150,22 @@ fun LearningPracticeSection(
             Column(modifier = Modifier.fillMaxWidth()
                 .background(HomeColors.CardSurface, RoundedCornerShape(14.dp))
                 .border(1.dp, HomeColors.CardBorderSubtle, RoundedCornerShape(14.dp))
-                .clickable { selectedId = lesson.id }.padding(14.dp),
+                .clickable {
+                    selectedId = lesson.id
+                }.padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(5.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text("${i + 1}. ${lesson.title}", fontWeight = FontWeight.Bold,
                         fontSize = 14.sp, color = HomeColors.TextPrimary)
-                    Text(if (done) "Tamamlandı" else "Başla", color = HomeColors.MagicCyan, fontSize = 12.sp)
+                    val open = LearningAccessPolicy.accessible(
+                        grade, lesson.id, purchaseManager.isPremiumSync(),
+                        migratedAccess.grandfatheredIds()
+                    )
+                    Text(
+                        if (!open) "Premium" else if (done) "Tekrar" else "Ücretsiz",
+                        color = if (open) HomeColors.MagicCyan else Color(0xFFFFD78B),
+                        fontSize = 12.sp
+                    )
                 }
                 Text(lesson.teaching, color = HomeColors.TextSecondary, fontSize = 12.sp)
                 Text(CurriculumSkillCatalog.displayStatus(GradePolicy.parse(userClass), lesson.id),

@@ -121,7 +121,8 @@ fun LearningPracticeSection(
         PracticeLesson(selected, userClass, store,
             onBack = back,
             onFinish = { wrong, hints ->
-                store.complete(selected.id, wrong, hints)
+                store.complete(selected.id, wrong, hints,
+                    LearningPathCatalog.practiceQuestionCount(selected))
                 version++
             },
             onNavigateToGames = onNavigateToGames,
@@ -176,7 +177,7 @@ fun LearningPracticeSection(
                 }
             }
         }
-        Text("Her ders 4 soruluk bir başlangıç çalışmasıdır. Oturum puanı öğrenme düzeyini kanıtlamaz. Yıldız ve ücretli hak verilmez.",
+        Text("Kısa giriş dersleri 4, derinleşme dersleri 8 sorudur. Bir oturum puanı tam kazanım ustalığını kanıtlamaz.",
             color = HomeColors.TextSecondary, fontSize = 11.sp)
     }
 }
@@ -193,6 +194,7 @@ private fun PracticeLesson(
 ) {
     val context = LocalContext.current
     val grade = userClass.substringBefore(".").trim().toIntOrNull() ?: 1
+    val totalQuestions = LearningPathCatalog.practiceQuestionCount(lesson)
     val earlyReader = grade <= 2
     val script = remember(lesson.id) { LessonTeachingCatalog.forLesson(lesson) }
     val narrator = remember(lesson.id) { LessonNarrator(context) }
@@ -248,14 +250,14 @@ private fun PracticeLesson(
     val correctConceptIndex = checkChoices.indexOf(
         script.check.choices[script.check.correctIndex]
     )
-    val accuracy = 400 / (4 + wrong)
+    val accuracy = 100 * totalQuestions / (totalQuestions + wrong)
     val moveTo: (Int) -> Unit = { next ->
         narrator.stop()
         stage = next
         progress.setStage(lesson.id, next)
     }
     val speechText = when {
-        finished -> "Ders tamamlandı. Dört soruluk çalışmanı bitirdin."
+        finished -> "Ders tamamlandı. $totalQuestions soruluk çalışmanı bitirdin."
         stage == 0 -> script.headline + ". " + script.explanationFor(grade)
         stage == 1 && workedStep == script.steps.lastIndex ->
             script.steps[workedStep] + ". " + script.check.prompt +
@@ -287,7 +289,7 @@ private fun PracticeLesson(
     LaunchedEffect(right, index, finished) {
         if (right && !finished) {
             delay(1250)
-            if (index == 3) {
+            if (index == totalQuestions - 1) {
                 onFinish(wrong, hints)
                 finished = true
             } else {
@@ -398,7 +400,7 @@ private fun PracticeLesson(
         if (finished) {
             Text("Kısa ders tamamlandı", color = HomeColors.MagicCyan,
                 fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
-            Text("4 soru · " + wrong + " yanlış deneme · " + hints + " ipucu",
+            Text(totalQuestions.toString() + " soru · " + wrong + " yanlış deneme · " + hints + " ipucu",
                 color = Color.White, fontSize = 14.sp)
             Text(
                 if (progress.conceptErrors(lesson.id) == 0)
@@ -612,7 +614,7 @@ private fun PracticeLesson(
         } else {
             // Four varied, deterministic questions, retaining the previous
             // system's auto-advance and saved seed/attempt counters.
-            Text("Soru " + (index + 1) + " / 4",
+            Text("Soru " + (index + 1) + " / " + totalQuestions,
                 color = HomeColors.TextSecondary, fontSize = 13.sp)
             Text(q.text, fontWeight = FontWeight.ExtraBold, color = Color.White,
                 fontSize = if (earlyReader) 23.sp else 20.sp, lineHeight = 29.sp)
@@ -684,7 +686,7 @@ private fun PracticeLesson(
                     fontSize = 13.sp, lineHeight = 19.sp)
             }
             if (right) {
-                Text("Doğru! " + (if (index == 3) "Dersin tamamlanıyor…"
+                Text("Doğru! " + (if (index == totalQuestions - 1) "Dersin tamamlanıyor…"
                      else "Sonraki soruya geçiliyor…"),
                     color = HomeColors.MagicCyan, fontSize = 13.sp,
                     fontWeight = FontWeight.Bold)

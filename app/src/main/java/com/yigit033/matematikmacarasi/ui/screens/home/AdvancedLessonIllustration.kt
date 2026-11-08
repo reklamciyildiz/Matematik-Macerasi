@@ -418,6 +418,37 @@ internal fun AdvancedLessonIllustration(
             )
         }
 
+        TeachingVisual.MULTIPLES -> {
+            val first = v[0]
+            val second = v[1]
+            val aMultiples = (1..5).map { first * it }
+            val bMultiples = (1..5).map { second * it }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    first.toString() + " katları: " +
+                        aMultiples.take(if (phase >= 1) 5 else 3).joinToString(" · "),
+                    color = ink, fontSize = 13.sp, lineHeight = 19.sp
+                )
+                if (phase >= 1) {
+                    Text(
+                        second.toString() + " katları: " +
+                            bMultiples.joinToString(" · "),
+                        color = sea, fontSize = 13.sp, lineHeight = 19.sp
+                    )
+                }
+                if (phase >= 2) {
+                    val common = aMultiples.intersect(bMultiples.toSet()).minOrNull()
+                    if (common != null) {
+                        Text(
+                            "İlk ortak pozitif kat: " + common,
+                            color = amber, fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
         TeachingVisual.FACTORS -> {
             val shown = if (phase >= 1) 2 else 1
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

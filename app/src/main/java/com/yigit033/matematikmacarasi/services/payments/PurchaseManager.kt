@@ -62,6 +62,7 @@ class PurchaseManager private constructor(
     private val codeValidator by lazy { 
         PremiumCodeValidator.getInstance(context)
     }
+    private val playSubscriptionClient by lazy { PlaySubscriptionClient(context) }
     
     // Premium durumu için StateFlow
     private val _premiumState = MutableStateFlow(false)
@@ -259,17 +260,24 @@ class PurchaseManager private constructor(
         if (BuildConfig.MM_SUBSCRIPTIONS_ENABLED &&
             purchase.products.contains(PREMIUM_SUBSCRIPTION_SKU)) {
             when(purchase.purchaseState) {
-                Purchase.PurchaseState.PURCHASED -> {
-                    _subscriptionActive.value=true
-                    _premiumState.value=true
-                    _purchaseStatus.value=PurchaseStatus.Success
-                    if(!purchase.isAcknowledged) acknowledgePurchase(purchase)
+                Purchase.PurchaseState.PURCHASED -> scope.launch {
+                    val result=withContext(Dispatchers.IO) {
+                        playSubscriptionClient.verifyAndStore(purchase.purchaseToken)
+                    }
+                    val active=when(result) {
+                        PlaySubscriptionClient.Verdict.VERIFIED -> true
+                        PlaySubscriptionClient.Verdict.DENIED -> false
+                        PlaySubscriptionClient.Verdict.UNAVAILABLE ->
+                            playSubscriptionClient.isPremiumOffline()
+                    }
+                    _subscriptionActive.value=active
+                    _premiumState.value=isPremiumSync()
+                    _purchaseStatus.value=if(active) PurchaseStatus.Success
+                        else PurchaseStatus.ServiceUnavailable
                 }
                 Purchase.PurchaseState.PENDING -> _purchaseStatus.value=PurchaseStatus.Pending
                 else -> Unit
             }
-            // Reconcile cancellation/renewal against active Play holdings.
-            queryPurchases()
             return
         }
         // Existing lifetime INAPP flow stays unchanged.
@@ -388,20 +396,29 @@ class PurchaseManager private constructor(
     }
     
 
-    /** Play only returns currently entitled subscriptions. A canceled but
-     * paid-through plan remains active until expiry. Backend subscriptionsv2
-     * and RTDN must be deployed before enabling actual recurring sales.
-     */
+    /** Only Play+Integrity verified short-lived signed leases grant SUBS access. */
     private suspend fun queryActiveSubscription():Boolean? {
         if(!BuildConfig.MM_SUBSCRIPTIONS_ENABLED) return false
         val params=QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS).build()
         val result=billingClient.queryPurchasesAsync(params)
-        if(result.billingResult.responseCode!=BillingClient.BillingResponseCode.OK)return null
-        val subs=result.purchasesList.filter { PREMIUM_SUBSCRIPTION_SKU in it.products }
-        subs.filter { it.purchaseState==Purchase.PurchaseState.PURCHASED &&
-            !it.isAcknowledged }.forEach { acknowledgePurchase(it) }
-        return subs.any { it.purchaseState==Purchase.PurchaseState.PURCHASED }
+        if(result.billingResult.responseCode!=BillingClient.BillingResponseCode.OK)
+            return playSubscriptionClient.isPremiumOffline()
+        val subs=result.purchasesList.filter {
+            PREMIUM_SUBSCRIPTION_SKU in it.products &&
+                it.purchaseState==Purchase.PurchaseState.PURCHASED
+        }
+        if(subs.isEmpty()) {
+            playSubscriptionClient.clear()
+            return false
+        }
+        for(purchase in subs) {
+            val verdict=withContext(Dispatchers.IO) {
+                playSubscriptionClient.verifyAndStore(purchase.purchaseToken)
+            }
+            if(verdict==PlaySubscriptionClient.Verdict.VERIFIED)return true
+        }
+        return playSubscriptionClient.isPremiumOffline()
     }
 
     /** Load localized prices directly from the Play product catalog. */
@@ -630,7 +647,8 @@ class PurchaseManager private constructor(
             // outlive a revoked/expired license. Only an offline-valid signed
             // code license OR the cached Play purchase grants access.
             if (BuildConfig.MM_USE_CLOUDFLARE) {
-                return getPremiumStatus() || codeValidator.isCodePremium() || _subscriptionActive.value
+                return getPremiumStatus() || codeValidator.isCodePremium() ||
+                    (BuildConfig.MM_SUBSCRIPTIONS_ENABLED && playSubscriptionClient.isPremiumOffline())
             }
 
             // A cached aggregate is not proof that a paid subscription is active.

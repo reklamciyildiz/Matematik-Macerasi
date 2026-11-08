@@ -28,6 +28,17 @@ android {
         }
         // Disabled until Play subscription base plans and expiry verification pass QA.
         def subscriptionsEnabled = (project.findProperty('MM_SUBSCRIPTIONS_ENABLED') ?: 'false').toString() == 'true'
+        def playSubsUrl = (project.findProperty('MM_PLAY_SUBS_URL') ?: '').toString()
+        def playPub = (project.findProperty('MM_PLAY_SUBS_PUBLIC_KEY_B64') ?: '').toString()
+        def playProject = (project.findProperty('MM_PLAY_INTEGRITY_PROJECT_NUMBER') ?: '').toString()
+        if(subscriptionsEnabled && (!playSubsUrl.matches('https://[A-Za-z0-9.-]+(/[A-Za-z0-9/_-]*)?') ||
+                !playPub.matches('[A-Za-z0-9+/=]{200,}') ||
+                !playProject.matches('[0-9]{4,20}'))) {
+            throw new GradleException('Subscriptions require verified Play Worker URL, separate RSA public key and Play Integrity cloud project number.')
+        }
+        buildConfigField 'String', 'MM_PLAY_SUBS_URL', '"' + playSubsUrl + '"'
+        buildConfigField 'String', 'MM_PLAY_SUBS_PUBLIC_KEY_B64', '"' + playPub + '"'
+        buildConfigField 'String', 'MM_PLAY_INTEGRITY_PROJECT_NUMBER', '"' + playProject + '"'
         buildConfigField 'boolean', 'MM_SUBSCRIPTIONS_ENABLED', subscriptionsEnabled.toString()
         buildConfigField 'boolean', 'MM_USE_CLOUDFLARE', cloudflareEnabled.toString()
         buildConfigField 'String', 'MM_CLOUDFLARE_URL', '"' + cloudflareUrl + '"'
@@ -182,6 +193,7 @@ dependencies {
 
     // Google Play Billing Kütüphanesi
     implementation 'com.android.billingclient:billing-ktx:8.0.0'
+    implementation 'com.google.android.play:integrity:1.5.0'
 
     // Google AdMob Kütüphanesi
     implementation 'com.google.android.gms:play-services-ads:22.4.0'

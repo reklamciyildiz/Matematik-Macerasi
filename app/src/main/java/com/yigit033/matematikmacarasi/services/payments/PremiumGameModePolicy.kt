@@ -6,7 +6,8 @@ package com.yigit033.matematikmacarasi.services.payments
  */
 object PremiumGameModePolicy {
     private val advancedGames=setOf("fractions","time_tower","pattern_forest",
-        "operations","geometry","balloon","space","hunt")
+        "operations","add","subtract","multiply","divide","mixed",
+        "geometry","balloon","space","hunt")
     const val FIRST_PREMIUM_DIFFICULTY_INDEX=1
     /** Free users should never land on a locked default difficulty. */
     fun defaultDifficulty(grade:Int,hasPremium:Boolean):Int =

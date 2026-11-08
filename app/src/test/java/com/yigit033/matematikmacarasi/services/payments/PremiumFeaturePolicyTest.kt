@@ -16,7 +16,9 @@ class PremiumFeaturePolicyTest {
                 PremiumFeaturePolicy.canEnterMarketShop(index,true))
         }
         PremiumFeature.entries.forEach { feature->
-            assertFalse(PremiumFeaturePolicy.allowed(feature,false))
+            if(feature==PremiumFeature.AD_FREE)
+                assertTrue(PremiumFeaturePolicy.allowed(feature,false))
+            else assertFalse(PremiumFeaturePolicy.allowed(feature,false))
             assertTrue(PremiumFeaturePolicy.allowed(feature,true))
         }
         assertEquals(11,PremiumFeaturePolicy.features.size)

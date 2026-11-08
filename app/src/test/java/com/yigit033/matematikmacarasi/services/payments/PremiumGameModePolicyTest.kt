@@ -58,10 +58,15 @@ class PremiumGameModePolicyTest {
             }
         }
     }
-    @Test fun otherGamesRemainFreeAndSchoolGradeIsNotLocked() {
-        for(id in listOf("add","subtract","forest"))
-            for(difficulty in 0..2) {
-                assertTrue(PremiumGameModePolicy.canStart(id,difficulty,false))
-            }
+    @Test fun everyArithmeticCatalogAliasHonorsExactlyTheSameGate() {
+        for(id in listOf("operations","add","subtract","multiply","divide","mixed")) {
+            assertTrue(PremiumGameModePolicy.canStart(id,0,false))
+            for(difficulty in 1..4)
+                assertFalse(PremiumGameModePolicy.canStart(id,difficulty,false))
+        }
+    }
+    @Test fun fullyFreeEducationalForestStaysAvailable() {
+        for(difficulty in 0..2)
+            assertTrue(PremiumGameModePolicy.canStart("forest",difficulty,false))
     }
 }

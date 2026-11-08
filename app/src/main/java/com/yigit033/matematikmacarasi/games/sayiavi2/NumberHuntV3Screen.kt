@@ -35,6 +35,10 @@ import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.R
 import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
 import com.yigit033.matematikmacarasi.services.AudioService
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -286,14 +290,26 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
     onWorldFinished:(grade:Int,attempts:Int,errors:Int,seconds:Long)->Unit,
     onClassic:()->Unit,onExit:()->Unit,modifier:Modifier=Modifier){
     val context=LocalContext.current
-    val store=remember(context){NumberHuntV3Store(context)}
+    val purchase=remember(context){PurchaseManager.getInstance(context)}
+    val entitlement by purchase.premiumState.collectAsState()
+    val hasPremium=entitlement || purchase.isPremiumSync()
+    fun upgrade(){context.startActivity(Intent(context,SettingsActivity::class.java))}
+    val primaryStore=remember(context){NumberHuntV3Store(context)}
+    val basicStore=remember(context){
+        NumberHuntV3Store(context,PremiumGameModePolicy.freeCheckpointStore("hunt"))
+    }
     val audio=remember(context){AudioService.getInstance(context)}
     var grade by remember(profileGrade){mutableIntStateOf(profileGrade.coerceIn(1,8))}
-    var tier by remember(grade){
-        mutableStateOf(store.load(grade)?.tier ?: LearningTier.GELISEN)
+    val paidCheckpoint=primaryStore.load(grade)
+    val store=if(!hasPremium && paidCheckpoint!=null &&
+        PremiumGameModePolicy.requiresPremium("hunt",paidCheckpoint.tier.ordinal))
+        basicStore else primaryStore
+    var tier by remember(grade,store,hasPremium){
+        mutableStateOf(if(hasPremium)store.load(grade)?.tier ?: LearningTier.TEMEL
+            else LearningTier.TEMEL)
     }
-    var session by remember(grade){mutableStateOf(store.load(grade))}
-    var playing by remember{mutableStateOf(false)}
+    var session by remember(grade,store){mutableStateOf(store.load(grade))}
+    var playing by remember(grade,store){mutableStateOf(false)}
     var confirmOverwrite by remember{mutableStateOf(false)}
     var warning by remember(grade,session?.seed,session?.index){mutableStateOf<String?>(null)}
     var showHint by remember(grade,session?.seed,session?.index){mutableStateOf(false)}
@@ -302,6 +318,10 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
     val accent=worldAccent(world.key)
 
     fun newRun(){
+        if(!PremiumGameModePolicy.canStart("hunt",tier.ordinal,hasPremium)){
+            upgrade()
+            return
+        }
         val now=System.currentTimeMillis().coerceAtLeast(1L)
         val seed=now xor Random.nextLong().let{if(it==0L)1L else it}
         if(store.begin(grade,tier,if(seed==0L)now else seed,now)){
@@ -421,12 +441,18 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp)){
                     LearningTier.entries.forEach{option->
                         Surface(Modifier.weight(1f).height(48.dp)
-                            .clickable{tier=option},
+                            .clickable{
+                                if(!PremiumGameModePolicy.canStart(
+                                        "hunt",option.ordinal,hasPremium))upgrade()
+                                else tier=option
+                            },
                             shape=RoundedCornerShape(13.dp),
                             color=if(tier==option)Color(0xFF217D6D) else ocean,
                             border=BorderStroke(1.dp,if(tier==option)amber else accent)){
                             Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center){
-                                Text(option.title,color=cream,fontWeight=FontWeight.Bold,
+                                Text((if(!PremiumGameModePolicy.canStart(
+                                        "hunt",option.ordinal,hasPremium))"🔒 " else "")+
+                                    option.title,color=cream,fontWeight=FontWeight.Bold,
                                     fontSize=13.sp)
                             }
                         }
@@ -463,7 +489,11 @@ fun NumberHuntV3Screen(profileGrade:Int,currentStars:Int,
                     }
                 }
                 if(run!=null){
-                    Button(onClick={playing=true},
+                    Button(onClick={
+                        if(!PremiumGameModePolicy.canStart("hunt",run.tier.ordinal,hasPremium))
+                            upgrade()
+                        else playing=true
+                    },
                         modifier=Modifier.fillMaxWidth().heightIn(min=56.dp),
                         colors=ButtonDefaults.buttonColors(containerColor=Color(0xFF158F6D))){
                         Text(when {

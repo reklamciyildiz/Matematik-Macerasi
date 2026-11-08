@@ -16,6 +16,7 @@ import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.services.DailyTaskManager
 import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsHelper
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
 import com.yigit033.matematikmacarasi.services.StarManager
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 
@@ -98,8 +99,13 @@ class SayiAvi2Activity : ComponentActivity() {
      * achievement. StarManager's idempotent key is the authoritative guard.
      */
     private fun awardGradeFirstClear(grade:Int):Boolean {
-        val store=NumberHuntV3Store(this)
-        if(!store.hasCompleted(grade) || store.starAcknowledged(grade))return false
+        // A Free Basic completion can live in the isolated checkpoint if a
+        // previously selected Premium world is preserved in the old slot.
+        val store=listOf(
+            NumberHuntV3Store(this),
+            NumberHuntV3Store(this,PremiumGameModePolicy.freeCheckpointStore("hunt"))
+        ).firstOrNull { it.hasCompleted(grade) && !it.starAcknowledged(grade) }
+            ?:return false
         val rewardId="sayi_avi_3_grade_$grade"
         val wasAlreadyAwarded=starManager.getGameStars(rewardId)>0
         val confirmed=starManager.addStars(rewardId,1)

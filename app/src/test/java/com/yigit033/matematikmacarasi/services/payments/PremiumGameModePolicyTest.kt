@@ -46,6 +46,18 @@ class PremiumGameModePolicyTest {
             assertTrue(PremiumGameModePolicy.allowsArithmeticDifficulty(level,true))
         }
     }
+    @Test fun worldBasedAdventureUsesSeparateBasicSaveWithSameRightChecks() {
+        val names=listOf("geometry","balloon","space","hunt")
+            .map(PremiumGameModePolicy::freeCheckpointStore)
+        assertTrue(names.distinct().size==4)
+        for(game in listOf("geometry","balloon","space","hunt")) {
+            assertTrue(PremiumGameModePolicy.canStart(game,0,false))
+            for(tier in 1..2){
+                assertFalse(PremiumGameModePolicy.canStart(game,tier,false))
+                assertTrue(PremiumGameModePolicy.canStart(game,tier,true))
+            }
+        }
+    }
     @Test fun otherGamesRemainFreeAndSchoolGradeIsNotLocked() {
         for(id in listOf("add","subtract","forest"))
             for(difficulty in 0..2) {

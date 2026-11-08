@@ -21,6 +21,7 @@ object PremiumGameModePolicy {
         "geometry"->"geometry_castle_free_checkpoint_v1"
         "balloon"->"balloon_adventure_free_checkpoint_v1"
         "space"->"space_expedition_free_checkpoint_v1"
+        "hunt"->"number_hunt_worlds_free_v3"
         else->error("Unknown game: "+gameId)
     }
     fun requiresPremium(gameId:String,difficulty:Int):Boolean =

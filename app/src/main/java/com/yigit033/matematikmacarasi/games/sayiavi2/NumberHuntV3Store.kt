@@ -11,9 +11,9 @@ import com.yigit033.matematikmacarasi.learning.adaptive.LearningTier
  * Every solved transition is committed before UI advances, including the final
  * checkpoint. Reopening a solved task advances once, never grants rewards twice.
  */
-class NumberHuntV3Store(context:Context) {
+class NumberHuntV3Store(context:Context,preferenceName:String="number_hunt_worlds_v3") {
     private val prefs=context.applicationContext
-        .getSharedPreferences("number_hunt_worlds_v3",Context.MODE_PRIVATE)
+        .getSharedPreferences(preferenceName,Context.MODE_PRIVATE)
 
     data class Session(val grade:Int,val seed:Long,val tier:LearningTier,
         val index:Int,val attempts:Int,val errors:Int,val hints:Int,

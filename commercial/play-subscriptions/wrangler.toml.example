@@ -1,0 +1,27 @@
+# STAGING TEMPLATE ONLY. Do not deploy until the Google Play service account,
+# Play Integrity API, D1 migrations, Pub/Sub subscription, and tests are set up.
+name = "matematik-macerasi-play-subscriptions"
+main = "src/worker.mjs"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+SUBSCRIPTIONS_SERVER_ENABLED = "false"
+RTDN_PULL_ENABLED = "false"
+PUBSUB_SUBSCRIPTION_ID = "projects/REPLACE_PROJECT/subscriptions/REPLACE_SUBSCRIPTION"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "matematik-macerasi-play-subscriptions"
+database_id = "REPLACE_WITH_REAL_D1_UUID"
+migrations_dir = "migrations"
+
+[[ratelimits]]
+name = "VERIFY_RATE_LIMITER"
+namespace_id = "2201"
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
+[triggers]
+crons = ["*/5 * * * *"]

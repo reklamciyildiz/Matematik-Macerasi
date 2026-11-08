@@ -276,6 +276,58 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
                 color = pale, fontSize = 12.sp)
         }
 
+        PracticeVisualKind.MULTIPLES_LISTS -> {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(9.dp)
+            ) {
+                v.take(2).forEachIndexed { index, number ->
+                    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text("$number sayısının katları", color = if (index == 0) teal else blue,
+                            fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            repeat(4) { multiplier ->
+                                Box(
+                                    Modifier.weight(1f).height(39.dp)
+                                        .background(dark, RoundedCornerShape(8.dp))
+                                        .border(1.dp, if (index == 0) teal else blue,
+                                            RoundedCornerShape(8.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text((number * (multiplier + 1)).toString(),
+                                        color = pale, fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+                Text("Her iki sıradaki ilk ortak pozitif katı bul.",
+                    color = yellow, fontSize = 12.sp)
+            }
+        }
+
+        PracticeVisualKind.LINEAR_INPUT -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("y = ", color = pale, fontSize = 18.sp)
+                Box(Modifier.background(dark, RoundedCornerShape(9.dp))
+                    .border(1.dp, teal, RoundedCornerShape(9.dp))
+                    .padding(horizontal = 10.dp, vertical = 12.dp)) {
+                    Text(v[0].toString() + "x + " + v[1],
+                        color = pale, fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold)
+                }
+                Text("x = " + v[2], color = yellow,
+                    fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            }
+            Text("x yerine verilen değeri koy; sonucu hesapla.",
+                color = pale, fontSize = 12.sp, textAlign = TextAlign.Center)
+        }
+
         PracticeVisualKind.FACTOR_LISTS -> {
             v.forEach { number ->
                 val factors = (1..number).filter { number % it == 0 }

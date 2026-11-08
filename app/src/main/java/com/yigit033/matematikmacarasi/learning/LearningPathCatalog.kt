@@ -3,7 +3,7 @@ package com.yigit033.matematikmacarasi.learning
 import kotlin.random.Random
 
 /** P2 pilot içerikleri: sınıfa ait bütün müfredatın karşılığı değildir. */
-enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY_INTRO, MULTIPLY, DIVISIBLE_15, EXTENDED, TOPIC_STARTER }
+enum class Skill { COUNT_2, COUNT_3, COUNT_4, ADD_10, ADD_20, MULTIPLY_INTRO, MULTIPLY, DIVISIBLE_15, EXTENDED, TOPIC_STARTER, DEEP_DIVE }
 data class Lesson(val id: String, val title: String, val teaching: String, val example: String,
     val hint: String, val skill: Skill)
 data class PracticeQuestion(val text: String, val choices: List<Int>, val answer: Int, val explanation: String) {
@@ -36,13 +36,15 @@ object LearningPathCatalog {
         // instructional topic order, not the age of its implementation.
         val legacy = listOf(c2,c3,c4,a10,a20,mulIntro,mul,div)
         val available = (legacy + ExpandedLessonCatalog.forGrade(grade) +
-            TopicStarterCatalog.forGrade(grade)).associateBy { it.id }
+            TopicStarterCatalog.forGrade(grade) +
+            DeepLessonCatalog.forGrade(grade)).associateBy { it.id }
         val topics = if (grade <= 4) primaryTopics(grade) else secondaryTopics(grade)
         val orderedIds = topics.flatMap { topic ->
             val suffix = topic.id.removePrefix("g" + grade + "_")
             topic.lessonIds +
                 ExpandedLessonCatalog.lessonIdsForTopic(grade, suffix) +
-                TopicStarterCatalog.lessonIdsForTopic(grade, suffix)
+                TopicStarterCatalog.lessonIdsForTopic(grade, suffix) +
+                DeepLessonCatalog.lessonIdsForTopic(grade, suffix)
         }
         require(orderedIds.isNotEmpty() && orderedIds.distinct().size == orderedIds.size)
         return orderedIds.map { id -> requireNotNull(available[id]) }
@@ -56,6 +58,9 @@ object LearningPathCatalog {
         }
         if (lesson.skill == Skill.TOPIC_STARTER) {
             return TopicStarterQuestionBank.question(lesson, seed, index)
+        }
+        if (lesson.skill == Skill.DEEP_DIVE) {
+            return DeepLessonQuestionBank.question(lesson, seed, index)
         }
         val random = Random(seed + index * 7919L)
         val text: String
@@ -106,7 +111,7 @@ object LearningPathCatalog {
                 explanation = "$answer, 15'in katı olduğu için ikisine de tam bölünür."
                 wrong = listOf(answer + 1, answer + 3, answer + 5)
             }
-            Skill.EXTENDED, Skill.TOPIC_STARTER ->
+            Skill.EXTENDED, Skill.TOPIC_STARTER, Skill.DEEP_DIVE ->
                 error("Specialised lessons use their own question bank")
         }
         val values = (listOf(answer) + wrong).distinct().toMutableList()

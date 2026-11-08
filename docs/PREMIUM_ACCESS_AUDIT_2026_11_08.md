@@ -2,7 +2,7 @@
 
 ## Mevcut haklar
 - Oyunların çoğu Free açılır; sınıf koşulları ücret kilidi değildir.
-- Kesir Kristalleri, Zaman Kulesi, Örüntü Ormanı: Temel tamamen Free (1/3 zorluk); Orta ve Zor Premium (2/3 zorluk). Kayıtlı ücretli zorluk ilerlemesi hak iptalinde silinmez.
+- Kesir Kristalleri, Zaman Kulesi, Örüntü Ormanı: Temel tamamen Free (1/3 zorluk); Orta ve Zor Premium (2/3 zorluk). Kayıtlı ücretli zorluk ilerlemesi hak iptalinde silinmez. Eski Orta/Zor kaydı Premium hakkı olmayan oyuncuyu Temel'den mahrum etmesin diye **ayrı bir Temel kayıt alanı** açılır; kullanıcı duraklatma ekranından Temel'e geçebilir, asıl Premium kayıt üzerinde yazılmaz.
 - Öğren: seçilen her sınıfta 2 ayrı alandan kalıcı Free ders; Premium'da 72 farklı / 84 sınıf-ders sunumu. Eski tamamlanmış ders erişimleri korunur.
 - Pazar: Free 3 mağaza / 12 karar; Premium 10 mağaza / 40 karar + Kendi Tezgâhım.
 - Labirent: Free günde 5 yeni oyun; Premium sınırsız.

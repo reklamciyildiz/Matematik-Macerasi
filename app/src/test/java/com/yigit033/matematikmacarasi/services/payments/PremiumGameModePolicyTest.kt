@@ -19,6 +19,19 @@ class PremiumGameModePolicyTest {
             assertFalse(PremiumGameModePolicy.canStart(id,2,false))
         }
     }
+    @Test fun inaccessiblePaidCheckpointsDoNotBlockASeparateBasicSave() {
+        val slots=mapOf(
+            "fractions" to "fraction_crystals_v1",
+            "time_tower" to "time_tower_v1",
+            "pattern_forest" to "pattern_forest_v1"
+        )
+        for((game,paidSlot) in slots) {
+            val freeSlot=PremiumGameModePolicy.freeCheckpointStore(game)
+            assertFalse(freeSlot==paidSlot)
+            assertTrue(freeSlot.contains("free_checkpoint"))
+        }
+        assertTrue(slots.keys.map(PremiumGameModePolicy::freeCheckpointStore).distinct().size==3)
+    }
     @Test fun otherGamesRemainFreeAndSchoolGradeIsNotLocked() {
         for(id in listOf("add","subtract","geometry","hunt","forest","space","balloon"))
             for(difficulty in 0..2) {

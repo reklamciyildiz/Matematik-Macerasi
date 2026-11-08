@@ -163,9 +163,23 @@ fun FractionCrystalsScreen(
     var chosenDifficulty by remember { mutableIntStateOf(if(grade<=3) 0 else 1) }
     var message by remember { mutableStateOf("") }
     var positive by remember { mutableStateOf(true) }
+    var showFreeBasic by remember { mutableStateOf(false) }
     if(run.seed>0L && !run.finished &&
         !PremiumGameModePolicy.canStart("fractions",run.difficulty,hasPremium)) {
-        PremiumChallengePause(onSettings={openPremiumSettings()},onExit=onExit)
+        if(showFreeBasic) {
+            // The old Medium/Hard checkpoint stays in the original store.
+            // A completely separate Basic slot remains playable for Free users.
+            val basicStore=remember(context) {
+                FractionCrystalStore(context,PremiumGameModePolicy.freeCheckpointStore("fractions"))
+            }
+            FractionCrystalsScreen(
+                store=basicStore,grade=grade,
+                onExit=onExit,onCompleted=onCompleted
+            )
+        } else {
+            PremiumChallengePause(onSettings={openPremiumSettings()},
+                onExit=onExit,onPlayBasic={showFreeBasic=true})
+        }
         return
     }
 

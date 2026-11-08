@@ -127,9 +127,23 @@ fun TimeTowerScreen(
     var success by remember { mutableStateOf(true) }
     var confirmRestart by remember { mutableStateOf(false) }
     var selectedHand by remember(run.seed,run.index) { mutableStateOf(ClockHand.MINUTE) }
+    var showFreeBasic by remember { mutableStateOf(false) }
     if(run.seed>0L && !run.finished &&
         !PremiumGameModePolicy.canStart("time_tower",run.difficulty,hasPremium)) {
-        PremiumChallengePause(onSettings={openPremiumSettings()},onExit=onExit)
+        if(showFreeBasic) {
+            // The old Medium/Hard checkpoint stays in the original store.
+            // A completely separate Basic slot remains playable for Free users.
+            val basicStore=remember(context) {
+                TimeTowerStore(context,PremiumGameModePolicy.freeCheckpointStore("time_tower"))
+            }
+            TimeTowerScreen(
+                store=basicStore,profileGrade=profileGrade,
+                onExit=onExit,onCompleted=onCompleted
+            )
+        } else {
+            PremiumChallengePause(onSettings={openPremiumSettings()},
+                onExit=onExit,onPlayBasic={showFreeBasic=true})
+        }
         return
     }
 

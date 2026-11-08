@@ -199,9 +199,23 @@ fun PatternForestScreen(store:PatternForestStore,profileGrade:Int,
     var positive by remember { mutableStateOf(true) }
     var restart by remember { mutableStateOf(false) }
 
+    var showFreeBasic by remember { mutableStateOf(false) }
     if(run.seed>0L && !run.finished &&
         !PremiumGameModePolicy.canStart("pattern_forest",run.difficulty,hasPremium)) {
-        PremiumChallengePause(onSettings={openPremiumSettings()},onExit=onExit)
+        if(showFreeBasic) {
+            // The old Medium/Hard checkpoint stays in the original store.
+            // A completely separate Basic slot remains playable for Free users.
+            val basicStore=remember(context) {
+                PatternForestStore(context,PremiumGameModePolicy.freeCheckpointStore("pattern_forest"))
+            }
+            PatternForestScreen(
+                store=basicStore,profileGrade=profileGrade,
+                onExit=onExit,onCompleted=onCompleted
+            )
+        } else {
+            PremiumChallengePause(onSettings={openPremiumSettings()},
+                onExit=onExit,onPlayBasic={showFreeBasic=true})
+        }
         return
     }
     var dragBounds by remember(run.seed,run.index) {

@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 
 /** Pause, never erase, a Premium checkpoint when the subscription is absent. */
 @Composable
-fun PremiumChallengePause(onSettings:()->Unit,onExit:()->Unit) {
+fun PremiumChallengePause(onSettings:()->Unit,onExit:()->Unit,onPlayBasic:()->Unit) {
     BackHandler(onBack=onExit)
     Column(Modifier.fillMaxSize().background(Brush.verticalGradient(
         listOf(Color(0xFF174D75),Color(0xFF0B2A47))))
@@ -39,11 +39,16 @@ fun PremiumChallengePause(onSettings:()->Unit,onExit:()->Unit) {
             color=Color(0xFFE2F2F9),fontSize=15.sp,
             lineHeight=23.sp,textAlign=TextAlign.Center)
         Spacer(Modifier.height(24.dp))
-        Button(onClick=onSettings,modifier=Modifier.fillMaxWidth().heightIn(min=54.dp),
+        Button(onClick=onPlayBasic,modifier=Modifier.fillMaxWidth().heightIn(min=54.dp),
             shape=RoundedCornerShape(17.dp),
             colors=ButtonDefaults.buttonColors(containerColor=Color(0xFFFFD980),
                 contentColor=Color(0xFF0C2944))) {
-            Text("Premium'u Ayarlar'dan Kontrol Et",fontWeight=FontWeight.Bold)
+            Text("Ücretsiz Temel Seviyede Oyna",fontWeight=FontWeight.Bold)
+        }
+        Spacer(Modifier.height(9.dp))
+        OutlinedButton(onClick=onSettings,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
+            shape=RoundedCornerShape(17.dp)) {
+            Text("Premium Hakkını Kontrol Et",color=Color.White)
         }
         Spacer(Modifier.height(9.dp))
         OutlinedButton(onClick=onExit,modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),

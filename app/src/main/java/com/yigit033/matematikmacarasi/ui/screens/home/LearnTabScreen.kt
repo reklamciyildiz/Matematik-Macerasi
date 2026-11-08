@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -38,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -57,6 +59,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.yigit033.matematikmacarasi.learning.CurriculumTopic
+import com.yigit033.matematikmacarasi.learning.LearningAccessPolicy
+import com.yigit033.matematikmacarasi.learning.LearningAccessMigration
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import com.yigit033.matematikmacarasi.learning.GradeCurriculumCatalog
 import com.yigit033.matematikmacarasi.learning.InstructionBand
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
@@ -83,8 +88,19 @@ fun LearnTabScreen(
     val progress = remember(context) { LearningJourneyProgress(context) }
     val curriculum = remember(userClass) { GradeCurriculumCatalog.forClass(userClass) }
     val lessons = remember(userClass) { LearningPathCatalog.forGrade(userClass) }
+    val purchaseManager = remember(context) { PurchaseManager.getInstance(context) }
+    val purchaseFlow by purchaseManager.premiumState.collectAsState()
+    val migration = remember(context) { LearningAccessMigration(context) }
+    val grandfathered = remember(context) { migration.grandfatheredIds() }
+    val grade = curriculum.grade
+    val isPremium = remember(purchaseFlow, userClass) { purchaseManager.isPremiumSync() }
+    val canOpen: (String) -> Boolean = { id ->
+        LearningAccessPolicy.accessible(grade, id,
+            purchaseManager.isPremiumSync(), grandfathered)
+    }
     var selectedTopicId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var selectedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
+    var lockedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var reportExpanded by rememberSaveable(userClass) { mutableStateOf(false) }
     var showRemainingOnly by rememberSaveable(userClass) { mutableStateOf(false) }
     var topicQuery by rememberSaveable(userClass) { mutableStateOf("") }
@@ -94,10 +110,27 @@ fun LearnTabScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) revision++
+            if (event == Lifecycle.Event.ON_RESUME) {
+                purchaseManager.refreshPremiumState()
+                revision++
+            }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    lockedLessonId?.let { lockedId ->
+        val title = lessons.firstOrNull { it.id == lockedId }?.title ?: "Öğren Dersi"
+        LearningPremiumDialog(title = title, onDismiss = { lockedLessonId = null })
+    }
+    val openLesson: (String) -> Unit = { id ->
+        if (canOpen(id)) {
+            selectedTopicId = GradeCurriculumCatalog.topicForLesson(grade, id)?.id
+            selectedLessonId = id
+            revision++
+        } else {
+            lockedLessonId = id
+        }
     }
 
     if (selectedLessonId != null) {
@@ -118,11 +151,9 @@ fun LearnTabScreen(
             topic = chosenTopic,
             userClass = userClass,
             lessonComplete = { progress.completed(it) },
+            lessonAccessible = canOpen,
             onBack = { selectedTopicId = null },
-            onStart = { lessonId ->
-                selectedLessonId = lessonId
-                revision++
-            },
+            onStart = openLesson,
             modifier = modifier
         )
         return
@@ -133,7 +164,6 @@ fun LearnTabScreen(
     val completed = lessons.count { progress.completed(it.id) }
     val reviewDueLessons = lessons.filter { progress.isReviewDue(it.id) }
         .sortedBy { progress.nextReviewAt(it.id) }
-    val grade = curriculum.grade
     val searchText = topicQuery.trim().lowercase(java.util.Locale.forLanguageTag("tr-TR"))
     val listedTopics = curriculum.topics.filter { topic ->
         val unfinished = topic.lessonIds.any { !progress.completed(it) }
@@ -199,7 +229,10 @@ fun LearnTabScreen(
                 color = hubText, fontSize = 12.sp
             )
             Text(
-                "Her konu için en az bir başlangıç dersi mevcut. Bunlar tüm müfredat kazanımlarının tamamı değildir.",
+                if (isPremium)
+                    "Premium etkin · Tüm mevcut kısa dersler açık. Tam müfredat kapsamı değildir."
+                else
+                    "Her sınıfta 2 ücretsiz başlangıç dersi; diğerleri Premium. Tam müfredat değildir.",
                 color = Color(0xFFBBD7E6), fontSize = 11.sp, lineHeight = 16.sp
             )
         }
@@ -244,9 +277,7 @@ fun LearnTabScreen(
                 )
                 Button(
                     onClick = {
-                        selectedTopicId = GradeCurriculumCatalog
-                            .topicForLesson(curriculum.grade, next.id)?.id
-                        selectedLessonId = next.id
+                        openLesson(next.id)
                     },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     shape = RoundedCornerShape(13.dp),
@@ -315,9 +346,7 @@ fun LearnTabScreen(
                         modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF133A56), RoundedCornerShape(13.dp))
                             .clickable {
-                                selectedTopicId = GradeCurriculumCatalog
-                                    .topicForLesson(curriculum.grade, lesson.id)?.id
-                                selectedLessonId = lesson.id
+                                openLesson(lesson.id)
                             }
                             .heightIn(min = 51.dp).padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -465,10 +494,12 @@ fun LearnTabScreen(
                 topics.forEach { topic ->
                     val readyCount = topic.lessonIds.size
                     val doneCount = topic.lessonIds.count { progress.completed(it) }
+                    val lockedCount = topic.lessonIds.count { !canOpen(it) }
                     CurriculumTopicCard(
                         topic = topic,
                         done = doneCount,
                         count = readyCount,
+                        lockedCount = lockedCount,
                         onClick = { selectedTopicId = topic.id }
                     )
                 }
@@ -529,6 +560,7 @@ private fun CurriculumTopicCard(
     topic: CurriculumTopic,
     done: Int,
     count: Int,
+    lockedCount: Int,
     onClick: () -> Unit
 ) {
     val accent = when (topic.area) {
@@ -608,6 +640,8 @@ private fun CurriculumTopicCard(
             Text(
                 when {
                     count == 0 -> "Ders henüz eklenmedi"
+                    lockedCount == count -> "Premium · Ön izleme açık"
+                    lockedCount > 0 -> "${count - lockedCount} açık · $lockedCount Premium ders"
                     done == count -> "Kısa dersler tamamlandı · Tekrar et"
                     else -> "Konuya giriş dersleri hazır"
                 },
@@ -615,8 +649,9 @@ private fun CurriculumTopicCard(
             )
         }
         Icon(
-            Icons.Filled.ChevronRight,
-            contentDescription = "Konuyu incele: " + topic.title,
+            if (lockedCount == count) Icons.Filled.Lock else Icons.Filled.ChevronRight,
+            contentDescription = if (lockedCount == count) "Premium konu: " + topic.title
+                else "Konuyu incele: " + topic.title,
             tint = accent, modifier = Modifier.size(22.dp)
         )
     }
@@ -627,6 +662,7 @@ private fun CurriculumTopicDetail(
     topic: CurriculumTopic,
     userClass: String,
     lessonComplete: (String) -> Boolean,
+    lessonAccessible: (String) -> Boolean,
     onBack: () -> Unit,
     onStart: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -684,6 +720,7 @@ private fun CurriculumTopicDetail(
             topic.lessonIds.forEach { id ->
                 val lesson = lessons.firstOrNull { it.id == id }
                 if (lesson != null) {
+                    val accessible = lessonAccessible(id)
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF183F5D), RoundedCornerShape(15.dp))
@@ -692,16 +729,19 @@ private fun CurriculumTopicDetail(
                             .padding(15.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(if (lessonComplete(id)) Icons.Filled.CheckCircle
+                        Icon(if (!accessible) Icons.Filled.Lock
+                             else if (lessonComplete(id)) Icons.Filled.CheckCircle
                              else Icons.Filled.PlayArrow,
-                            contentDescription = null, tint = hubCyan)
+                             contentDescription = null,
+                             tint = if (accessible) hubCyan else hubGold)
                         Spacer(Modifier.width(11.dp))
                         Column(Modifier.weight(1f)) {
                             Text(lesson.title, color = Color.White,
                                 fontWeight = FontWeight.Bold)
                             Text(
-                                if (lessonComplete(id)) "Tekrar çalış"
-                                else "Resimli anlatım · Adım adım örnek · Kavrama kontrolü",
+                                if (!accessible) "Premium · Yetişkin seçeneklerini inceleyebilir"
+                                 else if (lessonComplete(id)) "Tekrar çalış"
+                                 else "Ücretsiz · Resimli anlatım · Kavrama kontrolü",
                                 color = hubText, fontSize = 11.sp
                             )
                         }

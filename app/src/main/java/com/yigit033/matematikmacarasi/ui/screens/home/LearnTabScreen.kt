@@ -90,12 +90,15 @@ fun LearnTabScreen(
     val lessons = remember(userClass) { LearningPathCatalog.forGrade(userClass) }
     val purchaseManager = remember(context) { PurchaseManager.getInstance(context) }
     val purchaseFlow by purchaseManager.premiumState.collectAsState()
+    var revision by remember { mutableIntStateOf(0) }
     val migration = remember(context) { LearningAccessMigration(context) }
     val grandfathered = remember(context) { migration.grandfatheredIds() }
     val grade = curriculum.grade
     // The reactive Play/Cloudflare flow invalidates this local snapshot
     // after purchase restoration, without trusting stale union state.
-    val isPremium = remember(purchaseFlow) { purchaseManager.isPremiumSync() }
+    val isPremium = remember(purchaseFlow, revision) {
+        purchaseManager.isPremiumSync()
+    }
     val canOpen: (String) -> Boolean = { id ->
         LearningAccessPolicy.accessible(grade, id,
             purchaseManager.isPremiumSync(), grandfathered)
@@ -107,7 +110,7 @@ fun LearnTabScreen(
     var showRemainingOnly by rememberSaveable(userClass) { mutableStateOf(false) }
     var topicQuery by rememberSaveable(userClass) { mutableStateOf("") }
     val homeScroll = rememberScrollState()
-    var revision by remember { mutableIntStateOf(0) }
+
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {

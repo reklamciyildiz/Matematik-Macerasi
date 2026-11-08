@@ -11,7 +11,8 @@ enum class PracticeVisualKind {
     FRACTION_PARTS, CLOCK_START, TRIANGLE, SQUARE, PERIMETER,
     AREA_GRID, DATA_BARS, CHANCE_CHIPS, SIGNED_WALK, ALGEBRA_BALANCE,
     POWER_FACTORS, RIGHT_TRIANGLE, VOLUME_LAYERS, MIRROR_POINTS, FACTOR_LISTS,
-    RATIO_GROUPS, MULTIPLES_LISTS, LINEAR_INPUT
+    RATIO_GROUPS, MULTIPLES_LISTS, LINEAR_INPUT,
+    TEN_FRAME, HUNDREDS, EQUAL_SHARE, FRACTION_COMPARE, TWO_STEP
 }
 
 data class PracticeVisualModel(
@@ -47,6 +48,16 @@ data class PracticeVisualModel(
         PracticeVisualKind.SQUARE -> "Dört kenarlı ve dört köşeli kare."
         PracticeVisualKind.PERIMETER ->
             "Kenarları ${values[0]} ve ${values[1]} birim olan dikdörtgen."
+        PracticeVisualKind.TEN_FRAME ->
+            "Onluk tabloda ${values[0]} dolu, ${10-values[0]} boş yer var."
+        PracticeVisualKind.HUNDREDS ->
+            "${values[0]} yüzlük, ${values[1]} onluk ve ${values[2]} birlik."
+        PracticeVisualKind.EQUAL_SHARE ->
+            "${values[0]} nesne ${values[1]} eş gruba dağıtılıyor."
+        PracticeVisualKind.FRACTION_COMPARE ->
+            "Paydası ${values[2]} olan iki kesrin payı ${values[0]} ve ${values[1]}."
+        PracticeVisualKind.TWO_STEP ->
+            "${values[0]} kutu, her kutuda ${values[1]} nesne ve sonradan ${values[2]} nesne ekleniyor."
         else -> description // Advanced models supply exact operands with their own caption.
     }
 }
@@ -110,6 +121,36 @@ object PracticeVisualFactory {
                 else if (text.startsWith("Bir kare")) PracticeVisualModel(
                     PracticeVisualKind.SQUARE, listOf(4), "Karenin kenar ve köşeleri")
                 else null
+            "g1_make_ten" ->
+                build(PracticeVisualKind.TEN_FRAME,
+                    groups(text, """(\d+) nesnenin 10 olması için"""),
+                    "Onluk tablo: dolu ve boş yerler")
+            "g1_compare_data" ->
+                build(PracticeVisualKind.COMPARE_GROUPS,
+                    groups(text, """Grafikte A=(\d+), B=(\d+) nesne"""),
+                    "İki gruptaki nesnelerin farkı")
+            "g2_quarter", "g3_quarter_of_set" ->
+                build(PracticeVisualKind.FRACTION_PARTS,
+                    groups(text, """(\d+) nesnenin (?:çeyreği|dörtte biri)""")
+                        ?.let { listOf(it[0],1,4) },
+                    "Dört eş parçaya bölünmüş bütün")
+            "g2_hundred_place" ->
+                build(PracticeVisualKind.HUNDREDS,
+                    groups(text, """(\d+) yüzlük, (\d+) onluk ve (\d+) birlik"""),
+                    "Yüzlük, onluk ve birlik blokları")
+            "g3_share_equal" ->
+                build(PracticeVisualKind.EQUAL_SHARE,
+                    groups(text, """(\d+) nesne (\d+) çocuğa eşit"""),
+                    "Nesnelerin eş gruplara paylaştırılması")
+            "g4_same_denominator" ->
+                build(PracticeVisualKind.FRACTION_COMPARE,
+                    groups(text, """(\d+)/(\d+) ve (\d+)/(\d+) kesirlerinden""")
+                        ?.let { listOf(it[0],it[2],it[1]) },
+                    "Paydaları eşit iki kesrin parça karşılaştırması")
+            "g4_two_step" ->
+                build(PracticeVisualKind.TWO_STEP,
+                    groups(text, """(\d+) kutunun her birinde (\d+) kalem var. (\d+) kalem daha"""),
+                    "Eş kalem kutularına sonradan eklenen kalemler")
             "g3_rectangle", "g4_perimeter" ->
                 build(PracticeVisualKind.PERIMETER,
                     groups(text, """(?:Uzun kenarı|Kenarları) (\d+)(?:, kısa kenarı| ve) (\d+)"""),

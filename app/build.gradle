@@ -26,6 +26,9 @@ android {
                 !cloudflarePublicKey.matches('[A-Za-z0-9+/=]{200,}'))) {
             throw new GradleException('Cloudflare mode requires a valid HTTPS URL and public RSA key.')
         }
+        // Disabled until Play subscription base plans and expiry verification pass QA.
+        def subscriptionsEnabled = (project.findProperty('MM_SUBSCRIPTIONS_ENABLED') ?: 'false').toString() == 'true'
+        buildConfigField 'boolean', 'MM_SUBSCRIPTIONS_ENABLED', subscriptionsEnabled.toString()
         buildConfigField 'boolean', 'MM_USE_CLOUDFLARE', cloudflareEnabled.toString()
         buildConfigField 'String', 'MM_CLOUDFLARE_URL', '"' + cloudflareUrl + '"'
         buildConfigField 'String', 'MM_CLOUDFLARE_PUBLIC_KEY_B64', '"' + cloudflarePublicKey + '"'

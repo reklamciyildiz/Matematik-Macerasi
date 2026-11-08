@@ -29,6 +29,7 @@ class PurchaseManager private constructor(
     companion object {
         private const val TAG = "PurchaseManager"
         private const val PREMIUM_SKU = "matematik_macerasi_premium"
+        private const val PREMIUM_SUBSCRIPTION_SKU = "matematik_macerasi_premium_subscription"
         private const val DEBUG_MODE = false // Production için false
         private const val DEBUG_PREMIUM = false // Production için false
         
@@ -62,12 +63,17 @@ class PurchaseManager private constructor(
     // Premium durumu için StateFlow
     private val _premiumState = MutableStateFlow(false)
     val premiumState: StateFlow<Boolean> = _premiumState.asStateFlow()
+    // Temporary SUBS access is NEVER saved in legacy lifetime preferences.
+    private val _subscriptionActive=MutableStateFlow(false)
+    val subscriptionActive:StateFlow<Boolean> = _subscriptionActive.asStateFlow()
+    private val _planPrices=MutableStateFlow<Map<PremiumPlan,String>>(emptyMap())
+    val planPrices:StateFlow<Map<PremiumPlan,String>> = _planPrices.asStateFlow()
     private val _restoreState=MutableStateFlow<RestoreState>(RestoreState.Idle)
     val restoreState:StateFlow<RestoreState> = _restoreState.asStateFlow()
     sealed class RestoreState {
         object Idle:RestoreState()
         object Loading:RestoreState()
-        data class Found(val googlePlay:Boolean,val code:Boolean):RestoreState()
+        data class Found(val googlePlay:Boolean,val code:Boolean,val subscription:Boolean=false):RestoreState()
         object NotFound:RestoreState()
         data class Error(val message:String):RestoreState()
     }
@@ -246,7 +252,23 @@ class PurchaseManager private constructor(
         Log.d(TAG, "   - Purchase State: ${purchase.purchaseState}")
         Log.d(TAG, "   - Is Acknowledged: ${purchase.isAcknowledged}")
         
-        // Premium ürünü kontrol et
+        if (BuildConfig.MM_SUBSCRIPTIONS_ENABLED &&
+            purchase.products.contains(PREMIUM_SUBSCRIPTION_SKU)) {
+            when(purchase.purchaseState) {
+                Purchase.PurchaseState.PURCHASED -> {
+                    _subscriptionActive.value=true
+                    _premiumState.value=true
+                    _purchaseStatus.value=PurchaseStatus.Success
+                    if(!purchase.isAcknowledged) acknowledgePurchase(purchase)
+                }
+                Purchase.PurchaseState.PENDING -> _purchaseStatus.value=PurchaseStatus.Pending
+                else -> Unit
+            }
+            // Reconcile cancellation/renewal against active Play holdings.
+            queryPurchases()
+            return
+        }
+        // Existing lifetime INAPP flow stays unchanged.
             if (purchase.products.contains(PREMIUM_SKU)) {
             when (purchase.purchaseState) {
                 Purchase.PurchaseState.PURCHASED -> {
@@ -343,8 +365,10 @@ class PurchaseManager private constructor(
                         legacyCodeActivated=hasCodePremium
                     )
                     
-                    _premiumState.value = finalPremiumStatus
-                    savePremiumStatus(premiumFound) // Sadece Google Play durumunu kaydet
+                    val sub=queryActiveSubscription()
+                    if(sub!=null) _subscriptionActive.value=sub
+                    _premiumState.value=finalPremiumStatus || _subscriptionActive.value
+                    savePremiumStatus(premiumFound) // Only verified lifetime INAPP, never SUBS
                     
                     if (premiumFound) {
                         Log.d(TAG, "Premium sürüm bulundu ve aktif edildi")
@@ -360,6 +384,56 @@ class PurchaseManager private constructor(
         }
     }
     
+
+    /** Play only returns currently entitled subscriptions. A canceled but
+     * paid-through plan remains active until expiry. Backend subscriptionsv2
+     * and RTDN must be deployed before enabling actual recurring sales.
+     */
+    private suspend fun queryActiveSubscription():Boolean? {
+        if(!BuildConfig.MM_SUBSCRIPTIONS_ENABLED) return false
+        val params=QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS).build()
+        val result=billingClient.queryPurchasesAsync(params)
+        if(result.billingResult.responseCode!=BillingClient.BillingResponseCode.OK)return null
+        val subs=result.purchasesList.filter { PREMIUM_SUBSCRIPTION_SKU in it.products }
+        subs.filter { it.purchaseState==Purchase.PurchaseState.PURCHASED &&
+            !it.isAcknowledged }.forEach { acknowledgePurchase(it) }
+        return subs.any { it.purchaseState==Purchase.PurchaseState.PURCHASED }
+    }
+
+    /** Load localized prices directly from the Play product catalog. */
+    fun refreshPlanPrices() {
+        if(!BuildConfig.MM_SUBSCRIPTIONS_ENABLED || !billingClient.isReady) return
+        val products=listOf(
+            QueryProductDetailsParams.Product.newBuilder().setProductId(PREMIUM_SKU)
+                .setProductType(BillingClient.ProductType.INAPP).build(),
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(PREMIUM_SUBSCRIPTION_SKU)
+                .setProductType(BillingClient.ProductType.SUBS).build()
+        )
+        val query=QueryProductDetailsParams.newBuilder().setProductList(products).build()
+        billingClient.queryProductDetailsAsync(query) { result,details ->
+            if(result.responseCode!=BillingClient.BillingResponseCode.OK)
+                return@queryProductDetailsAsync
+            val prices=mutableMapOf<PremiumPlan,String>()
+            for(product in details.productDetailsList) {
+                if(product.productId==PREMIUM_SKU) {
+                    product.oneTimePurchaseOfferDetails?.formattedPrice?.let {
+                        prices[PremiumPlan.LIFETIME]=it
+                    }
+                }else if(product.productId==PREMIUM_SUBSCRIPTION_SKU) {
+                    for(plan in listOf(PremiumPlan.MONTHLY,PremiumPlan.YEARLY)) {
+                        val offer=product.subscriptionOfferDetails
+                            ?.firstOrNull { it.basePlanId==plan.basePlanId }
+                        offer?.pricingPhases?.pricingPhaseList?.lastOrNull()
+                            ?.formattedPrice?.let { prices[plan]=it }
+                    }
+                }
+            }
+            _planPrices.value=prices
+        }
+    }
+
     /** Explicit Play restore; errors do not erase cached rights. */
     fun restorePurchases() {
         if(_restoreState.value is RestoreState.Loading) return
@@ -391,15 +465,17 @@ class PurchaseManager private constructor(
                 purchased.filter {
                     it.purchaseState==Purchase.PurchaseState.PURCHASED && !it.isAcknowledged
                 }.forEach {acknowledgePurchase(it)}
+                val sub=queryActiveSubscription()
+                if(sub!=null) _subscriptionActive.value=sub
                 val code=codeValidator.isCodePremium()
                 savePremiumStatus(play)
                 val hasAccess=PremiumEntitlementPolicy.hasAccess(
                     confirmedPlayPurchase=play,
                     legacyCodeActivated=code
-                )
+                ) || _subscriptionActive.value
                 _premiumState.value=hasAccess
                 _restoreState.value=when {
-                    hasAccess->RestoreState.Found(play,code)
+                    hasAccess->RestoreState.Found(play,code,_subscriptionActive.value)
                     pending->RestoreState.Error(
                         "Ödeme beklemede. Google Play onayından sonra yeniden dene.")
                     else->RestoreState.NotFound
@@ -538,13 +614,11 @@ class PurchaseManager private constructor(
             // outlive a revoked/expired license. Only an offline-valid signed
             // code license OR the cached Play purchase grants access.
             if (BuildConfig.MM_USE_CLOUDFLARE) {
-                return getPremiumStatus() || codeValidator.isCodePremium()
+                return getPremiumStatus() || codeValidator.isCodePremium() || _subscriptionActive.value
             }
 
-            // Önce cache kontrolü yap
-            if (_premiumState.value) {
-                return true
-            }
+            // A cached aggregate is not proof that a paid subscription is active.
+            if (_subscriptionActive.value) return true
             
             // 1. Google Play satın alma kontrolü
             val prefs = context.getSharedPreferences("premium_prefs", Context.MODE_PRIVATE)
@@ -612,8 +686,14 @@ class PurchaseManager private constructor(
      * Premium sürümü satın alma işlemini başlatır.
      * Bu metod, kullanıcı arayüzünden kolayca çağrılabilir.
      */
-    fun buyPremium(activity:Activity) {
-        if (activity.isFinishing || activity.isDestroyed) return
+    fun buyPremium(activity:Activity) = buyPremium(activity,PremiumPlan.LIFETIME)
+
+    fun buyPremium(activity:Activity,plan:PremiumPlan) {
+        if(activity.isFinishing || activity.isDestroyed) return
+        if(!PremiumPlanPolicy.purchasable(plan,BuildConfig.MM_SUBSCRIPTIONS_ENABLED)) {
+            _purchaseStatus.value=PurchaseStatus.ProductNotFound
+            return
+        }
         if (isPremiumSync()) {
             _purchaseStatus.value = PurchaseStatus.AlreadyOwned
             Toast.makeText(activity, "Premium erişimin zaten etkin.", Toast.LENGTH_SHORT).show()
@@ -621,10 +701,10 @@ class PurchaseManager private constructor(
         }
         // Direct Google Play Billing launch: no app-specific adult challenge.
         // Play Store and family-account purchase approvals still apply.
-        startPurchase(activity)
+        startPurchase(activity,plan)
     }
 
-    private fun startPurchase(activity:Activity) {
+    private fun startPurchase(activity:Activity,plan:PremiumPlan) {
         if(activity.isFinishing || activity.isDestroyed) return
         if(isPremiumSync()) {
             _purchaseStatus.value=PurchaseStatus.AlreadyOwned
@@ -682,7 +762,7 @@ class PurchaseManager private constructor(
                     
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                         Log.d(TAG, "✅ BillingClient bağlandı, satın alma akışı başlatılıyor...")
-                        launchPurchaseFlow(activity)
+                        launchPurchaseFlow(activity,plan)
                     } else {
                         Log.e(TAG, "❌ BillingClient bağlantı hatası: ${billingResult.responseCode}, ${billingResult.debugMessage}")
                         
@@ -711,7 +791,7 @@ class PurchaseManager private constructor(
             return
         }
         
-        launchPurchaseFlow(activity)
+        launchPurchaseFlow(activity,plan)
     }
     
     /**
@@ -769,7 +849,7 @@ class PurchaseManager private constructor(
     /**
      * Premium satın alma akışını başlatır.
      */
-    private fun launchPurchaseFlow(activity: Activity) {
+    private fun launchPurchaseFlow(activity: Activity,plan:PremiumPlan) {
         Log.d(TAG, "🚀 Premium satın alma akışı başlatılıyor...")
         
         if (!billingClient.isReady) {
@@ -786,7 +866,7 @@ class PurchaseManager private constructor(
                     delay(3000)
                     if (billingClient.isReady) {
                         Log.d(TAG, "✅ BillingClient hazır, satın alma akışı tekrar başlatılıyor...")
-                        launchPurchaseFlow(activity)
+                        launchPurchaseFlow(activity,plan)
                     } else {
                         Log.e(TAG, "❌ BillingClient 3 saniye sonra hala hazır değil")
                         _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
@@ -813,8 +893,9 @@ class PurchaseManager private constructor(
             .setProductList(
                 listOf(
                     QueryProductDetailsParams.Product.newBuilder()
-                        .setProductId(PREMIUM_SKU)
-                        .setProductType(BillingClient.ProductType.INAPP)
+                        .setProductId(plan.productId)
+                        .setProductType(if(plan.subscription)
+                            BillingClient.ProductType.SUBS else BillingClient.ProductType.INAPP)
                         .build()
                 )
             )
@@ -835,6 +916,12 @@ class PurchaseManager private constructor(
                     if (productDetailsList.isNotEmpty()) {
                         // Ürün detayları bulundu, satın alma akışını başlat
                         val productDetails = productDetailsList.first()
+                        val offer=if(plan.subscription) productDetails.subscriptionOfferDetails
+                            ?.firstOrNull { it.basePlanId==plan.basePlanId } else null
+                        if(plan.subscription && offer==null) {
+                            _purchaseStatus.value=PurchaseStatus.ProductNotFound
+                            return@queryProductDetailsAsync
+                        }
                         
                         Log.d(TAG, "✅ Ürün detayları bulundu:")
                         Log.d(TAG, "   - İsim: ${productDetails.name}")
@@ -848,6 +935,7 @@ class PurchaseManager private constructor(
                                     listOf(
                                         BillingFlowParams.ProductDetailsParams.newBuilder()
                                             .setProductDetails(productDetails)
+                                            .apply { if(offer!=null)setOfferToken(offer.offerToken) }
                                             .build()
                                     )
                                 )

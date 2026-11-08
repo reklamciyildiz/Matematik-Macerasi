@@ -71,6 +71,9 @@ import com.yigit033.matematikmacarasi.services.NotificationService
 import com.yigit033.matematikmacarasi.services.PremiumCodeValidator
 import com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumPlan
+import com.yigit033.matematikmacarasi.BuildConfig
+import android.net.Uri
 import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
 import com.yigit033.matematikmacarasi.utils.AppVersionUtils
 import kotlinx.coroutines.Dispatchers
@@ -180,6 +183,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     val purchaseManager=remember(context){PurchaseManager.getInstance(context)}
     val premiumFlow by purchaseManager.premiumState.collectAsState()
     val restoration by purchaseManager.restoreState.collectAsState()
+    val prices by purchaseManager.planPrices.collectAsState()
+    val subscriptionActive by purchaseManager.subscriptionActive.collectAsState()
     val isPremium=premiumFlow || purchaseManager.isPremiumSync()
     val codeValidator=remember(context){PremiumCodeValidator.getInstance(context)}
     val notificationService=remember(context){NotificationService.getInstance(context)}
@@ -258,13 +263,43 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                     }
                 }
                 if(isPremium) {
-                    Text("✓ Premium erişimin korunuyor. Tekrar satın alma gerekmez.",
+                    Text(if(subscriptionActive)
+                            "✓ Premium aboneliğin aktif. Bitiş ve yenileme bilgileri Google Play'de."
+                        else "✓ Premium erişimin korunuyor. Tekrar satın alma gerekmez.",
                         color=SettingsPalette.mint,fontSize=12.sp)
+                    if(subscriptionActive) SettingsAction("Aboneliği Google Play'de Yönet",
+                        onClick={context.startActivity(Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://play.google.com/store/account/subscriptions")))})
                 } else {
-                    SettingsAction("Premium Özellikleri Aç",prominent=true,
-                        onClick={ (context as? ComponentActivity)?.let {
-                            purchaseManager.buyPremium(it)
-                        } })
+                    if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) {
+                        Text("Tek Premium içerik · Üç farklı ödeme seçeneği",
+                            color=SettingsPalette.gold,fontWeight=FontWeight.Bold,fontSize=13.sp)
+                        PremiumPlan.entries.forEach { plan ->
+                            val price=prices[plan]
+                            val duration=when(plan) {
+                                PremiumPlan.MONTHLY->" / ay · otomatik yenilenir"
+                                PremiumPlan.YEARLY->" / yıl · otomatik yenilenir"
+                                PremiumPlan.LIFETIME->" · tek ödeme, süresiz"
+                            }
+                            SettingsAction(
+                                plan.label+" · "+(price ?: "Google Play fiyatı yükleniyor")+duration,
+                                prominent=plan==PremiumPlan.YEARLY,
+                                enabled=price!=null,
+                                onClick={ (context as? ComponentActivity)?.let {
+                                    purchaseManager.buyPremium(it,plan)
+                                } }
+                            )
+                        }
+                        Text("Aylık ve yıllık aynı Premium haklarını sağlar; " +
+                            "iptal edilirse erişim ödenmiş sürenin sonunda sona erer. " +
+                            "Ömür boyu plan otomatik yenilenmez.",
+                            color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
+                    } else {
+                        SettingsAction("Ömür Boyu Premium'u Aç",prominent=true,
+                            onClick={ (context as? ComponentActivity)?.let {
+                                purchaseManager.buyPremium(it)
+                            } })
+                    }
                     OutlinedButton(onClick={codeDialog=true},
                         modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
                         border=BorderStroke(1.dp,SettingsPalette.gold),
@@ -293,7 +328,9 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
             FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
             FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
             FeatureLine("Labirentte sınırsız oyun, ek profil istatistikleri ve günlük bonus",true)
-            Text("Premium tek seferlik Google Play satın alımıdır; abonelik değildir.",
+            Text(if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
+                    "Aylık/yıllık otomatik yenilenir; ömür boyu Premium tek seferlik ödemedir."
+                else "Şu anda Google Play'de ömür boyu tek seferlik Premium sunuluyor.",
                 color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
             Text("Çocuk güvenliği denetimi süresince reklamlar tüm oyuncular için kapalıdır.",
                 color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
@@ -312,7 +349,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                 is PurchaseManager.RestoreState.Loading ->
                     "Google Play hesabı kontrol ediliyor…"
                 is PurchaseManager.RestoreState.Found ->
-                    if(state.googlePlay)"Google Play Premium satın alımın bulundu."
+                    if(state.subscription)"Google Play Premium aboneliğin aktif."
+                    else if(state.googlePlay)"Google Play ömür boyu satın alımın bulundu."
                     else "Premium kod hakkın etkin."
                 is PurchaseManager.RestoreState.NotFound ->
                     "Bu Google Play hesabında aktif satın alım bulunamadı."

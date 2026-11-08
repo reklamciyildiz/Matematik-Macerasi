@@ -32,8 +32,8 @@ require('PREMIUM_SKU = "matematik_macerasi_premium"' in purchase,
 require("private fun launchPurchaseFlow(" in purchase,
         "purchase checkout bypasses central purchase entry")
 require("fun buyPremium(activity:Activity)" in purchase and
-        "startPurchase(activity)" in purchase and
-        "private fun startPurchase(activity:Activity)" in purchase,
+        "startPurchase(activity,plan)" in purchase and
+        "private fun startPurchase(activity:Activity,plan:PremiumPlan)" in purchase,
         "direct Google Play purchase entry is missing")
 require("if (isPremiumSync())" in purchase,
         "repeat purchase should be blocked for existing Premium")

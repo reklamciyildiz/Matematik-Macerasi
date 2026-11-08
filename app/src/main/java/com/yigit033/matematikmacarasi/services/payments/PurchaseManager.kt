@@ -1,6 +1,8 @@
 package com.yigit033.matematikmacarasi.services.payments
 
 import android.app.Activity
+import android.content.Intent
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import android.widget.Toast
 import android.content.Context
 import android.util.Log
@@ -179,6 +181,7 @@ class PurchaseManager private constructor(
                         Log.d(TAG, "✅ Billing servisine bağlantı başarılı!")
                     // Kullanıcının premium durumunu kontrol et
                     queryPurchases()
+                    refreshPlanPrices()
                     }
                     BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> {
                         Log.e(TAG, "❌ Billing servisi bu cihazda kullanılamıyor")
@@ -686,7 +689,12 @@ class PurchaseManager private constructor(
      * Premium sürümü satın alma işlemini başlatır.
      * Bu metod, kullanıcı arayüzünden kolayca çağrılabilir.
      */
-    fun buyPremium(activity:Activity) = buyPremium(activity,PremiumPlan.LIFETIME)
+    /** Existing purchase entry points lead to all plans once available. */
+    fun buyPremium(activity:Activity) {
+        if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
+            activity.startActivity(Intent(activity,SettingsActivity::class.java))
+        else buyPremium(activity,PremiumPlan.LIFETIME)
+    }
 
     fun buyPremium(activity:Activity,plan:PremiumPlan) {
         if(activity.isFinishing || activity.isDestroyed) return
@@ -880,7 +888,7 @@ class PurchaseManager private constructor(
         }
         
         // Zaten premium ise işlemi durdur
-        if (_premiumState.value) {
+        if (isPremiumSync()) {
             Log.d(TAG, "ℹ️ Kullanıcı zaten premium sürüme sahip")
             _purchaseStatus.value = PurchaseStatus.AlreadyOwned
             return

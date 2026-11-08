@@ -3,6 +3,11 @@ package com.yigit033.matematikmacarasi.games.interactive
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,6 +30,9 @@ import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
  */
 class SpaceMathAdventureActivity:ComponentActivity() {
     private lateinit var store:SpaceExpeditionStore
+    private lateinit var mainStore:SpaceExpeditionStore
+    private lateinit var basicStore:SpaceExpeditionStore
+    private val purchases by lazy {PurchaseManager.getInstance(this)}
     private lateinit var stars:StarManager
     private lateinit var audio:AudioService
     private lateinit var statistics:GameStatisticsHelper
@@ -38,12 +46,14 @@ class SpaceMathAdventureActivity:ComponentActivity() {
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         runCatching {
-            store=SpaceExpeditionStore(this)
+            mainStore=SpaceExpeditionStore(this)
+            basicStore=SpaceExpeditionStore(this,PremiumGameModePolicy.freeCheckpointStore("space"))
+            store=mainStore
             stars=StarManager.getInstance(applicationContext)
             audio=AudioService.getInstance(applicationContext)
             statistics=GameStatisticsHelper(applicationContext)
             adaptive=AdaptiveLearningStore(this)
-            run=store.load()
+            chooseEntitledStore()
             run?.takeIf {it.completed}?.let(::deliver)
         }.onFailure {
             Log.e(TAG,"Failed to open space game",it)
@@ -51,12 +61,17 @@ class SpaceMathAdventureActivity:ComponentActivity() {
             return
         }
         setContent {
+            val entitlement by purchases.premiumState.collectAsState()
+            val hasPremium=entitlement || purchases.isPremiumSync()
+            LaunchedEffect(entitlement){chooseEntitledStore()}
             MatematikMacerasiTheme {
                 @Suppress("UNUSED_VARIABLE")
                 val revision=recordsRevision
                 SpaceExpeditionScreen(
                     run=run,
-                    recommended=adaptive.progress(AdventureSkill.SPACE).currentTier,
+                    recommended=if(hasPremium)
+                        adaptive.progress(AdventureSkill.SPACE).currentTier
+                        else LearningTier.TEMEL,
                     profileGrade=adaptive.progress(AdventureSkill.SPACE).profileGrade,
                     records=SpacePlanet.entries.associateWith {store.record(it)},
                     historicalStars=SpacePlanet.entries.associateWith {
@@ -72,7 +87,29 @@ class SpaceMathAdventureActivity:ComponentActivity() {
             }
         }
     }
+    private fun chooseEntitledStore() {
+        if(!::mainStore.isInitialized)return
+        val saved=mainStore.load()
+        val fallback=!purchases.isPremiumSync() && saved!=null &&
+            PremiumGameModePolicy.requiresPremium("space",saved.tier.ordinal)
+        val next=if(fallback)basicStore else mainStore
+        if(!::store.isInitialized || store!==next) {
+            store=next
+            run=store.load()
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+        if(::mainStore.isInitialized){
+            purchases.checkPremiumStatusAsync()
+            chooseEntitledStore()
+        }
+    }
     private fun start(planet:SpacePlanet,tier:LearningTier):Boolean {
+        if(!PremiumGameModePolicy.canStart("space",tier.ordinal,purchases.isPremiumSync())){
+            feedback="Orta ve Zor galaksi görevleri Premium gerektirir."
+            return false
+        }
         val time=System.currentTimeMillis()
         val seed=maxOf(time, (run?.seed?:0L)+1, ++nonce).coerceAtLeast(1)
         val grade=adaptive.progress(AdventureSkill.SPACE).profileGrade
@@ -88,7 +125,8 @@ class SpaceMathAdventureActivity:ComponentActivity() {
     }
     private fun transition(action:(SpaceRun)->SpaceRun) {
         val before=run?:return
-        if(before.completed)return
+        if(before.completed || !PremiumGameModePolicy.canStart(
+                "space",before.tier.ordinal,purchases.isPremiumSync()))return
         val next=runCatching {action(before)}.onFailure {
             Log.e(TAG,"Space mission action failed",it)
             feedback="Etkileşim gerçekleştirilemedi, tekrar dene."

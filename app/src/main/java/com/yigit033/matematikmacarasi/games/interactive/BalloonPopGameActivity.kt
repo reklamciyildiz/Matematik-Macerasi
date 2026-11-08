@@ -3,6 +3,11 @@ package com.yigit033.matematikmacarasi.games.interactive
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -23,6 +28,9 @@ import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
  */
 class BalloonPopGameActivity:ComponentActivity() {
     private lateinit var store:BalloonAdventureStore
+    private lateinit var mainStore:BalloonAdventureStore
+    private lateinit var basicStore:BalloonAdventureStore
+    private val purchases by lazy {PurchaseManager.getInstance(this)}
     private lateinit var audio:AudioService
     private lateinit var stars:StarManager
     private lateinit var statistics:GameStatisticsHelper
@@ -33,11 +41,13 @@ class BalloonPopGameActivity:ComponentActivity() {
     private var seedNonce=0L
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
-        store=BalloonAdventureStore(this)
+        mainStore=BalloonAdventureStore(this)
+        basicStore=BalloonAdventureStore(this,PremiumGameModePolicy.freeCheckpointStore("balloon"))
+        store=mainStore
         audio=AudioService.getInstance(applicationContext)
         stars=StarManager.getInstance(applicationContext)
         statistics=GameStatisticsHelper(applicationContext)
-        run=store.load()
+        chooseEntitledStore()
         run?.takeIf {it.completed}?.let {deliver(it)}
         val grade=GradePolicy.parse(
             PlayerProfileService.getInstance(this).getUserClass())
@@ -47,12 +57,15 @@ class BalloonPopGameActivity:ComponentActivity() {
             else -> LearningTier.USTALIK
         }
         setContent {
+            val entitlement by purchases.premiumState.collectAsState()
+            val hasPremium=entitlement || purchases.isPremiumSync()
+            LaunchedEffect(entitlement){chooseEntitledStore()}
             MatematikMacerasiTheme {
                 @Suppress("UNUSED_VARIABLE")
                 val revision=recordsRevision
                 BalloonAdventureScreen(
                     run=run,
-                    suggestedTier=suggested,
+                    suggestedTier=if(hasPremium)suggested else LearningTier.TEMEL,
                     records=BalloonRealm.entries.associateWith {realm ->
                         store.record(realm)
                     },
@@ -70,7 +83,29 @@ class BalloonPopGameActivity:ComponentActivity() {
             }
         }
     }
+    private fun chooseEntitledStore() {
+        if(!::mainStore.isInitialized)return
+        val saved=mainStore.load()
+        val fallback=!purchases.isPremiumSync() && saved!=null &&
+            PremiumGameModePolicy.requiresPremium("balloon",saved.tier.ordinal)
+        val next=if(fallback)basicStore else mainStore
+        if(!::store.isInitialized || store!==next) {
+            store=next
+            run=store.load()
+        }
+    }
+    override fun onResume() {
+        super.onResume()
+        if(::mainStore.isInitialized){
+            purchases.checkPremiumStatusAsync()
+            chooseEntitledStore()
+        }
+    }
     private fun start(realm:BalloonRealm,tier:LearningTier,pace:BalloonPace):Boolean {
+        if(!PremiumGameModePolicy.canStart("balloon",tier.ordinal,purchases.isPremiumSync())){
+            feedback="Orta ve Zor uçuş modları Premium gerektirir."
+            return false
+        }
         val now=(System.currentTimeMillis()+ ++seedNonce).coerceAtLeast(1L)
         val next=runCatching {BalloonAdventureEngine.begin(now,realm,tier,pace)}
             .onFailure {Log.e(TAG,"Unable to create balloon game",it)}
@@ -86,7 +121,8 @@ class BalloonPopGameActivity:ComponentActivity() {
     }
     private fun change(action:(BalloonRun)->BalloonRun) {
         val before=run?:return
-        if(before.completed)return
+        if(before.completed || !PremiumGameModePolicy.canStart(
+                "balloon",before.tier.ordinal,purchases.isPremiumSync()))return
         val next=runCatching {action(before)}.onFailure {
             Log.e(TAG,"Balloon action failed",it)
             feedback="Bir hata oluştu, tekrar dene."

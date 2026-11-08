@@ -2,6 +2,13 @@ package com.yigit033.matematikmacarasi.games.interactive
 
 import com.yigit033.matematikmacarasi.games.common.AutoAdvanceOnSuccess
 import androidx.activity.compose.BackHandler
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -156,12 +163,20 @@ fun BalloonAdventureScreen(
     onNext:()->Unit,
     onExit:()->Unit
 ) {
+    val context=LocalContext.current
+    val purchase=remember(context){PurchaseManager.getInstance(context)}
+    val entitlement by purchase.premiumState.collectAsState()
+    val hasPremium=entitlement || purchase.isPremiumSync()
+    fun upgrade(){context.startActivity(Intent(context,SettingsActivity::class.java))}
     var lobby by rememberSaveable {mutableStateOf(true)}
     var selectedRealm by rememberSaveable {mutableIntStateOf(0)}
     var selectedTierName by rememberSaveable {mutableStateOf(suggestedTier.name)}
     var selectedPaceName by rememberSaveable {mutableStateOf(BalloonPace.RELAXED.name)}
     var replacing by remember {mutableStateOf<Triple<BalloonRealm,LearningTier,BalloonPace>?>(null)}
     var startError by remember {mutableStateOf(false)}
+    LaunchedEffect(hasPremium) {
+        if(!hasPremium) selectedTierName=LearningTier.TEMEL.name
+    }
     val selectedTier=LearningTier.fromSaved(selectedTierName,suggestedTier)
     val selectedPace=BalloonPace.entries.firstOrNull {it.name==selectedPaceName}?:BalloonPace.RELAXED
     // Every resolved balloon is persisted by the Activity before this timer starts.
@@ -169,6 +184,10 @@ fun BalloonAdventureScreen(
         !lobby && run?.resolved == true && run.completed == false) { onNext() }
     BackHandler(enabled=!lobby) {lobby=true}
     fun start(realm:BalloonRealm,tier:LearningTier,pace:BalloonPace=selectedPace) {
+        if(!PremiumGameModePolicy.canStart("balloon",tier.ordinal,hasPremium)){
+            upgrade()
+            return
+        }
         if(run!=null && !run.completed)replacing=Triple(realm,tier,pace)
         else if(onStart(realm,tier,pace)) {lobby=false;startError=false}
         else startError=true
@@ -237,7 +256,11 @@ fun BalloonAdventureScreen(
             Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                 LearningTier.entries.forEach {tier->
                     val selected=tier==selectedTier
-                    OutlinedButton(onClick={selectedTierName=tier.name},
+                    OutlinedButton(onClick={
+                        if(!PremiumGameModePolicy.canStart("balloon",tier.ordinal,hasPremium))
+                            upgrade()
+                        else selectedTierName=tier.name
+                    },
                         modifier=Modifier.weight(1f).heightIn(min=48.dp),
                         contentPadding=PaddingValues(horizontal=2.dp),
                         border=BorderStroke(if(selected)2.dp else 1.dp,
@@ -245,7 +268,11 @@ fun BalloonAdventureScreen(
                         colors=ButtonDefaults.outlinedButtonColors(
                             contentColor=BalloonPalette.white,
                             containerColor=if(selected)Color(0xFF31668A) else Color.Transparent)
-                    ) {Text(tier.title,fontSize=12.sp,fontWeight=FontWeight.Bold)}
+                    ) {
+                        val locked=!PremiumGameModePolicy.canStart("balloon",tier.ordinal,hasPremium)
+                        Text(if(locked)"🔒 "+tier.title else tier.title,fontSize=12.sp,
+                            fontWeight=FontWeight.Bold)
+                    }
                 }
             }
             Text("Profiline göre önerilen: "+suggestedTier.title+

@@ -1,6 +1,13 @@
 package com.yigit033.matematikmacarasi.games.interactive
 
 import androidx.activity.compose.BackHandler
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
+import com.yigit033.matematikmacarasi.services.payments.PremiumGameModePolicy
+import com.yigit033.matematikmacarasi.screens.SettingsActivity
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -121,13 +128,25 @@ fun SpaceExpeditionScreen(
     onHint:()->Unit,
     onExit:()->Unit
 ) {
+    val context=LocalContext.current
+    val purchase=remember(context){PurchaseManager.getInstance(context)}
+    val entitlement by purchase.premiumState.collectAsState()
+    val hasPremium=entitlement || purchase.isPremiumSync()
+    fun upgrade(){context.startActivity(Intent(context,SettingsActivity::class.java))}
     var lobby by rememberSaveable {mutableStateOf(true)}
     var choice by rememberSaveable {mutableIntStateOf(0)}
     var selectedTier by rememberSaveable {mutableStateOf(recommended.name)}
     var replacing by remember {mutableStateOf<Pair<SpacePlanet,LearningTier>?>(null)}
     var failed by remember {mutableStateOf(false)}
+    LaunchedEffect(hasPremium) {
+        if(!hasPremium) selectedTier=LearningTier.TEMEL.name
+    }
     val tier=LearningTier.fromSaved(selectedTier,recommended)
     fun start(planet:SpacePlanet,t:LearningTier) {
+        if(!PremiumGameModePolicy.canStart("space",t.ordinal,hasPremium)){
+            upgrade()
+            return
+        }
         if(run!=null && !run.completed)replacing=planet to t
         else if(onBegin(planet,t)){lobby=false;failed=false}
         else failed=true
@@ -209,7 +228,11 @@ fun SpaceExpeditionScreen(
                         Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){
                             LearningTier.entries.forEach{opt->
                                 OutlinedButton(
-                                    onClick={selectedTier=opt.name},
+                                    onClick={
+                                        if(!PremiumGameModePolicy.canStart("space",opt.ordinal,hasPremium))
+                                            upgrade()
+                                        else selectedTier=opt.name
+                                    },
                                     modifier=Modifier.weight(1f).heightIn(min=46.dp),
                                     contentPadding=PaddingValues(horizontal=3.dp),
                                     border=BorderStroke(if(opt==tier)2.dp else 1.dp,
@@ -218,7 +241,10 @@ fun SpaceExpeditionScreen(
                                         containerColor=if(opt==tier)
                                             Color(0xFF264F70) else Color.Transparent,
                                         contentColor=GalaxyPaint.bright)
-                                ){Text(opt.title,fontSize=12.sp)}
+                                ){
+                                    val locked=!PremiumGameModePolicy.canStart("space",opt.ordinal,hasPremium)
+                                    Text(if(locked)"🔒 "+opt.title else opt.title,fontSize=12.sp)
+                                }
                             }
                         }
                         Text("Zorluk değişse bile sınıfının dışındaki işlemler açılmaz.",

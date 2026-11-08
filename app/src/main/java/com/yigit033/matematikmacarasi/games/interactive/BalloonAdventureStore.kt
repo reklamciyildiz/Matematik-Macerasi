@@ -8,9 +8,9 @@ data class BalloonRecord(
     val completions:Int=0,val bestStars:Int=0,val bestStreak:Int=0,
     val mistakes:Int=0,val hints:Int=0
 )
-class BalloonAdventureStore(context:Context) {
+class BalloonAdventureStore(context:Context, preferenceName:String="balloon_adventure_v2") {
     private val prefs=context.applicationContext.getSharedPreferences(
-        "balloon_adventure_v2",Context.MODE_PRIVATE)
+        preferenceName,Context.MODE_PRIVATE)
     @Synchronized fun load():BalloonRun? {
         if(prefs.getInt("version",0)!=2)return null
         val realm=BalloonRealm.entries.getOrNull(prefs.getInt("realm",-1))?:return null

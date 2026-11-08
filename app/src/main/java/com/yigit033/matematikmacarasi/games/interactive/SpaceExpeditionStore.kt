@@ -8,9 +8,9 @@ data class SpacePlanetRecord(
 )
 
 /** Isolated v2 checkpoint. Never overwrites legacy SpaceMath or Play purchases. */
-class SpaceExpeditionStore(context:Context) {
+class SpaceExpeditionStore(context:Context, preferenceName:String="space_expedition_v2") {
     private val prefs=context.applicationContext.getSharedPreferences(
-        "space_expedition_v2",Context.MODE_PRIVATE
+        preferenceName,Context.MODE_PRIVATE
     )
     @Synchronized fun load():SpaceRun? {
         if(prefs.getInt("version",0) !in 2..3)return null

@@ -315,7 +315,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
             Text("ÜCRETSİZ",color=SettingsPalette.mint,
                 fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
             FeatureLine("Temel matematik oyunları")
-            FeatureLine("Kesir Kristalleri, Zaman Kulesi ve Örüntü Ormanı: Temel + Orta seviyeler")
+            FeatureLine("Kesir Kristalleri, Zaman Kulesi ve Örüntü Ormanı: Temel seviye")
             FeatureLine("Her sınıfta iki farklı konudan ücretsiz başlangıç dersi")
             FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
             FeatureLine("Labirent: günde 5 oyun")
@@ -327,7 +327,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
             FeatureLine("Tüm ücretsiz içerikler ve Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
             FeatureLine("Öğren: 1–8. sınıf mevcut kısa ders kütüphanesi ve derinleşme dersleri",true)
             FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
-            FeatureLine("Kesir, Zaman ve Örüntü oyunlarında Zor seviye",true)
+            FeatureLine("Kesir, Zaman ve Örüntü oyunlarında Orta ve Zor seviyeler",true)
             FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
             FeatureLine("Labirentte sınırsız oyun, ek profil istatistikleri ve günlük bonus",true)
             Text(if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)

@@ -29,13 +29,13 @@ fun PremiumChallengePause(onSettings:()->Unit,onExit:()->Unit) {
         verticalArrangement=Arrangement.Center) {
         Text("🔒",fontSize=42.sp)
         Spacer(Modifier.height(12.dp))
-        Text("Zor Seviye · Premium",
+        Text("Orta ve Zor Seviye · Premium",
             color=Color(0xFFFFD980),fontSize=25.sp,
             fontWeight=FontWeight.ExtraBold,textAlign=TextAlign.Center)
         Spacer(Modifier.height(12.dp))
         Text("Bu maceradaki ilerlemen korunuyor. Premium erişimin geri " +
             "yüklendiğinde kaldığın yerden devam edebilirsin. " +
-            "Temel ve Orta seviyeler ücretsiz.",
+            "Temel seviye ücretsiz olarak oynanabilir.",
             color=Color(0xFFE2F2F9),fontSize=15.sp,
             lineHeight=23.sp,textAlign=TextAlign.Center)
         Spacer(Modifier.height(24.dp))

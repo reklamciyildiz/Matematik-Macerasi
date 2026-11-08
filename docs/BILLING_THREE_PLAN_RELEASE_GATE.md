@@ -5,6 +5,7 @@
   - `monthly`: otomatik yenilenen aylık base plan.
   - `yearly`: otomatik yenilenen yıllık base plan.
 - Tüm planlar **aynı Premium haklarını** açar; başka tier yok.
+- Kesir Kristalleri, Zaman Kulesi ve Örüntü Ormanı: **Temel** Free, **Orta + Zor** Premium. Kayıtlı Orta/Zor maceraları hak kaybında silinmez; yeniden etkinleşince devam eder.
 - Fiyatlar Android'de Google Play ProductDetails `formattedPrice` üzerinden okunur. Play ürünü bulunmazsa satılamaz.
 - Aylık/yıllık hakkı eski `premium_prefs.is_premium` kalıcı INAPP alanına yazılmaz. `queryPurchasesAsync(SUBS)` ile oturumda doğrulanır; ödeme beklerken hak verilmez.
 - Geri yükleme hem eski INAPP hem SUBS hem mevcut kodu sorgular; erişim süresi dolunca Premium düşmelidir. Oynama kayıtları ve özel avatar sahipliği silinmez.

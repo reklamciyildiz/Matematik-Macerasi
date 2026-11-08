@@ -5,14 +5,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PremiumGameModePolicyTest {
-    @Test fun twoCompleteBaseDifficultiesStayFree() {
+    @Test fun onlyBasicDifficultyIsFreeAndBothAdvancedDifficultiesNeedPremium() {
         for(id in listOf("fractions","time_tower","pattern_forest")) {
-            for(difficulty in 0..1) {
-                assertTrue(PremiumGameModePolicy.canStart(id,difficulty,false))
-                assertFalse(PremiumGameModePolicy.requiresPremium(id,difficulty))
+            assertTrue(PremiumGameModePolicy.canStart(id,0,false))
+            assertFalse(PremiumGameModePolicy.requiresPremium(id,0))
+            for(difficulty in 1..2) {
+                assertTrue(PremiumGameModePolicy.requiresPremium(id,difficulty))
+                assertFalse(PremiumGameModePolicy.canStart(id,difficulty,false))
+                assertTrue(PremiumGameModePolicy.canStart(id,difficulty,true))
             }
+            // A stored advanced checkpoint must remain restricted if access lapses.
+            assertFalse(PremiumGameModePolicy.canStart(id,1,false))
             assertFalse(PremiumGameModePolicy.canStart(id,2,false))
-            assertTrue(PremiumGameModePolicy.canStart(id,2,true))
         }
     }
     @Test fun otherGamesRemainFreeAndSchoolGradeIsNotLocked() {

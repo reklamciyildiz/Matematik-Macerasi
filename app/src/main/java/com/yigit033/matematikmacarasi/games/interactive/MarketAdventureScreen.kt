@@ -317,7 +317,8 @@ fun MarketAdventureScreen(
         dismissButton={TextButton(onClick={pendingNewRun=null}) {Text("Vazgeç")}}
     )
     val scene=MarketAdventureEngine.scenario(run)
-    val stage=if(showLobby || premiumRunBlocked) MarketAdventurePhase.WELCOME else run.phase
+    val stage=if(showLobby) MarketAdventurePhase.WELCOME
+        else if(premiumRunBlocked) MarketAdventurePhase.WELCOME else run.phase
     Column(
         Modifier.fillMaxSize().background(
             Brush.verticalGradient(listOf(

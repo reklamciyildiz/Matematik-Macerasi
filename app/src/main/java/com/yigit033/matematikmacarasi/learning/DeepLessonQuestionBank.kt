@@ -5,7 +5,7 @@ import kotlin.random.Random
 /** Grade-specific conceptual follow-up problems with deterministic questions. */
 object DeepLessonQuestionBank {
     fun question(lesson: Lesson, seed: Long, index: Int): PracticeQuestion {
-        require(lesson.skill == Skill.DEEP_DIVE && index in 0..3)
+        require(lesson.skill == Skill.DEEP_DIVE && index in 0..7)
         val r = Random(seed + index * 10007L + lesson.id.hashCode().toLong())
         fun n(low: Int, high: Int) = r.nextInt(low, high)
         val answer: Int

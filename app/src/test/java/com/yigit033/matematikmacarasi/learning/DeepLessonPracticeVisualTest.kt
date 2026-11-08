@@ -9,7 +9,7 @@ import org.junit.Test
 class DeepLessonPracticeVisualTest {
     @Test fun eighthGradeDeepLessonsHaveStrictlyGroundedQuestionIllustrations() {
         for (lesson in DeepLessonCatalog.forGrade(8)) {
-            for (seed in 1L..100L) for (index in 0..3) {
+            for (seed in 1L..100L) for (index in 0..7) {
                 val q = DeepLessonQuestionBank.question(lesson,seed,index)
                 val model = PracticeVisualFactory.forQuestion(lesson.id,q.text)
                 assertNotNull(lesson.id+": "+q.text,model)

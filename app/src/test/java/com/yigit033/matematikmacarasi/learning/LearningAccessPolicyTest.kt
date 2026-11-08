@@ -17,6 +17,11 @@ class LearningAccessPolicyTest {
                 topics.first { id in it.lessonIds }.id
             }
             assertEquals(2,topicIds.distinct().size)
+            val areas = free.map { id ->
+                topics.first { id in it.lessonIds }.area
+            }
+            assertEquals("Two free units must show distinct mathematical strands for grade $grade",
+                2,areas.distinct().size)
             assertEquals(free, LearningAccessPolicy.freeLessonIds(grade))
         }
     }

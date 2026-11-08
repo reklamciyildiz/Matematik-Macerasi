@@ -1,8 +1,9 @@
 package com.yigit033.matematikmacarasi.services.payments
 
 /**
- * Current user-facing Premium policy: retain the two existing, independent
- * entitlements from Google Play Billing and legacy Firebase code activation.
+ * Three paid billing options grant the exact same features:
+ * existing lifetime Play INAPP, existing signed Premium codes, or an actively
+ * entitled Play SUBS product (monthly/yearly). SUBS is NOT permanent.
  *
  * No verified-parent account, institutional source or login requirement is
  * introduced into the Android app. A future institutional design must go
@@ -11,6 +12,7 @@ package com.yigit033.matematikmacarasi.services.payments
 object PremiumEntitlementPolicy {
     fun hasAccess(
         confirmedPlayPurchase: Boolean,
-        legacyCodeActivated: Boolean
-    ): Boolean = confirmedPlayPurchase || legacyCodeActivated
+        legacyCodeActivated: Boolean,
+        activePlaySubscription: Boolean = false
+    ): Boolean = confirmedPlayPurchase || legacyCodeActivated || activePlaySubscription
 }

@@ -5,6 +5,8 @@
   - `monthly`: otomatik yenilenen aylık base plan.
   - `yearly`: otomatik yenilenen yıllık base plan.
 - Tüm planlar **aynı Premium haklarını** açar; başka tier yok.
+- Dört işlem ve Karışık Mod: Temel Free; diğer dört zorluk Premium.
+- Sayı Avı 3.1, Geometri, Kesir, Örüntü, Zaman, Balon ve Uzay: Temel Free; Orta/Zor Premium. Klasik öğretici Orman ve Tapınak Free.
 - Kesir Kristalleri, Zaman Kulesi ve Örüntü Ormanı: **Temel** Free, **Orta + Zor** Premium. Kayıtlı Orta/Zor maceraları hak kaybında silinmez; yeniden etkinleşince devam eder.
 - Fiyatlar Android'de Google Play ProductDetails `formattedPrice` üzerinden okunur. Play ürünü bulunmazsa satılamaz.
 - Aylık/yıllık hakkı eski `premium_prefs.is_premium` kalıcı INAPP alanına yazılmaz. `queryPurchasesAsync(SUBS)` ile oturumda doğrulanır; ödeme beklerken hak verilmez.

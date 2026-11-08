@@ -54,10 +54,14 @@ data class GameCatalogItem(
 ) {
     /** Standard metadata: do not confuse a difficulty choice with the school grade. */
     fun difficultyNote():String=when(id){
-        "operations","add","subtract","multiply","divide"->"5 zorluk seviyesi"
-        "hunt"->"Temel · Orta · Zor"
-        "forest"->"Bölümlü macera"
-        else->"Temel · Orta · Zor"
+        "operations","add","subtract","multiply","divide"->
+            "Temel Free · 4 Premium zorluk"
+        "hunt","geometry","fractions","pattern_forest","time_tower",
+        "balloon","space"->"Temel Free · Orta/Zor Premium"
+        "forest"->"Ücretsiz öğretici macera"
+        "market"->"3 mağaza Free · 7 Premium"
+        "maze"->"Free: günde 5 · Premium: sınırsız"
+        else->"Ücretsiz temel macera"
     }
 
     fun compactGradeNote(grade:Int):String=when{

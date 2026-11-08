@@ -118,7 +118,9 @@ fun PremiumOperationDifficultySelect(
                         }
                     }
                     Column(Modifier.weight(1f)){
-                        Text(if(locked)"🔒 "+labels[index]+" · Premium" else labels[index]+" · Free",color=light,
+                        Text(if(index==0)labels[index]+" · Free"
+                            else (if(locked)"🔒 " else "")+labels[index]+" · Premium",
+                            color=light,
                             fontSize=16.sp,fontWeight=FontWeight.Bold)
                         Text(if(op==OperationKind.ADD || op==OperationKind.SUBTRACT)
                             "$cap'e kadar sonuç"

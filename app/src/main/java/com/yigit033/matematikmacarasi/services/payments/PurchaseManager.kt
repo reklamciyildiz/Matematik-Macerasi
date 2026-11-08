@@ -363,14 +363,13 @@ class PurchaseManager private constructor(
                     
                     // Premium kod aktivasyonu varsa onu da kontrol et!
                     val hasCodePremium = codeValidator.isCodePremium()
-                    val finalPremiumStatus = PremiumEntitlementPolicy.hasAccess(
-                        confirmedPlayPurchase=premiumFound,
-                        legacyCodeActivated=hasCodePremium
-                    )
-                    
                     val sub=queryActiveSubscription()
                     if(sub!=null) _subscriptionActive.value=sub
-                    _premiumState.value=finalPremiumStatus || _subscriptionActive.value
+                    _premiumState.value=PremiumEntitlementPolicy.hasAccess(
+                        confirmedPlayPurchase=premiumFound,
+                        legacyCodeActivated=hasCodePremium,
+                        activePlaySubscription=_subscriptionActive.value
+                    )
                     savePremiumStatus(premiumFound) // Only verified lifetime INAPP, never SUBS
                     
                     if (premiumFound) {
@@ -474,8 +473,9 @@ class PurchaseManager private constructor(
                 savePremiumStatus(play)
                 val hasAccess=PremiumEntitlementPolicy.hasAccess(
                     confirmedPlayPurchase=play,
-                    legacyCodeActivated=code
-                ) || _subscriptionActive.value
+                    legacyCodeActivated=code,
+                    activePlaySubscription=_subscriptionActive.value
+                )
                 _premiumState.value=hasAccess
                 _restoreState.value=when {
                     hasAccess->RestoreState.Found(play,code,_subscriptionActive.value)

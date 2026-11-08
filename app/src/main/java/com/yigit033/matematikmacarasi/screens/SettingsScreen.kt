@@ -187,6 +187,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     val subscriptionActive by purchaseManager.subscriptionActive.collectAsState()
     val isPremium=premiumFlow || purchaseManager.isPremiumSync()
     val codeValidator=remember(context){PremiumCodeValidator.getInstance(context)}
+    val incompatibleLicense=codeValidator.hasCloudflareLicenseIgnoredByThisBuild()
     val notificationService=remember(context){NotificationService.getInstance(context)}
     val scope=rememberCoroutineScope()
     var music by remember { mutableStateOf(audioService.isMusicEnabled()) }
@@ -261,6 +262,12 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                             color=SettingsPalette.text,fontSize=12.sp,
                             lineHeight=16.sp)
                     }
+                }
+                if(incompatibleLicense) {
+                    Text("⚠ Bu sürüm eski Cloudflare Premium lisansını okuyamıyor. " +
+                        "Kod hakkın silinmiş olmayabilir; lisansı doğrulayan doğru " +
+                        "yapılandırılmış APK'yı yükle. Uygulama verilerini temizleme.",
+                        color=SettingsPalette.gold,fontSize=12.sp,lineHeight=18.sp)
                 }
                 if(isPremium) {
                     Text(if(subscriptionActive)
@@ -340,8 +347,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                 color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
         }
 
-        SettingsSection("Satın Alma ve Geri Yükleme",
-            "Google Play satın alımını ücretsiz olarak yeniden kontrol et") {
+        SettingsSection("Satın Alma ve Premium Kodunu Geri Yükleme",
+            "Ödeme yapmadan Google Play ve mevcut kod hakkını yeniden kontrol et") {
             SettingsAction(
                 if(restoration is PurchaseManager.RestoreState.Loading)
                     "Satın Alma Kontrol Ediliyor…" else "Satın Alımları Geri Yükle",
@@ -349,7 +356,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                 onClick={purchaseManager.restorePurchases()})
             val resultText=when(val state=restoration) {
                 is PurchaseManager.RestoreState.Idle ->
-                    "Mevcut Premium kodu hakların da korunur."
+                    "Mevcut Premium kodu hakkın da kontrol edilir."
                 is PurchaseManager.RestoreState.Loading ->
                     "Google Play hesabı kontrol ediliyor…"
                 is PurchaseManager.RestoreState.Found ->

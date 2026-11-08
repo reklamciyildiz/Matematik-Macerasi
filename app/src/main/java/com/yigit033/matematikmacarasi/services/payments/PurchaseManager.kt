@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.SupervisorJob
 
 /**
@@ -442,6 +443,14 @@ class PurchaseManager private constructor(
         _restoreState.value=RestoreState.Loading
         scope.launch {
             try {
+                // A Premium code is independent of Play Billing: reconcile it
+                // FIRST, even when this emulator cannot connect to Google Play.
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        codeValidator.checkAndSyncPremiumStatus()
+                    }
+                }.onFailure { Log.w(TAG,"Code restore unavailable; local license retained") }
+                refreshPremiumState()
                 if(!billingClient.isReady) connectToBillingService()
                 var tries=0
                 while(!billingClient.isReady && tries<25) {
@@ -449,7 +458,9 @@ class PurchaseManager private constructor(
                     tries++
                 }
                 if(!billingClient.isReady) {
-                    _restoreState.value=RestoreState.Error(
+                    _restoreState.value=if(codeValidator.isCodePremium()) {
+                        RestoreState.Found(false,true,_subscriptionActive.value)
+                    } else RestoreState.Error(
                         "Google Play'e bağlanılamadı. İnternet açıkken tekrar dene.")
                     return@launch
                 }
@@ -457,7 +468,9 @@ class PurchaseManager private constructor(
                     .setProductType(BillingClient.ProductType.INAPP).build()
                 val result=billingClient.queryPurchasesAsync(params)
                 if(result.billingResult.responseCode!=BillingClient.BillingResponseCode.OK) {
-                    _restoreState.value=RestoreState.Error(
+                    _restoreState.value=if(codeValidator.isCodePremium()) {
+                        RestoreState.Found(false,true,_subscriptionActive.value)
+                    } else RestoreState.Error(
                         "Satın alma sorgusu tamamlanamadı. Tekrar deneyebilirsin.")
                     return@launch
                 }

@@ -8,3 +8,14 @@ android.suppressUnsupportedCompileSdk=36
 # Signing Config (Set your own passwords or leave blank for debug builds)
 # KEYSTORE_PASSWORD=your_keystore_password
 # KEY_PASSWORD=your_key_password
+
+# Keep these settings in local gradle.properties; never publish keys or secrets.
+# The public Cloudflare key must match the WORKER that issued existing licenses.
+# MM_USE_CLOUDFLARE=true
+# MM_CLOUDFLARE_URL=https://your-worker.workers.dev
+# MM_CLOUDFLARE_PUBLIC_KEY_B64=<public RSA SPKI key, Base64 DER>
+# A Play AAB must not accidentally switch existing code users back to Firebase.
+# MM_RELEASE_PREMIUM_MODE=cloudflare
+# Set only AFTER auditing/importing ALL old code activations and passing restore QA:
+# MM_LEGACY_CODE_IMPORT_QA_COMPLETE=true
+# MM_SUBSCRIPTIONS_ENABLED=false

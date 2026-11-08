@@ -14,8 +14,8 @@ android {
         applicationId "com.yigit033.matematikmacarasi"
         minSdk 24
         targetSdk 36
-        versionCode 14
-        versionName "1.2.1"
+        versionCode 15
+        versionName "1.3.0"
 
         // Intentionally disabled until Cloudflare D1 is provisioned, legacy
         // rights have been migrated, and real-device acceptance tests pass.
@@ -77,6 +77,44 @@ android {
     packaging {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+// A Play release MUST use the same signed-license backend as the already
+// activated code users. A local debug build may use legacy Firebase for QA;
+// neither configuration is silently promoted to the published AAB.
+gradle.taskGraph.whenReady { graph ->
+    boolean releasing = graph.allTasks.any { t ->
+        t.project == project && t.name in ['bundleRelease', 'assembleRelease']
+    }
+    if (releasing) {
+        def releaseMode = (project.findProperty('MM_RELEASE_PREMIUM_MODE') ?: '').toString()
+        def codeEnabled = (project.findProperty('MM_USE_CLOUDFLARE') ?: 'false').toString() == 'true'
+        def subscriptionsEnabled = (project.findProperty('MM_SUBSCRIPTIONS_ENABLED') ?: 'false').toString() == 'true'
+        if (releaseMode != 'cloudflare' || !codeEnabled) {
+            throw new GradleException(
+                'Release blocked: MM_RELEASE_PREMIUM_MODE=cloudflare AND ' +
+                'MM_USE_CLOUDFLARE=true are required. ' +
+                'Import legacy D1 activations and verify signed-license renewal first.')
+        }
+        if (subscriptionsEnabled) {
+            throw new GradleException(
+                'Release blocked: monthly/yearly sales require verified Play Developer API ' +
+                'and RTDN entitlement backend. Keep MM_SUBSCRIPTIONS_ENABLED=false.')
+        }
+        if (!(project.findProperty('MM_LEGACY_CODE_IMPORT_QA_COMPLETE') ?: 'false')
+                .toString().equalsIgnoreCase('true')) {
+            throw new GradleException(
+                'Release blocked: finish legacy Firebase->D1 code import and user restore QA; ' +
+                'then set MM_LEGACY_CODE_IMPORT_QA_COMPLETE=true in local gradle.properties.')
+        }
+        if (!file('matematik_macerasi.keystore').isFile() ||
+                !(project.findProperty('KEYSTORE_PASSWORD') ?: '').toString().trim() ||
+                !(project.findProperty('KEY_PASSWORD') ?: '').toString().trim()) {
+            throw new GradleException(
+                'Release blocked: upload keystore or signing passwords are missing. ' +
+                'Use local app/matematik_macerasi.keystore; never commit secrets.')
         }
     }
 }

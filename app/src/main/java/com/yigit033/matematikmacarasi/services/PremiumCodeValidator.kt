@@ -137,6 +137,17 @@ class PremiumCodeValidator private constructor(private val context: Context) {
      * Cihazın premium kod ile aktive edilip edilmediğini kontrol eder.
      * SADECE local cache'den okur, Firebase sync manuel olarak yapılmalı!
      */
+    /** Never exposes or logs the signed license. Detect a mismatched APK
+     * that reads legacy Firebase while a Cloudflare license is already stored.
+     */
+    fun hasCloudflareLicenseIgnoredByThisBuild(): Boolean =
+        PremiumCodeBuildPolicy.isIncompatible(
+            cloudflareEnabled=BuildConfig.MM_USE_CLOUDFLARE,
+            signedLicensePresent=context.getSharedPreferences(
+                "cf_premium_license_v1",Context.MODE_PRIVATE
+            ).contains("signed_license")
+        )
+
     fun isCodePremium(): Boolean {
         if (BuildConfig.MM_USE_CLOUDFLARE) return cloudflare.isPremiumOffline()
         // Sadece local cache kontrol et, sync yapma!

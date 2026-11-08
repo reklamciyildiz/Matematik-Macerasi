@@ -235,6 +235,149 @@ internal fun PracticeQuestionIllustration(
                 }
                 Text("Köşeleri tek tek say", color = light, fontSize = 12.sp)
             }
+            PracticeVisualKind.TEN_FRAME -> {
+                Text("Onluk tabloyu tamamla", color = gold,
+                    fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(7.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    repeat(2) { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            repeat(5) { col ->
+                                val filled = row * 5 + col < v[0]
+                                Box(
+                                    Modifier.size(35.dp)
+                                        .background(
+                                            if (filled) cyan else Color(0xFF23465D),
+                                            RoundedCornerShape(9.dp))
+                                        .border(2.dp, if (filled) gold
+                                            else Color(0xFF6A98B2),
+                                            RoundedCornerShape(9.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+                Text("Dolu yerleri say, sonra boşları tamamla.",
+                    color = light, fontSize = 12.sp)
+            }
+
+            PracticeVisualKind.HUNDREDS -> {
+                Row(modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                    listOf(100, 10, 1).forEachIndexed { i, place ->
+                        Column(
+                            modifier = Modifier.weight(1f)
+                                .background(surface, RoundedCornerShape(10.dp))
+                                .border(1.dp,
+                                    if (i == 0) gold else cyan,
+                                    RoundedCornerShape(10.dp))
+                                .padding(vertical = 12.dp, horizontal = 5.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(v[i].toString(), color = if (i == 0) gold else cyan,
+                                fontSize = 24.sp, fontWeight = FontWeight.ExtraBold)
+                            Text(if (i == 0) "YÜZLÜK"
+                                else if (i == 1) "ONLUK" else "BİRLİK",
+                                color = light, fontSize = 10.sp)
+                            Text("× " + place, color = light, fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+
+            PracticeVisualKind.EQUAL_SHARE -> {
+                val groups = v[1]
+                if (groups > 0 && v[0] % groups == 0) {
+                    val each = v[0] / groups
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        (0 until groups).chunked(2).forEach { row ->
+                            Row(modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                row.forEach { group ->
+                                    Column(
+                                        Modifier.weight(1f)
+                                            .background(surface, RoundedCornerShape(9.dp))
+                                            .border(1.dp, cyan, RoundedCornerShape(9.dp))
+                                            .padding(7.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text("Grup " + (group + 1),
+                                            color = gold, fontSize = 11.sp)
+                                        GroupOfObjects(each, grade, true)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Text(v[0].toString() + " nesne · " + groups + " eş grup",
+                        color = light, fontSize = 12.sp)
+                }
+            }
+
+            PracticeVisualKind.FRACTION_COMPARE -> {
+                val den = v[2]
+                listOf(v[0],v[1]).forEach { numerator ->
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(numerator.toString() + "/" + den,
+                            color = gold, fontWeight = FontWeight.Bold)
+                        Row(modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            repeat(den) { index ->
+                                Box(
+                                    Modifier.weight(1f).height(32.dp)
+                                        .background(
+                                            if (index < numerator) cyan
+                                            else Color(0xFF315C78),
+                                            RoundedCornerShape(5.dp))
+                                        .border(1.dp, gold, RoundedCornerShape(5.dp))
+                                )
+                            }
+                        }
+                    }
+                }
+                Text("Eş parçaları sayıp iki kesri karşılaştır.",
+                    color = light, fontSize = 12.sp)
+            }
+
+            PracticeVisualKind.TWO_STEP -> {
+                val groups = List(v[0]) { v[1] }
+                val packets = groups + v[2]
+                Column(modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    packets.chunked(3).forEachIndexed { rowIndex, packet ->
+                        Row(modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            packet.forEachIndexed { index, amount ->
+                                val isAdded = rowIndex * 3 + index == groups.size
+                                Box(
+                                    Modifier.weight(1f).height(62.dp)
+                                        .background(
+                                            if (isAdded) Color(0xFF685B33) else surface,
+                                            RoundedCornerShape(10.dp))
+                                        .border(1.dp,
+                                            if (isAdded) gold else cyan,
+                                            RoundedCornerShape(10.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(if (isAdded) "+ " + amount else
+                                        amount.toString() + " kalem",
+                                        color = light, fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+                Text(v[0].toString() + " eş kutu, ardından " +
+                    v[2] + " ek kalem",
+                    color = gold, fontSize = 12.sp)
+            }
+
             PracticeVisualKind.PERIMETER -> {
                 Canvas(Modifier.size(width=210.dp,height=125.dp)) {
                     // Preserve actual dimensions so a 9×2 problem is not

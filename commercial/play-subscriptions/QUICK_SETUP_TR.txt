@@ -1,0 +1,21 @@
+MATEMATIK MACERASI SUBSCRIPTION STAGING / Nov 2026
+
+Step A: run in Windows PowerShell after git pull:
+cd C:\active_projects\MatematikMacerasiii\commercial\play-subscriptions
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-staging.ps1
+
+This creates an isolated subscription D1 database and a Worker with BOTH
+subscription sales and RTDN disabled. It never writes the existing Premium
+code D1 or changes the Google Play listing.
+
+Step B (after Cloud Console service-account JSON download):
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-staging.ps1 -GoogleServiceAccountJson "C:\private\mm-play-billing-verifier.json"
+
+The key file remains local. It is uploaded only via Wrangler secret put
+and is never printed. An independent lease RSA pair is generated in the
+git-ignored private folder and the private part uploaded as Worker secret.
+The public signing key remains private folder for Android build settings.
+After this, subscriptions STILL disabled. The monthly/yearly checkout needs
+Pub/Sub RTDN and end-to-end Google Play license tester verification,
+Android Worker URL and public key config, entitlement-owner binding.
+A Google service account is not the same as a Google Play paid purchase.

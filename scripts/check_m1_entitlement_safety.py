@@ -20,7 +20,8 @@ for expected in (
     'fun restorePurchases()',
     'fun buyPremium(activity:Activity)',
     'savePremiumStatus(premiumFound)',
-    'PremiumEntitlementPolicy.hasAccess(',
+    'playSubscriptionClient.isPremiumOffline()',
+    'val hasAccess=isPremiumSync()',
 ):
     assert expected in client,expected
 for expected in ('legacyCodeActivated: Boolean','confirmedPlayPurchase: Boolean'):

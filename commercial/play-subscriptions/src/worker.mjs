@@ -209,6 +209,13 @@ export default {
     // This decouples notification QA from exposing real subscription purchases.
     if(env.RTDN_PULL_ENABLED!=="true" || !env.DB ||
        !env.GOOGLE_SERVICE_ACCOUNT_JSON)return;
-    ctx.waitUntil(fetchPubSub(env).catch(()=>{}));
+    ctx.waitUntil(fetchPubSub(env).then(({messages,acknowledged})=>{
+      // Counts only: no purchase tokens, device identifiers or account data.
+      if(messages>0)console.info("mmplay_rtdn_processed",messages,acknowledged);
+    }).catch(error=>{
+      // Do not swallow permission/API failures silently during RTDN QA.
+      console.error("mmplay_rtdn_poll_failed",
+        typeof error?.message==="string"?error.message.slice(0,100):"unknown");
+    }));
   }
 };

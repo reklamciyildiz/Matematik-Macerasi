@@ -1,6 +1,6 @@
 # Staged Cloudflare Worker for Google Play recurring Premium
 
-**STAGING CODE ONLY · DO NOT DEPLOY YET · SUBSCRIPTION PURCHASES DISABLED**
+**STAGING DEPLOYED · SUBSCRIPTION PURCHASES DISABLED**
 
 This Worker is deliberately isolated from the active Premium-code D1.
 It contains an authenticated verification route \`POST /v1/verify\` that:
@@ -89,3 +89,21 @@ reviewed/removed after all of these are evidenced:
 There is no enabled subscription entitlement server currently deployed from
 this repository. No Google Cloud project link, service account secret, Pub/Sub
 topic or live payment test can be inferred from passing GitHub Actions.
+
+## Status update — November 9, 2026
+
+The owner confirmed Cloudflare staging Worker deployed at
+`matematik-macerasi-play-subscriptions.matematik-macerasi-yigit033.workers.dev`.
+Isolated D1 ID `3ad1286a-45b3-412e-b09e-0cbbf4943549`, migration 0001 applied,
+and both Google account/Play lease private key Worker secrets were uploaded.
+
+The GitHub RTDN bootstraps are in `scripts/create-google-pubsub.sh`
+(Cloud Shell; owner execution) and `scripts/configure-rtdn.ps1` (local
+Windows; only after Console RTDN test).
+
+**Do not rerun** `setup-staging.ps1` once RTDN polling is configured;
+that bootstrap resets local flags to both disabled. Use `wrangler deploy`
+with the current checked, git-ignored `wrangler.toml` for future Worker changes.
+
+This is still staging; 21+ mocked tests are not equivalent to real Play license
+payments. Sales remain false, existing Premium code / lifetime product unaffected.

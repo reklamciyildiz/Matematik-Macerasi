@@ -25,7 +25,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Check trusted policy syntax
-        run: node --check src/entitlement.mjs
-      - name: Subscription state regression vectors
+      - name: Check subscription server syntax
+        run: |
+          node --check src/entitlement.mjs
+          node --check src/google-play-verifier.mjs
+          node --check src/play-integrity.mjs
+          node --check src/worker.mjs
+      - name: Subscription state and Google API mock integration tests
         run: npm test

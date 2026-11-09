@@ -9,13 +9,23 @@ $legacyDbId = "278757f5-3ff1-490e-854d-d7eb6898f296"
 $expectedEmail = "mm-play-billing-verifier@matematik-macerasi.iam.gserviceaccount.com"
 
 function Run-Wrangler([string[]]$arguments) {
-    & npx wrangler @arguments
+    & npx --yes wrangler@4.158.0 @arguments
     if ($LASTEXITCODE -ne 0) { throw "Wrangler failure: $($arguments[0]) $($arguments[1])" }
 }
 function Get-SubscriptionD1 {
-    $output = & npx wrangler d1 list --json
+    $output = & npx --yes wrangler@4.158.0 d1 list --json
     if ($LASTEXITCODE -ne 0) { throw "Cloudflare D1 listing failed" }
-    $dbs = @(ConvertFrom-Json -InputObject ($output -join [Environment]::NewLine))
+    # A fresh npx directory can emit an interactive "Need to install" prompt.
+    # Treat a non-JSON stdout as a bootstrap error, never as a D1 listing.
+    $jsonText = ($output -join [Environment]::NewLine).Trim()
+    if (-not $jsonText.StartsWith("[")) {
+        throw "Cloudflare did not return D1 JSON. Check auth: npx --yes wrangler@4.158.0 whoami ; login if needed."
+    }
+    try {
+        $dbs = @(ConvertFrom-Json -InputObject $jsonText -ErrorAction Stop)
+    } catch {
+        throw "Cloudflare D1 output is not valid JSON. Check Wrangler login and retry."
+    }
     $found = @($dbs | Where-Object { $_.name -eq $dbName })
     if ($found.Count -gt 1) { throw "Duplicate D1 database name" }
     if ($found.Count -eq 0) { return $null }
@@ -70,7 +80,7 @@ if ($key.type -ne "service_account" -or $key.client_email -ne $expectedEmail -or
     throw "Wrong JSON key: must be the dedicated mm-play-billing-verifier account."
 }
 Write-Host "Uploading Google Play service-account credentials as Worker secret ..."
-Get-Content -LiteralPath $keyPath -Raw | & npx wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON
+Get-Content -LiteralPath $keyPath -Raw | & npx --yes wrangler@4.158.0 secret put GOOGLE_SERVICE_ACCOUNT_JSON
 if ($LASTEXITCODE -ne 0) { throw "Service-account secret upload failed" }
 
 $privateDir = Join-Path (Get-Location).Path "private"
@@ -85,7 +95,7 @@ $privatePem = Join-Path $privateDir "play-lease-private.pem"
 $publicBase64 = Join-Path $privateDir "play-lease-public.b64.txt"
 if (-not (Test-Path $publicBase64)) { throw "Missing Play lease public key" }
 Write-Host "Uploading dedicated Play lease private key as Worker secret ..."
-Get-Content -LiteralPath $privatePem -Raw | & npx wrangler secret put PLAY_LEASE_PRIVATE_KEY
+Get-Content -LiteralPath $privatePem -Raw | & npx --yes wrangler@4.158.0 secret put PLAY_LEASE_PRIVATE_KEY
 if ($LASTEXITCODE -ne 0) { throw "Play lease secret upload failed" }
 Write-Host "SECRETS_READY. Sales still DISABLED; no charges or payment activation."
 Write-Host "Android public signing key is stored at private/play-lease-public.b64.txt"

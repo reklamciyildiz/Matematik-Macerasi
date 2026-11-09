@@ -21,7 +21,8 @@ checks=[
     ("notification preference retained",'putBoolean("notifications_enabled",it)' in settings),
     ("icon access retained","IconSelectorActivity::class.java" in settings),
     ("premium code redemption retained","validateAndActivateCode(code)" in settings),
-    ("premium single billing gate","purchaseManager.buyPremium(it)" in settings),
+    ("direct lifetime Play checkout from Settings",
+         "purchaseManager.buyPremium(it,PremiumPlan.LIFETIME)" in settings),
     ("profile hero preserved","AnimatedAvatarView(" in profile),
     ("profile editing preserved",'onNameChange(it)' in profile and 'onClassChange(option)' in profile),
     ("profile personalization retained","Kişiselleştirme ve Ayarlar" in profile and

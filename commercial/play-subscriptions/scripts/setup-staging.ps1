@@ -15,7 +15,7 @@ function Run-Wrangler([string[]]$arguments) {
 function Get-SubscriptionD1 {
     $output = & npx wrangler d1 list --json
     if ($LASTEXITCODE -ne 0) { throw "Cloudflare D1 listing failed" }
-    $dbs = @($output | ConvertFrom-Json)
+    $dbs = @(ConvertFrom-Json -InputObject ($output -join [Environment]::NewLine))
     $found = @($dbs | Where-Object { $_.name -eq $dbName })
     if ($found.Count -gt 1) { throw "Duplicate D1 database name" }
     if ($found.Count -eq 0) { return $null }

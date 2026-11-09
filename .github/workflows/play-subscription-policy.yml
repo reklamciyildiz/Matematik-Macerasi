@@ -33,3 +33,13 @@ jobs:
           node --check src/worker.mjs
       - name: Subscription state and Google API mock integration tests
         run: npm test
+      - name: Check subscription key generator syntax
+        run: node --check scripts/generate-play-lease-key.mjs
+      - name: Validate PowerShell bootstrap syntax without deploying
+        working-directory: .
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile("commercial/play-subscriptions/scripts/setup-staging.ps1", [ref]$tokens, [ref]$errors)
+          if ($errors.Count -ne 0) { $errors | Format-List; exit 1 }

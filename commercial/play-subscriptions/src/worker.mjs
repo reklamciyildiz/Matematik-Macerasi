@@ -1,5 +1,5 @@
 /*
- * STAGING / not deployed. Google Play recurring subscriptions backend.
+ * Staged Cloudflare subscription backend; operator may deploy with sales disabled. Google Play recurring subscriptions backend.
  * Never put Play service account JSON or RSA private keys in Android/GitHub.
  * Env:
  *  SUBSCRIPTIONS_SERVER_ENABLED, GOOGLE_SERVICE_ACCOUNT_JSON,
@@ -181,7 +181,8 @@ async function fetchPubSub(env, fetchImpl=fetch,nowMs=Date.now()) {
 export default {
   async fetch(request,env) {
     if(new URL(request.url).pathname==="/health")
-      return json({ok:true,enabled:env.SUBSCRIPTIONS_SERVER_ENABLED==="true"});
+      return json({ok:true,enabled:env.SUBSCRIPTIONS_SERVER_ENABLED==="true",
+        rtdnEnabled:env.RTDN_PULL_ENABLED==="true"});
     if(env.SUBSCRIPTIONS_SERVER_ENABLED!=="true")
       return json({error:"SUBSCRIPTIONS_DISABLED"},503);
     if(request.method!=="POST" || new URL(request.url).pathname!=="/v1/verify")
@@ -204,8 +205,10 @@ export default {
     }
   },
   async scheduled(_event,env,ctx) {
-    if(env.SUBSCRIPTIONS_SERVER_ENABLED!=="true" ||
-       env.RTDN_PULL_ENABLED!=="true" || !env.DB)return;
+    // RTDN test messages can be consumed while checkout remains DISABLED.
+    // This decouples notification QA from exposing real subscription purchases.
+    if(env.RTDN_PULL_ENABLED!=="true" || !env.DB ||
+       !env.GOOGLE_SERVICE_ACCOUNT_JSON)return;
     ctx.waitUntil(fetchPubSub(env).catch(()=>{}));
   }
 };

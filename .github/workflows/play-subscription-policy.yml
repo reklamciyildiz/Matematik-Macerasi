@@ -35,6 +35,8 @@ jobs:
         run: npm test
       - name: Check subscription key generator syntax
         run: node --check scripts/generate-play-lease-key.mjs
+      - name: Check Google Cloud Shell bootstrap syntax
+        run: bash -n scripts/create-google-pubsub.sh
       - name: Validate PowerShell bootstrap syntax without deploying
         working-directory: .
         shell: pwsh

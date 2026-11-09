@@ -33,6 +33,11 @@ assert 'Object.assign(exports,require("./institution-functions.cjs"))' not in pl
 assert 'require("./institution-functions.cjs")' not in play_server
 assert 'exports.createInstitutionContract' not in play_server
 assert 'exports.redeemInstitutionSeatCode' not in play_server
+# Cloudflare-mode subscription/license state must come from current signed
+# rights, never from a stale mutable UI StateFlow after expiry.
+assert 'val isPremium=if(BuildConfig.MM_USE_CLOUDFLARE)' in ui
+assert '_premiumState.value=isPremiumSync()' in client
+assert 'playSubscriptionClient.isPremiumOffline()' in client
 assert 'validateAndActivateCode' in codes
 assert 'DifferentCodeAlreadyActivated' in codes and 'DifferentCodeAlreadyActivated' in ui
 assert 'premium_codes' in legacy and 'code_activations' in legacy

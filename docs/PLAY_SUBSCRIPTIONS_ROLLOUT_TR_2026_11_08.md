@@ -7,11 +7,13 @@ satın alma girişi ebeveynin erişebileceği bölümde olmalı; otomatik yenile
 
 ## Türkiye başlangıç önerisi
 
-- Aylık: 79,99 TRY / ay (otomatik yenileme)
-- Yıllık: 499,99 TRY / yıl (otomatik yenileme; 12 x aylığa göre ~%47,9 daha düşük)
+- Aylık: 54,90 TRY / ay (otomatik yenileme; Play Console'da etkin olarak bildirildi)
+- Yıllık: 349,90 TRY / yıl (otomatik yenileme; 12 x aylığa göre ~%46,9 daha düşük)
 - Mevcut **ömür boyu INAPP** ürünü: fiyatını ve haklarını koru, kullanıcılar
   satın aldığı kalıcı hakkı kaybetmesin. Eğer ömür boyu ürün yıllık fiyatın
   altındaysa abonelik fiyat kararını tekrar değerlendir.
+  Önerilen yeni ömür boyu fiyatı 799,90 TRY; Play Console'da
+  uygulandığı henüz doğrulanmadı.
 - Diğer ülkelerin fiyatlarını Play'in yerelleştirmesiyle ayrı kontrol et.
   Çocuklar için yanıltıcı geri sayım, sahte indirim veya varsayılan deneme yok.
 
@@ -22,9 +24,9 @@ satın alma girişi ebeveynin erişebileceği bölümde olmalı; otomatik yenile
    (görünen ad: Matematik Macerası Premium). Mevcut INAPP
    \`matematik_macerasi_premium\` ürününe dokunma.
 3. \`monthly\` kimliğinde otomatik yenilenen P1M temel plan;
-   Türkiye fiyatı 79,99 TRY; açık şartlar.
+   Türkiye fiyatı 54,90 TRY; açık şartlar.
 4. \`yearly\` kimliğinde otomatik yenilenen P1Y temel plan;
-   Türkiye fiyatı 499,99 TRY; açık şartlar.
+   Türkiye fiyatı 349,90 TRY; açık şartlar.
 5. Abonelikleri canlı satılabilir hâle getirmeden önce Android'de güvenli
    sunucu doğrulaması, satın alma token'ı sahipliği, Google Play
    subscriptionsv2, acknowledgement, RTDN, iptal/iade, hesap/cihaz restore

@@ -374,12 +374,10 @@ class PurchaseManager private constructor(
                     val hasCodePremium = codeValidator.isCodePremium()
                     val sub=queryActiveSubscription()
                     if(sub!=null) _subscriptionActive.value=sub
-                    _premiumState.value=PremiumEntitlementPolicy.hasAccess(
-                        confirmedPlayPurchase=premiumFound,
-                        legacyCodeActivated=hasCodePremium,
-                        activePlaySubscription=_subscriptionActive.value
-                    )
                     savePremiumStatus(premiumFound) // Only verified lifetime INAPP, never SUBS
+                    // StateFlow is presentation only. Do not let a stale
+                    // subscription boolean outlive the signed 24h lease.
+                    _premiumState.value=isPremiumSync()
                     
                     if (premiumFound) {
                         Log.d(TAG, "Premium sürüm bulundu ve aktif edildi")
@@ -501,11 +499,9 @@ class PurchaseManager private constructor(
                 if(sub!=null) _subscriptionActive.value=sub
                 val code=codeValidator.isCodePremium()
                 savePremiumStatus(play)
-                val hasAccess=PremiumEntitlementPolicy.hasAccess(
-                    confirmedPlayPurchase=play,
-                    legacyCodeActivated=code,
-                    activePlaySubscription=_subscriptionActive.value
-                )
+                // Preserve lifetime/code rights, but require a signed,
+                // unexpired Google subscription lease for SUBS.
+                val hasAccess=isPremiumSync()
                 _premiumState.value=hasAccess
                 _restoreState.value=when {
                     hasAccess->RestoreState.Found(play,code,_subscriptionActive.value)

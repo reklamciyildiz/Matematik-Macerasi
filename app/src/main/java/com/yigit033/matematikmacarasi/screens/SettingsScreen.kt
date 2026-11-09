@@ -185,7 +185,12 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     val restoration by purchaseManager.restoreState.collectAsState()
     val prices by purchaseManager.planPrices.collectAsState()
     val subscriptionActive by purchaseManager.subscriptionActive.collectAsState()
-    val isPremium=premiumFlow || purchaseManager.isPremiumSync()
+    // In Cloudflare mode the aggregate StateFlow is NOT a source of truth:
+    // it may outlive a revoked code or an expired 24-hour Play subscription.
+    // Recalculate current rights using the signed license / Play lifetime cache.
+    val isPremium=if(BuildConfig.MM_USE_CLOUDFLARE)
+        purchaseManager.isPremiumSync()
+    else premiumFlow || purchaseManager.isPremiumSync()
     val codeValidator=remember(context){PremiumCodeValidator.getInstance(context)}
     val incompatibleLicense=codeValidator.hasCloudflareLicenseIgnoredByThisBuild()
     val notificationService=remember(context){NotificationService.getInstance(context)}

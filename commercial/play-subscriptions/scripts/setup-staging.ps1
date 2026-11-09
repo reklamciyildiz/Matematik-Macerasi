@@ -1,8 +1,5 @@
 #requires -Version 5.1
-param(
-    [string]$GoogleServiceAccountJson = "",
-    [string]$ExistingDatabaseId = ""
-)
+param([string]$GoogleServiceAccountJson = "", [string]$ExistingDatabaseId = "")
 # Separate staging Worker / D1. Both entitlement feature flags remain FALSE.
 # No existing Premium code database or Google Play production is changed.
 $ErrorActionPreference = "Stop"
@@ -38,7 +35,7 @@ if (-not (Get-Command npx -ErrorAction SilentlyContinue)) { throw "Node.js/npx m
 Write-Host "=== Play subscriptions: isolated staging setup ==="
 $db = Get-SubscriptionD1
 if ($null -eq $db -and $ExistingDatabaseId) {
-    throw "A D1 UUID override was provided, but no database with the required name exists. Refusing to create a replacement."
+    throw "An existing D1 UUID was provided but the named database does not exist; refusing to create another."
 }
 if ($null -eq $db) {
     Write-Host "Creating a separate subscription database ..."
@@ -46,9 +43,8 @@ if ($null -eq $db) {
     $db = Get-SubscriptionD1
 }
 if ($null -eq $db) { throw "Subscription database not returned by Cloudflare" }
-# Wrangler D1 list can expose its ID under different property names.
-# When the list omits a usable ID, accept an explicitly supplied UUID
-# copied from Wrangler's successful d1 create output. NEVER create another DB.
+$dbId = [string]$db.uuid
+if (-not $dbId) { $dbId = [string]$db.id }
 $uuidPattern = '^[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}
 if ($dbId -eq $legacyDbId) { throw "SAFETY BLOCK: existing Premium code D1" }
 
@@ -107,21 +103,15 @@ Write-Host "Android public signing key is stored at private/play-lease-public.b6
 Write-Host "Play Integrity Cloud project number: 740643037501"
 Write-Host "Never send the JSON, private PEM, or purchase token to a chat."
 
-$knownIds = @([string]$db.uuid, [string]$db.id, [string]$db.database_id, [string]$db.databaseId) |
-    Where-Object { $_ -match $uuidPattern }
-$discoveredId = @($knownIds | Select-Object -First 1)
-$dbId = if ($discoveredId.Count -gt 0) { [string]$discoveredId[0] } else { "" }
 if ($ExistingDatabaseId) {
-    if ($ExistingDatabaseId -notmatch $uuidPattern) {
-        throw "ExistingDatabaseId must be a valid D1 UUID."
-    }
-    if ($dbId -and $dbId -ne $ExistingDatabaseId) {
-        throw "Safety block: provided D1 UUID differs from Cloudflare's listed database ID."
+    if ($ExistingDatabaseId -notmatch $uuidPattern) { throw "Invalid supplied D1 UUID" }
+    if ($dbId -match $uuidPattern -and $dbId -ne $ExistingDatabaseId) {
+        throw "Safety block: supplied UUID differs from Cloudflare listed database ID"
     }
     $dbId = $ExistingDatabaseId
 }
 if ($dbId -notmatch $uuidPattern) {
-    throw "D1 list did not expose a valid UUID. Rerun with -ExistingDatabaseId and the UUID printed by Wrangler d1 create."
+    throw "D1 list did not expose a UUID. Supply -ExistingDatabaseId using the UUID from Wrangler create."
 }
 if ($dbId -eq $legacyDbId) { throw "SAFETY BLOCK: existing Premium code D1" }
 

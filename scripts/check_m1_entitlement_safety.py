@@ -22,6 +22,11 @@ for expected in (
     'savePremiumStatus(premiumFound)',
     'playSubscriptionClient.isPremiumOffline()',
     'val hasAccess=isPremiumSync()',
+    # Billing8: both INAPP lifetime and SUBS have Play offer tokens.
+    'oneTimePurchaseOfferDetailsList?.firstOrNull()',
+    'subscriptionOffer?.offerToken else oneTimeOffer?.offerToken',
+    '.setOfferToken(offerToken)',
+
 ):
     assert expected in client,expected
 for expected in ('legacyCodeActivated: Boolean','confirmedPlayPurchase: Boolean'):
@@ -36,6 +41,7 @@ assert 'exports.redeemInstitutionSeatCode' not in play_server
 # Cloudflare-mode subscription/license state must come from current signed
 # rights, never from a stale mutable UI StateFlow after expiry.
 assert 'val isPremium=if(BuildConfig.MM_USE_CLOUDFLARE)' in ui
+assert 'enabled=lifetimePrice!=null' in ui
 assert '_premiumState.value=isPremiumSync()' in client
 assert 'playSubscriptionClient.isPremiumOffline()' in client
 assert 'validateAndActivateCode' in codes

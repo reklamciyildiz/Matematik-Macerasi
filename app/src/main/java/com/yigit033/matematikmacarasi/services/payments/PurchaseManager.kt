@@ -421,10 +421,12 @@ class PurchaseManager private constructor(
 
     /** Load localized prices directly from the Play product catalog. */
     fun refreshPlanPrices() {
-        if(!BuildConfig.MM_SUBSCRIPTIONS_ENABLED || !billingClient.isReady) return
-        val products=listOf(
+        if(!billingClient.isReady) return
+        val products=mutableListOf(
             QueryProductDetailsParams.Product.newBuilder().setProductId(PREMIUM_SKU)
-                .setProductType(BillingClient.ProductType.INAPP).build(),
+                .setProductType(BillingClient.ProductType.INAPP).build()
+        )
+        if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) products.add(
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(PREMIUM_SUBSCRIPTION_SKU)
                 .setProductType(BillingClient.ProductType.SUBS).build()
@@ -436,7 +438,9 @@ class PurchaseManager private constructor(
             val prices=mutableMapOf<PremiumPlan,String>()
             for(product in details.productDetailsList) {
                 if(product.productId==PREMIUM_SKU) {
-                    product.oneTimePurchaseOfferDetails?.formattedPrice?.let {
+                    val lifetimeOffer=product.oneTimePurchaseOfferDetailsList?.firstOrNull()
+                        ?: product.oneTimePurchaseOfferDetails
+                    lifetimeOffer?.formattedPrice?.let {
                         prices[PremiumPlan.LIFETIME]=it
                     }
                 }else if(product.productId==PREMIUM_SUBSCRIPTION_SKU) {
@@ -951,9 +955,19 @@ class PurchaseManager private constructor(
                     if (productDetailsList.isNotEmpty()) {
                         // Ürün detayları bulundu, satın alma akışını başlat
                         val productDetails = productDetailsList.first()
-                        val offer=if(plan.subscription) productDetails.subscriptionOfferDetails
-                            ?.firstOrNull { it.basePlanId==plan.basePlanId } else null
-                        if(plan.subscription && offer==null) {
+                        val subscriptionOffer=if(plan.subscription) {
+                            productDetails.subscriptionOfferDetails
+                                ?.firstOrNull { it.basePlanId==plan.basePlanId }
+                        } else null
+                        val oneTimeOffer=if(!plan.subscription) {
+                            productDetails.oneTimePurchaseOfferDetailsList?.firstOrNull()
+                                ?: productDetails.oneTimePurchaseOfferDetails
+                        } else null
+                        // Billing Library 8: include selected offer token for
+                        // both INAPP (lifetime) and SUBS (monthly/yearly).
+                        val offerToken=if(plan.subscription)
+                            subscriptionOffer?.offerToken else oneTimeOffer?.offerToken
+                        if(offerToken.isNullOrBlank()) {
                             _purchaseStatus.value=PurchaseStatus.ProductNotFound
                             return@queryProductDetailsAsync
                         }
@@ -970,7 +984,7 @@ class PurchaseManager private constructor(
                                     listOf(
                                         BillingFlowParams.ProductDetailsParams.newBuilder()
                                             .setProductDetails(productDetails)
-                                            .apply { if(offer!=null)setOfferToken(offer.offerToken) }
+                                            .setOfferToken(offerToken)
                                             .build()
                                     )
                                 )

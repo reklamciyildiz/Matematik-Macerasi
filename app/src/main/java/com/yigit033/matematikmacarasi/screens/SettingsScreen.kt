@@ -307,10 +307,16 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                             "Ömür boyu plan otomatik yenilenmez.",
                             color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
                     } else {
-                        SettingsAction("Ömür Boyu Premium'u Aç",prominent=true,
+                        val lifetimePrice=prices[PremiumPlan.LIFETIME]
+                        SettingsAction(
+                            "Ömür Boyu Premium · " +
+                                (lifetimePrice ?: "Google Play fiyatı yükleniyor"),
+                            prominent=true,
+                            enabled=lifetimePrice!=null,
                             onClick={ (context as? ComponentActivity)?.let {
-                                purchaseManager.buyPremium(it)
-                            } })
+                                purchaseManager.buyPremium(it,PremiumPlan.LIFETIME)
+                            } }
+                        )
                     }
                     OutlinedButton(onClick={codeDialog=true},
                         modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),

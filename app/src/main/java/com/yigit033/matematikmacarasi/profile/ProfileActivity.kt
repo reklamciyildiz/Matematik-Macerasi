@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
 import com.yigit033.matematikmacarasi.R
+import com.yigit033.matematikmacarasi.BuildConfig
 import com.yigit033.matematikmacarasi.screens.AvatarStoreActivity
 import com.yigit033.matematikmacarasi.screens.SettingsActivity
 import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
@@ -227,7 +228,11 @@ fun ProfileScreen(
             
             // Premium durumunu dinle ve isPremium değişkenini güncelle
             purchaseManager?.premiumState?.collect { premiumState ->
-                isPremium = premiumState
+                // Cloudflare signed leases, not cached StateFlow, decide current
+                // eligibility after expiration/revocation.
+                isPremium = if (BuildConfig.MM_USE_CLOUDFLARE)
+                    purchaseManager?.isPremiumSync() ?: false
+                else premiumState
             }
         } catch (e: Exception) {
             Log.e("ProfileScreen", "PurchaseManager başlatılamadı: ${e.message}", e)
@@ -823,10 +828,12 @@ fun ProfileScreen(
                             ) {
                                 StatisticsItemModern(
                                     iconRes = R.drawable.ic_star,
-                                    title = "Kazanılan Yıldız",
+                                    title = "İlerleme Yıldızları",
                                     value = gameStatisticsService.getTotalEarnedStars().toString(),
                                     color = Color(0xFFFFD47B),
-                                    isPremium = true,
+                                    statistic = AdventureStatistic.STARS,
+                                    isPremiumUser = isPremium,
+                                    gameStatisticsService = gameStatisticsService,
                                     modifier = Modifier.weight(1f)
                                 )
                                 StatisticsItemModern(
@@ -834,7 +841,9 @@ fun ProfileScreen(
                                     title = "Oyun Süresi",
                                     value = formattedPlayTime,
                                     color = Color(0xFF84D7F4),
-                                    isPremium = isPremium,
+                                    statistic = AdventureStatistic.PLAY_TIME,
+                                    isPremiumUser = isPremium,
+                                    gameStatisticsService = gameStatisticsService,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -847,7 +856,9 @@ fun ProfileScreen(
                                     title = "Biten Oyunlar",
                                     value = completedGamesCount.toString(),
                                     color = Color(0xFF8CE3BF),
-                                    isPremium = isPremium,
+                                    statistic = AdventureStatistic.COMPLETIONS,
+                                    isPremiumUser = isPremium,
+                                    gameStatisticsService = gameStatisticsService,
                                     modifier = Modifier.weight(1f)
                                 )
                                 StatisticsItemModern(
@@ -855,19 +866,21 @@ fun ProfileScreen(
                                     title = "Favori Oyun",
                                     value = favoriteGame,
                                     color = Color(0xFFFFB4C6),
-                                    isPremium = isPremium,
+                                    statistic = AdventureStatistic.FAVORITE,
+                                    isPremiumUser = isPremium,
+                                    gameStatisticsService = gameStatisticsService,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
                             if (!isPremium) {
                                 Text(
-                                    "Oyun süresi, biten oyunlar ve favori oyun detayları Premium ile açılır.",
+                                    AdventureStatisticsPolicy.description(false),
                                     color = Color(0xFFFFD78A), fontSize = 11.sp,
                                     lineHeight = 16.sp
                                 )
                             } else {
                                 Text(
-                                    "Bir istatistiğe dokunarak oyunlarına göre ayrıntıyı incele.",
+                                    AdventureStatisticsPolicy.description(true),
                                     color = Color(0xFFB5D6E3), fontSize = 11.sp
                                 )
                             }
@@ -921,22 +934,25 @@ private fun StatisticsItemModern(
     title: String,
     value: String,
     color: Color,
-    isPremium: Boolean,
+    statistic: AdventureStatistic,
+    isPremiumUser: Boolean,
+    gameStatisticsService: GameStatisticsService,
     modifier: Modifier = Modifier
 ) {
     var showDetailPopup by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val gameStatisticsService = remember(context) {
-        com.yigit033.matematikmacarasi.services.GameStatisticsService(context)
+    val showSummary = AdventureStatisticsPolicy.showValue(statistic, isPremiumUser)
+    val canOpenDetail = AdventureStatisticsPolicy.allowBreakdown(statistic, isPremiumUser)
+    LaunchedEffect(canOpenDetail) {
+        if (!canOpenDetail) showDetailPopup = false
     }
 
     Card(
-        modifier = modifier.heightIn(min = 142.dp)
-            .clickable(enabled = isPremium) { showDetailPopup = true },
+        modifier = modifier.heightIn(min = 143.dp)
+            .clickable(enabled = canOpenDetail) { showDetailPopup = true },
         shape = RoundedCornerShape(17.dp),
         backgroundColor = Color(0xFF0D2C46),
         border = BorderStroke(1.dp,
-            if (isPremium) Color(0xFF427C99) else Color(0xFF355672)),
+            if (canOpenDetail) Color(0xFF427C99) else Color(0xFF355672)),
         elevation = 2.dp
     ) {
         Column(
@@ -949,7 +965,7 @@ private fun StatisticsItemModern(
                 verticalAlignment = Alignment.Top
             ) {
                 Box(
-                    modifier = Modifier.size(38.dp)
+                    Modifier.size(38.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .background(color.copy(alpha = 0.14f)),
                     contentAlignment = Alignment.Center
@@ -962,93 +978,57 @@ private fun StatisticsItemModern(
                     )
                 }
                 Icon(
-                    imageVector = if (isPremium) Icons.Default.KeyboardArrowRight
+                    imageVector = if (canOpenDetail) Icons.Default.KeyboardArrowRight
                                   else Icons.Default.Lock,
-                    contentDescription = if (isPremium) "Ayrıntıları göster"
-                                         else "Premium gerekir",
-                    tint = if (isPremium) Color(0xFFAED8E9) else Color(0xFFFFD47B),
+                    contentDescription = if (canOpenDetail) "Oyun detaylarını aç"
+                                         else "Ayrıntılı analiz Premium ile açılır",
+                    tint = if (canOpenDetail) Color(0xFFAED8E9) else Color(0xFFFFD47B),
                     modifier = Modifier.size(19.dp)
                 )
             }
+            Text(title, fontSize = 12.sp, color = Color(0xFFB9D8E6),
+                fontWeight = FontWeight.Medium, maxLines = 2)
             Text(
-                text = title,
-                fontSize = 12.sp,
-                color = Color(0xFFB9D8E6),
-                fontWeight = FontWeight.Medium,
-                maxLines = 2
-            )
-            Text(
-                text = if (isPremium) value else "Premium ile açılır",
-                fontSize = if (isPremium) 17.sp else 11.sp,
+                text = if (showSummary) value else "Premium ile açılır",
+                fontSize = if (showSummary) 17.sp else 11.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = if (isPremium) Color.White else Color(0xFFFFD47B),
+                color = if (showSummary) Color.White else Color(0xFFFFD47B),
                 maxLines = 2
             )
         }
     }
 
-    // Her istatistik kartı için uygun detay popup'ını göster
-    if (showDetailPopup && isPremium) {
-        when (title) {
-            "Toplam Yıldız", "Kazanılan Yıldız" -> {
-                val starsPerGame = gameStatisticsService.getStarsPerGameDetails()
-                StatisticsDetailPopup(
-                    title = "Oyunlara Göre Yıldız Dağılımı",
-                    items = starsPerGame,
-                    accentColor = color,
-                    onDismiss = { showDetailPopup = false }
-                )
-                // Debug için yıldız bilgilerini logla
-                Log.d("ProfileActivity", "Yıldız dağılımı: $starsPerGame")
-            }
-            
-            "Oyun Süresi" -> {
-                val timePerGame = gameStatisticsService.getGamePlayTimeDetails()
-                StatisticsDetailPopup(
-                    title = "Oyunlara Göre Süre Dağılımı",
-                    items = timePerGame,
-                    formatValue = { seconds ->
-                        val minutes = seconds / 60
-                        val hours = minutes / 60
-                        when {
-                            hours > 0 -> "$hours saat ${minutes % 60} dk"
-                            minutes > 0 -> "$minutes dk"
-                            else -> "$seconds sn"
-                        }
-                    },
-                    accentColor = color,
-                    onDismiss = { showDetailPopup = false }
-                )
-                // Debug için süre bilgilerini logla
-                Log.d("ProfileActivity", "Süre dağılımı: $timePerGame")
-            }
-            
-            "Tamamlanan Oyun", "Biten Oyunlar" -> {
-                val gamesCount = gameStatisticsService.getGamePlayCountDetails()
-                StatisticsDetailPopup(
-                    title = "Tamamlanan Oyun Sayıları",
-                    items = gamesCount,
-                    formatValue = { count -> "$count kez" },
-                    accentColor = color,
-                    onDismiss = { showDetailPopup = false }
-                )
-                // Debug için oyun sayılarını logla
-                Log.d("ProfileActivity", "Tamamlanan oyun sayıları: $gamesCount")
-            }
-            
-            "Favori Oyun" -> {
-                val gamesCount = gameStatisticsService.getGamePlayCountDetails()
-                StatisticsDetailPopup(
-                    title = "Oyun Oynama Sayıları",
-                    items = gamesCount,
-                    formatValue = { count -> "$count kez" },
-                    accentColor = color,
-                    onDismiss = { showDetailPopup = false }
-                )
-                // Debug için oyun sayılarını logla
-                Log.d("ProfileActivity", "Oyun oynama sayıları: $gamesCount")
-            }
+    if (showDetailPopup && canOpenDetail) {
+        val records = when (statistic) {
+            AdventureStatistic.STARS -> gameStatisticsService.getStarsPerGameDetails()
+            AdventureStatistic.PLAY_TIME -> gameStatisticsService.getGamePlayTimeDetails()
+            AdventureStatistic.COMPLETIONS, AdventureStatistic.FAVORITE ->
+                gameStatisticsService.getGamePlayCountDetails()
         }
+        val detailTitle = when (statistic) {
+            AdventureStatistic.STARS -> "Oyunlara Göre İlerleme Yıldızları"
+            AdventureStatistic.PLAY_TIME -> "Oyunlara Göre Süre Dağılımı"
+            AdventureStatistic.COMPLETIONS -> "Tamamlanan Oyun Sayıları"
+            AdventureStatistic.FAVORITE -> "En Çok Oynadığın Oyunlar"
+        }
+        StatisticsDetailPopup(
+            title = detailTitle,
+            items = records,
+            formatValue = { amount ->
+                if (statistic == AdventureStatistic.PLAY_TIME) {
+                    val minutes = amount / 60
+                    val hours = minutes / 60
+                    when {
+                        hours > 0 -> "$hours saat ${minutes % 60} dk"
+                        minutes > 0 -> "$minutes dk"
+                        else -> "$amount sn"
+                    }
+                } else if (statistic == AdventureStatistic.STARS) "$amount yıldız"
+                else "$amount kez"
+            },
+            accentColor = color,
+            onDismiss = { showDetailPopup = false }
+        )
     }
 }
 

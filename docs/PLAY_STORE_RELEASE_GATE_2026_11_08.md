@@ -1,5 +1,7 @@
 # Matematik Macerası — Play Store 1.3.0 / code 15 release gate
 
+**2026-11-10 ek:** Aylık/yıllık abonelikli signed AAB, **yalnızca Internal Testing** amacıyla yerel `MM_PLAY_SUBS_INTERNAL_QA_BUILD=true` ve geçerli tüm imza, D1 ve kod-import koşullarıyla oluşturulabilir. Gerçek iki Play lisans test ödemesi geçmeden Production'a çıkarılmaz. Uçtan uca hızlı yol: [`PLAY_SUBSCRIPTION_TWO_TEST_GO_NO_GO.md`](PLAY_SUBSCRIPTION_TWO_TEST_GO_NO_GO.md). `MM_PLAY_SUBS_LIVE_QA_COMPLETE=true` yalnız bu QA tamamlandığında kullanılır. Aşağıdaki 8 Kasım kısıtları, eski varsayılan kapalı durumu açıklar.
+
 Prepared 2026-11-08. Status: **NOT submitted to Play Console**.
 Repository has no Play Console authorisation, private signing key, credentials or validated service account. Do not assume a GitHub green check means checkout/refunds/production are verified.
 

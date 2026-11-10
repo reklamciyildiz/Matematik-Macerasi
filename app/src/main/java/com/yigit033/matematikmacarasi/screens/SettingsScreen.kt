@@ -206,6 +206,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     var code by remember {mutableStateOf("")}
     var verifying by remember {mutableStateOf(false)}
     var codeError by remember {mutableStateOf<String?>(null)}
+    // Keep the detailed plan comparison hidden until a Free player asks for it.
+    var showPlanComparison by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         purchaseManager.checkPremiumStatusAsync()
@@ -262,7 +264,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                             color=SettingsPalette.gold,fontSize=19.sp,
                             fontWeight=FontWeight.Black)
                         Text(if(isPremium)
-                            "Ek mağazalar ve kişiselleştirme erişimin açık"
+                            "Tüm macera dünyaları ve zorluklar erişimine açık"
                             else "Daha fazla mağaza ve seçenek keşfet",
                             color=SettingsPalette.text,fontSize=12.sp,
                             lineHeight=16.sp)
@@ -279,6 +281,8 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                             "✓ Premium aboneliğin aktif. Bitiş ve yenileme bilgileri Google Play'de."
                         else "✓ Premium erişimin korunuyor. Tekrar satın alma gerekmez.",
                         color=SettingsPalette.mint,fontSize=12.sp)
+                    Text("✦ Tüm dersler ve zorluklar  ·  Özel avatarlar  ·  Ayrıntılı macera istatistikleri",
+                        color=SettingsPalette.text,fontSize=12.sp,lineHeight=19.sp)
                     if(subscriptionActive) SettingsAction("Aboneliği Google Play'de Yönet",
                         onClick={context.startActivity(Intent(Intent.ACTION_VIEW,
                             Uri.parse("https://play.google.com/store/account/subscriptions")))})
@@ -329,33 +333,58 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
             }
         }
 
-        SettingsSection("Free ve Premium","Nelerin ücretsiz olduğunu açıkça gör") {
-            Text("ÜCRETSİZ",color=SettingsPalette.mint,
-                fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-            FeatureLine("Dört işlem: seçilen sınıfa uygun Temel zorluk")
-            FeatureLine("Orman Keşfi ve Antik Tapınak öğretici maceraları")
-            FeatureLine("Sayı Avı, Geometri, Kesir, Zaman, Örüntü, Balon ve Uzay: Temel")
-            FeatureLine("Her sınıfta iki farklı konudan ücretsiz başlangıç dersi")
-            FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
-            FeatureLine("Labirent: günde 5 oyun")
-            FeatureLine("İlk 6 avatar (bazıları yıldızla açılır) ve standart ikon")
-            FeatureLine("Temel öğrenme raporları")
-            HorizontalDivider(color=SettingsPalette.border)
-            Text("PREMIUM",color=SettingsPalette.gold,
-                fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-            FeatureLine("Tüm ücretsiz içerikler ve Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
-            FeatureLine("Öğren: 1–8. sınıf mevcut kısa ders kütüphanesi ve derinleşme dersleri",true)
-            FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
-            FeatureLine("Dört işlem ve Karışık Mod: Orta, Zor, Çok Zor, Uzman",true)
-            FeatureLine("Sayı Avı, Geometri, Kesir, Zaman, Örüntü, Balon ve Uzay: Orta ve Zor",true)
-            FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
-            FeatureLine("Labirentte sınırsız oyun, ek profil istatistikleri ve günlük bonus",true)
-            Text(if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
-                    "Aylık/yıllık otomatik yenilenir; ömür boyu Premium tek seferlik ödemedir."
-                else "Şu anda Google Play'de ömür boyu tek seferlik Premium sunuluyor.",
-                color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
-            Text("Çocuk güvenliği denetimi süresince reklamlar tüm oyuncular için kapalıdır.",
-                color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
+        // Premium players already have everything unlocked. Don't put an
+        // exhausting sales comparison under their active-membership card.
+        if (!isPremium) {
+            SettingsSection("Ücretsiz Macera / Premium",
+                "Ücretsiz içeriklerle oyna, hazır olduğunda daha fazlasını keşfet") {
+                Text("ÜCRETSİZ MACERAN",color=SettingsPalette.mint,
+                    fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
+                FeatureLine("Sınıfına uygun Temel oyunlar ve başlangıç dersleri")
+                FeatureLine("6 başlangıç avatarı ve temel macera istatistikleri")
+                HorizontalDivider(color=SettingsPalette.border)
+                Text("PREMIUM İLE AÇILANLAR",color=SettingsPalette.gold,
+                    fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
+                FeatureLine("Orta, Zor, Çok Zor ve Uzman oyun seçenekleri",true)
+                FeatureLine("Tüm öğrenme dersleri ve ayrıntılı oyun istatistikleri",true)
+                FeatureLine("Özel avatarlar, Kendi Tezgâhım ve genişletilmiş Pazar",true)
+                TextButton(onClick={showPlanComparison = !showPlanComparison},
+                    modifier=Modifier.fillMaxWidth()) {
+                    Text(if(showPlanComparison) "Ayrıntıları gizle" else "Tüm hakları karşılaştır",
+                        color=SettingsPalette.gold,fontWeight=FontWeight.Bold)
+                    Icon(Icons.Default.ChevronRight,contentDescription=null,
+                        tint=SettingsPalette.gold,modifier=Modifier.size(19.dp))
+                }
+                if (showPlanComparison) {
+                    HorizontalDivider(color=SettingsPalette.border)
+                    Text("ÜCRETSİZ",color=SettingsPalette.mint,
+                        fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
+                    FeatureLine("Dört işlem: seçilen sınıfa uygun Temel zorluk")
+                    FeatureLine("Orman Keşfi ve Antik Tapınak öğretici maceraları")
+                    FeatureLine("Sayı Avı, Geometri, Kesir, Zaman, Örüntü, Balon ve Uzay: Temel")
+                    FeatureLine("Her sınıfta iki farklı konudan ücretsiz başlangıç dersi")
+                    FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
+                    FeatureLine("Labirent: günde 5 oyun")
+                    FeatureLine("İlk 6 avatar (bazıları yıldızla açılır) ve standart ikon")
+                    FeatureLine("Yıldız ve biten oyun özeti")
+                    HorizontalDivider(color=SettingsPalette.border)
+                    Text("PREMIUM",color=SettingsPalette.gold,
+                        fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
+                    FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
+                    FeatureLine("Öğren: 1–8. sınıf kısa ve derinleşme dersleri",true)
+                    FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
+                    FeatureLine("Dört işlem ve Karışık Mod: Orta, Zor, Çok Zor, Uzman",true)
+                    FeatureLine("Sayı Avı, Geometri, Kesir, Zaman, Örüntü, Balon ve Uzay: Orta ve Zor",true)
+                    FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
+                    FeatureLine("Labirentte sınırsız oyun, oyun bazlı analizler ve günlük bonus",true)
+                    Text(if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
+                            "Aylık/yıllık otomatik yenilenir; ömür boyu Premium tek seferliktir."
+                        else "Ömür boyu Premium tek seferlik ödeme ile alınır.",
+                        color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
+                }
+                Text("Çocuk güvenliği denetimi süresince reklamlar tüm oyuncular için kapalıdır.",
+                    color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
+            }
         }
 
         SettingsSection("Satın Alma ve Premium Kodunu Geri Yükleme",

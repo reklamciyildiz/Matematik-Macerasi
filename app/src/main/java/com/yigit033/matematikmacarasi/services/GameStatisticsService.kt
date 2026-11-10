@@ -386,176 +386,9 @@ class GameStatisticsService(private val context: Context) {
     /**
      * Kazanılan toplam yıldız sayısını getirir
      */
-    fun getTotalEarnedStars(): Int {
-        return try {
-            // Tüm oyunlardan kazanılan toplam yıldız sayısını hesapla
-            var totalStars = 0
-            
-            // Detaylı log için
-            val logBuilder = StringBuilder("Temel Oyun Yıldızları: ")
-            
-            // 1. Önce temel işlem oyunlarını seviye bazlı olarak topla
-            val basicGamePrefixes = listOf(
-                "addition_game",
-                "subtraction_game",
-                "multiplication_game", 
-                "division_game"
-            )
-            
-            // Her temel oyun için, her seviyeden kazanılan yıldızları topla
-            Log.d(TAG, "YILDIZ SORUN TESPITI - Temel işlem oyunları yıldızlarını kontrol ediyorum")
-            for (prefix in basicGamePrefixes) {
-                Log.d(TAG, "YILDIZ SORUN TESPITI - $prefix oyunu için yıldızları kontrol ediyorum")
-                for (level in 1..5) {
-                    // Seviye başına yıldız sayısını takip et - bir seviye için tek bir yıldız sayısı olmalı
-                    var starsForThisLevel = 0
-                    
-                    // FORMAT 1: prefix_level_X (Örnek: addition_game_level_1)
-                    val levelGameId = "${prefix}_level_$level"
-                    
-                    try {
-                        val progress = gameDataRepository.getProgress(levelGameId)
-                        val earnedStars = progress.stars
-                        if (earnedStars > 0) {
-                            starsForThisLevel = earnedStars
-                            logBuilder.append("[$levelGameId: $earnedStars] ")
-                            Log.d(TAG, "Temel oyun kazanılan yıldız (format1): $levelGameId: $earnedStars")
-                        }
-                    } catch (e: Exception) {
-                        // Format 1 bulunamadı, sessizce devam et ve Format 2'yi dene
-                        Log.d(TAG, "YILDIZ SORUN TESPITI - Format1 bulunamadı: $levelGameId - ${e.message}")
-                    }
-                    
-                    // Eğer Format 1'de yıldız bulunamadıysa Format 2'yi kontrol et
-                    if (starsForThisLevel == 0) {
-                        // FORMAT 2: prefix_X (Örnek: addition_game_1) - eski format
-                        val altLevelGameId = "${prefix}_$level"
-                        try {
-                            val progress = gameDataRepository.getProgress(altLevelGameId)
-                            val earnedStars = progress.stars
-                            if (earnedStars > 0) {
-                                starsForThisLevel = earnedStars
-                                logBuilder.append("[$altLevelGameId: $earnedStars] ")
-                                Log.d(TAG, "Temel oyun kazanılan yıldız (format2): $altLevelGameId: $earnedStars")
-                            }
-                        } catch (e: Exception) {
-                            // Format 2 de bulunamadı, sessizce devam et
-                            Log.d(TAG, "YILDIZ SORUN TESPITI - Format2 bulunamadı: $altLevelGameId - ${e.message}")
-                        }
-                        
-                        // Hala yıldız bulunamadıysa StarManager'ı kontrol et
-                        if (starsForThisLevel == 0) {
-                            try {
-                                val starManager = StarManager.getInstance(context)
-                                
-                                // Format 1 kontrolü (addition_game_level_1)
-                                val smStars1 = starManager.getGameStars(levelGameId)
-                                if (smStars1 > 0) {
-                                    starsForThisLevel = smStars1
-                                    logBuilder.append("[SM-$levelGameId: $smStars1] ")
-                                    Log.d(TAG, "StarManager'dan temel oyun yıldızı (format1): $levelGameId: $smStars1")
-                                } else {
-                                    // Format 2 kontrolü (addition_game_1)
-                                    val smStars2 = starManager.getGameStars(altLevelGameId)
-                                    if (smStars2 > 0) {
-                                        starsForThisLevel = smStars2
-                                        logBuilder.append("[SM-$altLevelGameId: $smStars2] ")
-                                        Log.d(TAG, "StarManager'dan temel oyun yıldızı (format2): $altLevelGameId: $smStars2")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                // StarManager kontrolü başarısız oldu, sessizce devam et
-                                Log.w(TAG, "StarManager'dan yıldız kontrol hatası: ${e.message}")
-                                Log.d(TAG, "YILDIZ SORUN TESPITI - StarManager kontrolü başarısız: ${e.message}")
-                            }
-                        }
-                    }
-                    
-                    // Bu seviye için hesaplanan yıldızları toplam yıldızlara ekle
-                    totalStars += starsForThisLevel
-                    if (starsForThisLevel > 0) {
-                        Log.d(TAG, "YILDIZ SORUN TESPITI - Seviye $level için toplamda $starsForThisLevel yıldız eklendi")
-                    }
-                }
-            }
-            
-            Log.d(TAG, logBuilder.toString())
-            
-            // 2. İnteraktif oyunlar için ana ID'leri ve seviye bazlı ID'leri kontrol et
-            val interactiveGameIds = listOf(
-                "BalloonPopGameActivity",
-                "NumberHuntGameActivity", 
-                "MathMazeGameActivity", 
-                "SpaceMathAdventureActivity",
-                "ShapeRecognitionGameActivity", 
-                "MarketSimulatorActivity"
-            )
-            
-            // İnteraktif oyunların hem temel ID'lerini hem de seviye bazlı ID'lerini kontrol et
-            for (gameId in interactiveGameIds) {
-                // Ana oyun ID'sini kontrol et
-                var earnedStars = gameDataRepository.getProgress(gameId).stars
-                totalStars += earnedStars
-                if (earnedStars > 0) {
-                    Log.d(TAG, "İnteraktif oyun kazanılan yıldız (Ana ID): $gameId: $earnedStars")
-                }
-                
-                // Sayı Avı için özel kontrol - her seviye için en fazla 3 yıldız
-                if (gameId == "NumberHuntGameActivity") {
-                    // Her seviye için ayrı ayrı kontrol et, ama her seviyeden en fazla 3 yıldız
-                    for (level in 1..8) { // Maksimum 8 seviye olabilir
-                        var maxStarsForLevel = 0
-                        
-                        // Seviye formatlarını kontrol et
-                        val levelFormat = "${gameId}_level_$level"
-                        try {
-                            // Repository'den ilerlemeyi al
-                            val progress = gameDataRepository.getProgress(levelFormat)
-                            if (progress.stars > maxStarsForLevel) {
-                                maxStarsForLevel = progress.stars
-                            }
-                        } catch (e: Exception) {
-                            // Bu seviye için kayıt yok, devam et
-                        }
-                        
-                        // Bu seviyenin en yüksek yıldızını toplama ekle (her seviye için max 3)
-                        if (maxStarsForLevel > 0) {
-                            totalStars += maxStarsForLevel
-                            Log.d(TAG, "Sayı Avı seviye $level için en yüksek yıldız: $maxStarsForLevel")
-                        }
-                    }
-                } else {
-                    // Diğer interaktif oyunlar için seviye bazlı ID'leri kontrol et
-                    for (level in 1..8) { // Maksimum 8 seviye olabilir
-                        // Farklı seviye ID formatlarını kontrol et
-                        val formats = listOf(
-                            "${gameId}_Level_$level", // Büyük L formatı 
-                            "${gameId}_level_$level"  // Küçük l formatı
-                        )
-                        
-                        for (levelFormat in formats) {
-                            try {
-                                val progress = gameDataRepository.getProgress(levelFormat)
-                                if (progress.stars > 0) {
-                                    totalStars += progress.stars
-                                    Log.d(TAG, "İnteraktif oyun kazanılan yıldız (Seviye): $levelFormat: ${progress.stars}")
-                                }
-                            } catch (e: Exception) {
-                                // Bu format için yıldız bulunamadı - sessizce devam et
-                            }
-                        }
-                    }
-                }
-            }
-            
-            Log.d(TAG, "Toplam kazanılan yıldızlar: $totalStars")
-            return totalStars
-        } catch (e: Exception) {
-            Log.e(TAG, "Toplam kazanılan yıldız alınırken hata", e)
-            0
-        }
-    }
-    
+    fun getTotalEarnedStars(): Int =
+        AdventureAnalyticsMath.safeSum(getStarsPerGameDetails().values)
+
     /**
      * Favori oyunu getirir (en çok oynanan oyun)
      */
@@ -978,183 +811,47 @@ class GameStatisticsService(private val context: Context) {
      * Premium kullanıcılar için detaylı istatistik popup'ı için kullanılır
      */
     fun getStarsPerGameDetails(): Map<String, Int> {
-        val result = mutableMapOf<String, Int>()
-        try {
-            // Tüm oyun isimlerini listeye ekle (hiç oynanmamış olsalar bile)
-            for ((_, displayName) in GAME_NAMES) {
-                result[displayName] = 0 // Varsayılan olarak 0 yıldız
-            }
-            
-            // Temel işlem oyunlarını seviye bazlı ID'lerden topla - activity adlarını doğru eşleştir
-            val basicGamePrefixes = mapOf(
-                "addition_game" to "Toplama Oyunu",
-                "subtraction_game" to "Çıkarma Oyunu",
-                "multiplication_game" to "Çarpma Oyunu",
-                "division_game" to "Bölme Oyunu"
-            )
-            
-            // Doğrudan activity adı ile eşleştireceğimiz bir map (GAME_NAMES'e karşılık gelen)
-            val activityNameMap = mapOf(
-                "addition_game" to "AdditionGameActivity",
-                "subtraction_game" to "SubtractionGameActivity", 
-                "multiplication_game" to "MultiplicationGameActivity",
-                "division_game" to "DivisionGameActivity"
-            )
-            
-            // Seviye bazlı temel oyunları kontrol et
-            for ((prefix, displayName) in basicGamePrefixes) {
-                var totalStarsForGame = 0
-                
-                // Her seviyeyi kontrol et (1-5 arası)
-                for (level in 1..5) {
-                    // Seviye için yıldız sayısını takip et
-                    var starsForThisLevel = 0
-                    
-                    // İlk olarak yeni formatı kontrol et (addition_game_level_1)
-                    val levelFormatId = "${prefix}_level_$level"
-                    try {
-                        val progress = gameDataRepository.getProgress(levelFormatId)
-                        if (progress.stars > 0) {
-                            starsForThisLevel = progress.stars
-                            Log.d(TAG, "Seviyeli oyun yıldızları (yeni format): $levelFormatId = ${progress.stars} yıldız")
-                        }
-                    } catch (e: Exception) {
-                        // Bu formatta kayıt yok - sorun değil
+        val results = linkedMapOf<String, Int>()
+        for ((gameId, displayName) in GAME_NAMES) {
+            val best = try {
+                val direct = gameDataRepository.getProgress(gameId).stars.coerceAtLeast(0)
+                val prefix = basicPrefix(gameId)
+                val levelStars = (1..8).map { level ->
+                    val formats = if (prefix != null) {
+                        listOf("${prefix}_level_$level", "${prefix}_$level")
+                    } else {
+                        listOf(
+                            "${gameId}_level_$level",
+                            "${gameId}_Level_$level",
+                            "${gameId.removeSuffix("Activity")}_level_$level"
+                        )
                     }
-                    
-                    // Yeni formatta bulunamadıysa eski formatı kontrol et (addition_game_1)
-                    if (starsForThisLevel == 0) {
-                        val oldLevelGameId = "${prefix}_$level"
-                        try {
-                            val progress = gameDataRepository.getProgress(oldLevelGameId)
-                            if (progress.stars > 0) {
-                                starsForThisLevel = progress.stars
-                                Log.d(TAG, "Seviyeli oyun yıldızları (eski format): $oldLevelGameId = ${progress.stars} yıldız")
-                            }
-                        } catch (e: Exception) {
-                            // Bu formatta da kayıt yok - sorun değil
+                    var highest = formats.maxOfOrNull { legacyId ->
+                        runCatching { gameDataRepository.getProgress(legacyId).stars }
+                            .getOrDefault(0).coerceAtLeast(0)
+                    } ?: 0
+                    // Existing operation players may have stars only in the
+                    // historical StarManager namespace; preserve those rights.
+                    if (prefix != null) {
+                        val starManager = StarManager.getInstance(context)
+                        for (legacyId in formats) {
+                            highest = max(highest,
+                                runCatching { starManager.getGameStars(legacyId) }.getOrDefault(0))
                         }
                     }
-                    
-                    // Hala bulunamadıysa StarManager'dan kontrol et
-                    if (starsForThisLevel == 0) {
-                        try {
-                            val starManager = StarManager.getInstance(context)
-                            val smStars1 = starManager.getGameStars(levelFormatId) // Yeni format kontrolü
-                            if (smStars1 > 0) {
-                                starsForThisLevel = smStars1
-                                Log.d(TAG, "StarManager'dan temel oyun yıldızı (yeni format): $levelFormatId: $smStars1")
-                            } else {
-                                val smStars2 = starManager.getGameStars("${prefix}_$level") // Eski format kontrolü
-                                if (smStars2 > 0) {
-                                    starsForThisLevel = smStars2
-                                    Log.d(TAG, "StarManager'dan temel oyun yıldızı (eski format): ${prefix}_$level: $smStars2")
-                                }
-                            }
-                        } catch (e: Exception) {
-                            // StarManager kontrolü başarısız - sessizce devam et
-                        }
-                    }
-                    
-                    // Bu seviye için bulunan yıldızları toplama ekle
-                    totalStarsForGame += starsForThisLevel
+                    highest
                 }
-                
-                // İki farklı yere yıldızları ekle:
-                // 1. Doğrudan displayName için (eski stil)
-                result[displayName] = totalStarsForGame
-                
-                // 2. GAME_NAMES'teki karşılığı için (popup karşılaştırması için)
-                val activityName = activityNameMap[prefix]
-                if (activityName != null) {
-                    val gameName = GAME_NAMES[activityName] ?: displayName
-                    result[gameName] = totalStarsForGame
-                    
-                    if (totalStarsForGame > 0) {
-                        Log.d(TAG, "Toplam seviyeli oyun yıldızları (activity): $gameName = $totalStarsForGame yıldız")
-                    }
-                }
-                
-                if (totalStarsForGame > 0) {
-                    Log.d(TAG, "Toplam seviyeli oyun yıldızları: $displayName = $totalStarsForGame yıldız")
-                }
+                // The main record can mirror a per-level record. Never sum both.
+                max(direct, AdventureAnalyticsMath.safeSum(levelStars))
+            } catch (e: Exception) {
+                Log.e(TAG, "Yıldız özeti hesaplanamadı: $gameId", e)
+                0
             }
-            
-            // İnteraktif oyunlar için seviye bazlı ID desteği ekle
-            val interactiveGamePrefixes = mapOf(
-                "BalloonPopGameActivity" to "Balon Patlatma",
-                "NumberHuntGameActivity" to "Sayı Avı",
-                "MathMazeGameActivity" to "Matematik Labirenti",
-                "SpaceMathAdventureActivity" to "Uzay Matematik Macerası"
-            )
-            
-            // Oyun başına yıldız topla
-            for ((gameId, displayName) in interactiveGamePrefixes) {
-                var totalStarsForGame = 0
-                
-                // Ana ID'den yıldız
-                val mainProgress = gameDataRepository.getProgress(gameId)
-                totalStarsForGame += mainProgress.stars
-                
-                if (mainProgress.stars > 0) {
-                    Log.d(TAG, "İnteraktif oyun ana yıldız: $gameId = ${mainProgress.stars} yıldız")
-                }
-                
-                // Seviye bazlı ek ID'leri kontrol et - bazı interaktif oyunlar seviye bazlı ID kullanabilir
-                for (level in 1..5) {
-                    // Farklı seviye ID formatlarını kontrol et
-                    val formats = listOf(
-                        "${gameId}_level_$level",
-                        "${gameId}_Level_$level",
-                        "${gameId.replace("Activity", "")}_level_$level",
-                        "${gameId.lowercase().replace("activity", "")}_$level"
-                    )
-                    
-                    for (levelFormat in formats) {
-                        try {
-                            val progress = gameDataRepository.getProgress(levelFormat)
-                            if (progress.stars > 0) {
-                                totalStarsForGame += progress.stars
-                                Log.d(TAG, "İnteraktif oyun seviyeli yıldız: $levelFormat = ${progress.stars} yıldız")
-                            }
-                        } catch (e: Exception) {
-                            // Belirli bir seviye ID'si için kayıt bulunamadı - normal durum
-                            // Sessizce devam et
-                        }
-                    }
-                }
-                
-                // İnteraktif oyun için toplam yıldız sonucunu güncelle
-                result[displayName] = totalStarsForGame
-                if (totalStarsForGame > 0) {
-                    Log.d(TAG, "İnteraktif oyun toplam yıldız: $displayName = $totalStarsForGame yıldız")
-                }
-            }
-            
-            // Diğer oyunlar: Şekil Tanıma ve Market Simülatörü için standart kontrol
-            val otherGameIds = listOf(
-                "ShapeRecognitionGameActivity", 
-                "MarketSimulatorActivity"
-            )
-            
-            for (gameId in otherGameIds) {
-                val progress = gameDataRepository.getProgress(gameId)
-                val stars = progress.stars
-                val gameName = GAME_NAMES[gameId] ?: gameId
-                
-                // İlgili oyun adı için yıldızları güncelle
-                result[gameName] = stars
-                if (stars > 0) {
-                    Log.d(TAG, "Diğer oyun yıldız detayı: $gameName = $stars yıldız")
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Oyun yıldızları alınırken hata", e)
-            e.printStackTrace() // Daha detaylı hata izlemesi için
+            results[displayName] = best
         }
-        return result.toList().sortedByDescending { (_, value) -> value }.toMap()
+        return results.toList().sortedByDescending { it.second }.toMap()
     }
-    
+
     /**
      * Her oyun için oynama sayısını içeren bir map döndürür
      * Premium kullanıcılar için detaylı istatistik popup'ı için kullanılır

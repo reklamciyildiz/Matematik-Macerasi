@@ -14,7 +14,7 @@
 
 ## İmzalı AAB ile dahili test açılışı
 1. Play Console'da Monthly ve Yearly base planlarının aktif, fiyatların doğru ve test hesabının **License testing** listesinde olduğundan emin ol. Test kullanıcısını **Internal testing** listesine ekle; uygulamayı Play Store'daki opt-in bağlantısından kur.
-2. Cloudflare Worker'da AYNI dedicated D1, mevcut gizli anahtarlar ve çalışan RTDN ayarları korunarak `SUBSCRIPTIONS_SERVER_ENABLED="true"` dağıtımı yapılmalı. Yayından önce `/health` sonucu `enabled:true,rtdnEnabled:true` olmalıdır. Test tamamlanmazsa sunucu/bundle yayınını ilerletme. Service account JSON/Pem paylaşma.
+2. Cloudflare Worker'da AYNI dedicated D1, mevcut gizli anahtarlar ve çalışan RTDN ayarları korunarak abonelik doğrulamasını dahili test için aç. Yerel PowerShell'de `commercial/play-subscriptions` klasöründe `powershell -ExecutionPolicy Bypass -File .\\scripts\\enable-internal-play-qa.ps1 -ForInternalTesting` çalıştır. Script yalnız doğru D1/RTDN bağlamında dağıtır ve `/health` sonucu `enabled:true,rtdnEnabled:true` olmasını kontrol eder. **Yalnızca Internal Testing için; Play Console Production'a yayınlama izni değildir.** Service account JSON/Pem paylaşma.
 3. Bilgisayardaki **gitignore edilen** `gradle.properties` içine (public key/URL'ler doğru olduğunda):
    ```properties
    MM_RELEASE_PREMIUM_MODE=cloudflare

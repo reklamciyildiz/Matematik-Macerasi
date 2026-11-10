@@ -31,10 +31,20 @@ android {
         def playSubsUrl = (project.findProperty('MM_PLAY_SUBS_URL') ?: '').toString()
         def playPub = (project.findProperty('MM_PLAY_SUBS_PUBLIC_KEY_B64') ?: '').toString()
         def playProject = (project.findProperty('MM_PLAY_INTEGRITY_PROJECT_NUMBER') ?: '').toString()
-        if(subscriptionsEnabled && (!playSubsUrl.matches('https://[A-Za-z0-9.-]+(/[A-Za-z0-9/_-]*)?') ||
-                !playPub.matches('[A-Za-z0-9+/=]{200,}') ||
-                !playProject.matches('[0-9]{4,20}'))) {
-            throw new GradleException('Subscriptions require verified Play Worker URL, separate RSA public key and Play Integrity cloud project number.')
+        if (subscriptionsEnabled) {
+            // Report only missing/invalid field NAMES; never print key material.
+            def invalidPlayFields = []
+            if (!playSubsUrl.matches('https://[A-Za-z0-9.-]+(/[A-Za-z0-9/_-]*)?'))
+                invalidPlayFields << 'MM_PLAY_SUBS_URL (HTTPS Worker address)'
+            if (!playPub.matches('[A-Za-z0-9+/=]{200,}'))
+                invalidPlayFields << 'MM_PLAY_SUBS_PUBLIC_KEY_B64 (RSA SPKI public key, Base64 DER)'
+            if (!playProject.matches('[0-9]{4,20}'))
+                invalidPlayFields << 'MM_PLAY_INTEGRITY_PROJECT_NUMBER (numeric Cloud project)'
+            if (!invalidPlayFields.isEmpty())
+                throw new GradleException('Play subscription build config missing/invalid: ' +
+                    invalidPlayFields.join(', ') +
+                    '. Run commercial/play-subscriptions/scripts/repair-android-play-public-key.ps1 ' +
+                    'for the existing public key. Never put private keys in Gradle.')
         }
         buildConfigField 'String', 'MM_PLAY_SUBS_URL', '"' + playSubsUrl + '"'
         buildConfigField 'String', 'MM_PLAY_SUBS_PUBLIC_KEY_B64', '"' + playPub + '"'

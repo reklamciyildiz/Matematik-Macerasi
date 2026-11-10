@@ -125,9 +125,24 @@ gradle.taskGraph.whenReady { graph ->
                 'Import legacy D1 activations and verify signed-license renewal first.')
         }
         if (subscriptionsEnabled) {
-            throw new GradleException(
-                'Release blocked: monthly/yearly sales require verified Play Developer API ' +
-                'and RTDN entitlement backend. Keep MM_SUBSCRIPTIONS_ENABLED=false.')
+            // A signed Play-distributed build is needed to test Play Integrity
+            // and real license-tester purchases. This explicit local opt-in
+            // unblocks INTERNAL TRACK QA only; no flag changes the Play track
+            // or proves that purchase verification works.
+            boolean internalPlayQa = (project.findProperty('MM_PLAY_SUBS_INTERNAL_QA_BUILD')
+                ?: 'false').toString().equalsIgnoreCase('true')
+            boolean liveQaComplete = (project.findProperty('MM_PLAY_SUBS_LIVE_QA_COMPLETE')
+                ?: 'false').toString().equalsIgnoreCase('true')
+            if (!internalPlayQa && !liveQaComplete) {
+                throw new GradleException(
+                    'Release blocked: Play subscriptions require a real license-tester purchase ' +
+                    'of BOTH monthly and yearly plans and restore/expiry QA. ' +
+                    'To build a signed AAB for Play INTERNAL TESTING ONLY, set ' +
+                    'MM_PLAY_SUBS_INTERNAL_QA_BUILD=true in untracked gradle.properties. ' +
+                    'For production approval set MM_PLAY_SUBS_LIVE_QA_COMPLETE=true ' +
+                    'ONLY AFTER both real Play tests pass. Never treat mocked CI tests ' +
+                    'or RTDN test messages as successful purchases.')
+            }
         }
         if (!(project.findProperty('MM_LEGACY_CODE_IMPORT_QA_COMPLETE') ?: 'false')
                 .toString().equalsIgnoreCase('true')) {

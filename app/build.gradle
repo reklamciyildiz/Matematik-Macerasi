@@ -14,7 +14,7 @@ android {
         applicationId "com.yigit033.matematikmacarasi"
         minSdk 24
         targetSdk 36
-        versionCode 16
+        versionCode 17
         versionName "1.3.0"
 
         // Intentionally disabled until Cloudflare D1 is provisioned, legacy

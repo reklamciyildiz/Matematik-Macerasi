@@ -7,6 +7,8 @@ settings=(root/"screens/SettingsScreen.kt").read_text(encoding="utf-8")
 host=(root/"screens/SettingsActivity.kt").read_text(encoding="utf-8")
 profile=(root/"profile/ProfileActivity.kt").read_text(encoding="utf-8")
 avatar=(root/"screens/AvatarStoreActivity.kt").read_text(encoding="utf-8")
+popup=(root/"components/StatisticsDetailPopup.kt").read_text(encoding="utf-8")
+policy=(root/"profile/AdventureStatisticsPolicy.kt").read_text(encoding="utf-8")
 checks=[
     ("old purple stack removed","0xFFCE93D8" not in settings),
     ("readable section surface","color=SettingsPalette.panel" in settings),
@@ -14,7 +16,10 @@ checks=[
     ("restore button retained","Satın Alımları Geri Yükle" in settings),
     ("restore feedback readable","Text(resultText,color=SettingsPalette.secondary" in settings),
     ("premium active state retained","Premium Aktif" in settings),
-    ("four core feature rows","Free ve Premium" in settings and
+    ("free-only optional plan comparison",
+         "if (!isPremium)" in settings and
+         "if (showPlanComparison)" in settings and
+         "Tüm hakları karşılaştır" in settings and
          "PremiumFeaturePolicy.marketShopCount" in settings),
     ("audio controls retained","audioService.setMusicEnabled" in settings and
          "audioService.setSoundEnabled" in settings),
@@ -45,8 +50,15 @@ checks=[
          '"Sınıf düzeyi"' in profile),
     ("compact statistics tiles",'Text("Macera İstatistiklerim"' in profile and
          'modifier = Modifier.weight(1f)' in profile),
-    ("statistics details retained",'"Kazanılan Yıldız"' in profile and
+    ("statistics details retained",'"İlerleme Yıldızları"' in profile and
          '"Biten Oyunlar"' in profile and "StatisticsDetailPopup(" in profile),
+    ("free summaries and premium breakdown protected",
+         "AdventureStatisticsPolicy.showValue" in profile and
+         "AdventureStatisticsPolicy.allowBreakdown" in profile and
+         "isPremium" in policy),
+    ("statistics overlay respects dark theme",
+         "backgroundColor = Color.White" not in popup and
+         "Henüz oyun kaydı yok" in popup),
 ]
 errors=[message for message,ok in checks if not ok]
 if errors:

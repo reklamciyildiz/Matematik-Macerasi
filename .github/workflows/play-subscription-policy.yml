@@ -33,8 +33,10 @@ jobs:
           node --check src/worker.mjs
       - name: Subscription state and Google API mock integration tests
         run: npm test
-      - name: Check subscription key generator syntax
-        run: node --check scripts/generate-play-lease-key.mjs
+      - name: Check subscription key generator and existing-key recovery syntax
+        run: |
+          node --check scripts/generate-play-lease-key.mjs
+          node --check scripts/derive-existing-play-public-key.mjs
       - name: Check Google Cloud Shell bootstrap syntax
         run: bash -n scripts/create-google-pubsub.sh
       - name: Validate PowerShell bootstrap syntax without deploying

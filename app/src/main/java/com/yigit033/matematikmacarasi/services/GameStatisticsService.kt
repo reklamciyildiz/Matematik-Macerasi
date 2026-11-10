@@ -181,83 +181,67 @@ class GameStatisticsService(private val context: Context) {
     /**
      * Belirli bir oyunun oynanma sayısını getirir
      */
-    private fun getGamePlayCount(gameId: String): Int {
-        return try {
-            // Önce doğrudan ID ile kontrol et
-            val directCount = prefs.getInt("game_play_count_$gameId", 0)
-            if (directCount > 0) {
-                return directCount
-            }
-            
-            // Temel işlem oyunlarını kontrol et (addition_game -> addition_game_level_1, addition_game_level_2, ...)
-            val basicGamePrefixes = listOf(
-                "addition_game", "subtraction_game", "multiplication_game", "division_game"
-            )
-            
-            for (prefix in basicGamePrefixes) {
-                if (gameId == "AdditionGameActivity" && prefix == "addition_game" ||
-                    gameId == "SubtractionGameActivity" && prefix == "subtraction_game" ||
-                    gameId == "MultiplicationGameActivity" && prefix == "multiplication_game" ||
-                    gameId == "DivisionGameActivity" && prefix == "division_game") {
-                    
-                    // Seviye bazlı ID'leri topla
-                    var totalCount = 0
-                    for (level in 1..5) {
-                        val levelGameId = "${prefix}_$level"
-                        totalCount += prefs.getInt("game_play_count_$levelGameId", 0)
-                    }
-                    
-                    if (totalCount > 0) {
-                        Log.d(TAG, "Temel işlem oyunu toplam sayım: $gameId ($prefix) = $totalCount kez")
-                        return totalCount
-                    }
-                }
-            }
-            
-            // İnteraktif oyunlar için seviye bazlı ID kontrolü
-            if (gameId.endsWith("Activity")) {
-                var totalCount = 0
-                for (level in 1..5) {
-                    val levelFormat = "${gameId}_level_$level"
-                    totalCount += prefs.getInt("game_play_count_$levelFormat", 0)
-                }
-                
-                if (totalCount > 0) {
-                    Log.d(TAG, "İnteraktif oyun seviye toplam sayım: $gameId = $totalCount kez")
-                    return totalCount
-                }
-            }
-            
-            // Hiçbir şey bulunamadıysa 0 döndür
-            0
-        } catch (e: Exception) {
-            Log.e(TAG, "$gameId oynanma sayısı alınırken hata", e)
-            0
-        }
+    private fun basicPrefix(gameId: String): String? = when (gameId) {
+        "AdditionGameActivity" -> "addition_game"
+        "SubtractionGameActivity" -> "subtraction_game"
+        "MultiplicationGameActivity" -> "multiplication_game"
+        "DivisionGameActivity" -> "division_game"
+        else -> null
     }
-    
+
+    private fun getGamePlayCount(gameId: String): Int = try {
+        val direct = prefs.getInt("game_play_count_$gameId", 0)
+        val prefix = basicPrefix(gameId)
+        val oldBasic = if (prefix != null) (1..8).map {
+            prefs.getInt("game_play_count_${prefix}_$it", 0)
+        } else emptyList()
+        val newerBasic = if (prefix != null) (1..8).map {
+            prefs.getInt("game_play_count_${prefix}_level_$it", 0)
+        } else emptyList()
+        val interactive = (1..8).map {
+            prefs.getInt("game_play_count_${gameId}_level_$it", 0)
+        }
+        AdventureAnalyticsMath.canonicalValue(direct, oldBasic, newerBasic, interactive)
+    } catch (e: Exception) {
+        Log.e(TAG, "Oyun sayısı alınamadı: $gameId", e)
+        0
+    }
+
+    /**
+     * Store seconds for each game. Old activity/level record formats can
+     * overlap: choose the strongest representation, never add duplicates.
+     */
+    private fun getGameSeconds(gameId: String): Int = try {
+        val direct = prefs.getInt("game_time_$gameId", 0)
+        val prefix = basicPrefix(gameId)
+        val oldBasic = if (prefix != null) (1..8).map {
+            prefs.getInt("game_time_${prefix}_$it", 0)
+        } else emptyList()
+        val newerBasic = if (prefix != null) (1..8).map {
+            prefs.getInt("game_time_${prefix}_level_$it", 0)
+        } else emptyList()
+        val activityLevels = (1..8).map {
+            prefs.getInt("game_time_${gameId}_level_$it", 0)
+        }
+        val activityCapitalLevels = (1..8).map {
+            prefs.getInt("game_time_${gameId}_Level_$it", 0)
+        }
+        AdventureAnalyticsMath.canonicalValue(direct, oldBasic, newerBasic,
+            activityLevels, activityCapitalLevels)
+    } catch (e: Exception) {
+        Log.e(TAG, "Oyun süresi alınamadı: $gameId", e)
+        0
+    }
+
     /**
      * Toplam oyun süresini dakika cinsinden getirir
      */
     fun getTotalPlayTimeMinutes(): Int {
-        return try {
-            // Tüm oyunların süresini saniye cinsinden topla ve dakikaya çevir
-            var totalSeconds = 0
-            for (gameId in VALID_GAME_IDS) {
-                totalSeconds += prefs.getInt("game_time_$gameId", 0)
-            }
-            // En az 1 dakika göster, eğer saniye varsa
-            if (totalSeconds > 0) {
-                max(1, totalSeconds / 60)
-            } else {
-                0
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Toplam oyun süresi alınırken hata", e)
-            0
-        }
+        // Use the same canonical data as the premium breakdown.
+        val seconds = AdventureAnalyticsMath.safeSum(VALID_GAME_IDS.map { getGameSeconds(it) })
+        return if (seconds > 0) max(1, seconds / 60) else 0
     }
-    
+
     /**
      * Oyun süresini dakika cinsinden ekler
      */
@@ -575,78 +559,16 @@ class GameStatisticsService(private val context: Context) {
     /**
      * Favori oyunu getirir (en çok oynanan oyun)
      */
-    fun getFavoriteGame(): String {
-        try {
-            var maxPlayCount = -1
-            var mostPlayedGameId = ""
-            var logMsg = "Tüm oyunların oynama sayıları: "
-            
-            // VALID_GAME_IDS içindeki tüm oyunları kontrol et
-            for (gameId in VALID_GAME_IDS) {
-                val playCount = getGamePlayCount(gameId)
-                logMsg += "[$gameId: $playCount] "
-                
-                if (playCount > maxPlayCount) {
-                    maxPlayCount = playCount
-                    mostPlayedGameId = gameId
-                } else if (playCount == maxPlayCount && playCount > 0) {
-                    // Eşitlik durumunda şimdilik ilk bulunanı tercih ediyoruz
-                }
-            }
-            
-            // Temel işlem oyunlarını seviye bazlı ID'lerden kontrol et
-            val basicGamePrefixes = mapOf(
-                "addition_game" to "AdditionGameActivity",
-                "subtraction_game" to "SubtractionGameActivity", 
-                "multiplication_game" to "MultiplicationGameActivity",
-                "division_game" to "DivisionGameActivity"
-            )
-            
-            // Seviye bazlı temel oyunları kontrol et
-            for ((prefix, activityName) in basicGamePrefixes) {
-                var totalPlaysForGame = 0
-                
-                // Her seviyeyi kontrol et (1-5 arası)
-                for (level in 1..5) {
-                    val levelGameId = "${prefix}_$level"
-                    val count = prefs.getInt("game_play_count_$levelGameId", 0)
-                    if (count > 0) {
-                        totalPlaysForGame += count
-                        logMsg += "[$levelGameId: $count] "
-                    }
-                }
-                
-                // En çok oynanan oyun olup olmadığını kontrol et
-                if (totalPlaysForGame > maxPlayCount) {
-                    maxPlayCount = totalPlaysForGame
-                    mostPlayedGameId = activityName
-                    Log.d(TAG, "Yeni favori oyun (seviye bazlı): $activityName, Sayı: $totalPlaysForGame")
-                }
-            }
-            
-            Log.d(TAG, logMsg)
-            Log.d(TAG, "Favori oyun hesaplandı: En çok oynanan ID='$mostPlayedGameId', Sayı=$maxPlayCount")
-
-            return if (maxPlayCount > 0 && mostPlayedGameId.isNotEmpty()) {
-                val favoriteGameName = GAME_NAMES[mostPlayedGameId] ?: "Bilinmiyor"
-                
-                // Favori oyun ismini SharedPreferences'e kaydet
-                val storedFavorite = prefs.getString(FAVORITE_GAME_KEY, null)
-                if (storedFavorite != favoriteGameName) {
-                    prefs.edit().putString(FAVORITE_GAME_KEY, favoriteGameName).apply()
-                    Log.d(TAG, "SharedPreferences'daki favori oyun güncellendi: $favoriteGameName")
-                }
-                favoriteGameName
-            } else {
-                // Eğer hiç oyun oynanmadıysa
-                "Henüz Yok"
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Favori oyun belirlenirken hata", e)
-            return "Bilinmiyor"
-        }
+    fun getFavoriteGame(): String = try {
+        // Never treat an unplayed game as the favorite.
+        val favorite = VALID_GAME_IDS.maxByOrNull { getGamePlayCount(it) }
+        if (favorite == null || getGamePlayCount(favorite) <= 0) "Henüz Yok"
+        else GAME_NAMES[favorite] ?: "Bilinmiyor"
+    } catch (e: Exception) {
+        Log.e(TAG, "Favori oyun alınamadı", e)
+        "Bilinmiyor"
     }
-    
+
     /**
      * Oyun süresini formatla (2 saat 15 dk gibi)
      */
@@ -1237,175 +1159,22 @@ class GameStatisticsService(private val context: Context) {
      * Her oyun için oynama sayısını içeren bir map döndürür
      * Premium kullanıcılar için detaylı istatistik popup'ı için kullanılır
      */
-    fun getGamePlayCountDetails(): Map<String, Int> {
-        val result = mutableMapOf<String, Int>()
-        try {
-            // Debug log
-            Log.d(TAG, "getGamePlayCountDetails çağrıldı - popup içeriği oluşturuluyor")
-            
-            // Tüm oyun isimlerini listeye ekle (hiç oynanmamış olsalar bile)
-            for ((gameId, displayName) in GAME_NAMES) {
-                // İlgili oyun için gerçek oynanma sayısını al
-                val playCount = getGamePlayCount(gameId)
-                
-                // Gerçek değeri güncelle (varsayılan 0 yerine)
-                result[displayName] = playCount
-                
-                if (playCount > 0) {
-                    Log.d(TAG, "Oyun oynanma detayı: $displayName = $playCount kez")
-                }
-            }
-            
-            // Temel işlem oyunlarını seviye bazlı ID'lerden topla
-            val basicGamePrefixes = mapOf(
-                "addition_game" to "Toplama Oyunu",
-                "subtraction_game" to "Çıkarma Oyunu",
-                "multiplication_game" to "Çarpma Oyunu",
-                "division_game" to "Bölme Oyunu"
-            )
-            
-            // Seviye bazlı temel oyunları kontrol et
-            for ((prefix, displayName) in basicGamePrefixes) {
-                var totalPlaysForGame = 0
-                
-                // Her seviyeyi kontrol et (1-5 arası)
-                for (level in 1..5) {
-                    val levelGameId = "${prefix}_level_$level"
-                    val count = prefs.getInt("game_play_count_$levelGameId", 0)
-                    if (count > 0) {
-                        totalPlaysForGame += count
-                        Log.d(TAG, "Seviyeli oyun oynanma sayısı: $levelGameId = $count kez")
-                    }
-                }
-                
-                // Eğer varsa, toplam oynanma sayısını güncelle
-                if (totalPlaysForGame > 0) {
-                    result[displayName] = totalPlaysForGame
-                    Log.d(TAG, "Toplam seviyeli oyun oynanma sayısı: $displayName = $totalPlaysForGame kez")
-                }
-            }
-            
-            // Map'teki 0 değerlerini kaldırma
-            val nonZeroResults = result.filter { (_, count) -> count > 0 }
-            
-            // Debug log
-            Log.d(TAG, "getGamePlayCountDetails tamamlandı - Toplam oyun sayısı: ${nonZeroResults.size}")
-            nonZeroResults.forEach { (game, count) ->
-                Log.d(TAG, "Tamamlanan oyun: $game = $count kez")
-            }
-            
-            return nonZeroResults.toList().sortedByDescending { (_, value) -> value }.toMap()
-        } catch (e: Exception) {
-            Log.e(TAG, "Oyun oynama sayıları alınırken hata", e)
-            e.printStackTrace() // Daha detaylı hata izlemesi için
-            return emptyMap()
-        }
-    }
-    
+    fun getGamePlayCountDetails(): Map<String, Int> =
+        GAME_NAMES.mapValues { (gameId, _) -> getGamePlayCount(gameId) }
+            .filterValues { it > 0 }
+            .mapKeys { (gameId, _) -> GAME_NAMES[gameId] ?: gameId }
+            .toList().sortedByDescending { it.second }.toMap()
+
     /**
      * Her oyun için oynama sürelerini içeren bir map döndürür (saniye cinsinden)
      * Premium kullanıcılar için detaylı istatistik popup'ı için kullanılır
      */
-    fun getGamePlayTimeDetails(): Map<String, Int> {
-        val result = mutableMapOf<String, Int>()
-        try {
-            // Debug log
-            Log.d(TAG, "getGamePlayTimeDetails çağrıldı - popup içeriği oluşturuluyor")
-            
-            // Tüm GAME_NAMES içindeki oyunları kontrol et
-            for ((gameId, displayName) in GAME_NAMES) {
-                // Her oyun için süreyi doğrudan al
-                val seconds = prefs.getInt("game_time_$gameId", 0)
-                result[displayName] = seconds
-                
-                if (seconds > 0) {
-                    Log.d(TAG, "Oyun süresi (ana ID): $displayName = $seconds saniye")
-                }
-            }
-            
-            // Temel işlem oyunlarını seviye bazlı ID'lerden topla
-            val basicGamePrefixes = mapOf(
-                "addition_game" to "Toplama Oyunu",
-                "subtraction_game" to "Çıkarma Oyunu",
-                "multiplication_game" to "Çarpma Oyunu",
-                "division_game" to "Bölme Oyunu"
-            )
-            
-            // Seviye bazlı temel oyunları kontrol et
-            for ((prefix, displayName) in basicGamePrefixes) {
-                var totalSecondsForGame = 0
-                
-                // Her seviyeyi kontrol et (1-5 arası)
-                for (level in 1..5) {
-                    val levelGameId = "${prefix}_level_$level"
-                    val seconds = prefs.getInt("game_time_$levelGameId", 0)
-                    if (seconds > 0) {
-                        totalSecondsForGame += seconds
-                        Log.d(TAG, "Seviyeli oyun süresi: $levelGameId = $seconds saniye")
-                    }
-                }
-                
-                // Eğer süre varsa, mevcut değeri güncelle
-                if (totalSecondsForGame > 0) {
-                    result[displayName] = totalSecondsForGame
-                    Log.d(TAG, "Toplam seviyeli oyun süresi: $displayName = $totalSecondsForGame saniye")
-                }
-            }
-            
-            // İnteraktif oyunlar için seviye bazlı ID desteği ekle
-            val interactiveGamePrefixes = mapOf(
-                "BalloonPopGameActivity" to "Balon Patlatma",
-                "NumberHuntGameActivity" to "Sayı Avı",
-                "MathMazeGameActivity" to "Matematik Labirenti",
-                "SpaceMathAdventureActivity" to "Uzay Matematik Macerası"
-            )
-            
-            // Oyun başına süre topla
-            for ((gameId, displayName) in interactiveGamePrefixes) {
-                var totalSecondsForGame = result[displayName] ?: 0
-                
-                // Seviye bazlı ek ID'leri kontrol et - bazı interaktif oyunlar seviye bazlı ID kullanabilir
-                for (level in 1..5) {
-                    // Farklı seviye ID formatlarını kontrol et
-                    val formats = listOf(
-                        "${gameId}_level_$level",
-                        "${gameId}_Level_$level",
-                        "${gameId.replace("Activity", "")}_level_$level"
-                    )
-                    
-                    for (levelFormat in formats) {
-                        val seconds = prefs.getInt("game_time_$levelFormat", 0)
-                        if (seconds > 0) {
-                            totalSecondsForGame += seconds
-                            Log.d(TAG, "İnteraktif oyun seviyeli süre: $levelFormat = $seconds saniye")
-                        }
-                    }
-                }
-                
-                // İnteraktif oyun için toplam süre sonucunu güncelle
-                if (totalSecondsForGame > 0) {
-                    result[displayName] = totalSecondsForGame
-                    Log.d(TAG, "İnteraktif oyun toplam süre: $displayName = $totalSecondsForGame saniye")
-                }
-            }
-            
-            // Map'teki 0 değerlerini kaldırma
-            val nonZeroResults = result.filter { (_, seconds) -> seconds > 0 }
-            
-            // Debug log
-            Log.d(TAG, "getGamePlayTimeDetails tamamlandı - Toplam oyun sayısı: ${nonZeroResults.size}")
-            nonZeroResults.forEach { (game, seconds) ->
-                Log.d(TAG, "Oynanmış oyun süresi: $game = $seconds saniye")
-            }
-            
-            return nonZeroResults.toList().sortedByDescending { (_, value) -> value }.toMap()
-        } catch (e: Exception) {
-            Log.e(TAG, "Oyun süreleri alınırken hata", e)
-            e.printStackTrace() // Daha detaylı hata izlemesi için
-            return emptyMap()
-        }
-    }
-    
+    fun getGamePlayTimeDetails(): Map<String, Int> =
+        GAME_NAMES.mapValues { (gameId, _) -> getGameSeconds(gameId) }
+            .filterValues { it > 0 }
+            .mapKeys { (gameId, _) -> GAME_NAMES[gameId] ?: gameId }
+            .toList().sortedByDescending { it.second }.toMap()
+
     /**
      * Her oyun için en yüksek skorları içeren bir map döndürür
      * Premium kullanıcılar için detaylı istatistik popup'ı için kullanılır

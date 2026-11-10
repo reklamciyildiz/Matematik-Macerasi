@@ -37,6 +37,7 @@ jobs:
         run: |
           node --check scripts/generate-play-lease-key.mjs
           node --check scripts/derive-existing-play-public-key.mjs
+          node --check scripts/repair-android-play-public-key.mjs
       - name: Check Google Cloud Shell bootstrap syntax
         run: bash -n scripts/create-google-pubsub.sh
       - name: Validate PowerShell bootstrap syntax without deploying

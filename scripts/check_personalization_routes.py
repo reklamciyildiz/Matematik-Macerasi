@@ -15,15 +15,22 @@ assert main.get(a+"enabled")!="false", "MainActivity must always stay enabled"
 assert not any(y.get(a+"name")=="android.intent.action.MAIN"
     for f in main.findall("intent-filter") for y in f.findall("action")), \
     "MainActivity must not own a duplicate launcher entry point"
-assert set([".DefaultIconActivity",".RobotIconActivity",".SpaceIconActivity"]) <= set(aliases)
-for name in [".DefaultIconActivity",".RobotIconActivity",".SpaceIconActivity"]:
+launcher_alias_names=(
+    ".BrandIconActivity",".DefaultIconActivity",
+    ".RobotIconActivity",".SpaceIconActivity"
+)
+assert set(launcher_alias_names) <= set(aliases)
+for name in launcher_alias_names:
     alias=aliases[name]
     assert alias.get(a+"targetActivity")==".MainActivity"
     assert any(any(z.get(a+"name")=="android.intent.action.MAIN"
         for z in f.findall("action")) and
         any(z.get(a+"name")=="android.intent.category.LAUNCHER"
         for z in f.findall("category")) for f in alias.findall("intent-filter"))
-assert aliases[".DefaultIconActivity"].get(a+"enabled")=="true"
+# The premium brand icon replaced the classic icon as the install default.
+# Every install must have exactly one enabled launcher entry point.
+assert [name for name in launcher_alias_names
+        if aliases[name].get(a+"enabled")=="true"]==[".BrandIconActivity"]
 for name in [".screens.SettingsActivity",".screens.AvatarStoreActivity",
              ".settings.IconSelectorActivity"]:
     assert name in activities and activities[name].get(a+"exported")=="false"
@@ -52,4 +59,4 @@ assert "COMPONENT_ENABLED_STATE_ENABLED" in manager
 assert "DONT_KILL_APP" in manager
 assert manager.index("if(alias==selected)")<manager.index("if(alias!=selected)")
 assert "MainActivity" in manager
-print("PASS: Settings, avatar and icon routes; safe three-alias launcher configuration")
+print("PASS: Settings, avatar and icon routes; safe four-alias launcher configuration")

@@ -139,6 +139,10 @@ jobs:
           node --check commercial/functions/institution-functions.cjs
           node --check commercial/functions/src/institution-policy.cjs
 
+      - name: Play Billing catalog resilience and checkout source guard
+        shell: bash
+        run: python3 scripts/check_play_billing_catalog_source.py
+
       - name: M1 unchanged Play purchase and institutional-license source safety
         shell: bash
         run: python3 scripts/check_m1_entitlement_safety.py

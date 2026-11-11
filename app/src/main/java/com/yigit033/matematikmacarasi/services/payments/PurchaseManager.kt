@@ -241,18 +241,10 @@ class PurchaseManager private constructor(
                 Log.w(TAG, "⚠️ Billing servisi bağlantısı kesildi")
                 _catalogStatus.value = CatalogStatus.Error(
                     "Google Play bağlantısı kesildi. Fiyatları yeniden sorgulayın.")
-                Log.d(TAG, "🔄 5 saniye sonra yeniden bağlanma deneniyor...")
-                
-                // 5 saniye içinde yeniden bağlanmayı dene
-                scope.launch {
-                    delay(5000)
-                    if (!billingClient.isReady) {
-                        Log.d(TAG, "🔄 Billing servisine yeniden bağlanma girişimi")
-                    connectToBillingService()
-                    } else {
-                        Log.d(TAG, "✅ BillingClient zaten tekrar bağlandı")
-                    }
-                }
+                _planPrices.value = emptyMap()
+                // Library 8 auto-reconnects on the next Billing API request.
+                // Do NOT start another manual connection here; the UI exposes
+                // an explicit price retry and safely requests fresh products.
             }
         })
     }

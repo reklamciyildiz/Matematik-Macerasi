@@ -840,7 +840,7 @@ class PurchaseManager private constructor(
         startPurchase(activity,plan)
     }
 
-    private fun startPurchase(activity: Activity, plan: PremiumPlan) {
+    private fun startPurchase(activity:Activity,plan:PremiumPlan) {
         if (activity.isFinishing || activity.isDestroyed) return
         if (isPremiumSync()) {
             _purchaseStatus.value = PurchaseStatus.AlreadyOwned

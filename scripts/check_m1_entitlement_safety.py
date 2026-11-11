@@ -41,7 +41,7 @@ assert 'exports.redeemInstitutionSeatCode' not in play_server
 # Cloudflare-mode subscription/license state must come from current signed
 # rights, never from a stale mutable UI StateFlow after expiry.
 assert 'val isPremium=if(BuildConfig.MM_USE_CLOUDFLARE)' in ui
-assert 'enabled=price!=null && catalog !is PurchaseManager.CatalogStatus.Loading' in ui
+assert 'enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready' in ui
 assert 'PremiumPlan.LIFETIME' in ui and 'purchaseManager.buyPremium(it,plan)' in ui
 assert 'Google Play fiyatlarını yeniden kontrol et' in ui
 assert 'unfetchedProductList' in client and 'enableAutoServiceReconnection()' in client

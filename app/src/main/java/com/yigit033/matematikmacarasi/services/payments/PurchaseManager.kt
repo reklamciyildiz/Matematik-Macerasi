@@ -54,6 +54,9 @@ class PurchaseManager private constructor(
     private val billingClient: BillingClient = BillingClient.newBuilder(context)
         .setListener(this) // this = PurchasesUpdatedListener
         .enablePendingPurchases(pendingPurchasesParams)
+        // Billing Library 8 supports transparent recovery after Play Store
+        // disconnects, instead of a permanently empty pricing catalog.
+        .enableAutoServiceReconnection()
         .build()
     
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -72,6 +75,16 @@ class PurchaseManager private constructor(
     val subscriptionActive:StateFlow<Boolean> = _subscriptionActive.asStateFlow()
     private val _planPrices=MutableStateFlow<Map<PremiumPlan,String>>(emptyMap())
     val planPrices:StateFlow<Map<PremiumPlan,String>> = _planPrices.asStateFlow()
+
+    /** Price load outcome is independent of purchase entitlement. */
+    sealed class CatalogStatus {
+        object Loading : CatalogStatus()
+        data class Ready(val unavailablePlans: Set<PremiumPlan>) : CatalogStatus()
+        data class Error(val message: String) : CatalogStatus()
+    }
+    private val _catalogStatus = MutableStateFlow<CatalogStatus>(CatalogStatus.Loading)
+    val catalogStatus: StateFlow<CatalogStatus> = _catalogStatus.asStateFlow()
+    private var catalogRequestId = 0
     private val _restoreState=MutableStateFlow<RestoreState>(RestoreState.Idle)
     val restoreState:StateFlow<RestoreState> = _restoreState.asStateFlow()
     sealed class RestoreState {
@@ -191,6 +204,7 @@ class PurchaseManager private constructor(
                         Log.e(TAG, "   - Google Play Store yüklü değil")
                         Log.e(TAG, "   - Google Play Services güncel değil")
                         Log.e(TAG, "   - Cihaz Google Play'i desteklemiyor")
+                        _catalogStatus.value = CatalogStatus.Error("Google Play ödeme servisi bu cihazda kullanılamıyor.")
                         _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
                     }
                     BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> {
@@ -199,6 +213,7 @@ class PurchaseManager private constructor(
                         Log.e(TAG, "   - İnternet bağlantısı yok")
                         Log.e(TAG, "   - Google Play Store geçici olarak erişilemez")
                         Log.e(TAG, "   - Sunucu bakımda")
+                        _catalogStatus.value = CatalogStatus.Error("Google Play bağlantısı kurulamadı. İnternet ve Play Store bağlantısını kontrol edin.")
                         _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
                     }
                     BillingClient.BillingResponseCode.DEVELOPER_ERROR -> {
@@ -208,12 +223,14 @@ class PurchaseManager private constructor(
                         Log.e(TAG, "   1. AndroidManifest.xml'de BILLING permission var mı")
                         Log.e(TAG, "   2. Google Play Billing Library doğru sürümde mi")
                         Log.e(TAG, "   3. Uygulama imzası Google Play Console ile uyumlu mu")
+                        _catalogStatus.value = CatalogStatus.Error("Google Play ödeme yapılandırması geçersiz (kod $responseCode).")
                         _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
                     }
                     else -> {
                         Log.e(TAG, "❌ Bilinmeyen billing bağlantı hatası:")
                         Log.e(TAG, "   - Response Code: $responseCode")
                         Log.e(TAG, "   - Debug Message: $debugMessage")
+                    _catalogStatus.value = CatalogStatus.Error("Google Play bağlantısı kurulamadı (kod $responseCode).")
                     _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
                     }
                 }
@@ -222,6 +239,8 @@ class PurchaseManager private constructor(
             override fun onBillingServiceDisconnected() {
                 billingConnecting=false
                 Log.w(TAG, "⚠️ Billing servisi bağlantısı kesildi")
+                _catalogStatus.value = CatalogStatus.Error(
+                    "Google Play bağlantısı kesildi. Fiyatları yeniden sorgulayın.")
                 Log.d(TAG, "🔄 5 saniye sonra yeniden bağlanma deneniyor...")
                 
                 // 5 saniye içinde yeniden bağlanmayı dene
@@ -419,40 +438,118 @@ class PurchaseManager private constructor(
         return playSubscriptionClient.isPremiumOffline()
     }
 
-    /** Load localized prices directly from the Play product catalog. */
+    /**
+     * Retrieve each Play product type separately. A failed or ineligible
+     * subscription must not suppress the lifetime product (or vice versa).
+     * Neither mock prices nor an indefinite "loading" state are allowed.
+     */
     fun refreshPlanPrices() {
-        if(!billingClient.isReady) return
-        val products=mutableListOf(
-            QueryProductDetailsParams.Product.newBuilder().setProductId(PREMIUM_SKU)
-                .setProductType(BillingClient.ProductType.INAPP).build()
-        )
-        if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) products.add(
-            QueryProductDetailsParams.Product.newBuilder()
-                .setProductId(PREMIUM_SUBSCRIPTION_SKU)
-                .setProductType(BillingClient.ProductType.SUBS).build()
-        )
-        val query=QueryProductDetailsParams.newBuilder().setProductList(products).build()
-        billingClient.queryProductDetailsAsync(query) { result,details ->
-            if(result.responseCode!=BillingClient.BillingResponseCode.OK)
-                return@queryProductDetailsAsync
-            val prices=mutableMapOf<PremiumPlan,String>()
-            for(product in details.productDetailsList) {
-                if(product.productId==PREMIUM_SKU) {
-                    val lifetimeOffer=product.oneTimePurchaseOfferDetailsList?.firstOrNull()
-                        ?: product.oneTimePurchaseOfferDetails
-                    lifetimeOffer?.formattedPrice?.let {
-                        prices[PremiumPlan.LIFETIME]=it
-                    }
-                }else if(product.productId==PREMIUM_SUBSCRIPTION_SKU) {
-                    for(plan in listOf(PremiumPlan.MONTHLY,PremiumPlan.YEARLY)) {
-                        val offer=product.subscriptionOfferDetails
-                            ?.firstOrNull { it.basePlanId==plan.basePlanId }
-                        offer?.pricingPhases?.pricingPhaseList?.lastOrNull()
-                            ?.formattedPrice?.let { prices[plan]=it }
+        val requestId = ++catalogRequestId
+        _planPrices.value = emptyMap()
+        _catalogStatus.value = CatalogStatus.Loading
+
+        // Also bounds the wait if Play Billing never returns a callback.
+        scope.launch {
+            delay(12_000)
+            if (catalogRequestId == requestId &&
+                _catalogStatus.value is CatalogStatus.Loading) {
+                _catalogStatus.value = CatalogStatus.Error(
+                    "Google Play fiyat sorgusu zaman aşımına uğradı. Tekrar deneyin.")
+                Log.w(TAG, "Play catalog timeout request=$requestId")
+            }
+        }
+
+        if (!billingClient.isReady) {
+            connectToBillingService()
+            // The connection callback starts a NEW catalog request on success.
+            return
+        }
+
+        val requestedTypes = buildList {
+            add(BillingClient.ProductType.INAPP to PREMIUM_SKU)
+            if (BuildConfig.MM_SUBSCRIPTIONS_ENABLED) {
+                add(BillingClient.ProductType.SUBS to PREMIUM_SUBSCRIPTION_SKU)
+            }
+        }
+        val found = mutableMapOf<PremiumPlan, String>()
+        val errors = mutableListOf<String>()
+        var finished = 0
+
+        for ((type, id) in requestedTypes) {
+            val params = QueryProductDetailsParams.newBuilder().setProductList(
+                listOf(QueryProductDetailsParams.Product.newBuilder()
+                    .setProductId(id).setProductType(type).build())
+            ).build()
+            try {
+                billingClient.queryProductDetailsAsync(params) { result, details ->
+                    scope.launch {
+                        if (catalogRequestId != requestId) return@launch
+                        if (result.responseCode == BillingClient.BillingResponseCode.OK) {
+                            for (product in details.productDetailsList) {
+                                when (product.productId) {
+                                    PREMIUM_SKU -> {
+                                        val offer = product.oneTimePurchaseOfferDetailsList
+                                            ?.firstOrNull()
+                                            ?: product.oneTimePurchaseOfferDetails
+                                        offer?.formattedPrice?.let {
+                                            found[PremiumPlan.LIFETIME] = it
+                                        }
+                                    }
+                                    PREMIUM_SUBSCRIPTION_SKU -> {
+                                        for (plan in listOf(PremiumPlan.MONTHLY, PremiumPlan.YEARLY)) {
+                                            val offers = product.subscriptionOfferDetails
+                                                ?.filter { it.basePlanId == plan.basePlanId }
+                                                .orEmpty()
+                                            val offer = offers.firstOrNull { it.offerId == null }
+                                                ?: offers.firstOrNull()
+                                            offer?.pricingPhases?.pricingPhaseList
+                                                ?.lastOrNull()?.formattedPrice?.let {
+                                                    found[plan] = it
+                                                }
+                                        }
+                                    }
+                                }
+                            }
+                            for (unfetched in details.unfetchedProductList) {
+                                Log.w(TAG, "Unfetched Play product: ${unfetched.productId}, " +
+                                    "type=${unfetched.productType}, status=${unfetched.statusCode}")
+                                errors.add("Ürün ${unfetched.productId}: ${unfetched.statusCode}")
+                            }
+                        } else {
+                            errors.add("$type: ${result.responseCode}")
+                            Log.w(TAG, "Play product query failed type=$type, " +
+                                "code=${result.responseCode}, detail=${result.debugMessage}")
+                        }
+                        finished++
+                        if (finished == requestedTypes.size) {
+                            _planPrices.value = found.toMap()
+                            val expected = if (BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
+                                PremiumPlan.entries.toSet()
+                            else setOf(PremiumPlan.LIFETIME)
+                            val unavailable = expected - found.keys
+                            _catalogStatus.value = if (found.isEmpty()) {
+                                CatalogStatus.Error(
+                                    if (errors.isNotEmpty())
+                                        "Google Play fiyatları alınamadı. Ürünlerin satışa " +
+                                            "açık olduğunu ve Play Store hesabınızı kontrol edin."
+                                    else
+                                        "Google Play bu hesap veya ülke için Premium " +
+                                            "ürünlerini sunmuyor. Play Store ve ürün " +
+                                            "yayın durumunu kontrol edin.")
+                            } else CatalogStatus.Ready(unavailable)
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Play catalog request failed type=$type", e)
+                errors.add("$type: exception")
+                finished++
+                if (finished == requestedTypes.size) {
+                    _planPrices.value = found.toMap()
+                    _catalogStatus.value = CatalogStatus.Error(
+                        "Google Play fiyat sorgusu başarısız. Tekrar deneyin.")
+                }
             }
-            _planPrices.value=prices
         }
     }
 

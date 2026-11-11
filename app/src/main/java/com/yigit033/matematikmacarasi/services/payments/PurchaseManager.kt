@@ -840,96 +840,25 @@ class PurchaseManager private constructor(
         startPurchase(activity,plan)
     }
 
-    private fun startPurchase(activity:Activity,plan:PremiumPlan) {
-        if(activity.isFinishing || activity.isDestroyed) return
-        if(isPremiumSync()) {
-            _purchaseStatus.value=PurchaseStatus.AlreadyOwned
+    private fun startPurchase(activity: Activity, plan: PremiumPlan) {
+        if (activity.isFinishing || activity.isDestroyed) return
+        if (isPremiumSync()) {
+            _purchaseStatus.value = PurchaseStatus.AlreadyOwned
             return
         }
-        
-        // Önce temel kontrolleri yap
-        try {
-            // İnternet bağlantısı kontrolü
-            val connectivityManager = activity.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            val activeNetwork = connectivityManager.activeNetworkInfo
-            val isConnected = activeNetwork?.isConnectedOrConnecting == true
-            
-            if (!isConnected) {
-                Log.e(TAG, "❌ İnternet bağlantısı yok")
-                _purchaseStatus.value = PurchaseStatus.ServiceUnavailable
-                return
-            }
-            
-            // Google Play Store varlığı kontrolü
-            val packageManager = activity.packageManager
-            try {
-                packageManager.getPackageInfo("com.android.vending", 0)
-                Log.d(TAG, "✅ Google Play Store mevcut")
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Google Play Store bulunamadı: ${e.message}")
-                _purchaseStatus.value = PurchaseStatus.ServiceUnavailable
-                return
-            }
-            
-            // Google Play Services kontrolü
-            try {
-                val gmsPackage = packageManager.getPackageInfo("com.google.android.gms", 0)
-                Log.d(TAG, "✅ Google Play Services mevcut, versiyon: ${gmsPackage.versionName}")
-            } catch (e: Exception) {
-                Log.e(TAG, "❌ Google Play Services bulunamadı: ${e.message}")
-                _purchaseStatus.value = PurchaseStatus.ServiceUnavailable
-                return
-            }
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "❌ Temel kontroller sırasında hata: ${e.message}", e)
-            _purchaseStatus.value = PurchaseStatus.ServiceUnavailable
-            return
-        }
-        
+        // Do not manually call PackageManager.getPackageInfo() for Play Store
+        // or Play Services here: package visibility restrictions can report
+        // missing apps even when BillingClient is fully functional.
+        // The BillingClient is the authority for purchase availability.
         if (!billingClient.isReady) {
-            Log.e(TAG, "❌ BillingClient hazır değil! Bağlantı kuruluyor...")
+            Log.w(TAG, "Billing not connected at checkout; requesting reconnect")
             _purchaseStatus.value = PurchaseStatus.ServiceUnavailable
-            
-            // Bağlantı kurulumu için özel bir callback ekleyin
-            billingClient.startConnection(object : BillingClientStateListener {
-                override fun onBillingSetupFinished(billingResult: BillingResult) {
-                    Log.d(TAG, "🔄 Yeniden bağlantı sonucu: ${billingResult.responseCode}, ${billingResult.debugMessage}")
-                    
-                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                        Log.d(TAG, "✅ BillingClient bağlandı, satın alma akışı başlatılıyor...")
-                        launchPurchaseFlow(activity,plan)
-                    } else {
-                        Log.e(TAG, "❌ BillingClient bağlantı hatası: ${billingResult.responseCode}, ${billingResult.debugMessage}")
-                        
-                        // Hata koduna göre özel mesajlar
-                        when (billingResult.responseCode) {
-                            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> {
-                                Log.e(TAG, "🔧 Billing servisi bu cihazda desteklenmiyor")
-                            }
-                            BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> {
-                                Log.e(TAG, "🔧 Google Play Store servisi şu anda kullanılamıyor")
-                            }
-                            BillingClient.BillingResponseCode.DEVELOPER_ERROR -> {
-                                Log.e(TAG, "🔧 Geliştirici hatası - Uygulama imzası veya konfigürasyon sorunu")
-                            }
-                        }
-                        
-                        _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
-                    }
-                }
-                
-                override fun onBillingServiceDisconnected() {
-                    Log.e(TAG, "❌ Satın alma sırasında bağlantı kesildi")
-                    _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
-                }
-            })
+            connectToBillingService()
             return
         }
-        
-        launchPurchaseFlow(activity,plan)
+        launchPurchaseFlow(activity, plan)
     }
-    
+
     /**
      * Premium durumunu sıfırlar (test için)
      * Bu metod yalnızca geliştirici seçeneklerinden çağrılmalıdır.
@@ -989,32 +918,14 @@ class PurchaseManager private constructor(
         Log.d(TAG, "🚀 Premium satın alma akışı başlatılıyor...")
         
         if (!billingClient.isReady) {
-            Log.e(TAG, "❌ BillingClient hazır değil! Durum kontrol ediliyor...")
+            // Never automatically re-open a checkout after a delayed
+            // reconnection. Let the user review the currently displayed price
+            // and explicitly tap the plan again.
             _purchaseStatus.value = PurchaseStatus.ServiceUnavailable
-            
-            // Bağlantı durumunu kontrol et ve yeniden bağlan
-            scope.launch {
-                try {
-                    Log.d(TAG, "🔄 BillingClient yeniden bağlanıyor...")
-                    connectToBillingService()
-                    
-                    // 3 saniye bekle ve tekrar dene
-                    delay(3000)
-                    if (billingClient.isReady) {
-                        Log.d(TAG, "✅ BillingClient hazır, satın alma akışı tekrar başlatılıyor...")
-                        launchPurchaseFlow(activity,plan)
-                    } else {
-                        Log.e(TAG, "❌ BillingClient 3 saniye sonra hala hazır değil")
-                        _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "❌ BillingClient yeniden bağlantı hatası: ${e.message}", e)
-                    _purchaseStatus.postValue(PurchaseStatus.ServiceUnavailable)
-                }
-            }
+            connectToBillingService()
             return
         }
-        
+
         // Zaten premium ise işlemi durdur
         if (isPremiumSync()) {
             Log.d(TAG, "ℹ️ Kullanıcı zaten premium sürüme sahip")

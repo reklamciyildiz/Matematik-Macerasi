@@ -327,7 +327,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                             plan.label+" · "+hint+suffix,
                             prominent=plan==PremiumPlan.YEARLY ||
                                 (!BuildConfig.MM_SUBSCRIPTIONS_ENABLED && plan==PremiumPlan.LIFETIME),
-                            enabled=price!=null && catalog !is PurchaseManager.CatalogStatus.Loading,
+                            enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready,
                             onClick={
                                 purchaseAttempted = true
                                 lastCheckoutStatus = null

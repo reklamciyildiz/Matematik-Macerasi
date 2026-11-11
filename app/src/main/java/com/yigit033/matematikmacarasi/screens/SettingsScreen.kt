@@ -49,6 +49,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,6 +73,7 @@ import com.yigit033.matematikmacarasi.services.PremiumCodeValidator
 import com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 import com.yigit033.matematikmacarasi.services.payments.PremiumPlan
+import androidx.lifecycle.Observer
 import com.yigit033.matematikmacarasi.BuildConfig
 import android.net.Uri
 import com.yigit033.matematikmacarasi.settings.IconSelectorActivity
@@ -184,6 +186,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     val premiumFlow by purchaseManager.premiumState.collectAsState()
     val restoration by purchaseManager.restoreState.collectAsState()
     val prices by purchaseManager.planPrices.collectAsState()
+    val catalog by purchaseManager.catalogStatus.collectAsState()
     val subscriptionActive by purchaseManager.subscriptionActive.collectAsState()
     // In Cloudflare mode the aggregate StateFlow is NOT a source of truth:
     // it may outlive a revoked code or an expired 24-hour Play subscription.
@@ -208,6 +211,21 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     var codeError by remember {mutableStateOf<String?>(null)}
     // Keep the detailed plan comparison hidden until a Free player asks for it.
     var showPlanComparison by remember { mutableStateOf(false) }
+    var purchaseAttempted by remember { mutableStateOf(false) }
+    var lastCheckoutStatus by remember {
+        mutableStateOf<PurchaseManager.PurchaseStatus?>(null)
+    }
+    // LiveData remains the legacy billing-result channel. Observe it with
+    // Activity lifecycle and remove the observer on leaving Settings.
+    DisposableEffect(purchaseManager, context) {
+        val observer = Observer<PurchaseManager.PurchaseStatus> {
+            lastCheckoutStatus = it
+        }
+        val owner = context as? ComponentActivity
+        owner?.let { purchaseManager.purchaseStatus.observe(it, observer) }
+        onDispose { purchaseManager.purchaseStatus.removeObserver(observer) }
+    }
+    LaunchedEffect(Unit) { purchaseManager.refreshPlanPrices() }
 
     LaunchedEffect(Unit) {
         purchaseManager.checkPremiumStatusAsync()
@@ -287,40 +305,98 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                         onClick={context.startActivity(Intent(Intent.ACTION_VIEW,
                             Uri.parse("https://play.google.com/store/account/subscriptions")))})
                 } else {
-                    if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) {
-                        Text("Tek Premium içerik · Üç farklı ödeme seçeneği",
-                            color=SettingsPalette.gold,fontWeight=FontWeight.Bold,fontSize=13.sp)
-                        PremiumPlan.entries.forEach { plan ->
-                            val price=prices[plan]
-                            val duration=when(plan) {
-                                PremiumPlan.MONTHLY->" / ay · otomatik yenilenir"
-                                PremiumPlan.YEARLY->" / yıl · otomatik yenilenir"
-                                PremiumPlan.LIFETIME->" · tek ödeme, süresiz"
-                            }
-                            SettingsAction(
-                                plan.label+" · "+(price ?: "Google Play fiyatı yükleniyor")+duration,
-                                prominent=plan==PremiumPlan.YEARLY,
-                                enabled=price!=null,
-                                onClick={ (context as? ComponentActivity)?.let {
-                                    purchaseManager.buyPremium(it,plan)
-                                } }
-                            )
+                    Text(
+                        "Tek Premium içerik · ${if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) "Üç" else "Bir"} ödeme seçeneği",
+                        color=SettingsPalette.gold,fontWeight=FontWeight.Bold,fontSize=13.sp
+                    )
+                    val offeredPlans = if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
+                        PremiumPlan.entries.toList()
+                    else listOf(PremiumPlan.LIFETIME)
+                    offeredPlans.forEach { plan ->
+                        val price=prices[plan]
+                        val suffix=when(plan) {
+                            PremiumPlan.MONTHLY->" / ay · otomatik yenilenir"
+                            PremiumPlan.YEARLY->" / yıl · otomatik yenilenir"
+                            PremiumPlan.LIFETIME->" · tek ödeme, süresiz"
                         }
-                        Text("Aylık ve yıllık aynı Premium haklarını sağlar; " +
-                            "iptal edilirse erişim ödenmiş sürenin sonunda sona erer. " +
-                            "Ömür boyu plan otomatik yenilenmez.",
-                            color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
-                    } else {
-                        val lifetimePrice=prices[PremiumPlan.LIFETIME]
+                        val hint=if(price!=null) price else
+                            if(catalog is PurchaseManager.CatalogStatus.Loading)
+                                "Fiyat sorgulanıyor"
+                            else "Google Play'de şu anda kullanılamıyor"
                         SettingsAction(
-                            "Ömür Boyu Premium · " +
-                                (lifetimePrice ?: "Google Play fiyatı yükleniyor"),
-                            prominent=true,
-                            enabled=lifetimePrice!=null,
-                            onClick={ (context as? ComponentActivity)?.let {
-                                purchaseManager.buyPremium(it,PremiumPlan.LIFETIME)
-                            } }
+                            plan.label+" · "+hint+suffix,
+                            prominent=plan==PremiumPlan.YEARLY ||
+                                (!BuildConfig.MM_SUBSCRIPTIONS_ENABLED && plan==PremiumPlan.LIFETIME),
+                            enabled=price!=null && catalog !is PurchaseManager.CatalogStatus.Loading,
+                            onClick={
+                                purchaseAttempted = true
+                                lastCheckoutStatus = null
+                                (context as? ComponentActivity)?.let {
+                                    purchaseManager.buyPremium(it,plan)
+                                }
+                            }
                         )
+                    }
+                    when(val catalogState = catalog) {
+                        is PurchaseManager.CatalogStatus.Loading -> {
+                            Row(verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                                CircularProgressIndicator(
+                                    modifier=Modifier.size(18.dp),strokeWidth=2.dp,
+                                    color=SettingsPalette.gold)
+                                Text("Google Play ürünleri kontrol ediliyor…",
+                                    color=SettingsPalette.secondary,fontSize=12.sp)
+                            }
+                        }
+                        is PurchaseManager.CatalogStatus.Error ->
+                            Text(catalogState.message,color=SettingsPalette.gold,
+                                fontSize=12.sp,lineHeight=17.sp)
+                        is PurchaseManager.CatalogStatus.Ready -> {
+                            if(catalogState.unavailablePlans.isNotEmpty()) {
+                                Text(
+                                    "Bazı ödeme seçenekleri bu Google Play hesabında " +
+                                        "görüntülenemiyor. Diğer seçenekler çalışabilir.",
+                                    color=SettingsPalette.gold,fontSize=12.sp,lineHeight=17.sp)
+                            }
+                        }
+                    }
+                    if(catalog !is PurchaseManager.CatalogStatus.Loading &&
+                        (catalog is PurchaseManager.CatalogStatus.Error ||
+                         prices.size < offeredPlans.size)) {
+                        SettingsAction("Google Play fiyatlarını yeniden kontrol et",
+                            onClick={ purchaseManager.refreshPlanPrices() })
+                        Text("Sorun devam ederse Play Store'un güncel olduğunu, " +
+                            "doğru Google hesabını ve internet bağlantısını kontrol edin.",
+                            color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
+                    }
+                    if(purchaseAttempted) {
+                        val checkoutMessage = when(lastCheckoutStatus) {
+                            is PurchaseManager.PurchaseStatus.ServiceUnavailable ->
+                                "Google Play ödeme servisine bağlanılamadı. Yeniden deneyin."
+                            is PurchaseManager.PurchaseStatus.ProductNotFound ->
+                                "Seçilen ödeme planı Google Play'de bulunamadı."
+                            is PurchaseManager.PurchaseStatus.Failed ->
+                                "Google Play ödeme ekranı açılamadı (kod " +
+                                    (lastCheckoutStatus as PurchaseManager.PurchaseStatus.Failed).code +
+                                    "). Yeniden deneyin."
+                            is PurchaseManager.PurchaseStatus.Pending ->
+                                "Satın alma işlemi beklemede. Google Play'den tamamlanmasını bekleyin."
+                            is PurchaseManager.PurchaseStatus.AlreadyOwned ->
+                                "Premium erişiminiz zaten etkin."
+                            is PurchaseManager.PurchaseStatus.Canceled ->
+                                "Satın alma iptal edildi."
+                            is PurchaseManager.PurchaseStatus.Success ->
+                                "Satın alma doğrulandı. Premium erişiminiz güncelleniyor."
+                            else -> null
+                        }
+                        if(checkoutMessage!=null) Text(checkoutMessage,
+                            color=SettingsPalette.gold,fontSize=12.sp,lineHeight=17.sp)
+                    }
+                    if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) {
+                        Text("Aylık ve yıllık abonelikler aynı Premium haklarını sağlar. " +
+                            "İptal durumunda erişim ödenmiş sürenin sonunda sona erer; " +
+                            "ömür boyu plan otomatik yenilenmez.",
+                            color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
                     }
                     OutlinedButton(onClick={codeDialog=true},
                         modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),

@@ -9,7 +9,7 @@
         <item name="windowSplashScreenBackground">@color/colorPrimary</item>
         
         <!-- Splash ekranında gösterilecek ikon -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_brand_mark</item>
         
         <!-- İkonun animasyon süresi (ms cinsinden) -->
         <item name="windowSplashScreenAnimationDuration">750</item>

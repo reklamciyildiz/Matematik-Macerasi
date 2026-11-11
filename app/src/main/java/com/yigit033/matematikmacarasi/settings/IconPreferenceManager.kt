@@ -13,6 +13,7 @@ class IconPreferenceManager(context: Context) {
         private const val KEY_SELECTED_ICON = "selected_icon"
         
         // İkon tipleri
+        const val ICON_BRAND = "brand"
         const val ICON_DEFAULT = "default"
         const val ICON_ROBOT = "robot"
         const val ICON_SPACE = "space"
@@ -41,6 +42,6 @@ class IconPreferenceManager(context: Context) {
      * Seçili ikonu getir
      */
     fun getSelectedIcon(): String {
-        return preferences.getString(KEY_SELECTED_ICON, ICON_DEFAULT) ?: ICON_DEFAULT
+        return preferences.getString(KEY_SELECTED_ICON, ICON_BRAND) ?: ICON_BRAND
     }
 } 

@@ -209,10 +209,27 @@ class IconSelectorActivity : ComponentActivity() {
                             modifier = Modifier.padding(top = 32.dp)
                         )
                     } else {
-                        // Varsayılan ikon - Matematik Macerası (herkese açık)
+                        // Yeni resmî marka ikonu - tüm kullanıcılara açık.
                     ModernIconOption(
-                        title = "Matematik Macerası",
-                        description = "Renkli matematik macerası ikonu",
+                        title = "Matematik Macerası • Yeni",
+                        description = "Kaşif ve pusulalı resmî macera ikonu",
+                        iconResId = R.drawable.ic_brand_mark,
+                        isSelected = selectedIcon == IconPreferenceManager.ICON_BRAND,
+                        backgroundColor = Color(0xFF0876BF),
+                        isLocked = false,
+                        onSelect = {
+                            if (changeAppIcon(IconPreferenceManager.ICON_BRAND)) {
+                                selectedIcon = IconPreferenceManager.ICON_BRAND
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Klasik ikon ve daha önce kaydedilmiş seçimler korunur.
+                    ModernIconOption(
+                        title = "Klasik Matematik Macerası",
+                        description = "Önceki orijinal uygulama ikonu",
                         iconResId = R.drawable.ic_math_adventure_foreground,
                         isSelected = selectedIcon == IconPreferenceManager.ICON_DEFAULT,
                         backgroundColor = Color(0xFF2196F3), // Mavi

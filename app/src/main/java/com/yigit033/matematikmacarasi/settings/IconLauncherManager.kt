@@ -12,19 +12,22 @@ import android.util.Log
 object IconLauncherManager {
     private const val TAG="IconLauncherManager"
     private const val MAIN=".MainActivity"
+    private const val BRAND=".BrandIconActivity"
     private const val DEFAULT=".DefaultIconActivity"
     private const val ROBOT=".RobotIconActivity"
     private const val SPACE=".SpaceIconActivity"
 
     private fun aliasFor(icon:String):String = when(icon) {
+        IconPreferenceManager.ICON_BRAND -> BRAND
+        IconPreferenceManager.ICON_DEFAULT -> DEFAULT
         IconPreferenceManager.ICON_ROBOT -> ROBOT
         IconPreferenceManager.ICON_SPACE -> SPACE
-        else -> DEFAULT
+        else -> BRAND
     }
 
     fun apply(context:Context,icon:String):Boolean {
         val pm=context.packageManager
-        val names=listOf(DEFAULT,ROBOT,SPACE)
+        val names=listOf(BRAND,DEFAULT,ROBOT,SPACE)
         val selected=aliasFor(icon)
         val target=ComponentName(context.packageName,context.packageName+MAIN)
         try {
@@ -61,13 +64,13 @@ object IconLauncherManager {
             return true
         } catch(e:Exception) {
             Log.e(TAG,"Launcher aliases could not be synchronized",e)
-            // The installed default icon always remains a recoverable entry point.
+            // Restore the new brand icon as a recoverable launcher entry point.
             runCatching {
                 pm.setComponentEnabledSetting(target,
                     PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                     PackageManager.DONT_KILL_APP)
                 pm.setComponentEnabledSetting(
-                    ComponentName(context.packageName,context.packageName+DEFAULT),
+                    ComponentName(context.packageName,context.packageName+BRAND),
                     PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                     PackageManager.DONT_KILL_APP)
             }.onFailure {Log.e(TAG,"Default launcher recovery failed",it)}

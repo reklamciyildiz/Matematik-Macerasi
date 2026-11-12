@@ -111,7 +111,9 @@ async function verifyPurchase(body,env,nowMs=Date.now()) {
   const tokenHash=await digest("subscription-token:v1:"+body.purchaseToken);
   await saveReceipt(env.DB,tokenHash,valid,nowMs);
   if(!valid.entitled)return json({status:"NOT_ENTITLED"},403);
-  if(valid.needsAcknowledgement)await acknowledgeGoogle(body.purchaseToken,env,fetch,nowMs);
+  // Grant the device-bound entitlement before acknowledging the purchase.
+  // An intermittent Google acknowledge error must not hide a legitimately
+  // verified Premium entitlement. The Android client and RTDN retry the ack.
   await env.DB.prepare(
     "INSERT INTO subscription_installs(token_hash,device_hash,verified_at)"+
     " VALUES(?,?,?) ON CONFLICT(token_hash,device_hash) DO UPDATE SET"+
@@ -122,8 +124,18 @@ async function verifyPurchase(body,env,nowMs=Date.now()) {
     deviceId:body.deviceId,tokenHash,plan:valid.basePlanId,
     expiryTime:valid.expiryTime
   },nowMs);
+  let acknowledgement="CONFIRMED";
+  if(valid.needsAcknowledgement) {
+    try {
+      await acknowledgeGoogle(body.purchaseToken,env,fetch,nowMs);
+    } catch {
+      acknowledgement="RETRY_REQUIRED";
+      // Never expose purchase tokens, server credentials, or API responses.
+      console.warn("mmplay_ack_retry_required");
+    }
+  }
   return json({status:"ACTIVE",lease,expiryTime:valid.expiryTime,
-    basePlanId:valid.basePlanId});
+    basePlanId:valid.basePlanId,acknowledgement});
 }
 function decodePubSubPayload(encoded) {
   if(typeof encoded!=="string" || encoded.length>12000)return null;
@@ -163,9 +175,17 @@ async function fetchPubSub(env, fetchImpl=fetch,nowMs=Date.now()) {
       });
       await saveReceipt(env.DB,
         await digest("subscription-token:v1:"+purchaseToken), valid,nowMs);
+      // Google-verified purchased tokens can reach us while the app is offline
+      // or a device's Integrity verification is temporarily unavailable.
+      // Recover the missing Google Play purchase acknowledgement here too.
+      // Never acknowledge pending, expired or on-hold subscriptions.
+      if(valid.entitled && valid.needsAcknowledgement)
+        await acknowledgeGoogle(purchaseToken,env,fetchImpl,nowMs);
       if(typeof entry.ackId==="string")ackIds.push(entry.ackId);
     } catch {
-      // Do not acknowledge transient API or DB errors. Pub/Sub will retry.
+      // A failed Google ack or API/DB error must leave the Pub/Sub message
+      // unacknowledged so the next poll retries. No tokens in logs.
+      console.warn("mmplay_rtdn_verify_or_ack_retry_required");
     }
   }
   if(ackIds.length) {

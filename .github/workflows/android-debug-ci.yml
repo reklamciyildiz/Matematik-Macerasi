@@ -86,9 +86,11 @@ jobs:
           # Developer's local gradle.properties stays private and unchanged.
           cat >> gradle.properties <<'PROPS'
           android.useAndroidX=true
-          org.gradle.jvmargs=-Xmx2560m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
-          org.gradle.workers.max=2
-          kotlin.daemon.jvmargs=-Xmx1024m
+          # One compiler JVM avoids a 1 GB Kotlin daemon OOM in large
+          # Compose illustration methods; the runner has a bounded 4 GB heap.
+          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
+          org.gradle.workers.max=1
+          kotlin.compiler.execution.strategy=in-process
           PROPS
 
       - name: Verify geometry v3, legacy bridge and mobile safe navigation

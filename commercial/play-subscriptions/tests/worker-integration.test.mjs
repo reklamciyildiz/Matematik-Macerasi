@@ -19,7 +19,7 @@ const bearer="qa-service-account-access-token-with-correct-length";
 const payload=()=>({purchaseToken:token,deviceId,integrityToken});
 
 async function runScenario({plan="monthly",state="SUBSCRIPTION_STATE_ACTIVE",
-    recognition="PLAY_RECOGNIZED"}={}) {
+    recognition="PLAY_RECOGNIZED",ackStatus=200}={}) {
   const calls=[];
   const sql=[];
   const env={
@@ -60,7 +60,7 @@ async function runScenario({plan="monthly",state="SUBSCRIPTION_STATE_ACTIVE",
     }
     if(String(url).includes(":acknowledge")) {
       assert.equal(options.method,"POST");
-      return new Response("{}",{status:200});
+      return new Response("{}",{status:ackStatus});
     }
     throw new Error("UNEXPECTED_EXTERNAL_API");
   };
@@ -79,6 +79,7 @@ for(const plan of ["monthly","yearly"]) {
     const result=await runScenario({plan});
     assert.equal(result.status,200);
     assert.equal(result.body.status,"ACTIVE");
+    assert.equal(result.body.acknowledgement,"CONFIRMED");
     assert.equal(result.body.basePlanId,plan);
     assert.equal(result.calls.filter(s=>s.includes("purchases/subscriptionsv2/tokens/")).length,1);
     assert.equal(result.calls.filter(s=>s.includes(":acknowledge")).length,1);
@@ -114,4 +115,16 @@ test("unrecognized Play app cannot reach paid lookup or D1",async()=>{
   assert.equal(r.body.error,"INTEGRITY_DENIED");
   assert.equal(r.calls.some(x=>x.includes("purchases/subscriptionsv2/tokens/")),false);
   assert.equal(r.sql.length,0);
+});
+
+test("verified purchase retains signed Premium lease when Google ack is transiently unavailable",async()=>{
+  const r=await runScenario({ackStatus:503});
+  assert.equal(r.status,200);
+  assert.equal(r.body.status,"ACTIVE");
+  assert.equal(r.body.acknowledgement,"RETRY_REQUIRED");
+  assert.equal(r.calls.filter(s=>s.includes("purchases/subscriptionsv2/tokens/")).length,1);
+  assert.equal(r.calls.filter(s=>s.includes(":acknowledge")).length,1);
+  assert.ok(r.body.lease.split(".").length===3);
+  assert.equal(r.sql.length,2,"grant only verified, persisted purchases");
+  assert.ok(r.sql.every(row=>!JSON.stringify(row).includes(token)));
 });

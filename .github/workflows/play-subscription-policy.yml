@@ -46,7 +46,7 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          foreach ($path in @("commercial/play-subscriptions/scripts/setup-staging.ps1", "commercial/play-subscriptions/scripts/configure-rtdn.ps1", "commercial/play-subscriptions/scripts/enable-internal-play-qa.ps1", "commercial/play-subscriptions/scripts/repair-android-play-public-key.ps1")) {
+          foreach ($path in @("commercial/play-subscriptions/scripts/setup-staging.ps1", "commercial/play-subscriptions/scripts/configure-rtdn.ps1", "commercial/play-subscriptions/scripts/enable-internal-play-qa.ps1", "commercial/play-subscriptions/scripts/deploy-acknowledgement-recovery.ps1", "commercial/play-subscriptions/scripts/repair-android-play-public-key.ps1")) {
             $errors = $null
             $tokens = $null
             $null = [System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$tokens, [ref]$errors)

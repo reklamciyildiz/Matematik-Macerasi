@@ -95,6 +95,9 @@ class PurchaseManager private constructor(
         data class Error(val message:String):RestoreState()
     }
     private var billingConnecting=false
+    // In-memory only: purchase tokens must never be stored in logs or prefs.
+    // Avoid competing BillingClient acknowledge calls for the same purchase.
+    private val subscriptionAcksInFlight = mutableSetOf<String>()
     
     // Satın alma durumu için LiveData
     private val _purchaseStatus = MutableLiveData<PurchaseStatus>()
@@ -281,6 +284,12 @@ class PurchaseManager private constructor(
                         PlaySubscriptionClient.Verdict.UNAVAILABLE ->
                             playSubscriptionClient.isPremiumOffline()
                     }
+                    if(result==PlaySubscriptionClient.Verdict.VERIFIED &&
+                        !purchase.isAcknowledged) {
+                        // Only acknowledge after Play server validation and a
+                        // device-bound signed Premium lease have succeeded.
+                        acknowledgeVerifiedSubscription(purchase)
+                    }
                     _subscriptionActive.value=active
                     _premiumState.value=isPremiumSync()
                     _purchaseStatus.value=if(active) PurchaseStatus.Success
@@ -320,6 +329,51 @@ class PurchaseManager private constructor(
         }
     }
     
+    /**
+     * Redundant subscription acknowledgement after a VERIFIED backend lease.
+     * The Cloudflare Worker is primary; this handles lost RTDN callbacks,
+     * temporary API errors, and Google's accelerated license-test deadline.
+     * This must NEVER be called for PENDING, DENIED or UNAVAILABLE purchases.
+     */
+    private fun acknowledgeVerifiedSubscription(purchase: Purchase, attempt: Int = 0) {
+        if(!BuildConfig.MM_SUBSCRIPTIONS_ENABLED ||
+            purchase.purchaseState!=Purchase.PurchaseState.PURCHASED ||
+            !purchase.products.contains(PREMIUM_SUBSCRIPTION_SKU) ||
+            purchase.isAcknowledged) return
+        val token=purchase.purchaseToken
+        if(!subscriptionAcksInFlight.add(token)) return
+        val params=AcknowledgePurchaseParams.newBuilder()
+            .setPurchaseToken(token).build()
+        try {
+            billingClient.acknowledgePurchase(params) { result ->
+                subscriptionAcksInFlight.remove(token)
+                when(result.responseCode) {
+                    BillingClient.BillingResponseCode.OK ->
+                        Log.i(TAG,"Verified Google Play subscription acknowledged")
+                    BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
+                    BillingClient.BillingResponseCode.NETWORK_ERROR,
+                    BillingClient.BillingResponseCode.ERROR -> {
+                        Log.w(TAG,"Subscription acknowledgement transient failure code=" +
+                            result.responseCode)
+                        if(attempt<3) scope.launch {
+                            delay(3_000L * (attempt+1))
+                            // Preserve the signed verified entitlement requirement
+                            // on each retry, not just on the initial call.
+                            if(playSubscriptionClient.isPremiumOffline())
+                                acknowledgeVerifiedSubscription(purchase,attempt+1)
+                        }
+                    }
+                    else -> Log.w(TAG,"Subscription acknowledgement outcome code=" +
+                        result.responseCode + " (Google Play may have already acknowledged)")
+                }
+            }
+        } catch (error: Exception) {
+            subscriptionAcksInFlight.remove(token)
+            Log.w(TAG,"Google Play acknowledgement request failed: " +
+                error.javaClass.simpleName)
+        }
+    }
+
     /**
      * Satın almayı onaylar (acknowledge).
      */
@@ -425,7 +479,10 @@ class PurchaseManager private constructor(
             val verdict=withContext(Dispatchers.IO) {
                 playSubscriptionClient.verifyAndStore(purchase.purchaseToken)
             }
-            if(verdict==PlaySubscriptionClient.Verdict.VERIFIED)return true
+            if(verdict==PlaySubscriptionClient.Verdict.VERIFIED) {
+                if(!purchase.isAcknowledged) acknowledgeVerifiedSubscription(purchase)
+                return true
+            }
         }
         return playSubscriptionClient.isPremiumOffline()
     }

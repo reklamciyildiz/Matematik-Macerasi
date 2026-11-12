@@ -1,21 +1,33 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# Matematik Macerası - release R8 guardrails (2026-11)
+# Narrow, reflection-specific rules. DO NOT add -dontobfuscate,
+# -dontoptimize, -dontshrink, or blanket app/package -keep rules.
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# R8 obfuscates remaining implementation; consumer rules from AndroidX,
+# Compose, Play Billing, Firebase and Play Integrity are retained.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Retrofit 2.9 / Gson 2.10.1 / Kotlin suspend endpoints need generic
+# response types and runtime HTTP/JSON annotations at reflection time.
+-keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*
+-keep class kotlin.coroutines.Continuation
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Gson 2.10.1 predates the library's bundled R8 rules.
+# TypeToken<T> uses a generic signature to recover the actual T.
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# JSON keys remain stable when fields are explicitly annotated, even after
+# obfuscation. Never retain all Kotlin model classes or names as a workaround.
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
+
+# Retrofit 2.9 uses dynamic proxies: annotated API methods are reflected.
+# Keep only those annotated interface methods, not the entire library.
+-keepclassmembers interface * {
+    @retrofit2.http.* <methods>;
+}
+
+# Keep meaningful exception line numbers for retracing Play Console reports;
+# obfuscation stays enabled and filenames can be normalized.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

@@ -37,7 +37,7 @@ if($content -match $five) {
     throw "Unexpected cron configuration. Expected */5 or * * * * *; refusing change."
 }
 Write-Host "Running subscription Worker policy and recovery tests..."
-& node --test tests/*.test.mjs
+& node --test
 if ($LASTEXITCODE -ne 0) { throw "Subscription recovery tests failed; deployment cancelled." }
 Write-Host "Deploying subscription acknowledgement recovery; 1-minute RTDN poll."
 & npx --yes wrangler@4.158.0 deploy

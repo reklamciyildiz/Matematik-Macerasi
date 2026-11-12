@@ -41,18 +41,29 @@ jobs:
             "configuration_version":"1"
           }
           JSON
-          cat >> gradle.properties <<'PROPS'
+          # CI ONLY: non-functional/public placeholders ensure R8 keeps the
+          # enabled Play SUBS and Cloudflare code paths in the optimized APK.
+          # The resulting APK cannot verify a real purchase and MUST NOT ship.
+          DUMMY_PUBLIC_RSA_B64="$(printf 'A%.0s' {1..360})"
+          cat >> gradle.properties <<PROPS
           android.useAndroidX=true
-          org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
-          org.gradle.workers.max=2
-          kotlin.daemon.jvmargs=-Xmx1024m
+          org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
+          org.gradle.workers.max=1
+          kotlin.compiler.execution.strategy=in-process
+          MM_USE_CLOUDFLARE=true
+          MM_CLOUDFLARE_URL=https://r8qa.invalid
+          MM_CLOUDFLARE_PUBLIC_KEY_B64=${DUMMY_PUBLIC_RSA_B64}
+          MM_SUBSCRIPTIONS_ENABLED=true
+          MM_PLAY_SUBS_URL=https://r8qa.invalid
+          MM_PLAY_SUBS_PUBLIC_KEY_B64=${DUMMY_PUBLIC_RSA_B64}
+          MM_PLAY_INTEGRITY_PROJECT_NUMBER=123456789012
           PROPS
       - name: Compile optimized QA variant (not publishable)
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon :app:assembleR8Qa
-      - name: Locate R8 mapping
+      - name: Validate mapping and prove code was actually renamed
         shell: bash
         run: |
-          test -f app/build/outputs/mapping/r8Qa/mapping.txt
-          echo "::notice::Minified QA APK and mapping generated; not a safe production-release verdict."
+          python3 scripts/check_r8_mapping.py app/build/outputs/mapping/r8Qa/mapping.txt
+          echo "::notice::CI-only dummy backend keys and URLs. Not publishable. Mapping does not guarantee Play Console's 25 percent DEX metrics."

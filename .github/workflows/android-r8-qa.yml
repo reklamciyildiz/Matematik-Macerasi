@@ -58,6 +58,14 @@ jobs:
           MM_PLAY_SUBS_PUBLIC_KEY_B64=${DUMMY_PUBLIC_RSA_B64}
           MM_PLAY_INTEGRITY_PROJECT_NUMBER=123456789012
           PROPS
+      - name: Validate optimized local Play build script syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile(
+            "scripts/build-optimized-play-qa.ps1", [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) { $errors | Format-List; exit 1 }
       - name: Compile optimized QA variant (not publishable)
         run: |
           chmod +x ./gradlew

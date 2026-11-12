@@ -43,6 +43,30 @@ private val dark = Color(0xFF174560)
 @Composable
 internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
     val v = model.values
+    when(model.kind) {
+        PracticeVisualKind.AREA_GRID,
+        PracticeVisualKind.DATA_BARS,
+        PracticeVisualKind.CHANCE_CHIPS -> UpperGradeVisualGroup1(model)
+
+        PracticeVisualKind.SIGNED_WALK,
+        PracticeVisualKind.ALGEBRA_BALANCE,
+        PracticeVisualKind.POWER_FACTORS -> UpperGradeVisualGroup2(model)
+
+        PracticeVisualKind.RIGHT_TRIANGLE,
+        PracticeVisualKind.VOLUME_LAYERS,
+        PracticeVisualKind.MIRROR_POINTS -> UpperGradeVisualGroup3(model)
+
+        PracticeVisualKind.MULTIPLES_LISTS,
+        PracticeVisualKind.LINEAR_INPUT,
+        PracticeVisualKind.FACTOR_LISTS,
+        PracticeVisualKind.RATIO_GROUPS -> UpperGradeVisualGroup4(model)
+        else -> Unit
+    }
+}
+
+@Composable
+private fun UpperGradeVisualGroup1(model: PracticeVisualModel) {
+    val v = model.values
     when (model.kind) {
         PracticeVisualKind.AREA_GRID -> {
             Column(horizontalAlignment = Alignment.CenterHorizontally,
@@ -107,7 +131,14 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
                     color = pale, fontSize = 11.sp)
             }
         }
+        else -> Unit
+    }
+}
 
+@Composable
+private fun UpperGradeVisualGroup2(model: PracticeVisualModel) {
+    val v = model.values
+    when (model.kind) {
         PracticeVisualKind.SIGNED_WALK -> {
             Canvas(Modifier.fillMaxWidth().height(105.dp)) {
                 val baseline = size.height * .67f
@@ -201,7 +232,14 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
             Text("Taban her çarpanda aynıdır; çarpımı sen hesapla.",
                 color = pale, fontSize = 12.sp)
         }
+        else -> Unit
+    }
+}
 
+@Composable
+private fun UpperGradeVisualGroup3(model: PracticeVisualModel) {
+    val v = model.values
+    when (model.kind) {
         PracticeVisualKind.RIGHT_TRIANGLE -> {
             Canvas(Modifier.fillMaxWidth().height(157.dp)) {
                 val scale = minOf(
@@ -277,7 +315,14 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
             Text("Aynı eksenin iki yanındaki noktaları karşılaştır.",
                 color = pale, fontSize = 12.sp)
         }
+        else -> Unit
+    }
+}
 
+@Composable
+private fun UpperGradeVisualGroup4(model: PracticeVisualModel) {
+    val v = model.values
+    when (model.kind) {
         PracticeVisualKind.MULTIPLES_LISTS -> {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -375,7 +420,6 @@ internal fun UpperGradePracticeIllustration(model: PracticeVisualModel) {
             Text("Nicelikler arasındaki ilişkiyi kur.",
                 color = yellow, fontSize = 12.sp)
         }
-
-        else -> Unit // Primary-school diagrams use their own renderers.
+        else -> Unit
     }
 }

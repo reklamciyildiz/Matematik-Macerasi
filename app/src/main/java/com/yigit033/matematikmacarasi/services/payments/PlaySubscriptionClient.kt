@@ -10,6 +10,7 @@ import com.yigit033.matematikmacarasi.services.DeviceIdManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -38,7 +39,11 @@ internal class PlaySubscriptionClient(private val context: Context) {
             return@withContext Verdict.DENIED
         try {
             val deviceId=device.getDeviceId()
-            val integrityToken=integrityToken(purchaseToken,deviceId)
+            // Integrity provider setup can stall under a broken Play Services
+            // connection. Bound the wait so refresh/restore can retry safely.
+            val integrityToken=withTimeout(20_000L) {
+                integrityToken(purchaseToken,deviceId)
+            }
             if(!urlBase.startsWith("https://") || urlBase.contains("?") || urlBase.contains("#"))
                 return@withContext Verdict.UNAVAILABLE
             val conn=URL("$urlBase/v1/verify").openConnection() as HttpURLConnection
@@ -62,7 +67,12 @@ internal class PlaySubscriptionClient(private val context: Context) {
                     }
                     return@withContext Verdict.UNAVAILABLE
                 }
-                if(conn.responseCode!=200)return@withContext Verdict.UNAVAILABLE
+                if(conn.responseCode!=200) {
+                    // HTTP status only; never log tokens, lease or response body.
+                    Log.w("PlaySubscriptionClient",
+                        "Subscription verification HTTP status "+conn.responseCode)
+                    return@withContext Verdict.UNAVAILABLE
+                }
                 val reply=conn.inputStream.bufferedReader().use {
                     JSONObject(it.readText().take(8000))
                 }

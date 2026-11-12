@@ -15,6 +15,16 @@ import {verifyPlayIntegrity} from "./play-integrity.mjs";
 
 const MAX_LEASE_SECONDS=24*60*60;
 const encoder=new TextEncoder();
+const DIAGNOSTIC_CODES=new Set([
+  "PLAY_AUTH_FAILED","PLAY_AUTH_INVALID_RESPONSE",
+  "PLAY_SUBSCRIPTION_VERIFICATION_FAILED","PLAY_ACKNOWLEDGEMENT_FAILED",
+  "PLAY_INTEGRITY_REJECTED","INVALID_INTEGRITY_TOKEN","INVALID_BINDING_INPUT",
+  "MISSING_PLAY_ACCOUNT","INVALID_PLAY_ACCOUNT","MISSING_PLAY_LEASE_KEY",
+  "NO_ENTITLEMENT_TO_SIGN","PUBSUB_PULL_FAILED","PUBSUB_ACK_FAILED"
+]);
+const safeFailureCode=error=>
+  DIAGNOSTIC_CODES.has(error?.message)?error.message:"UNCLASSIFIED";
+
 const json=(payload,status=200)=>new Response(JSON.stringify(payload),{
   status,headers:{"content-type":"application/json; charset=utf-8",
     "cache-control":"no-store","x-content-type-options":"nosniff"},
@@ -128,6 +138,7 @@ async function verifyPurchase(body,env,nowMs=Date.now()) {
   if(valid.needsAcknowledgement) {
     try {
       await acknowledgeGoogle(body.purchaseToken,env,fetch,nowMs);
+      console.info("mmplay_ack_confirmed");
     } catch {
       acknowledgement="RETRY_REQUIRED";
       // Never expose purchase tokens, server credentials, or API responses.
@@ -179,13 +190,15 @@ async function fetchPubSub(env, fetchImpl=fetch,nowMs=Date.now()) {
       // or a device's Integrity verification is temporarily unavailable.
       // Recover the missing Google Play purchase acknowledgement here too.
       // Never acknowledge pending, expired or on-hold subscriptions.
-      if(valid.entitled && valid.needsAcknowledgement)
+      if(valid.entitled && valid.needsAcknowledgement) {
         await acknowledgeGoogle(purchaseToken,env,fetchImpl,nowMs);
+        console.info("mmplay_rtdn_ack_confirmed");
+      }
       if(typeof entry.ackId==="string")ackIds.push(entry.ackId);
-    } catch {
+    } catch(error) {
       // A failed Google ack or API/DB error must leave the Pub/Sub message
       // unacknowledged so the next poll retries. No tokens in logs.
-      console.warn("mmplay_rtdn_verify_or_ack_retry_required");
+      console.warn("mmplay_rtdn_verify_or_ack_retry_required",safeFailureCode(error));
     }
   }
   if(ackIds.length) {
@@ -216,7 +229,8 @@ export default {
       if(!limit?.success)return json({error:"RATE_LIMITED"},429);
       return await verifyPurchase(await bodyOf(request),env);
     } catch(error) {
-      // Never emit purchase token, private key, device ID or API response text.
+      // No raw external API responses, tokens or secrets: diagnostic code only.
+      console.warn("mmplay_verify_failed",safeFailureCode(error));
       if(error.message==="PLAY_INTEGRITY_REJECTED" ||
          error.message==="INVALID_INTEGRITY_TOKEN" ||
          error.message==="INVALID_BINDING_INPUT")

@@ -6,6 +6,7 @@ root = Path(__file__).resolve().parents[1]
 app = root / "app/src/main/java/com/yigit033/matematikmacarasi"
 source = (app / "services/payments/PurchaseManager.kt").read_text(encoding="utf-8")
 settings = (app / "screens/SettingsScreen.kt").read_text(encoding="utf-8")
+subscription = (app / "services/payments/PlaySubscriptionClient.kt").read_text(encoding="utf-8")
 
 checks = {
     "legacy INAPP retained": 'PREMIUM_SKU = "matematik_macerasi_premium"' in source,
@@ -26,6 +27,15 @@ checks = {
     "UI visible error state": "catalogState.message" in settings,
     "original code redemption retained": "Premium Kodum Var" in settings,
     "original purchase restoration retained": "Satın Alımları Geri Yükle" in settings,
+    "subscription ack only after Play server verification":
+        "if(result==PlaySubscriptionClient.Verdict.VERIFIED" in source and
+        "acknowledgeVerifiedSubscription(purchase)" in source,
+    "never ack pending subscription": "purchase.purchaseState!=Purchase.PurchaseState.PURCHASED" in source,
+    "subscription ack retries bounded": "if(attempt<3)" in source and
+        "subscriptionAcksInFlight" in source,
+    "subscription integrity timeout": "withTimeout(20_000L)" in subscription,
+    "purchase token not logged": "Purchase Token: ${purchase.purchaseToken}" not in source,
+
 }
 failures = [k for k,v in checks.items() if not v]
 if failures:

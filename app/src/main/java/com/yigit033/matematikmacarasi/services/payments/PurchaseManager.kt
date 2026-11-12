@@ -371,6 +371,11 @@ class PurchaseManager private constructor(
             subscriptionAcksInFlight.remove(token)
             Log.w(TAG,"Google Play acknowledgement request failed: " +
                 error.javaClass.simpleName)
+            if(attempt<3) scope.launch {
+                delay(3_000L * (attempt+1))
+                if(playSubscriptionClient.isPremiumOffline())
+                    acknowledgeVerifiedSubscription(purchase,attempt+1)
+            }
         }
     }
 

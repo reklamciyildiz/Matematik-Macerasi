@@ -114,9 +114,12 @@ fun AnimatedAvatarView(
         val hasAnimation = animate &&
             avatar.animationType == AvatarAnimationType.LOTTIE &&
             avatar.animationResId != 0
+        // Snapshot the delegated Compose state into a stable local value.
+        // Kotlin cannot smart-cast a delegated property after a null check.
+        val artwork = pilotArtwork
         when {
-            pilotArtwork != null -> Image(
-                bitmap = pilotArtwork,
+            artwork != null -> Image(
+                bitmap = artwork,
                 contentDescription = contentDescription,
                 modifier = Modifier.fillMaxSize().padding(2.dp),
                 contentScale = ContentScale.Fit

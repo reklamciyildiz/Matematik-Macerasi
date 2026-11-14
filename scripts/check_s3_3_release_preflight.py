@@ -73,10 +73,15 @@ require("if(CHILD_AD_DELIVERY_DISABLED) return" in ad,
 avatar_ui=read("screens/AvatarStoreActivity.kt")
 require("TEST MODU: 1 yıldız kazandınız!" not in avatar_ui,
         "debug ad-failure path must never mint stars in production")
-require("Reklam ödülleri şu anda kullanılamıyor." in avatar_ui,
-        "missing explicit unavailable-reward feedback")
-require("if (adManager?.isRewardedAdsEnabled() == true)" in avatar_ui,
-        "avatar store shows disabled child reward advertisements")
+# Avatar 3.0 removed the old rewarded-ad CTA entirely: children now
+# return to games to earn stars, without simulated or disabled ad rewards.
+commerce=read("components/Avatar3CommerceDialogs.kt")
+require("Oyunlara dön ve yıldız kazan" in commerce and
+        "onPlay = {" in avatar_ui,
+        "avatar wallet must provide an honest, non-ad earning route")
+require("showRewardedAd(" not in avatar_ui and
+        "TEST MODU: 1 yıldız kazandınız!" not in avatar_ui,
+        "avatar store must not serve or simulate child-directed rewarded ads")
 require("fun isRewardedAdsEnabled(): Boolean = !CHILD_AD_DELIVERY_DISABLED" in ad,
         "UI ads gate disconnected from child delivery policy")
 require("initializeAdMob()" not in application,

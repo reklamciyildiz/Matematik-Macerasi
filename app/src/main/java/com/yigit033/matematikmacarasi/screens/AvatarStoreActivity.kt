@@ -69,6 +69,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
 import com.yigit033.matematikmacarasi.components.AvatarCollectionHero
+import com.yigit033.matematikmacarasi.components.AvatarPremiumGateDialog
 import com.yigit033.matematikmacarasi.models.AvatarAnimationType
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.rememberScrollState
@@ -1347,271 +1348,25 @@ fun AvatarStoreScreen(
             }
         }
         
-        // Premium gerekli diyaloğu
+        // Avatar 3.0: single concise dark Premium gate. No direct checkout
+        // here; Settings owns monthly, yearly and lifetime Google Play flows.
         if (showPremiumRequiredDialog) {
-            Dialog(onDismissRequest = { showPremiumRequiredDialog = false }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth(0.95f)
-                        .fillMaxHeight(0.8f)
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    backgroundColor = Color.White,
-                    elevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Premium Başlık
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_premium),
-                                contentDescription = "Premium",
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "Premium Gerekli",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp,
-                                color = Color(0xFF5D35A0)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(12.dp))
-                        
-                        // Avatar bilgisi
-                        Text(
-                            text = "${avatarNeedingPremium?.name ?: "Bu avatar"} açmak için Premium üyelik gerekiyor.",
-                            color = Color(0xFF424242),
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 16.sp,
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Ayırıcı
-                        Divider(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp),
-                            color = Color(0xFFEEEEEE),
-                            thickness = 1.dp
-                        )
-                        
-                        // Kaydırılabilir Premium İçerik Alanı
-                        val scrollState = rememberScrollState()
-                        
-                        // Scroll durumuna göre gösterge ikonunun görünürlüğünü hesapla
-                        val scrollIndicatorVisible = scrollState.value < scrollState.maxValue && !scrollState.isScrollInProgress
-                        
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .verticalScroll(scrollState)
-                                    .padding(horizontal = 8.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                // Premium Başlığı
-                                Text(
-                                    text = "🎮 Matematik Kahramanlarının Abisi Burada! 🎮",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    color = Color(0xFF5D35A0),
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                
-                                Spacer(modifier = Modifier.height(12.dp))
-                                
-                                // Tanıtım İçeriği - Görsel Olarak Daha Çekici
-                                Text(
-                                    text = "Selam küçük kahramanlar! 👋\n" +
-                                          "Sizler için hazırladığım bu özel dünyada, Premium'a geçerek matematik serüveninize süper güçler katabilirsiniz! 🚀",
-                                    fontSize = 15.sp,
-                                    color = Color(0xFF424242),
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 22.sp
-                                )
-                                
-                                Spacer(modifier = Modifier.height(16.dp))
-                                
-                                // Premium Özellikler Başlığı
-                                Text(
-                                    text = "Premium'la:",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF5D35A0),
-                                    textAlign = TextAlign.Center
-                                )
-                                
-                                Spacer(modifier = Modifier.height(12.dp))
-                                
-                                // Premium Özellikleri - Özel Stillendirilmiş
-                                PremiumFeatureCard(text = "7-15 arası tüm avatarların kilidini açın", icon = "🧙‍♂️")
-                                PremiumFeatureCard(text = "Her gün otomatik 5 yıldız bonus kazanın", icon = "🎁")
-                                PremiumFeatureCard(text = "Oyunlardaki gizli istatistikleri keşfedin", icon = "📊")
-                                PremiumFeatureCard(text = "Uygulama ikonunuzu kendinize özel yapın", icon = "🎨")
-                                PremiumFeatureCard(text = "Reklam canavarlarına veda edin", icon = "🚫")
-                                PremiumFeatureCard(text = "Özel aktivitelerle yeteneklerinizi geliştirin", icon = "🧩")
-                                
-                                Spacer(modifier = Modifier.height(16.dp))
-                                
-                                // Motivasyon Metni
-                                Card(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(4.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    backgroundColor = Color(0xFFF5F5F5),
-                                    elevation = 2.dp
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(12.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "Ve unutmayın:",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
-                                            color = Color(0xFF5D35A0)
-                                        )
-                                        
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        
-                                        Text(
-                                            text = "Desteğinizle ben de sizler için daha da harika uygulamalar geliştirebilirim!\n" +
-                                                  "Bir abiniz olarak her zaman sizin iyiliğinizi düşünüyorum. 💬\n" +
-                                                  "Haydi, birlikte büyüyelim ve başarıya ulaşalım! 🌟",
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF333333),
-                                            textAlign = TextAlign.Center,
-                                            lineHeight = 20.sp
-                                        )
-                                    }
-                                }
-                            }
-                            
-                            // Scroll gösterge ikonu
-                            if (scrollIndicatorVisible) {
-                                Box(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .padding(bottom = 8.dp)
-                                        .size(36.dp)
-                                        .background(
-                                            color = Color.White.copy(alpha = 0.8f),
-                                            shape = CircleShape
-                                        )
-                                        .padding(4.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = "Aşağı kaydır",
-                                        tint = Color(0xFF5D35A0)
-                                    )
-                                }
-                            }
-                        }
-                        
-                        // Butonlar
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            // Vazgeç Butonu
-                            OutlinedButton(
-                                onClick = { 
-                                    try {
-                                        showPremiumRequiredDialog = false
-                                    } catch (e: Exception) {
-                                        Log.e("AvatarStoreScreen", "Premium dialog kapatma hatası: ${e.message}", e)
-                                    }
-                                },
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF5D35A0)
-                                ),
-                                border = BorderStroke(1.dp, Color(0xFF5D35A0)),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(48.dp)
-                            ) {
-                                Text(
-                                    text = "Vazgeç", 
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF5D35A0)
-                                )
-                            }
-                            
-                            Spacer(modifier = Modifier.width(12.dp))
-                            
-                            // Premium'a Yükselt Butonu
-                            Button(
-                                onClick = {
-                                    showPremiumRequiredDialog = false
-                                    // Use the canonical Settings paywall. It shows
-                                    // monthly/yearly/lifetime Play prices and owns
-                                    // BillingClient readiness/error handling.
-                                    context.startActivity(
-                                        android.content.Intent(context, SettingsActivity::class.java)
-                                    )
-                                },
-                                colors = ButtonDefaults.buttonColors(
-                                    backgroundColor = Color(0xFFFFD700),
-                                    contentColor = Color(0xFF5D35A0)
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier
-                                    .weight(1.5f)
-                                    .height(48.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.ic_premium),
-                                        contentDescription = null,
-                                        tint = Color(0xFF5D35A0),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = "Premium'a Yükselt",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
-                                        color = Color(0xFF5D35A0),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                            }
-                        }
-                    }
+            AvatarPremiumGateDialog(
+                avatar = avatarNeedingPremium,
+                onDismiss = {
+                    showPremiumRequiredDialog = false
+                    avatarNeedingPremium = null
+                },
+                onViewPlans = {
+                    showPremiumRequiredDialog = false
+                    avatarNeedingPremium = null
+                    context.startActivity(
+                        android.content.Intent(context, SettingsActivity::class.java)
+                    )
                 }
-            }
+            )
         }
-        
+
         // Satın alma onay diyaloğu
         if (showPurchaseConfirmDialog && selectedAvatarForInfo != null) {
             // CoroutineScope tanımlanması burada

@@ -1,5 +1,6 @@
 package com.yigit033.matematikmacarasi.components
 
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -45,6 +48,21 @@ fun AnimatedAvatarView(
     contentDescription: String? = avatar.name,
     animate: Boolean = true
 ) {
+    val context = LocalContext.current
+    // Optional, versioned production-ready WebP overrides. If no asset has
+    // been installed, preserve existing Lottie/XML art without breaking AAB
+    // builds, player ownership or current avatar identity.
+    val pilotArtwork = remember(context, avatar.id, animate) {
+        val suffix = if (animate) "full" else "card"
+        val filename = "avatars3/avatar3_${avatar.id.toString().padStart(2, '0')}_$suffix.webp"
+        try {
+            context.assets.open(filename).use { input ->
+                BitmapFactory.decodeStream(input)?.asImageBitmap()
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
     val palette = remember(avatar.id) {
         val backgrounds = listOf(
             Color(0xFF244F83), Color(0xFF3B3A80),
@@ -69,10 +87,15 @@ fun AnimatedAvatarView(
         val hasAnimation = animate &&
             avatar.animationType == AvatarAnimationType.LOTTIE &&
             avatar.animationResId != 0
-        if (hasAnimation) {
-            AnimatedAvatarArtwork(avatar, contentDescription)
-        } else {
-            AvatarStaticArtwork(avatar, contentDescription)
+        when {
+            pilotArtwork != null -> Image(
+                bitmap = pilotArtwork,
+                contentDescription = contentDescription,
+                modifier = Modifier.fillMaxSize().padding(2.dp),
+                contentScale = ContentScale.Fit
+            )
+            hasAnimation -> AnimatedAvatarArtwork(avatar, contentDescription)
+            else -> AvatarStaticArtwork(avatar, contentDescription)
         }
     }
 }

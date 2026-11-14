@@ -31,7 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
+import com.yigit033.matematikmacarasi.components.Avatar3PlayerPortrait
 import com.yigit033.matematikmacarasi.models.Avatar
 
 /**
@@ -78,10 +78,11 @@ fun ProfileHeader(
                         .border(2.5.dp, HomeColors.StarGold, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    AnimatedAvatarView(
+                    Avatar3PlayerPortrait(
                         avatar = currentAvatar,
                         size = 48.dp,
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(48.dp),
+                        animate = true
                     )
                 }
 

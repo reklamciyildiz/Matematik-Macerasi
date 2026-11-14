@@ -1559,80 +1559,89 @@ fun AvatarItem(
 ) {
     val premium = avatar.id > 6
     val usable = avatar.isUnlocked && (!premium || premiumActive)
-    val edge = when {
-        isSelected -> Color(0xFFFFD783)
-        premium -> Color(0xFF6693AF)
-        else -> Color(0xFF3E7897)
+    val accent = when {
+        isSelected -> Color(0xFF92FFE1)
+        premium -> Color(0xFFFFD783)
+        else -> Color(0xFF83DBFF)
     }
-    Card(
-        modifier = Modifier.fillMaxWidth()
-            .padding(5.dp)
-            .heightIn(min = 208.dp)
-            .border(if (isSelected) 2.dp else 1.dp, edge, RoundedCornerShape(20.dp))
+    val cardShape = RoundedCornerShape(21.dp)
+    androidx.compose.material.Card(
+        modifier = Modifier.fillMaxWidth().padding(5.dp)
+            .heightIn(min = 214.dp)
+            .border(if (isSelected) 2.dp else 1.dp,
+                accent.copy(alpha = if(isSelected) 1f else 0.65f), cardShape)
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        backgroundColor = if (isSelected) Color(0xFF1B5574) else Color(0xFF123B58),
-        elevation = if (isSelected) 7.dp else 2.dp
+        shape = cardShape,
+        backgroundColor = Color(0xFF173F66),
+        elevation = if (isSelected) 8.dp else 3.dp
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        if (isSelected) listOf(Color(0xFF246D83), Color(0xFF103A60))
+                        else if (premium) listOf(Color(0xFF37477C), Color(0xFF132F55))
+                        else listOf(Color(0xFF265C88), Color(0xFF143A60))
+                    )
+                )
+                .padding(horizontal = 10.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End) {
                 Text(
                     when {
-                        isSelected -> "SEÇİLİ"
-                        premium -> "PREMIUM"
-                        else -> "KAŞİF"
+                        isSelected -> "✓ SEÇİLİ"
+                        premium -> "♛ PREMIUM"
+                        usable -> "✓ AÇIK"
+                        else -> "ÜCRETSİZ"
                     },
-                    color = if (isSelected || premium) Color(0xFFFFD783) else Color(0xFFB2E8EE),
-                    fontSize = 10.sp, fontWeight = FontWeight.ExtraBold
+                    color = accent, fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold
                 )
             }
             Box(
-                modifier = Modifier.size(90.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(listOf(
-                            if (premium) Color(0xFF356B87) else Color(0xFF2B7991),
-                            Color(0xFF082A45)
-                        ))
-                    )
-                    .border(2.dp, edge.copy(alpha = .8f), CircleShape),
+                modifier = Modifier.size(94.dp).clip(CircleShape)
+                    .background(Color(0xFF0C2948))
+                    .border(1.5.dp, accent.copy(alpha=0.8f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                AnimatedAvatarView(avatar = avatar,
-                    modifier = Modifier.size(78.dp), contentDescription = avatar.name,
-                    animate = false)
+                AnimatedAvatarView(
+                    avatar = avatar, modifier = Modifier.size(80.dp),
+                    contentDescription = avatar.name, animate = false
+                )
                 if (!usable) {
                     Box(
-                        modifier = Modifier.align(Alignment.BottomEnd).size(27.dp)
-                            .clip(CircleShape).background(Color(0xFF082A45)),
+                        modifier = Modifier.align(Alignment.BottomEnd)
+                            .size(26.dp).clip(CircleShape)
+                            .background(Color(0xFF082B4B))
+                            .border(1.dp, accent.copy(alpha=0.65f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(Icons.Filled.Lock, contentDescription = "Kilitli",
-                            tint = Color.White, modifier = Modifier.size(17.dp))
+                            tint = Color.White, modifier = Modifier.size(15.dp))
                     }
                 }
             }
-            Text(avatar.name, color = Color.White, fontSize = 13.sp,
-                fontWeight = FontWeight.Bold, maxLines = 2,
-                overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+            Text(
+                avatar.name, color = Color.White, fontSize = 14.sp,
+                fontWeight = FontWeight.ExtraBold,
+                textAlign = TextAlign.Center, maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
             Text(
                 when {
-                    isSelected -> "Kullanılıyor"
-                    usable -> "Seçmek için dokun"
-                    premium && !premiumActive -> "Premium gerekli"
-                    avatar.price <= 0 -> "Ücretsiz"
-                    else -> "${avatar.price} yıldız ile aç"
+                    isSelected -> "Kullanımda"
+                    usable -> "Dokun ve seç"
+                    premium && !premiumActive -> "Premium erişimi gerekli"
+                    avatar.price == 0 -> "Ücretsiz aç"
+                    else -> "★ ${avatar.price} yıldız ile aç"
                 },
-                fontSize = 11.sp, fontWeight = FontWeight.SemiBold,
-                color = if (isSelected) Color(0xFFFFD783) else Color(0xFFC3E0EC),
-                textAlign = TextAlign.Center
+                color = if(isSelected) Color(0xFF9CFFE2) else Color(0xFFE3EEFF),
+                fontSize = 11.sp, lineHeight = 14.sp,
+                fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                maxLines = 2
             )
         }
     }

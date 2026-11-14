@@ -22,7 +22,9 @@ checks = {
         "hasAnimation -> AnimatedAvatarArtwork" in view,
     "optional WebP pilot with legacy fallback":
         "context.assets.open(filename)" in view and
-        "pilotArtwork != null" in view and
+        "val artwork = pilotArtwork" in view and
+        "artwork != null -> Image(" in view and
+        "bitmap = artwork" in view and
         "else -> AvatarStaticArtwork(avatar, contentDescription)" in view,
     "deterministic avatar palette": "val index = (avatar.id - 1)" in view and
         ".random()" not in view,

@@ -98,7 +98,7 @@ private fun AnimatedAvatarArtwork(avatar: Avatar, contentDescription: String?) {
         isPlaying = composition != null,
         speed = 1f
     )
-    if (composition == null || composition?.duration ?: 0f <= 0f) {
+    if (composition == null || (composition?.duration ?: 0f) <= 0f) {
         AvatarStaticArtwork(avatar, contentDescription)
     } else {
         LottieAnimation(

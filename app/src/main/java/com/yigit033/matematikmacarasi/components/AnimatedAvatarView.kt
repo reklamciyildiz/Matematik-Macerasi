@@ -125,6 +125,8 @@ fun AnimatedAvatarView(
                 contentScale = ContentScale.Fit
             )
             hasAnimation -> AnimatedAvatarArtwork(avatar, contentDescription)
+            avatar.animationType == AvatarAnimationType.LOTTIE &&
+                avatar.animationResId != 0 -> AvatarStaticLottieArtwork(avatar, contentDescription)
             else -> AvatarStaticArtwork(avatar, contentDescription)
         }
     }
@@ -138,6 +140,28 @@ private fun AvatarStaticArtwork(avatar: Avatar, contentDescription: String?) {
         modifier = Modifier.fillMaxSize().padding(8.dp),
         contentScale = ContentScale.Fit
     )
+}
+
+/**
+ * The gallery must depict exactly the same character as the animated preview.
+ * A stopped Lottie composition is much more consistent than an unrelated XML
+ * illustration and avoids 15 simultaneous infinite animations.
+ */
+@Composable
+private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String?) {
+    val composition by rememberLottieComposition(
+        spec = LottieCompositionSpec.RawRes(avatar.animationResId)
+    )
+    if (composition == null) {
+        AvatarStaticArtwork(avatar, contentDescription)
+    } else {
+        LottieAnimation(
+            composition = composition,
+            progress = { 0.25f },
+            modifier = Modifier.fillMaxSize().padding(4.dp),
+            contentScale = ContentScale.Fit
+        )
+    }
 }
 
 @Composable

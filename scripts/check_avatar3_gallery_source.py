@@ -26,7 +26,10 @@ checks = {
         "else -> AvatarStaticArtwork(avatar, contentDescription)" in view,
     "deterministic avatar palette": "val index = (avatar.id - 1)" in view and
         ".random()" not in view,
-    "responsive collection": "GridCells.Adaptive(minSize = 158.dp)" in store,
+    "responsive collection (320dp two-column)": "GridCells.Adaptive(minSize = 128.dp)" in store,
+    "off-main-thread sampled WebP": "produceState<ImageBitmap?>" in view and
+        "withContext(Dispatchers.IO)" in view and
+        "inSampleSize = sample" in view,
     "single avatar click handler": "val onAvatarTapped: (Avatar) -> Unit" in store,
     "current Premium manager is not shadowed": "var purchaseManager:" not in
         store[store.index("fun AvatarStoreScreen("):],

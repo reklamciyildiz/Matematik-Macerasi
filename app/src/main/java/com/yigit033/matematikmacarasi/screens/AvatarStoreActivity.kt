@@ -68,6 +68,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
+import com.yigit033.matematikmacarasi.components.AvatarCollectionHero
 import com.yigit033.matematikmacarasi.models.AvatarAnimationType
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.foundation.rememberScrollState
@@ -281,6 +282,7 @@ fun AvatarStoreScreen(
         else -> avatars
     }
     val currentAvatarId = remember { mutableStateOf(avatarService.getCurrentAvatar().id) }
+    var previewAvatarId by remember { mutableStateOf(currentAvatarId.value) }
     
     // Yıldız sayısını izlemek için bir mutableState
     val context = LocalContext.current
@@ -304,8 +306,9 @@ fun AvatarStoreScreen(
     
     // Premium durumunu kontrol et
     var isPremium by remember { mutableStateOf(false) }
-    var purchaseManager: com.yigit033.matematikmacarasi.services.payments.PurchaseManager? = null
-    
+    // PurchaseManager passed from the Activity is kept as the single authority.
+    // A local shadow would reset to null on recomposition.
+
     // Premium bonus servisi
     val premiumBonusService = remember { DailyPremiumBonusService.getInstance(context) }
     val dailyBonusAmount = remember { premiumBonusService.getDailyBonusAmount() }
@@ -347,19 +350,7 @@ fun AvatarStoreScreen(
             // EventBus üzerinden de güncelleyelim
             EventBus.forceStarNotification(currentStars)
             
-            // KRİTİK: Periyodik olarak SharedPreferences'dan direkt okuma yap
-            coroutineScope.launch {
-                while(true) {
-                    delay(500) // Yarım saniyede bir güncel yıldız sayısını kontrol et
-                    val latestStars = context.getSharedPreferences("star_manager_prefs", Context.MODE_PRIVATE)
-                        .getInt("display_stars", 0)
-                    if (latestStars != userStars) {
-                        Log.d("AvatarStoreScreen", "DOĞRUDAN ŞPREFERENCE GÜNCELLEMESİ - Eski: $userStars, Yeni: $latestStars")
-                        userStars = latestStars
-                    }
-                }
-            }
-            
+            // No 500ms SharedPreferences polling: event-driven updates below.
             Log.d("AvatarStoreScreen", "Mağaza ekranı başlatıldı, güncel yıldızlar: $currentStars")
         } catch (e: Exception) {
             Log.e("AvatarStoreScreen", "Yıldız sayısını alırken hata: ${e.message}", e)
@@ -400,35 +391,19 @@ fun AvatarStoreScreen(
         }
     }
     
-    // PurchaseManager'ı güvenli bir şekilde başlat ve premium durumunu kontrol et
-    LaunchedEffect(Unit) {
+    // Keep Premium entitlements reactive. No shadowed billing manager and no
+    // manual checkout preflight that can block a correctly installed Play Store.
+    LaunchedEffect(purchaseManager) {
         try {
-            // Önce Firebase'den senkronize et (uygulama silme-yükleme durumu için)
-            val codeValidator = com.yigit033.matematikmacarasi.services.PremiumCodeValidator.getInstance(context)
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                val synced = codeValidator.checkAndSyncPremiumStatus()
-                if (synced) {
-                    Log.d("AvatarStoreScreen", "✅ Firebase'den premium durumu senkronize edildi!")
-                }
-            }
-            
-            purchaseManager = com.yigit033.matematikmacarasi.services.payments.PurchaseManager.getInstance(context)
-            isPremium = purchaseManager?.isPremiumSync() ?: false
-            Log.d("AvatarStoreScreen", "Premium durumu kontrol edildi: $isPremium")
-            
-            purchaseManager?.checkPremiumStatusAsync()
-            
-            launch {
-                purchaseManager?.premiumState?.collect { premiumState ->
-                    Log.d("AvatarStoreScreen", "Premium durumu güncellendi: $premiumState")
-                    isPremium = premiumState
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("AvatarStoreScreen", "PurchaseManager başlatılamadı: ${e.message}", e)
+            val manager = purchaseManager ?: PurchaseManager.getInstance(context)
+            isPremium = manager.isPremiumSync()
+            manager.checkPremiumStatusAsync()
+            manager.premiumState.collect { isPremium = it }
+        } catch (error: Exception) {
+            Log.e("AvatarStoreScreen", "Premium durumu alınamadı", error)
         }
     }
-    
+
     // Avatar satın alma işlemi tamamlandığında yıldız sayısını hemen yenile
     val unlockAvatar: (Int) -> Unit = { avatarId ->
         try {
@@ -473,6 +448,35 @@ fun AvatarStoreScreen(
     // Reklam yükleme durumu
     var isAdLoading by remember { mutableStateOf(false) }
     
+    // Shared action for grid cards and the character preview. Never equip
+    // locked Premium avatars after an expired subscription.
+    val onAvatarTapped: (Avatar) -> Unit = { avatar ->
+        previewAvatarId = avatar.id
+        when {
+            avatar.id > 6 && !isPremium -> {
+                avatarNeedingPremium = avatar
+                showPremiumRequiredDialog = true
+            }
+            avatar.isUnlocked -> {
+                if (avatarService.setCurrentAvatar(avatar.id)) {
+                    currentAvatarId.value = avatar.id
+                    onAvatarChanged(avatar.id)
+                    Toast.makeText(context, "${avatar.name} seçildi", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Avatar seçilemedi", Toast.LENGTH_SHORT).show()
+                }
+            }
+            userStars < avatar.price -> {
+                selectedAvatarForInfo = avatar
+                showNotEnoughStarsDialog = true
+            }
+            else -> {
+                selectedAvatarForInfo = avatar
+                showPurchaseConfirmDialog = true
+            }
+        }
+    }
+
     // Hata mesajlarını göstermek için
     if (contextErrorMsg.value != null) {
         LaunchedEffect(contextErrorMsg.value) {
@@ -599,23 +603,17 @@ fun AvatarStoreScreen(
                 }
             )
             
-            // Compact collector hero: no empty/full-width decorative banner.
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    .background(Color(0xFF164965), RoundedCornerShape(20.dp))
-                    .border(1.dp, Color(0xFF5D91A8), RoundedCornerShape(20.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(7.dp)
-            ) {
-                Text("Avatar Seçin", color = Color.White,
-                    fontSize = 23.sp, fontWeight = FontWeight.ExtraBold)
-                Text("Kaşifini kişiselleştir. Yıldızlarınla avatar aç; Premium karakterler için Premium hakkı gerekir.",
-                    color = Color(0xFFC9E5EC), fontSize = 12.sp, lineHeight = 17.sp)
-                Text("${avatars.count { it.isUnlocked }} / ${avatars.size} avatar açık" +
-                    if (isPremium) "  ·  Premium aktif" else "  ·  9 Premium karakter",
-                    color = Color(0xFFFFD783), fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold)
+            // Character-first collection preview: only this avatar animates.
+            avatars.firstOrNull()?.let { fallback ->
+                AvatarCollectionHero(
+                    avatar = avatars.firstOrNull { it.id == previewAvatarId } ?: fallback,
+                    equippedId = currentAvatarId.value,
+                    unlockedCount = avatars.count { it.isUnlocked },
+                    totalCount = avatars.size,
+                    starBalance = userStars,
+                    premiumActive = isPremium,
+                    onPrimaryAction = onAvatarTapped
+                )
             }
 
             Row(
@@ -643,7 +641,7 @@ fun AvatarStoreScreen(
 
             // Avatar grid
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Adaptive(minSize = 158.dp),
                 contentPadding = PaddingValues(16.dp),
                 modifier = Modifier
                     .fillMaxSize()
@@ -653,50 +651,8 @@ fun AvatarStoreScreen(
                         AvatarItem(
                             avatar = avatar,
                             isSelected = avatar.id == currentAvatarId.value,
-                            onClick = {
-                            try {
-                                Log.d("AvatarStoreScreen", "Avatar tıklaması: ID=${avatar.id}, İsim=${avatar.name}, Açık=${avatar.isUnlocked}")
-                                
-                                // Avatar kilidini aç veya seç
-                                if (avatar.isUnlocked) {
-                                    // Eğer avatar zaten açıksa, seçimi güncelle
-                                        if (avatarService.setCurrentAvatar(avatar.id)) {
-                                            onAvatarChanged(avatar.id)
-                                            Toast.makeText(context, "${avatar.name} seçildi", Toast.LENGTH_SHORT).show()
-                                        } else {
-                                            Toast.makeText(context, "Bu avatar için Premium erişimi gerekli.", Toast.LENGTH_SHORT).show()
-                                        }
-                                } else {
-                                    // Satın alma için detay kontrolünü yap
-                                    selectedAvatarForInfo = avatar
-                                    
-                                    // Premium kontrolü ve yıldız kontrolü yap
-                                    val canUnlock = avatarService.canUnlockAvatar(avatar.id, userStars, isPremium)
-                                    Log.d("AvatarStoreScreen", "Avatar ${avatar.id} kilidi açılabilir mi: $canUnlock")
-                                    
-                                    if (!canUnlock) {
-                                        // Premium kontrol et
-                                        if (avatar.id > 6 && !isPremium) {
-                                            // Premium gerekli, ilgili dialogi göster
-                                            avatarNeedingPremium = avatar
-                                            showPremiumRequiredDialog = true
-                                            Log.d("AvatarStoreScreen", "Premium gerekli dialog gösteriliyor: ${avatar.name}")
-                                        } else {
-                                            // Yeterli yıldız yok, yetersiz yıldız dialogunu göster
-                                            showNotEnoughStarsDialog = true
-                                            Log.d("AvatarStoreScreen", "Yetersiz yıldız dialog gösteriliyor: ${avatar.name}")
-                                    }
-                                } else {
-                                        // Yeterli yıldız varsa, satın alma onayı göster
-                                        showPurchaseConfirmDialog = true
-                                        Log.d("AvatarStoreScreen", "Satın alma dialog gösteriliyor: ${avatar.name}")
-                                    }
-                                }
-                            } catch (e: Exception) {
-                                Log.e("AvatarStoreScreen", "Avatar tıklamasında hata: ${e.message}", e)
-                                Toast.makeText(context, "İşlem gerçekleştirilemedi", Toast.LENGTH_SHORT).show()
-                            }
-                        }
+                            premiumActive = isPremium,
+                            onClick = { onAvatarTapped(avatar) }
                     )
                 }
             }
@@ -1628,108 +1584,14 @@ fun AvatarStoreScreen(
                             
                             // Premium'a Yükselt Butonu
                             Button(
-                                onClick = { 
-                                    try {
-                                        showPremiumRequiredDialog = false
-                                        Log.d("AvatarStoreScreen", "🛒 Premium butonu tıklandı")
-                                        
-                                        // Önce temel kontrolleri yap
-                                        if (purchaseManager == null) {
-                                            Log.e("AvatarStoreScreen", "❌ PurchaseManager null")
-                                            Toast.makeText(
-                                                context, 
-                                                "Satın alma sistemi başlatılamadı. Lütfen uygulamayı yeniden başlatın.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // Context kontrolü - Ayarlar sayfasındaki gibi düzeltildi
-                                        if (context !is ComponentActivity) {
-                                            Log.e("AvatarStoreScreen", "❌ Context ComponentActivity değil: ${context.javaClass.simpleName}")
-                                            Toast.makeText(
-                                                context, 
-                                                "Satın alma ekranı açılamıyor. Lütfen avatar mağazasını yeniden açın.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // İnternet bağlantısı kontrolü
-                                        val connectivityManager = context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-                                        val activeNetwork = connectivityManager.activeNetworkInfo
-                                        val isConnected = activeNetwork?.isConnectedOrConnecting == true
-                                        
-                                        if (!isConnected) {
-                                            Log.e("AvatarStoreScreen", "❌ İnternet bağlantısı yok")
-                                            Toast.makeText(
-                                                context, 
-                                                "İnternet bağlantınızı kontrol edin ve tekrar deneyin.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // Google Play Store kontrolü
-                                        try {
-                                            context.packageManager.getPackageInfo("com.android.vending", 0)
-                                            Log.d("AvatarStoreScreen", "✅ Google Play Store mevcut")
-                                        } catch (e: Exception) {
-                                            Log.e("AvatarStoreScreen", "❌ Google Play Store bulunamadı: ${e.message}")
-                                            Toast.makeText(
-                                                context, 
-                                                "Google Play Store bulunamadı. Lütfen Google Play Store'u güncelleyin.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        // Google Play Services kontrolü
-                                        try {
-                                            val gmsPackage = context.packageManager.getPackageInfo("com.google.android.gms", 0)
-                                            Log.d("AvatarStoreScreen", "✅ Google Play Services mevcut, versiyon: ${gmsPackage.versionName}")
-                                        } catch (e: Exception) {
-                                            Log.e("AvatarStoreScreen", "❌ Google Play Services bulunamadı: ${e.message}")
-                                            Toast.makeText(
-                                                context, 
-                                                "Google Play Services bulunamadı. Lütfen Google Play Services'i güncelleyin.", 
-                                                Toast.LENGTH_LONG
-                                            ).show()
-                                            return@Button
-                                        }
-                                        
-                                        Log.d("AvatarStoreScreen", "✅ Tüm kontroller başarılı, satın alma başlatılıyor...")
-                                        
-                                        // Satın alma işlemini başlat - Düzeltildi
-                                        purchaseManager.buyPremium(context as ComponentActivity)
-                                        
-                                        Toast.makeText(
-                                            context, 
-                                            "Google Play Store açılıyor...", 
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        
-                                        Log.d("AvatarStoreScreen", "🔄 Premium satın alma başlatıldı")
-                                        
-                                    } catch (e: Exception) {
-                                        Log.e("AvatarStoreScreen", "❌ Premium butonu tıklama hatası: ${e.message}", e)
-                                        
-                                        // Hata türüne göre özel mesajlar
-                                        val errorMessage = when {
-                                            e.message?.contains("BILLING_UNAVAILABLE") == true -> 
-                                                "Bu cihazda satın alma özelliği desteklenmiyor."
-                                            e.message?.contains("SERVICE_UNAVAILABLE") == true -> 
-                                                "Google Play Store servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin."
-                                            e.message?.contains("DEVELOPER_ERROR") == true -> 
-                                                "Uygulama konfigürasyon hatası. Lütfen uygulamayı güncelleyin."
-                                            e.message?.contains("NETWORK") == true -> 
-                                                "İnternet bağlantı sorunu. Lütfen bağlantınızı kontrol edin."
-                                            else -> 
-                                                "Satın alma işlemi başlatılamadı: ${e.message}"
-                                        }
-                                        
-                                        Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
-                                    }
+                                onClick = {
+                                    showPremiumRequiredDialog = false
+                                    // Use the canonical Settings paywall. It shows
+                                    // monthly/yearly/lifetime Play prices and owns
+                                    // BillingClient readiness/error handling.
+                                    context.startActivity(
+                                        android.content.Intent(context, SettingsActivity::class.java)
+                                    )
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     backgroundColor = Color(0xFFFFD700),
@@ -1902,53 +1764,34 @@ fun AvatarStoreScreen(
                             // Satın al butonu
                             Button(
                                 onClick = {
-                                    try {
-                                        showPurchaseConfirmDialog = false
-                                        Log.d("AvatarStoreScreen", "Avatar satın alma başlatılıyor: ${selectedAvatarForInfo!!.id}")
-                                        
-                                        // KRİTİK: Doğrudan manuel hesaplama yapıp yıldızları UI'da güncelle
-                                        val avatarPrice = selectedAvatarForInfo!!.price
-                                        val currentStars = userStars // mevcut UI'da gösterilen yıldız değeri
-                                        
-                                        // Satın alma işlemini başlat
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            val unlockResult = avatarService.unlockAvatar(selectedAvatarForInfo!!.id)
-                                            if (unlockResult) {
-                                                // Yeni avatar'ı otomatik olarak seç
-                                                avatarService.setCurrentAvatar(selectedAvatarForInfo!!.id)
-                                                
-                                                // KRİTİK: Tüm SharedPreferences'ları manuel güncelle
-                                                val newStars = currentStars - avatarPrice
-                                                context.getSharedPreferences("star_manager_prefs", Context.MODE_PRIVATE)
-                                                    .edit().putInt("display_stars", newStars).commit()
-                                                
-                                                context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
-                                                    .edit().putInt("display_stars", newStars).commit()
-                                                
-                                                // UI thread'e dön ve UI'ı güncelle
-                                                withContext(Dispatchers.Main) {
-                                                    // DOĞRUDAN UI DEĞİŞKENİNİ GÜNCELLE!
-                                                    userStars = newStars
-                                                    
-                                                    // EventBus'a bildir
-                                                    EventBus.forceStarNotification(newStars)
-                                                    
-                                                    // Kullanıcıya bilgi ver
-                                                    Toast.makeText(context, "${selectedAvatarForInfo!!.name} satın alındı! Kalan yıldızlar: $newStars", 
-                                                        Toast.LENGTH_SHORT).show()
-                                                    
-                                                    // Avatar değişikliğini bildir
-                                                    onAvatarChanged(selectedAvatarForInfo!!.id)
-                                                }
+                                    val target = selectedAvatarForInfo
+                                    showPurchaseConfirmDialog = false
+                                    if(target != null) {
+                                        coroutineScope.launch {
+                                            // AvatarService is the ONLY place that
+                                            // debits and persists stars. Never write
+                                            // stale UI balances to two preference files.
+                                            val unlocked = withContext(Dispatchers.IO) {
+                                                avatarService.unlockAvatar(target.id)
+                                            }
+                                            if(unlocked) {
+                                                avatarService.setCurrentAvatar(target.id)
+                                                currentAvatarId.value = target.id
+                                                previewAvatarId = target.id
+                                                val actualBalance = starManager.getDisplayStars()
+                                                userStars = actualBalance
+                                                EventBus.forceStarNotification(actualBalance)
+                                                onAvatarChanged(target.id)
+                                                Toast.makeText(context,
+                                                    "${target.name} açıldı! Kalan: $actualBalance yıldız",
+                                                    Toast.LENGTH_SHORT).show()
                                             } else {
-                                                withContext(Dispatchers.Main) {
-                                                    Toast.makeText(context, "Satın alma başarısız", Toast.LENGTH_SHORT).show()
-                                                }
+                                                userStars = starManager.getDisplayStars()
+                                                Toast.makeText(context,
+                                                    "Avatar açılamadı. Yıldız bakiyeni kontrol et.",
+                                                    Toast.LENGTH_SHORT).show()
                                             }
                                         }
-                                    } catch (e: Exception) {
-                                        Log.e("AvatarStoreScreen", "Satın alma işleminde hata: ${e.message}", e)
-                                        Toast.makeText(context, "Satın alma başarısız", Toast.LENGTH_SHORT).show()
                                     }
                                 },
                                 modifier = Modifier

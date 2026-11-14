@@ -42,6 +42,9 @@ fun AvatarCollectionHero(
     totalCount: Int,
     starBalance: Int,
     premiumActive: Boolean,
+    lookId: Int = 0,
+    accessory: Int = 0,
+    effect: Int = 0,
     onPrimaryAction: (Avatar) -> Unit
 ) {
     val requiresPremium = avatar.id > 6 && !premiumActive
@@ -94,10 +97,12 @@ fun AvatarCollectionHero(
                     .border(1.dp, accent.copy(alpha = 0.8f), RoundedCornerShape(22.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                AnimatedAvatarView(
+                Avatar3CharacterStage(
                     avatar = avatar,
+                    lookId = lookId,
+                    accessory = accessory,
+                    effect = effect,
                     size = 96.dp,
-                    contentDescription = avatar.name,
                     animate = true
                 )
             }

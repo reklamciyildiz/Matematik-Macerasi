@@ -346,6 +346,7 @@ class AvatarService(private val context: Context) {
     /**
      * Avatar kilidini açar
      */
+    @Synchronized
     fun unlockAvatar(avatarId: Int): Boolean {
         Log.d("AvatarService", "Avatar kilidi açma başladı: $avatarId")
         

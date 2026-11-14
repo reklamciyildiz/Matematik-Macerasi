@@ -71,10 +71,26 @@ silinmez / değiştirilmez**.
   kasıtlı olarak düşük göstermemeli.
 - Lottie veya kısa animasyon yalnızca önizlemede, çoklu kartta asla.
 
-**Konsept paketleri:** ChatGPT oturumunda üretilen iki mağaza/karakter
-mockup görseli ve 15 avatar asset haritası kullanıcıya ZIP olarak teslim edilir.
-Bu görseller temiz karakter WebP dosyaları olmadığından **Android
-drawable dizinine doğrudan kopyalanmaz**.
+**Konsept paketleri:** ChatGPT oturumunda üretilen mağaza/karakter
+mockup görselleri ve 15 avatar asset haritası kullanıcıya ZIP olarak teslim edilir.
+Bu referansları doğrudan Android drawable içine koyma.
+
+**İki gerçek pilot WebP:** Aynı oturumda oluşturulan
+`Matematik_Macerasi_Avatar3_Pilot_WebP.zip` içinde
+`avatar3_06_card.webp`, `avatar3_06_full.webp`,
+`avatar3_07_card.webp`, `avatar3_07_full.webp` bulunur.
+Bu küçük dosyalar konsept görselinden ayrılmıştır ve **nihai şeffaf
+karakter sanatına eşdeğer değildir**; önce dahili testte değerlendirilir.
+Android `AnimatedAvatarView` dosyaları `assets/avatars3` içinde bulursa
+pilotları gösterir, bulamazsa eski XML/Lottie karakteri korur.
+
+Yerel kurulum:
+```powershell
+cd C:\active_projects\MatematikMacerasiii
+git pull --ff-only origin main
+powershell -ExecutionPolicy Bypass -File .\scripts\install-avatar3-pilot.ps1 -ZipPath "$env:USERPROFILE\Downloads\Matematik_Macerasi_Avatar3_Pilot_WebP.zip" -InstallPilot
+```
+Bu işlem APK/AAB üretmez ve GitHub'a push yapmaz.
 
 ## Doğrulama kapısı
 

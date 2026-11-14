@@ -30,7 +30,8 @@ checks=[
          "purchaseManager.buyPremium(it,plan)" in settings and
          "PremiumPlan.LIFETIME" in settings and
          "enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready" in settings),
-    ("profile hero preserved","AnimatedAvatarView(" in profile),
+    ("profile hero preserved and reflects Avatar 3.0",
+         "Avatar3PlayerPortrait(" in profile and "onAvatarStoreClick" in profile),
     ("profile editing preserved",'onNameChange(it)' in profile and 'onClassChange(option)' in profile),
     ("profile personalization retained","Kişiselleştirme ve Ayarlar" in profile and
          "onSettingsClick" in profile and "onAvatarStoreClick" in profile),

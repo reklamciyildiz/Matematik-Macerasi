@@ -1817,9 +1817,11 @@ fun AvatarStoreScreen(
 fun AvatarItem(
     avatar: Avatar,
     isSelected: Boolean,
+    premiumActive: Boolean,
     onClick: () -> Unit
 ) {
     val premium = avatar.id > 6
+    val usable = avatar.isUnlocked && (!premium || premiumActive)
     val edge = when {
         isSelected -> Color(0xFFFFD783)
         premium -> Color(0xFF6693AF)
@@ -1867,8 +1869,9 @@ fun AvatarItem(
                 contentAlignment = Alignment.Center
             ) {
                 AnimatedAvatarView(avatar = avatar,
-                    modifier = Modifier.size(78.dp), contentDescription = avatar.name)
-                if (!avatar.isUnlocked) {
+                    modifier = Modifier.size(78.dp), contentDescription = avatar.name,
+                    animate = false)
+                if (!usable) {
                     Box(
                         modifier = Modifier.align(Alignment.BottomEnd).size(27.dp)
                             .clip(CircleShape).background(Color(0xFF082A45)),
@@ -1885,7 +1888,8 @@ fun AvatarItem(
             Text(
                 when {
                     isSelected -> "Kullanılıyor"
-                    avatar.isUnlocked -> "Seçmek için dokun"
+                    usable -> "Seçmek için dokun"
+                    premium && !premiumActive -> "Premium gerekli"
                     avatar.price <= 0 -> "Ücretsiz"
                     else -> "${avatar.price} yıldız ile aç"
                 },

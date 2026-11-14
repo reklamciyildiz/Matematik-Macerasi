@@ -136,3 +136,31 @@ fun Avatar3UnlockConfirmDialog(
         ) { Text("Vazgeç") }
     }
 }
+
+/** Children cannot spend stars on an appearance from a single accidental tap. */
+@Composable
+fun Avatar3LookConfirmDialog(
+    avatar: Avatar,
+    lookTitle: String,
+    price: Int,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    CommerceSurface(header = "Yeni görünüşü aç", avatar = avatar) {
+        Text(lookTitle, color = cWhite, fontSize = 16.sp,
+            fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text("★ " + price + " yıldız", color = cGold,
+            fontSize = 23.sp, fontWeight = FontWeight.ExtraBold)
+        Text("Yıldızlarını harcamak istiyor musun? Onay olmadan harcanmaz.",
+            color = cWhite, fontSize = 12.sp, textAlign = TextAlign.Center)
+        Button(onClick = onConfirm, modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(15.dp),
+            colors = ButtonDefaults.buttonColors(backgroundColor = cGold, contentColor = cSea)) {
+            Text("Onayla · ★ " + price, fontWeight = FontWeight.Bold)
+        }
+        OutlinedButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = cWhite)) {
+            Text("İptal")
+        }
+    }
+}

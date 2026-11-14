@@ -66,6 +66,7 @@ fun Avatar3DetailDialog(
         mutableStateOf(customization.selectedEffect(avatar.id))
     }
     var busy by remember(avatar.id) { mutableStateOf(false) }
+    var pendingLookId by remember(avatar.id) { mutableStateOf<Int?>(null) }
     val chosen = looks[previewLook]
     val owned = customization.lookOwned(avatar.id, previewLook)
     val canUse = avatar.isUnlocked && (avatar.id <= 6 || premiumActive)
@@ -234,33 +235,7 @@ fun Avatar3DetailDialog(
                                     Toast.makeText(context, "Görünüş seçildi", Toast.LENGTH_SHORT).show()
                                 }
                                 balance < chosen.starCost -> onNeedStars(chosen.starCost)
-                                else -> {
-                                    busy = true
-                                    scope.launch {
-                                        val result = withContext(Dispatchers.IO) {
-                                            customization.buyLook(avatar.id, previewLook)
-                                        }
-                                        busy = false
-                                        when (result) {
-                                            Avatar3LookPurchaseResult.SUCCESS -> {
-                                                customization.selectLook(avatar.id, previewLook)
-                                                onUpdate()
-                                                Toast.makeText(context,
-                                                    "Görünüş koleksiyonuna eklendi!",
-                                                    Toast.LENGTH_SHORT).show()
-                                            }
-                                            Avatar3LookPurchaseResult.INSUFFICIENT_STARS ->
-                                                onNeedStars(chosen.starCost)
-                                            Avatar3LookPurchaseResult.PREMIUM_REQUIRED ->
-                                                onNeedPremium(avatar)
-                                            else -> {
-                                                onUpdate()
-                                                Toast.makeText(context,
-                                                    "İşlem tamamlanamadı", Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }
-                                }
+                                else -> pendingLookId = previewLook
                             }
                         }
                     ) { Text(action, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
@@ -279,6 +254,44 @@ fun Avatar3DetailDialog(
                     lineHeight = 15.sp)
             }
         }
+    }
+    // A second, explicit confirmation is required before any look purchase.
+    pendingLookId?.let { requested ->
+        val lookToBuy = looks[requested]
+        Avatar3LookConfirmDialog(
+            avatar = avatar,
+            lookTitle = lookToBuy.title,
+            price = lookToBuy.starCost,
+            onDismiss = { pendingLookId = null },
+            onConfirm = {
+                pendingLookId = null
+                busy = true
+                scope.launch {
+                    val result = withContext(Dispatchers.IO) {
+                        customization.buyLook(avatar.id, requested)
+                    }
+                    busy = false
+                    when (result) {
+                        Avatar3LookPurchaseResult.SUCCESS -> {
+                            customization.selectLook(avatar.id, requested)
+                            previewLook = requested
+                            onUpdate()
+                            Toast.makeText(context, "Yeni görünüş açıldı!",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                        Avatar3LookPurchaseResult.INSUFFICIENT_STARS ->
+                            onNeedStars(lookToBuy.starCost)
+                        Avatar3LookPurchaseResult.PREMIUM_REQUIRED ->
+                            onNeedPremium(avatar)
+                        else -> {
+                            onUpdate()
+                            Toast.makeText(context, "İşlem tamamlanamadı.",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        )
     }
 }
 

@@ -43,7 +43,7 @@ import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsService
 import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import android.util.Log
-import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
+import com.yigit033.matematikmacarasi.components.Avatar3PlayerPortrait
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
 import com.yigit033.matematikmacarasi.services.StarManager
 import android.app.Activity
@@ -372,10 +372,11 @@ fun ProfileScreen(
                                     contentAlignment = Alignment.Center
                                 ) {
                                     // Animasyonlu Avatar Görünümü
-                                    AnimatedAvatarView(
+                                    Avatar3PlayerPortrait(
                                         avatar = currentAvatar,
                                         modifier = Modifier.fillMaxSize(),
-                                        contentDescription = "Avatar"
+                                        size = 84.dp,
+                                        animate = true
                                     )
                                 }
                                 

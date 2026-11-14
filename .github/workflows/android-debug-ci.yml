@@ -129,6 +129,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_space_premium_assets.py
 
+      - name: Avatar 3.0 collection and legacy-ownership regression guard
+        shell: bash
+        run: python3 scripts/check_avatar3_gallery_source.py
+
       - name: Validate settings, icon aliases and profile navigation
         shell: bash
         run: python3 scripts/check_personalization_routes.py

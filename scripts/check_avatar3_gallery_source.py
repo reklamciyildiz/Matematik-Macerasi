@@ -19,7 +19,11 @@ checks = {
     "single collection hero": "AvatarCollectionHero(" in store and
         "animate = true" in hero,
     "static thumbnails": "animate = false" in store and
-        "if (hasAnimation)" in view,
+        "hasAnimation -> AnimatedAvatarArtwork" in view,
+    "optional WebP pilot with legacy fallback":
+        "context.assets.open(filename)" in view and
+        "pilotArtwork != null" in view and
+        "else -> AvatarStaticArtwork(avatar, contentDescription)" in view,
     "deterministic avatar palette": "val index = (avatar.id - 1)" in view and
         ".random()" not in view,
     "responsive collection": "GridCells.Adaptive(minSize = 158.dp)" in store,

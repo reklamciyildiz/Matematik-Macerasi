@@ -6,6 +6,11 @@ on:
     paths:
       - "app/build.gradle"
       - "app/proguard-rules.pro"
+      # Character gallery and animations must also survive minification.
+      - "app/src/main/java/com/yigit033/matematikmacarasi/screens/AvatarStoreActivity.kt"
+      - "app/src/main/java/com/yigit033/matematikmacarasi/components/Avatar*.kt"
+      - "app/src/main/java/com/yigit033/matematikmacarasi/components/AnimatedAvatarView.kt"
+      - "app/src/main/java/com/yigit033/matematikmacarasi/services/AvatarService.kt"
       - ".github/workflows/android-r8-qa.yml"
   workflow_dispatch:
 

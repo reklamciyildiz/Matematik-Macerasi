@@ -1512,15 +1512,16 @@ fun AvatarStoreScreen(
                                                 avatarService.unlockAvatar(target.id)
                                             }
                                             if(unlocked) {
-                                                avatarService.setCurrentAvatar(target.id)
-                                                currentAvatarId.value = target.id
+                                                val equipped = avatarService.setCurrentAvatar(target.id)
+                                                currentAvatarId.value = avatarService.getCurrentAvatar().id
                                                 previewAvatarId = target.id
                                                 val actualBalance = starManager.getDisplayStars()
                                                 userStars = actualBalance
                                                 EventBus.forceStarNotification(actualBalance)
-                                                onAvatarChanged(target.id)
+                                                if (equipped) onAvatarChanged(target.id)
                                                 Toast.makeText(context,
-                                                    "${target.name} açıldı! Kalan: $actualBalance yıldız",
+                                                    if(equipped) "${target.name} açıldı! Kalan: $actualBalance yıldız"
+                                                    else "${target.name} açıldı, ancak seçmek için Premium erişimi gerekiyor.",
                                                     Toast.LENGTH_SHORT).show()
                                             } else {
                                                 userStars = starManager.getDisplayStars()

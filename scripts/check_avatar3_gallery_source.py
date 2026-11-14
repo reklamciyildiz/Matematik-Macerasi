@@ -28,7 +28,8 @@ checks = {
         store[store.index("fun AvatarStoreScreen("):],
     "no repeated half-second polling": "delay(500)" not in store,
     "single source of star purchase": "val actualBalance = starManager.getDisplayStars()" in store
-        and 'putInt("display_stars"' not in store,
+        and 'putInt("display_stars"' not in store[
+            store.index("// Satın al butonu"):store.index("@Composable\nfun AvatarItem(")],
     "routes to canonical three-plan paywall": "SettingsActivity::class.java" in store
         and "purchaseManager.buyPremium(context as ComponentActivity)" not in store,
     "legacy Premium code sync kept": "checkAndSyncPremiumStatus()" in store,

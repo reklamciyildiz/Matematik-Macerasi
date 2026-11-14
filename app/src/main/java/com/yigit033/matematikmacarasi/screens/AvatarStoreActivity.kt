@@ -69,6 +69,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.yigit033.matematikmacarasi.components.AnimatedAvatarView
 import com.yigit033.matematikmacarasi.components.AvatarCollectionHero
+import com.yigit033.matematikmacarasi.components.Avatar3CharacterStage
+import com.yigit033.matematikmacarasi.components.Avatar3DetailDialog
+import com.yigit033.matematikmacarasi.components.Avatar3NeedStarsDialog
+import com.yigit033.matematikmacarasi.components.Avatar3UnlockConfirmDialog
+import com.yigit033.matematikmacarasi.services.Avatar3Customization
 import com.yigit033.matematikmacarasi.components.AvatarPremiumGateDialog
 import com.yigit033.matematikmacarasi.models.AvatarAnimationType
 import androidx.compose.runtime.rememberCoroutineScope
@@ -288,6 +293,8 @@ fun AvatarStoreScreen(
     // Yıldız sayısını izlemek için bir mutableState
     val context = LocalContext.current
     val starManager = remember { StarManager.getInstance(context) }
+    val customization = remember { Avatar3Customization(context) }
+    var customizationRefresh by remember { mutableStateOf(0) }
     
     // Direkt yıldız sayısını tutan state ve bunu güncellemek için fonksiyon
     var userStars by remember { mutableStateOf(starManager.getDisplayStars()) }
@@ -426,6 +433,8 @@ fun AvatarStoreScreen(
     var showPurchaseConfirmDialog by remember { mutableStateOf(false) }
     var showPremiumRequiredDialog by remember { mutableStateOf(false) }
     var selectedAvatarForInfo by remember { mutableStateOf<Avatar?>(null) }
+    var detailAvatar by remember { mutableStateOf<Avatar?>(null) }
+    var starsRequired by remember { mutableStateOf(0) }
     var avatarNeedingPremium by remember { mutableStateOf<Avatar?>(null) }
     
     // Reklam yükleme durumu
@@ -433,31 +442,11 @@ fun AvatarStoreScreen(
     
     // Shared action for grid cards and the character preview. Never equip
     // locked Premium avatars after an expired subscription.
+    // Character cards open the atelier. Tapping never silently equips or
+    // charges currency; the detail screen hosts explicit actions.
     val onAvatarTapped: (Avatar) -> Unit = { avatar ->
         previewAvatarId = avatar.id
-        when {
-            avatar.id > 6 && !isPremium -> {
-                avatarNeedingPremium = avatar
-                showPremiumRequiredDialog = true
-            }
-            avatar.isUnlocked -> {
-                if (avatarService.setCurrentAvatar(avatar.id)) {
-                    currentAvatarId.value = avatar.id
-                    onAvatarChanged(avatar.id)
-                    Toast.makeText(context, "${avatar.name} seçildi", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "Avatar seçilemedi", Toast.LENGTH_SHORT).show()
-                }
-            }
-            userStars < avatar.price -> {
-                selectedAvatarForInfo = avatar
-                showNotEnoughStarsDialog = true
-            }
-            else -> {
-                selectedAvatarForInfo = avatar
-                showPurchaseConfirmDialog = true
-            }
-        }
+        detailAvatar = avatar
     }
 
     // Hata mesajlarını göstermek için
@@ -595,6 +584,11 @@ fun AvatarStoreScreen(
                     totalCount = avatars.size,
                     starBalance = userStars,
                     premiumActive = isPremium,
+                    lookId = customization.selectedLook(
+                        avatars.firstOrNull { it.id == previewAvatarId }?.id ?: 1
+                    ),
+                    accessory = customization.selectedAccessory(previewAvatarId),
+                    effect = customization.selectedEffect(previewAvatarId),
                     onPrimaryAction = onAvatarTapped
                 )
             }
@@ -636,719 +630,80 @@ fun AvatarStoreScreen(
                             avatar = avatar,
                             isSelected = avatar.id == currentAvatarId.value,
                             premiumActive = isPremium,
+                            lookId = customization.selectedLook(avatar.id),
+                            accessory = customization.selectedAccessory(avatar.id),
+                            effect = customization.selectedEffect(avatar.id),
                             onClick = { onAvatarTapped(avatar) }
                     )
                 }
             }
         }
         
-        // Yetersiz yıldız diyaloğu
-        if (showNotEnoughStarsDialog && selectedAvatarForInfo != null) {
-            val remainingStars = selectedAvatarForInfo!!.price - userStars
-            
-            Dialog(onDismissRequest = { showNotEnoughStarsDialog = false }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    backgroundColor = Color.White,
-                    elevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp)
-                            .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Başlık ve yıldız ikonu
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Yıldız",
-                                tint = Color(0xFFFFC107),
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Yetersiz Yıldız",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF5D35A0)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Avatar resmi - animasyonlu border ile
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            Color(0xFFE8F5E9),
-                                            Color(0xFFB2DFDB)
-                                        )
-                                    )
-                                )
-                                .border(
-                                    width = 3.dp,
-                                    brush = Brush.sweepGradient(
-                                        colors = listOf(
-                                            Color(0xFF5D35A0),
-                                            Color(0xFF7E57C2),
-                                            Color(0xFF9575CD),
-                                            Color(0xFF5D35A0)
-                                        )
-                                    ),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            // Animasyonlu Avatar Görünümü
-                            AnimatedAvatarView(
-                                avatar = selectedAvatarForInfo!!,
-                                modifier = Modifier.size(100.dp),
-                                contentDescription = selectedAvatarForInfo!!.name
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Avatar adı - öne çıkan tasarım
-                        Text(
-                            text = selectedAvatarForInfo!!.name,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF5D35A0),
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        // Avatar açıklaması
-                        Text(
-                            text = selectedAvatarForInfo!!.description,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Color(0xFF757575),
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Gerekli ve mevcut yıldız bilgisi - görsel tasarım
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFFF5F5F5))
-                                .padding(vertical = 16.dp, horizontal = 16.dp)
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                // Yetersiz yıldız mesajı
-                                Text(
-                                    text = "Bu avatarı açmak için:",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF424242)
-                                )
-                                
-                                Spacer(modifier = Modifier.height(12.dp))
-                                
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    // Mevcut yıldız
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "Mevcut",
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF757575)
-                                        )
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Star,
-                                                contentDescription = "Mevcut Yıldız",
-                                                tint = Color(0xFFFFC107),
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = "$userStars",
-                                                fontSize = 22.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (userStars < selectedAvatarForInfo!!.price) 
-                                                    Color(0xFFE53935) else Color(0xFF43A047)
-                                            )
-                                        }
-                                    }
-                                    
-                                    // Ayırıcı
-                                    Text(
-                                        text = " / ",
-                                        fontSize = 24.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF757575),
-                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                    )
-                                    
-                                    // Gerekli yıldız
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(
-                                            text = "Gerekli",
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF757575)
-                                        )
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.Star,
-                                                contentDescription = "Gerekli Yıldız",
-                                                tint = Color(0xFFFFC107),
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = "${selectedAvatarForInfo!!.price}",
-                                                fontSize = 22.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF5D35A0)
-                                            )
-                                        }
-                                    }
-                                }
-                                
-                                Spacer(modifier = Modifier.height(16.dp))
-                                
-                                // Yetersiz yıldız mesajı
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFFFFECB3))
-                                        .padding(vertical = 12.dp, horizontal = 16.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Info,
-                                            contentDescription = "Bilgi",
-                                            tint = Color(0xFFFF9800),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "${remainingStars} yıldıza daha ihtiyacınız var",
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = Color(0xFF5D4037)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        // Premium kullanıcılar için özel mesaj, premium olmayan kullanıcılar için reklam butonu
-                        if (isPremium) {
-                            // Premium kullanıcılar için özel mesaj
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFFFD700).copy(alpha = 0.2f)
-                                ),
-                                elevation = CardDefaults.cardElevation(
-                                    defaultElevation = 4.dp
-                                )
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_premium),
-                                            contentDescription = "Premium",
-                                            tint = Color(0xFFFFD700),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Premium Üye",
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFF5D35A0)
-                                        )
-                                    }
-                                    
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    
-                                    Text(
-                                        text = "Her gün otomatik olarak $dailyBonusAmount yıldız bonus kazanıyorsunuz! 🎁",
-                                        fontSize = 14.sp,
-                                        color = Color(0xFF424242),
-                                        textAlign = TextAlign.Center,
-                                        lineHeight = 20.sp
-                                    )
-                                    
-                                    if (!hasTodaysBonusClaimed) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "Bugünkü bonusunuz henüz alınmadı, uygulama açılışında otomatik verilecek.",
-                                            fontSize = 12.sp,
-                                            color = Color(0xFF666666),
-                                            textAlign = TextAlign.Center,
-                                            fontStyle = FontStyle.Italic
-                                        )
-                                    } else {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            text = "Bugünkü bonusunuz alındı! Yarın tekrar gelin. ✨",
-                                            fontSize = 12.sp,
-                                            color = Color(0xFF4CAF50),
-                                            textAlign = TextAlign.Center,
-                                            fontStyle = FontStyle.Italic
-                                        )
-                                    }
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            // Families gate: never promise a reward while delivery is disabled.
-                            if (adManager?.isRewardedAdsEnabled() == true) {
-                            Card(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 8.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFFFF3E0) // Açık turuncu arka plan
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                                border = BorderStroke(2.dp, Color(0xFFFF9800))
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_star),
-                                            contentDescription = "Reklam Yıldızı",
-                                            tint = Color(0xFFFF9800),
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Ekstra Yıldız Kazan",
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFFE65100)
-                                        )
-                                    }
-                                    
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    
-                                    Text(
-                                        text = "Günlük bonusuna ek; reklam izle ve 1 yıldız daha kazan! 🎬",
-                                        fontSize = 14.sp,
-                                        color = Color(0xFF424242),
-                                        textAlign = TextAlign.Center,
-                                        lineHeight = 20.sp
-                                    )
-                                    
-                                    Spacer(modifier = Modifier.height(12.dp))
-                                    
-                                    // Reklam izleme butonu
-                                    Button(
-                                        onClick = {
-                                            if (isAdLoading) {
-                                                Toast.makeText(context, "Reklam yükleniyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show()
-                                                return@Button
-                                            }
-                                            
-                                            isAdLoading = true
-                                            Toast.makeText(context, "Reklam yükleniyor...", Toast.LENGTH_SHORT).show()
-                                            
-                                            try {
-                                                // Context'i kontrol et
-                                                val activity = context as? Activity
-                                                if (activity == null || adManager == null) {
-                                                    Log.e("AvatarStoreScreen", "Activity context veya AdManager bulunamadı")
-                                                    isAdLoading = false
-                                                    Toast.makeText(context, "Reklam gösterilemedi", Toast.LENGTH_SHORT).show()
-                                                    return@Button
-                                                }
-                                                
-                                                // Reklam gösterme fonksiyonunu çağır
-                                                adManager.showRewardedAd(
-                                                    activity = activity,
-                                                    onRewarded = { rewardAmount ->
-                                                        // Ödül verildi
-                                                        Log.d("AvatarStoreScreen", "Premium kullanıcı $rewardAmount yıldız kazandı")
-                                                        isAdLoading = false
-                                                        
-                                                        // Coroutine başlatarak suspend fonksiyonu çağır
-                                                        CoroutineScope(Dispatchers.IO).launch {
-                                                            try {
-                                                                val success = starManager.addRewardedStars(rewardAmount)
-                                                                if (success) {
-                                                                    val updatedStars = starManager.getDisplayStars()
-                                                                    
-                                                                    withContext(Dispatchers.Main) {
-                                                                        userStars = updatedStars
-                                                                        
-                                                                        Toast.makeText(
-                                                                            context,
-                                                                            "🎉 $rewardAmount yıldız kazandınız! Toplam: $updatedStars",
-                                                                            Toast.LENGTH_LONG
-                                                                        ).show()
-                                                                        
-                                                                        Log.d("AvatarStoreScreen", "Premium reklam ödülü başarıyla eklendi: $updatedStars toplam yıldız")
-                                                                    }
-                                                                } else {
-                                                                    withContext(Dispatchers.Main) {
-                                                                        Toast.makeText(
-                                                                            context,
-                                                                            "Yıldız eklenirken hata oluştu!",
-                                                                            Toast.LENGTH_SHORT
-                                                                        ).show()
-                                                                        Log.e("AvatarStoreScreen", "Premium reklam ödülü eklenemedi")
-                                                                    }
-                                                                }
-                                                            } catch (e: Exception) {
-                                                                withContext(Dispatchers.Main) {
-                                                                    isAdLoading = false
-                                                                    Log.e("AvatarStoreScreen", "Premium reklam ödülü işleme hatası: ${e.message}", e)
-                                                                    Toast.makeText(
-                                                                        context,
-                                                                        "Beklenmeyen hata: ${e.message}",
-                                                                        Toast.LENGTH_SHORT
-                                                                    ).show()
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    onAdNotAvailable = {
-                                                        isAdLoading = false
-                                                        Log.d("AvatarStoreScreen", "Premium kullanıcı için reklam bulunamadı")
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Şu anda reklam bulunamadı. Lütfen daha sonra tekrar deneyin.",
-                                                            Toast.LENGTH_SHORT
-                                                        ).show()
-                                                    }
-                                                )
-                                            } catch (e: Exception) {
-                                                isAdLoading = false
-                                                Log.e("AvatarStoreScreen", "Premium reklam gösterme işlemi başlatılamadı: ${e.message}", e)
-                                                Toast.makeText(
-                                                    context, 
-                                                    "Reklam sistemi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.", 
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            }
-                                        },
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(48.dp),
-                                        enabled = !isAdLoading,
-                                        colors = ButtonDefaults.buttonColors(
-                                            backgroundColor = if (isAdLoading) Color.Gray else Color(0xFFFF9800),
-                                            contentColor = Color.White
-                                        ),
-                                        shape = RoundedCornerShape(24.dp)
-                                    ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.Center
-                                        ) {
-                                            if (isAdLoading) {
-                                                CircularProgressIndicator(
-                                                    modifier = Modifier.size(16.dp),
-                                                    strokeWidth = 2.dp,
-                                                    color = Color.White
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = "Hazırlanıyor...",
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.White
-                                                )
-                                            } else {
-                                                Icon(
-                                                    painter = painterResource(id = R.drawable.ic_star),
-                                                    contentDescription = "Reklam İzle",
-                                                    tint = Color.White,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Text(
-                                                    text = "İzle ve Kazan",
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = Color.White
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            }
-                        } else {
-                            // No child-visible ad CTA until the reviewed ad stack is enabled.
-                            if (adManager?.isRewardedAdsEnabled() == true) {
-                            // Premium olmayan kullanıcılar için reklam butonu
-                            Button(
-                                onClick = {
-                                    if (isAdLoading) {
-                                        Toast.makeText(context, "Reklam yükleniyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show()
-                                        return@Button
-                                    }
-                                    
-                                    isAdLoading = true
-                                    Toast.makeText(context, "Reklam yükleniyor...", Toast.LENGTH_SHORT).show()
-                                    
-                                    try {
-                                        // AdManager'ı kontrol et
-                                        if (adManager == null) {
-                                            // Never mint stars when advertising is disabled or the SDK fails.
-                                            // The previous debug fallback was reachable in real builds.
-                                            Log.w("AvatarStoreScreen", "Reklam kapalı; yıldız ödülü verilmiyor")
-                                            isAdLoading = false
-                                            Toast.makeText(
-                                                context,
-                                                "Reklam ödülleri şu anda kullanılamıyor.",
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            return@Button
-                                        }
-
-                                        // Context'i kontrol et
-                                        val activity = context as? Activity
-                                        if (activity == null) {
-                                            Log.e("AvatarStoreScreen", "Context Activity değil")
-                                            isAdLoading = false
-                                            Toast.makeText(context, "Reklam gösterilemiyor (Context hatası)", Toast.LENGTH_SHORT).show()
-                                            return@Button
-                                        }
-                                        
-                                        // Reklam gösterme fonksiyonunu çağır
-                                        adManager.showRewardedAd(
-                                            activity = activity,
-                                            onRewarded = { rewardAmount ->
-                                                // Ödül verildi
-                                                Log.d("AvatarStoreScreen", "$rewardAmount yıldız ekleniyor")
-                                                isAdLoading = false
-                                                
-                                                // Coroutine başlatarak suspend fonksiyonu çağır
-                                                CoroutineScope(Dispatchers.IO).launch {
-                                                    try {
-                                                        // KRİTİK: Doğrudan SharedPreferences üzerinden mevcut değeri al
-                                                        val currentDisplayStars = context.getSharedPreferences("star_manager_prefs", Context.MODE_PRIVATE)
-                                                            .getInt("display_stars", 0)
-                                                        val newStars = currentDisplayStars + rewardAmount // yıldız ekle
-                                                        
-                                                        // KRİTİK: Tüm yerlere aynı anda kaydet
-                                                        val smp = context.getSharedPreferences("star_manager_prefs", Context.MODE_PRIVATE)
-                                                        smp.edit().putInt("display_stars", newStars).commit()
-                                                        
-                                                        context.getSharedPreferences("game_progress", Context.MODE_PRIVATE)
-                                                            .edit().putInt("display_stars", newStars).commit()
-                                                        
-                                                        // StarManager'a da bildir
-                                                        starManager.setDisplayStars(newStars)
-                                                        
-                                                        // UI güncellemeleri Main thread'e geri dönmeli
-                                                        withContext(Dispatchers.Main) {
-                                                            // Dialog'u kapat
-                                                            showNotEnoughStarsDialog = false
-                                                            
-                                                            // DOĞRUDAN UI DEĞİŞKENİNİ GÜNCELLE!
-                                                            userStars = newStars
-                                                            
-                                                            // EventBus'a bildir
-                                                            try {
-                                                                CoroutineScope(Dispatchers.Main).launch {
-                                                                    EventBus.forceStarNotification(newStars)
-                                                                }
-                                                            } catch (e: Exception) {
-                                                                Log.e("AvatarStoreScreen", "EventBus bildirimi hatası: ${e.message}", e)
-                                                            }
-                                                            
-                                                            Toast.makeText(
-                                                                context,
-                                                                "$rewardAmount yıldız kazandınız! Yeni toplam: $newStars",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-                                                        }
-                                                    } catch (e: Exception) {
-                                                        // Hata yönetimi - Main thread'e geri dön
-                                                        withContext(Dispatchers.Main) {
-                                                            isAdLoading = false
-                                                            Log.e("AvatarStoreScreen", "Yıldız ekleme hatası: ${e.message}", e)
-                                                            Toast.makeText(
-                                                                context,
-                                                                "Yıldız eklenirken bir sorun oluştu",
-                                                                Toast.LENGTH_SHORT
-                                                            ).show()
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            onAdNotAvailable = {
-                                                // Reklam gösterilemedi - Production için uygun mesaj göster
-                                                isAdLoading = false
-                                                Log.d("AvatarStoreScreen", "Ödüllü reklam gösterilemedi")
-                                                
-                                                // Production'da test modu YOK - Kullanıcıya uygun mesaj göster
-                                                CoroutineScope(Dispatchers.Main).launch {
-                                                    try {
-                                                        // Dialog'u kapat
-                                                        showNotEnoughStarsDialog = false
-                                                        
-                                                        // Kullanıcıya bilgilendirici mesaj göster
-                                                        Toast.makeText(
-                                                            context,
-                                                            "Reklam şu anda kullanılamıyor. Lütfen internet bağlantınızı kontrol edin ve daha sonra tekrar deneyin.",
-                                                            Toast.LENGTH_LONG
-                                                        ).show()
-                                                    } catch (e: Exception) {
-                                                        Log.e("AvatarStoreScreen", "Reklam hata mesajı gösterilirken hata: ${e.message}", e)
-                                                    }
-                                                }
-                                            }
-                                        )
-                                    } catch (e: Exception) {
-                                        isAdLoading = false
-                                        Log.e("AvatarStoreScreen", "Reklam gösterme işlemi başlatılamadı: ${e.message}", e)
-                                        
-                                        // Hata durumunda da test modu YOK - Kullanıcıya uygun mesaj göster
-                                        CoroutineScope(Dispatchers.Main).launch {
-                                            try {
-                                                // Dialog'u kapat
-                                                showNotEnoughStarsDialog = false
-                                                
-                                                // Kullanıcıya hata mesajı göster
-                                                Toast.makeText(
-                                                    context, 
-                                                    "Reklam sistemi şu anda kullanılamıyor. Lütfen uygulamayı yeniden başlatın veya daha sonra tekrar deneyin.", 
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                            } catch (e2: Exception) {
-                                                Log.e("AvatarStoreScreen", "Hata mesajı gösterilirken hata: ${e2.message}", e2)
-                                            }
-                                        }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                enabled = !isAdLoading, // Yükleme sırasında butonu devre dışı bırak
-                                colors = ButtonDefaults.buttonColors(
-                                    backgroundColor = if (isAdLoading) Color.Gray else Color(0xFFFFC107),
-                                    contentColor = Color.White
-                                ),
-                                shape = RoundedCornerShape(28.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.Center
-                                ) {
-                                    if (isAdLoading) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            strokeWidth = 2.dp,
-                                            color = Color.White
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Reklam Hazırlanıyor...",
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    } else {
-                                        Icon(
-                                            painter = painterResource(id = R.drawable.ic_star), // Mevcut yıldız ikonunu kullan
-                                            contentDescription = "Reklam İzle",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = "Reklam İzle ve 1 Yıldız Kazan",
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-                            }
-                            }
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Vazgeç butonu (Outlined stili ile)
-                        OutlinedButton(
-                            onClick = { showNotEnoughStarsDialog = false },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            shape = RoundedCornerShape(28.dp),
-                            border = BorderStroke(1.dp, Color(0xFF5D35A0)),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                backgroundColor = Color.White,
-                                contentColor = Color(0xFF5D35A0)
-                            )
-                        ) {
-                            Text(
-                                text = "Vazgeç",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+        // Avatar 3.0 atelier: all 15 IDs remain stable; new looks have their
+        // own persisted selection and purchase ledger.
+        detailAvatar?.let { selected ->
+            Avatar3DetailDialog(
+                avatar = selected,
+                equippedAvatarId = currentAvatarId.value,
+                balance = userStars,
+                premiumActive = isPremium,
+                customization = customization,
+                onDismiss = { detailAvatar = null },
+                onEquip = { avatar ->
+                    if (avatarService.setCurrentAvatar(avatar.id)) {
+                        currentAvatarId.value = avatar.id
+                        previewAvatarId = avatar.id
+                        onAvatarChanged(avatar.id)
+                        Toast.makeText(context, avatar.name + " seçildi",
+                            Toast.LENGTH_SHORT).show()
                     }
+                },
+                onUnlockAvatar = { avatar ->
+                    detailAvatar = null
+                    selectedAvatarForInfo = avatar
+                    when {
+                        avatar.id > 6 && !isPremium -> {
+                            avatarNeedingPremium = avatar
+                            showPremiumRequiredDialog = true
+                        }
+                        userStars < avatar.price -> {
+                            starsRequired = avatar.price
+                            showNotEnoughStarsDialog = true
+                        }
+                        else -> showPurchaseConfirmDialog = true
+                    }
+                },
+                onNeedStars = { cost ->
+                    detailAvatar = null
+                    selectedAvatarForInfo = selected
+                    starsRequired = cost
+                    showNotEnoughStarsDialog = true
+                },
+                onNeedPremium = { avatar ->
+                    detailAvatar = null
+                    avatarNeedingPremium = avatar
+                    showPremiumRequiredDialog = true
+                },
+                onUpdate = {
+                    customizationRefresh += 1
+                    refreshStars()
                 }
-            }
+            )
         }
-        
+
+        if (showNotEnoughStarsDialog && selectedAvatarForInfo != null) {
+            Avatar3NeedStarsDialog(
+                avatar = selectedAvatarForInfo!!,
+                balance = userStars,
+                required = starsRequired,
+                onDismiss = { showNotEnoughStarsDialog = false },
+                onPlay = {
+                    showNotEnoughStarsDialog = false
+                    onBackClick()
+                }
+            )
+        }
+
         // Avatar 3.0: single concise dark Premium gate. No direct checkout
         // here; Settings owns monthly, yearly and lifetime Google Play flows.
         if (showPremiumRequiredDialog) {
@@ -1368,186 +723,42 @@ fun AvatarStoreScreen(
             )
         }
 
-        // Satın alma onay diyaloğu
+        // One authoritative avatar purchase path; no secondary UI wallet write.
         if (showPurchaseConfirmDialog && selectedAvatarForInfo != null) {
-            // CoroutineScope tanımlanması burada
-            val coroutineScope = rememberCoroutineScope()
-            
-            Dialog(onDismissRequest = { showPurchaseConfirmDialog = false }) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    backgroundColor = Color.White,
-                    elevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Avatar Satın Al",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF5D35A0)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Box(
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    brush = Brush.radialGradient(
-                                        colors = listOf(
-                                            Color(0xFFE8F5E9),
-                                            Color(0xFFB2DFDB)
-                                        )
-                                    )
-                                )
-                                .border(
-                                    width = 3.dp,
-                                    brush = Brush.sweepGradient(
-                                        colors = listOf(
-                                            Color(0xFF5D35A0),
-                                            Color(0xFF7E57C2),
-                                            Color(0xFF9575CD),
-                                            Color(0xFF5D35A0)
-                                        )
-                                    ),
-                                    shape = CircleShape
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            AnimatedAvatarView(
-                                avatar = selectedAvatarForInfo!!,
-                                modifier = Modifier.size(100.dp),
-                                contentDescription = selectedAvatarForInfo!!.name
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            text = selectedAvatarForInfo!!.name,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF5D35A0)
-                        )
-                        
-                        Spacer(modifier = Modifier.height(8.dp))
-                        
-                        Text(
-                            text = selectedAvatarForInfo!!.description,
-                            fontSize = 16.sp,
-                            color = Color(0xFF757575),
-                            textAlign = TextAlign.Center
-                        )
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        // Fiyat bilgisi - görsel tasarım
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0xFFF1F8E9))
-                                .padding(vertical = 12.dp, horizontal = 16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = "Yıldız",
-                                tint = Color(0xFFFFC107),
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "${selectedAvatarForInfo!!.price} yıldız",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF558B2F)
-                            )
-                            Spacer(modifier = Modifier.weight(1f))
-                            Text(
-                                text = "Bakiye: $userStars",
-                                fontSize = 16.sp,
-                                color = Color(0xFF558B2F)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            // İptal butonu
-                            OutlinedButton(
-                                onClick = { showPurchaseConfirmDialog = false },
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = Color(0xFF5D35A0)
-                                ),
-                                border = BorderStroke(1.dp, Color(0xFF5D35A0)),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("İptal", fontSize = 16.sp)
+            Avatar3UnlockConfirmDialog(
+                avatar = selectedAvatarForInfo!!,
+                balance = userStars,
+                onDismiss = { showPurchaseConfirmDialog = false },
+                onConfirm = {
+                    val target = selectedAvatarForInfo
+                    showPurchaseConfirmDialog = false
+                    if (target != null) {
+                        coroutineScope.launch {
+                            val unlocked = withContext(Dispatchers.IO) {
+                                avatarService.unlockAvatar(target.id)
                             }
-                            
-                            Spacer(modifier = Modifier.width(16.dp))
-                            
-                            // Satın al butonu
-                            Button(
-                                onClick = {
-                                    val target = selectedAvatarForInfo
-                                    showPurchaseConfirmDialog = false
-                                    if(target != null) {
-                                        coroutineScope.launch {
-                                            // AvatarService is the ONLY place that
-                                            // debits and persists stars. Never write
-                                            // stale UI balances to two preference files.
-                                            val unlocked = withContext(Dispatchers.IO) {
-                                                avatarService.unlockAvatar(target.id)
-                                            }
-                                            if(unlocked) {
-                                                val equipped = avatarService.setCurrentAvatar(target.id)
-                                                currentAvatarId.value = avatarService.getCurrentAvatar().id
-                                                previewAvatarId = target.id
-                                                val actualBalance = starManager.getDisplayStars()
-                                                userStars = actualBalance
-                                                EventBus.forceStarNotification(actualBalance)
-                                                if (equipped) onAvatarChanged(target.id)
-                                                Toast.makeText(context,
-                                                    if(equipped) "${target.name} açıldı! Kalan: $actualBalance yıldız"
-                                                    else "${target.name} açıldı, ancak seçmek için Premium erişimi gerekiyor.",
-                                                    Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                userStars = starManager.getDisplayStars()
-                                                Toast.makeText(context,
-                                                    "Avatar açılamadı. Yıldız bakiyeni kontrol et.",
-                                                    Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    backgroundColor = Color(0xFF4CAF50),
-                                    contentColor = Color.White
-                                ),
-                                shape = RoundedCornerShape(28.dp)
-                            ) {
-                                Text("Satın Al", fontSize = 16.sp)
+                            if (unlocked) {
+                                val equipped = avatarService.setCurrentAvatar(target.id)
+                                currentAvatarId.value = avatarService.getCurrentAvatar().id
+                                previewAvatarId = target.id
+                                val actualBalance = starManager.getDisplayStars()
+                                userStars = actualBalance
+                                customizationRefresh += 1
+                                EventBus.forceStarNotification(actualBalance)
+                                if (equipped) onAvatarChanged(target.id)
+                                Toast.makeText(context,
+                                    if (equipped) target.name + " açıldı!"
+                                    else "Avatar açıldı. Kullanmak için Premium gerekli.",
+                                    Toast.LENGTH_SHORT).show()
+                            } else {
+                                refreshStars()
+                                Toast.makeText(context, "Avatar açılamadı. Bakiyeni kontrol et.",
+                                    Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                 }
-            }
+            )
         }
     }
 }
@@ -1557,6 +768,9 @@ fun AvatarItem(
     avatar: Avatar,
     isSelected: Boolean,
     premiumActive: Boolean,
+    lookId: Int = 0,
+    accessory: Int = 0,
+    effect: Int = 0,
     onClick: () -> Unit
 ) {
     val premium = avatar.id > 6
@@ -1609,9 +823,10 @@ fun AvatarItem(
                     .border(1.5.dp, accent.copy(alpha=0.8f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                AnimatedAvatarView(
-                    avatar = avatar, modifier = Modifier.size(80.dp),
-                    contentDescription = avatar.name, animate = false
+                Avatar3CharacterStage(
+                    avatar = avatar, lookId = lookId, accessory = accessory,
+                    effect = effect, modifier = Modifier.size(80.dp),
+                    size = 80.dp, animate = false
                 )
                 if (!usable) {
                     Box(

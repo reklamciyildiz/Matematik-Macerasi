@@ -624,7 +624,8 @@ fun AvatarStoreScreen(
 
             // Avatar grid
             LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 158.dp),
+                // 320dp phones must show two character cards, not one oversized column.
+                columns = GridCells.Adaptive(minSize = 128.dp),
                 contentPadding = PaddingValues(16.dp),
                 modifier = Modifier
                     .fillMaxSize()

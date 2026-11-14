@@ -403,41 +403,23 @@ fun AvatarStoreScreen(
             Log.e("AvatarStoreScreen", "Premium durumu alınamadı", error)
         }
     }
-
-    // Avatar satın alma işlemi tamamlandığında yıldız sayısını hemen yenile
-    val unlockAvatar: (Int) -> Unit = { avatarId ->
+    // Preserve the legacy Premium-code sync while keeping the avatar UI
+    // responsive: never block Play entitlement observation behind Firebase.
+    LaunchedEffect(context, purchaseManager) {
         try {
-            Log.d("AvatarStoreScreen", "Avatar kilidi açma işlemi başlatılıyor: $avatarId")
-            val unlockSuccess = avatarService.unlockAvatar(avatarId)
-            
-            if (unlockSuccess) {
-                Log.d("AvatarStoreScreen", "Avatar kilidi başarıyla açıldı: $avatarId")
-                Toast.makeText(context, "Avatar başarıyla açıldı!", Toast.LENGTH_SHORT).show()
-                
-                // Yeni avatarı otomatik olarak seç
-                avatarService.setCurrentAvatar(avatarId)
-                onAvatarChanged(avatarId)
-                
-                // KRİTİK: Yıldız sayısını hemen güncelle
-                coroutineScope.launch {
-                    delay(150) // Kısa bir bekleme
-                    val updatedStars = starManager.getDisplayStars()
-                    Log.d("AvatarStoreScreen", "Avatar kilidi açıldıktan sonra yıldız güncellemesi: $updatedStars")
-                    userStars = updatedStars
-                    
-                    // EventBus'a da bildir
-                    EventBus.forceStarNotification(updatedStars)
-                }
-            } else {
-                Log.e("AvatarStoreScreen", "Avatar kilidi açılamadı: $avatarId")
-                Toast.makeText(context, "Avatar kilidi açılamadı, lütfen tekrar deneyin.", Toast.LENGTH_SHORT).show()
+            val didSync = withContext(Dispatchers.IO) {
+                com.yigit033.matematikmacarasi.services.PremiumCodeValidator
+                    .getInstance(context).checkAndSyncPremiumStatus()
             }
-        } catch (e: Exception) {
-            Log.e("AvatarStoreScreen", "Avatar kilidi açma hatası: ${e.message}", e)
-            Toast.makeText(context, "Beklenmeyen bir hata oluştu.", Toast.LENGTH_SHORT).show()
+            if (didSync) {
+                (purchaseManager ?: PurchaseManager.getInstance(context))
+                    .checkPremiumStatusAsync()
+            }
+        } catch (error: Exception) {
+            Log.w("AvatarStoreScreen", "Premium kod eşitlemesi ertelendi")
         }
     }
-    
+
     // Popup durumları
     var showNotEnoughStarsDialog by remember { mutableStateOf(false) }
     var showPurchaseConfirmDialog by remember { mutableStateOf(false) }

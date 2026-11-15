@@ -47,10 +47,11 @@ require("acknowledgePurchase(purchase)" in purchase,
 require("Purchase Token: ${purchase.purchaseToken}" not in purchase,
         "purchase token accidentally logged")
 settings=read("screens/SettingsScreen.kt")
+offer=read("screens/PremiumAdventureUI.kt")
 require("Satın Alımları Geri Yükle" in settings and
-        "Tüm hakları karşılaştır" in settings and
+        "Tüm hakları karşılaştır" in offer and
         "if (!isPremium)" in settings and
-        "if (showPlanComparison)" in settings,
+        "expanded = showPlanComparison" in settings,
         "parents cannot access restore or optional Free/Premium comparison in Settings")
 policy=read("services/payments/PremiumFeaturePolicy.kt")
 require("FREE_MARKET_SHOPS = 3" in policy and

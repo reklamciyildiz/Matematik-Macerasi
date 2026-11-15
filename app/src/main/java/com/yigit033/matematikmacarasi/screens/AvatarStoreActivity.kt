@@ -295,6 +295,9 @@ fun AvatarStoreScreen(
     val starManager = remember { StarManager.getInstance(context) }
     val customization = remember { Avatar3Customization(context) }
     var customizationRefresh by remember { mutableStateOf(0) }
+    // Reading this Compose state invalidates the grid and hero on style changes,
+    // even when the star balance remains unchanged.
+    val styleRevision = customizationRefresh
     
     // Direkt yıldız sayısını tutan state ve bunu güncellemek için fonksiyon
     var userStars by remember { mutableStateOf(starManager.getDisplayStars()) }
@@ -576,6 +579,7 @@ fun AvatarStoreScreen(
             )
             
             // Character-first collection preview: only this avatar animates.
+            androidx.compose.runtime.key(styleRevision) {
             avatars.firstOrNull()?.let { fallback ->
                 AvatarCollectionHero(
                     avatar = avatars.firstOrNull { it.id == previewAvatarId } ?: fallback,
@@ -591,6 +595,7 @@ fun AvatarStoreScreen(
                     effect = customization.selectedEffect(previewAvatarId),
                     onPrimaryAction = onAvatarTapped
                 )
+            }
             }
 
             Row(

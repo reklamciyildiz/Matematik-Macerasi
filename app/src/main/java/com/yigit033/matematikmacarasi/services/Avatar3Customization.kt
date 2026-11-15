@@ -25,22 +25,24 @@ enum class Avatar3LookPurchaseResult {
 }
 
 object Avatar3LookCatalog {
+    // Names identify the actual on-character vector palette, not fictional outfits.
+    // IDs remain stable for the original saved look selections.
     private val titles = listOf(
-        listOf("Klasik Sıfır", "Okyanus Sıfırı", "Altın Galaksi"),
+        listOf("Klasik Sıfır", "Turkuaz Sıfır", "Galaksi Sıfır"),
         listOf("Klasik Robot", "Turkuaz Robot", "Galaksi Robotu"),
-        listOf("Klasik Canavar", "Orman Enerjisi", "Yıldız Fırtınası"),
-        listOf("Klasik Matematikçi", "Turkuaz Matematikçi", "Kozmik Matematikçi"),
-        listOf("Klasik Dahi Kız", "Turkuaz Dahi", "Mor Galaksi Dahisi"),
-        listOf("Klasik Kaşif", "Turkuaz Kaşif", "Mor Galaksi Kaşifi"),
+        listOf("Klasik Canavar", "Turkuaz Canavar", "Galaksi Canavarı"),
+        listOf("Klasik Matematikçi", "Turkuaz Matematikçi", "Galaksi Matematikçisi"),
+        listOf("Klasik Dahi Kız", "Turkuaz Dahi", "Galaksi Dahisi"),
+        listOf("Klasik Kaşif", "Turkuaz Kaşif", "Galaksi Kaşifi"),
         listOf("Klasik Büyücü", "Turkuaz Büyücü", "Galaksi Büyücüsü"),
-        listOf("Klasik Bilge", "Sayı Kütüphanesi", "Kozmik Bilge"),
-        listOf("Klasik Deha", "Geometri Laboratuvarı", "Kristal Şekiller"),
-        listOf("Klasik Mucit", "Neon Abaküs", "Galaksi Mucidi"),
-        listOf("Klasik Matematikçi", "Enerji Patlaması", "Altın Zafer"),
-        listOf("Klasik Bilge Çocuk", "Bilgi Ormanı", "Büyülü Kütüphane"),
-        listOf("Klasik Einstein", "Bilim Atölyesi", "Galaksi Teorisi"),
-        listOf("Klasik Uzman", "Şekil Kalesi", "Kristal Mimari"),
-        listOf("Klasik Zeka Küpü", "Neon Bulmaca", "Altın Zeka Küpü")
+        listOf("Klasik Bilge", "Turkuaz Bilge", "Galaksi Bilgesi"),
+        listOf("Klasik Şekiller", "Turkuaz Şekiller", "Galaksi Şekilleri"),
+        listOf("Klasik Abaküs", "Turkuaz Abaküs", "Galaksi Abaküsü"),
+        listOf("Klasik Heyecan", "Turkuaz Heyecan", "Galaksi Heyecanı"),
+        listOf("Klasik Bilge Çocuk", "Turkuaz Bilge", "Galaksi Bilgesi"),
+        listOf("Klasik Einstein", "Turkuaz Einstein", "Galaksi Einstein"),
+        listOf("Klasik Şekil Uzmanı", "Turkuaz Uzman", "Galaksi Uzmanı"),
+        listOf("Klasik Zeka Küpü", "Turkuaz Zeka", "Galaksi Zekası")
     )
 
     fun looks(avatarId: Int): List<Avatar3Look> {

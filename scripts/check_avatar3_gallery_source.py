@@ -110,7 +110,7 @@ checks = {
         'listOf("Klasik Kaşif", "Orman Kaşifi", "Uzay Kaşifi")' in custom,
     "pilot Premium style still requires entitlement":
         "premiumRequired = index == 2" in custom and
-        "look.premiumRequired" in custom and
+        "Avatar3LookCatalog.looks(avatarId)[lookId].premiumRequired" in custom and
         "premiumActive()" in custom,
     "previous owned Premium looks not deleted after expiry":
         "getStringSet(ownedKey(avatarId)" in custom and

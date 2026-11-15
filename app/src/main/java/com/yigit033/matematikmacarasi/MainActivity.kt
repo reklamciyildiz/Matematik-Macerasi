@@ -129,6 +129,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.core.splashscreen.SplashScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.tween
+import com.yigit033.matematikmacarasi.ui.components.BrandedLaunchSplash
 import com.yigit033.matematikmacarasi.services.GameStatisticsService
 import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.utils.NetworkUtils
@@ -177,11 +181,11 @@ class MainActivity : ComponentActivity() {
     
     @OptIn(ExperimentalCoilApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        
-        // Android 12+ Splash Screen API kurulumu
+        // Android 12+ enforces a system splash before the activity draws.
+        // The branded full-screen artwork appears as the first Compose layer.
         installSplashScreen()
-        
+        super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         
         // Uygulama tercihlerini yükle
@@ -208,13 +212,32 @@ class MainActivity : ComponentActivity() {
         // EventBus'a profil değişikliklerini bildir
         EventBus.updateProfileData(getUserName(), System.currentTimeMillis())
         
+        val coldLaunch = savedInstanceState == null
         setContent {
             MatematikMacerasiTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    HomeScreenNew(lastResumeTime)
+                var showLaunchArt by remember { mutableStateOf(coldLaunch) }
+                LaunchedEffect(coldLaunch) {
+                    if (coldLaunch) {
+                        // Content is already composed beneath the artwork.
+                        // Brief cinematic hold only; no network-dependent wait,
+                        // no fake loading percentage and no repeat on rotation.
+                        delay(950L)
+                        showLaunchArt = false
+                    }
+                }
+                Box(Modifier.fillMaxSize()) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        HomeScreenNew(lastResumeTime)
+                    }
+                    AnimatedVisibility(
+                        visible = showLaunchArt,
+                        exit = fadeOut(animationSpec = tween(durationMillis = 460))
+                    ) {
+                        BrandedLaunchSplash()
+                    }
                 }
             }
         }

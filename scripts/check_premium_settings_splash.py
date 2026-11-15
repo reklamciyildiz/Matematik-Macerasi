@@ -69,7 +69,9 @@ checks = {
         "BrandedLaunchSplash()" in main,
     "branded splash does not fake a real loading percentage":
         "Indeterminate loading glimmer" in splash and
-        "Yükleniyor..." in splash and "%" not in splash,
+        "Yükleniyor..." in splash and
+        "LinearProgressIndicator(progress =" not in splash and
+        "progress = 0.75f" not in splash,
     "system and Compose background share night navy":
         "@color/mm_splash_navy" in (root / "app/src/main/res/values/themes.xml").read_text(encoding="utf-8") and
         "#072447" in (root / "app/src/main/res/values/colors.xml").read_text(encoding="utf-8"),

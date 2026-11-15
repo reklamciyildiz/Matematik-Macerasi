@@ -63,6 +63,10 @@ fun Avatar3DetailDialog(
     LaunchedEffect(avatar.id) {
         customization.recordPreview(avatar.id, 0)
     }
+    // Keep button state reactive immediately after selecting a palette.
+    var savedLook by remember(avatar.id) {
+        mutableStateOf(customization.selectedLook(avatar.id))
+    }
     val chosen = looks[previewLook]
     val owned = customization.lookOwned(avatar.id, previewLook)
     val canUse = avatar.isUnlocked && (avatar.id <= 6 || premiumActive)
@@ -249,7 +253,7 @@ fun Avatar3DetailDialog(
                         !avatar.isUnlocked -> "Karakteri aç · ★ " + avatar.price
                         !canUse || (chosen.premiumRequired && !premiumActive) ->
                             "Premium seçeneklerini gör"
-                        owned && customization.selectedLook(avatar.id) == previewLook ->
+                        owned && savedLook == previewLook ->
                             "✓ Bu görünüş seçili"
                         owned -> "Bu görünüşü kullan"
                         else -> "Renk stilini kullan"
@@ -257,7 +261,7 @@ fun Avatar3DetailDialog(
                     Button(
                         modifier = Modifier.fillMaxWidth(),
                         enabled = !(owned && canUse &&
-                            customization.selectedLook(avatar.id) == previewLook),
+                            savedLook == previewLook),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(backgroundColor = amber,
                             contentColor = ocean, disabledBackgroundColor = Color(0xFF358578),
@@ -268,12 +272,14 @@ fun Avatar3DetailDialog(
                                 !canUse || (chosen.premiumRequired && !premiumActive) ->
                                     onNeedPremium(avatar)
                                 owned -> if (customization.selectLook(avatar.id, previewLook)) {
+                                    savedLook = previewLook
                                     onUpdate()
                                     Toast.makeText(context, "Görünüş seçildi", Toast.LENGTH_SHORT).show()
                                 }
                                 else -> {
                                     // No stars for Lottie recoloring: no currency debit.
                                     if (customization.selectLook(avatar.id, previewLook)) {
+                                        savedLook = previewLook
                                         onUpdate()
                                         Toast.makeText(context, "Renk stili seçildi",
                                             Toast.LENGTH_SHORT).show()

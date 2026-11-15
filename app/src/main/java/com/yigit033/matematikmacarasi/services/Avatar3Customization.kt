@@ -1,7 +1,6 @@
 package com.yigit033.matematikmacarasi.services
 
 import android.content.Context
-import android.util.Log
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 
 /**
@@ -18,11 +17,6 @@ data class Avatar3Look(
     val starCost: Int,
     val premiumRequired: Boolean
 )
-
-enum class Avatar3LookPurchaseResult {
-    SUCCESS, ALREADY_OWNED, AVATAR_LOCKED, PREMIUM_REQUIRED,
-    INSUFFICIENT_STARS, SAVE_FAILED, INVALID_LOOK
-}
 
 object Avatar3LookCatalog {
     // Names identify the actual on-character vector palette, not fictional outfits.
@@ -75,12 +69,6 @@ class Avatar3Customization(context: Context) {
     private val prefs = app.getSharedPreferences("avatar3_customization_v1", Context.MODE_PRIVATE)
     private val avatarPrefs = app.getSharedPreferences("avatar_prefs", Context.MODE_PRIVATE)
 
-    companion object {
-        // Serialized across all instances of this store; double-taps cannot
-        // independently spend for the same look.
-        private val purchaseLock = Any()
-    }
-
     fun avatarOwned(avatarId: Int): Boolean {
         if (avatarId !in 1..15) return false
         if (avatarId == 1) return true
@@ -128,39 +116,9 @@ class Avatar3Customization(context: Context) {
         return prefs.edit().putInt(selectedKey(avatarId), lookId).commit()
     }
 
-    fun buyLook(avatarId: Int, lookId: Int): Avatar3LookPurchaseResult =
-        synchronized(purchaseLock) {
-            val look = Avatar3LookCatalog.looks(avatarId).getOrNull(lookId)
-                ?: return@synchronized Avatar3LookPurchaseResult.INVALID_LOOK
-            if (avatarId !in 1..15 || lookId == 0) {
-                return@synchronized Avatar3LookPurchaseResult.INVALID_LOOK
-            }
-            if (!avatarOwned(avatarId)) {
-                return@synchronized Avatar3LookPurchaseResult.AVATAR_LOCKED
-            }
-            if (lookOwned(avatarId, lookId)) {
-                return@synchronized Avatar3LookPurchaseResult.ALREADY_OWNED
-            }
-            if ((avatarId > 6 || look.premiumRequired) && !premiumActive()) {
-                return@synchronized Avatar3LookPurchaseResult.PREMIUM_REQUIRED
-            }
-            val wallet = StarManager.getInstance(app)
-            val before = wallet.getDisplayStars()
-            if (before < look.starCost) {
-                return@synchronized Avatar3LookPurchaseResult.INSUFFICIENT_STARS
-            }
-            if (!wallet.setDisplayStars(before - look.starCost)) {
-                return@synchronized Avatar3LookPurchaseResult.SAVE_FAILED
-            }
-            val next = (prefs.getStringSet(ownedKey(avatarId), emptySet())
-                ?: emptySet()).toMutableSet().apply { add(lookId.toString()) }
-            if (!prefs.edit().putStringSet(ownedKey(avatarId), next).commit()) {
-                wallet.setDisplayStars(before)
-                Log.e("Avatar3Customization", "Look save failed; wallet rollback attempted")
-                return@synchronized Avatar3LookPurchaseResult.SAVE_FAILED
-            }
-            Avatar3LookPurchaseResult.SUCCESS
-        }
+    // Color palettes and the two Kaşif pilot costumes have no star price.
+    // The obsolete buyLook() wallet transaction was intentionally removed:
+    // ownership/equipment is gated by avatar purchase + Premium entitlement.
 
     fun selectedAccessory(avatarId: Int): Int =
         if (avatarOwned(avatarId)) prefs.getInt("accessory_$avatarId", 0).coerceIn(0, 2) else 0

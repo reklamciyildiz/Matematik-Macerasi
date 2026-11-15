@@ -31,7 +31,7 @@ checks = {
         "AvatarStaticLottieArtwork" in view,
     "Lottie previews and gallery images share animation source":
         "LottieCompositionSpec.RawRes(avatar.animationResId)" in view and
-        "AvatarStaticLottieArtwork(avatar, contentDescription)" in view,
+        "AvatarStaticLottieArtwork(avatar, contentDescription, recoloredJson)" in view,
     "optional WebP fallback preserved":
         "context.assets.open(filename)" in view and
         "val artwork = pilotArtwork" in view and
@@ -46,7 +46,11 @@ checks = {
     "look inventory separate from legacy avatar ID":
         "avatar3_customization_v1" in custom and
         "look_selected_" in custom and "looks_owned_" in custom,
-    "look transactions serialized and stars debited once":
+    "palette styles do not debit stars":
+        "starCost = 0" in custom and
+        "Renk stilleri karakterin kendi Lottie çizimini" in atelier and
+        "customization.buyLook(" not in atelier,
+    "style purchase history retained for backward compatibility":
         "synchronized(purchaseLock)" in custom and
         "wallet.setDisplayStars(before - look.starCost)" in custom,
     "premium look access is enforced at purchase and selection":
@@ -62,9 +66,18 @@ checks = {
         "fun setAccessory(" in custom and "fun setEffect(" in custom and
         "customization.setAccessory(" in atelier and
         "customization.setEffect(" in atelier,
-    "badges based on progress, not simulated":
-        "customization.unlockedLooks(" in atelier and
-        "customization.lookOwned(" in atelier,
+    "badge progress tied to actual previews and ownership":
+        "customization.recordPreview(" in atelier and
+        "customization.previewCount(" in atelier and
+        "avatar.isUnlocked" in atelier,
+    "locked style and effects can be previewed without purchase":
+        "accessory, true)" in atelier and
+        "effect, true)" in atelier and
+        "Kaydetmek için önce avatarı aç." in atelier,
+    "animated Lottie vector palettes rendered":
+        "Avatar3LottiePalette.load(" in view and
+        "lookId = lookId" in stage and
+        "LottieCompositionSpec.JsonString(json)" in view,
     "active customization visible in hero and cards":
         "lookId = customization.selectedLook(avatar.id)" in store and
         "Avatar3CharacterStage(" in hero and "Avatar3CharacterStage(" in store,

@@ -51,7 +51,8 @@ fun AnimatedAvatarView(
     modifier: Modifier = Modifier,
     size: Dp = 80.dp,
     contentDescription: String? = avatar.name,
-    animate: Boolean = true
+    animate: Boolean = true,
+    lookId: Int = 0
 ) {
     val context = LocalContext.current
     // Optional, versioned production-ready WebP overrides. If no asset has
@@ -90,6 +91,16 @@ fun AnimatedAvatarView(
             }
         }
     }
+    // Render a genuinely different palette within the Lottie vector artwork.
+    // Heavy JSON recoloring runs off main, is cached, and never mutates the raw asset.
+    val recoloredJson by produceState<String?>(null, context, avatar.animationResId, lookId) {
+        value = if (lookId in 1..2 && avatar.animationResId != 0) {
+            withContext(Dispatchers.Default) {
+                Avatar3LottiePalette.load(context, avatar.animationResId, lookId)
+            }
+        } else null
+    }
+
     val palette = remember(avatar.id) {
         val backgrounds = listOf(
             Color(0xFF244F83), Color(0xFF3B3A80),
@@ -118,15 +129,15 @@ fun AnimatedAvatarView(
         // Kotlin cannot smart-cast a delegated property after a null check.
         val artwork = pilotArtwork
         when {
-            artwork != null -> Image(
+            artwork != null && lookId == 0 -> Image(
                 bitmap = artwork,
                 contentDescription = contentDescription,
                 modifier = Modifier.fillMaxSize().padding(2.dp),
                 contentScale = ContentScale.Fit
             )
-            hasAnimation -> AnimatedAvatarArtwork(avatar, contentDescription)
+            hasAnimation -> AnimatedAvatarArtwork(avatar, contentDescription, recoloredJson)
             avatar.animationType == AvatarAnimationType.LOTTIE &&
-                avatar.animationResId != 0 -> AvatarStaticLottieArtwork(avatar, contentDescription)
+                avatar.animationResId != 0 -> AvatarStaticLottieArtwork(avatar, contentDescription, recoloredJson)
             else -> AvatarStaticArtwork(avatar, contentDescription)
         }
     }
@@ -148,9 +159,10 @@ private fun AvatarStaticArtwork(avatar: Avatar, contentDescription: String?) {
  * illustration and avoids 15 simultaneous infinite animations.
  */
 @Composable
-private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String?) {
+private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String?, json: String?) {
     val composition by rememberLottieComposition(
-        spec = LottieCompositionSpec.RawRes(avatar.animationResId)
+        spec = if (json != null) LottieCompositionSpec.JsonString(json)
+            else LottieCompositionSpec.RawRes(avatar.animationResId)
     )
     if (composition == null) {
         AvatarStaticArtwork(avatar, contentDescription)
@@ -165,9 +177,10 @@ private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String
 }
 
 @Composable
-private fun AnimatedAvatarArtwork(avatar: Avatar, contentDescription: String?) {
+private fun AnimatedAvatarArtwork(avatar: Avatar, contentDescription: String?, json: String?) {
     val composition by rememberLottieComposition(
-        spec = LottieCompositionSpec.RawRes(avatar.animationResId)
+        spec = if (json != null) LottieCompositionSpec.JsonString(json)
+            else LottieCompositionSpec.RawRes(avatar.animationResId)
     )
     val progress by animateLottieCompositionAsState(
         composition = composition,

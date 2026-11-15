@@ -27,12 +27,12 @@ enum class Avatar3LookPurchaseResult {
 object Avatar3LookCatalog {
     private val titles = listOf(
         listOf("Klasik Sıfır", "Okyanus Sıfırı", "Altın Galaksi"),
-        listOf("Klasik Robot", "Neon Robot", "Galaksi Robotu"),
+        listOf("Klasik Robot", "Turkuaz Robot", "Galaksi Robotu"),
         listOf("Klasik Canavar", "Orman Enerjisi", "Yıldız Fırtınası"),
-        listOf("Klasik Matematikçi", "Ada Kaşifi", "Kozmik Dahi"),
-        listOf("Klasik Dahi Kız", "Bilim Kulübü", "Yıldız Gözlemcisi"),
-        listOf("Klasik Kaşif", "Orman Kaşifi", "Uzay Kaşifi"),
-        listOf("Klasik Büyücü", "Kristal Büyücü", "Altın Büyücü"),
+        listOf("Klasik Matematikçi", "Turkuaz Matematikçi", "Kozmik Matematikçi"),
+        listOf("Klasik Dahi Kız", "Turkuaz Dahi", "Mor Galaksi Dahisi"),
+        listOf("Klasik Kaşif", "Turkuaz Kaşif", "Mor Galaksi Kaşifi"),
+        listOf("Klasik Büyücü", "Turkuaz Büyücü", "Galaksi Büyücüsü"),
         listOf("Klasik Bilge", "Sayı Kütüphanesi", "Kozmik Bilge"),
         listOf("Klasik Deha", "Geometri Laboratuvarı", "Kristal Şekiller"),
         listOf("Klasik Mucit", "Neon Abaküs", "Galaksi Mucidi"),
@@ -50,15 +50,14 @@ object Avatar3LookCatalog {
                 id = index,
                 title = name,
                 subtitle = when (index) {
-                    0 -> "İlk görünüşün"
-                    1 -> "Yeni renkler ve macera sahnesi"
-                    else -> "Özel ışık ve koleksiyon sahnesi"
+                    0 -> "Orijinal animasyon"
+                    1 -> "Turkuaz tonlarda Lottie renkleri"
+                    else -> "Mor ve altın galaksi paleti"
                 },
-                starCost = when (index) {
-                    0 -> 0
-                    1 -> 20
-                    else -> 35
-                },
+                // These are color treatments on the original Lottie,
+                // not separately illustrated costumes. Never charge stars
+                // for palette-only changes.
+                starCost = 0,
                 premiumRequired = index == 2
             )
         }
@@ -96,6 +95,11 @@ class Avatar3Customization(context: Context) {
     fun lookOwned(avatarId: Int, lookId: Int): Boolean {
         if (avatarId !in 1..15 || lookId !in 0..2) return false
         if (lookId == 0) return true
+        // Color treatments are not paid skins. A basic palette comes free
+        // with an owned avatar; the special palette requires Premium access.
+        if (avatarOwned(avatarId) && lookId == 1) return true
+        if (avatarOwned(avatarId) && lookId == 2 && premiumActive()) return true
+        // Preserve any appearance previously unlocked in older builds.
         return prefs.getStringSet(ownedKey(avatarId), emptySet())
             ?.contains(lookId.toString()) == true
     }

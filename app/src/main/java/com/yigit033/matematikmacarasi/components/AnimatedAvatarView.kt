@@ -94,6 +94,8 @@ fun AnimatedAvatarView(
     // Render a genuinely different palette within the Lottie vector artwork.
     // Heavy JSON recoloring runs off main, is cached, and never mutates the raw asset.
     val recoloredJson by produceState<String?>(null, context, avatar.animationResId, lookId) {
+        // Do not flash a previous look while another Lottie composition loads.
+        value = null
         value = if (lookId in 1..2 && avatar.animationResId != 0) {
             withContext(Dispatchers.Default) {
                 Avatar3LottiePalette.load(context, avatar.animationResId, lookId)

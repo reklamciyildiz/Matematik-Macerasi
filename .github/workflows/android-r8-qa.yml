@@ -11,6 +11,10 @@ on:
       - "app/src/main/java/com/yigit033/matematikmacarasi/components/Avatar*.kt"
       - "app/src/main/java/com/yigit033/matematikmacarasi/components/AnimatedAvatarView.kt"
       - "app/src/main/java/com/yigit033/matematikmacarasi/services/AvatarService.kt"
+      - "app/src/main/java/com/yigit033/matematikmacarasi/services/Avatar3Customization.kt"
+      - "app/src/main/res/raw/avatar_explorer_*_pilot.json"
+      - "app/src/test/java/com/yigit033/matematikmacarasi/services/Avatar3LookCatalogTest.kt"
+      - "scripts/check_avatar3_gallery_source.py"
       - ".github/workflows/android-r8-qa.yml"
   workflow_dispatch:
 

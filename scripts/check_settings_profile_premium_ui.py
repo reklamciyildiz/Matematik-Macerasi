@@ -4,6 +4,7 @@ from pathlib import Path
 base=Path(__file__).resolve().parents[1]
 root=base/"app/src/main/java/com/yigit033/matematikmacarasi"
 settings=(root/"screens/SettingsScreen.kt").read_text(encoding="utf-8")
+offer=(root/"screens/PremiumAdventureUI.kt").read_text(encoding="utf-8")
 host=(root/"screens/SettingsActivity.kt").read_text(encoding="utf-8")
 profile=(root/"profile/ProfileActivity.kt").read_text(encoding="utf-8")
 avatar=(root/"screens/AvatarStoreActivity.kt").read_text(encoding="utf-8")
@@ -15,12 +16,12 @@ checks=[
     ("no forced white content card","CardDefaults.cardColors(" not in settings),
     ("restore button retained","Satın Alımları Geri Yükle" in settings),
     ("restore feedback readable","Text(resultText,color=SettingsPalette.secondary" in settings),
-    ("premium active state retained","Premium Aktif" in settings),
+    ("premium active state retained","Premium Aktif" in offer and "PremiumAdventureOffer(" in settings),
     ("free-only optional plan comparison",
          "if (!isPremium)" in settings and
-         "if (showPlanComparison)" in settings and
-         "Tüm hakları karşılaştır" in settings and
-         "PremiumFeaturePolicy.marketShopCount" in settings),
+         "expanded = showPlanComparison" in settings and
+         "Tüm hakları karşılaştır" in offer and
+         "PremiumFeaturePolicy.marketShopCount" in offer),
     ("audio controls retained","audioService.setMusicEnabled" in settings and
          "audioService.setSoundEnabled" in settings),
     ("notification preference retained",'putBoolean("notifications_enabled",it)' in settings),
@@ -28,8 +29,8 @@ checks=[
     ("premium code redemption retained","validateAndActivateCode(code)" in settings),
     ("direct lifetime Play checkout from Settings",
          "purchaseManager.buyPremium(it,plan)" in settings and
-         "PremiumPlan.LIFETIME" in settings and
-         "enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready" in settings),
+         "PremiumPlan.LIFETIME" in offer and
+         "prices[chosen] != null && catalog is PurchaseManager.CatalogStatus.Ready" in offer),
     ("profile hero preserved and reflects Avatar 3.0",
          "Avatar3PlayerPortrait(" in profile and "onAvatarStoreClick" in profile),
     ("profile editing preserved",'onNameChange(it)' in profile and 'onClassChange(option)' in profile),

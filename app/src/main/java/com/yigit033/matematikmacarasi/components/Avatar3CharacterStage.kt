@@ -35,7 +35,8 @@ fun Avatar3CharacterStage(
     effect: Int,
     size: Dp,
     modifier: Modifier = Modifier,
-    animate: Boolean = false
+    animate: Boolean = false,
+    showVectorAnimation: Boolean = false
 ) {
     val palette = when (lookId) {
         1 -> listOf(Color(0xFF13839D), Color(0xFF155C8D), Color(0xFF111B50))
@@ -91,14 +92,28 @@ fun Avatar3CharacterStage(
                 }
             }
         }
-        AnimatedAvatarView(
-            avatar = avatar,
-            size = size * 0.79f,
-            animate = animate,
-            lookId = lookId,
-            modifier = Modifier.size(size * 0.79f),
-            contentDescription = avatar.name
-        )
+        if (avatar.id == 6 && !showVectorAnimation) {
+            // Production high-detail costume art is the default visual for
+            // Explorer. Original and pilot Lottie versions remain available
+            // through the workshop's explicit animation toggle.
+            Avatar3ExplorerArtwork(
+                avatar = avatar,
+                lookId = lookId,
+                size = size * 0.96f,
+                modifier = Modifier.size(size * 0.96f),
+                animate = animate,
+                fullBody = size >= 128.dp
+            )
+        } else {
+            AnimatedAvatarView(
+                avatar = avatar,
+                size = size * 0.79f,
+                animate = animate,
+                lookId = lookId,
+                modifier = Modifier.size(size * 0.79f),
+                contentDescription = avatar.name
+            )
+        }
         // Accessory artwork sits over the character's head, not as a tiny
         // unrelated corner label. All choices are fully previewable.
         if (accessory != 0) {

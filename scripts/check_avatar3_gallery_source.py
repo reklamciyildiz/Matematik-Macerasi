@@ -19,6 +19,15 @@ atelier = source("components/Avatar3DetailDialog.kt")
 stage = source("components/Avatar3CharacterStage.kt")
 commerce = source("components/Avatar3CommerceDialogs.kt")
 palette = source("components/Avatar3LottiePalette.kt")
+production_art = source("components/Avatar3ExplorerArtwork.kt")
+
+def valid_production_art(look):
+    path = repo / "app/src/main/assets/avatars3" / f"explorer_06_{look}.webp"
+    if not path.exists():
+        return False
+    data = path.read_bytes()
+    return (20_000 <= len(data) <= 180_000 and data[:4] == b"RIFF" and
+            data[8:12] == b"WEBP")
 
 forest = json.loads((raw / "avatar_explorer_forest_pilot.json").read_text(encoding="utf-8"))
 space = json.loads((raw / "avatar_explorer_space_pilot.json").read_text(encoding="utf-8"))
@@ -92,6 +101,19 @@ checks = {
         "Avatar3LottiePalette.load(" in view and
         "LottieCompositionSpec.JsonString(json)" in view and
         'node.optString("ty") == "gf"' in palette,
+    "real detailed classic/forest/space WebP assets shipped":
+        all(valid_production_art(name) for name in ("classic", "forest", "space")),
+    "Explorer art loader uses off-main decode and portrait crops":
+        "withContext(Dispatchers.IO)" in production_art and
+        "Bitmap.createBitmap(" in production_art and
+        "LruCache<String, ImageBitmap>" in production_art,
+    "Explorer workshop switches high-detail art and playable Lottie":
+        "showVectorAnimation" in stage and "previewLottie" in atelier and
+        "Lottie animasyonunu izle" in atelier,
+    "all avatar surfaces use production Explorer art":
+        "Avatar3ExplorerArtwork(" in stage and
+        "Avatar3CharacterStage(" in hero and
+        "Avatar3CharacterStage(" in store,
     "new pilot forest vector Lottie is well formed":
         valid_pilot(forest),
     "new pilot space vector Lottie is well formed":

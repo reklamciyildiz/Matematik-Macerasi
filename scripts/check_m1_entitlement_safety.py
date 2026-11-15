@@ -6,6 +6,7 @@ app=root/"app/src/main/java/com/yigit033/matematikmacarasi"
 client=(app/"services/payments/PurchaseManager.kt").read_text(encoding="utf-8")
 codes=(app/"services/PremiumCodeValidator.kt").read_text(encoding="utf-8")
 ui=(app/"screens/SettingsScreen.kt").read_text(encoding="utf-8")
+offer=(app/"screens/PremiumAdventureUI.kt").read_text(encoding="utf-8")
 legacy=(app/"services/FirebaseManager.kt").read_text(encoding="utf-8")
 policy=(app/"services/payments/PremiumEntitlementPolicy.kt").read_text(encoding="utf-8")
 server=(root/"commercial/functions/institution-functions.cjs").read_text(encoding="utf-8")
@@ -41,9 +42,10 @@ assert 'exports.redeemInstitutionSeatCode' not in play_server
 # Cloudflare-mode subscription/license state must come from current signed
 # rights, never from a stale mutable UI StateFlow after expiry.
 assert 'val isPremium=if(BuildConfig.MM_USE_CLOUDFLARE)' in ui
-assert 'enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready' in ui
-assert 'PremiumPlan.LIFETIME' in ui and 'purchaseManager.buyPremium(it,plan)' in ui
-assert 'Google Play fiyatlarını yeniden kontrol et' in ui
+assert 'prices[chosen] != null && catalog is PurchaseManager.CatalogStatus.Ready' in offer
+assert 'prices[plan] != null' in ui
+assert 'PremiumPlan.LIFETIME' in offer and 'purchaseManager.buyPremium(it,plan)' in ui
+assert 'Google Play fiyatlarını yeniden kontrol et' in offer
 assert 'unfetchedProductList' in client and 'enableAutoServiceReconnection()' in client
 assert '_premiumState.value=isPremiumSync()' in client
 assert 'playSubscriptionClient.isPremiumOffline()' in client

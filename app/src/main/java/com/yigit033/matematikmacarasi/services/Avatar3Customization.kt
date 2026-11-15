@@ -171,5 +171,20 @@ class Avatar3Customization(context: Context) {
         avatarOwned(avatarId) && value in 0..2 &&
             prefs.edit().putInt("effect_$avatarId", value).commit()
 
+    /** Previews are free for everyone, including locked avatars. */
+    fun recordPreview(avatarId: Int, lookId: Int) {
+        if (avatarId !in 1..15 || lookId !in 0..2) return
+        val key = "look_previewed_$avatarId"
+        val visited = (prefs.getStringSet(key, emptySet()) ?: emptySet()).toMutableSet()
+        if (visited.add(lookId.toString())) {
+            prefs.edit().putStringSet(key, visited).apply()
+        }
+    }
+
+    fun previewCount(avatarId: Int): Int =
+        if (avatarId in 1..15) {
+            (prefs.getStringSet("look_previewed_$avatarId", emptySet()) ?: emptySet()).size
+        } else 0
+
     fun unlockedLooks(avatarId: Int): Int = (0..2).count { lookOwned(avatarId, it) }
 }

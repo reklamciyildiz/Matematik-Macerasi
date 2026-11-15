@@ -26,6 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.awaitPointerEventScope
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -53,7 +55,17 @@ fun BrandedLaunchSplash() {
         label = "Indeterminate loading glimmer"
     )
     Box(
-        Modifier.fillMaxSize().background(Color(0xFF072447)),
+        Modifier.fillMaxSize()
+            // While the illustrated launch layer is visible, prevent a tap
+            // from accidentally activating a home button underneath it.
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent().changes.forEach { it.consume() }
+                    }
+                }
+            }
+            .background(Color(0xFF072447)),
         contentAlignment = Alignment.Center
     ) {
         Image(

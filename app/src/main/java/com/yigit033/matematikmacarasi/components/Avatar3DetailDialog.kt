@@ -27,10 +27,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.yigit033.matematikmacarasi.models.Avatar
 import com.yigit033.matematikmacarasi.services.Avatar3Customization
 import com.yigit033.matematikmacarasi.services.Avatar3LookCatalog
-import com.yigit033.matematikmacarasi.services.Avatar3LookPurchaseResult
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private val ocean = Color(0xFF0D2949)
 private val pearl = Color(0xFFE1F3FF)
@@ -53,7 +49,6 @@ fun Avatar3DetailDialog(
     onUpdate: () -> Unit
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val looks = remember(avatar.id) { Avatar3LookCatalog.looks(avatar.id) }
     var tab by remember(avatar.id) { mutableStateOf(0) }
     var previewLook by remember(avatar.id) {
@@ -65,8 +60,9 @@ fun Avatar3DetailDialog(
     var effect by remember(avatar.id) {
         mutableStateOf(customization.selectedEffect(avatar.id))
     }
-    var busy by remember(avatar.id) { mutableStateOf(false) }
-    var pendingLookId by remember(avatar.id) { mutableStateOf<Int?>(null) }
+    LaunchedEffect(avatar.id) {
+        customization.recordPreview(avatar.id, 0)
+    }
     val chosen = looks[previewLook]
     val owned = customization.lookOwned(avatar.id, previewLook)
     val canUse = avatar.isUnlocked && (avatar.id <= 6 || premiumActive)
@@ -152,7 +148,10 @@ fun Avatar3DetailDialog(
                                         .border(if (active) 2.dp else 1.dp,
                                             if (active) amber else Color(0xFF527FA5),
                                             RoundedCornerShape(17.dp))
-                                        .clickable { previewLook = look.id }.padding(8.dp),
+                                        .clickable {
+                                            previewLook = look.id
+                                            customization.recordPreview(avatar.id, look.id)
+                                        }.padding(8.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
@@ -163,47 +162,85 @@ fun Avatar3DetailDialog(
                                         maxLines = 2, overflow = TextOverflow.Ellipsis,
                                         textAlign = TextAlign.Center)
                                     Text(
-                                        if (hasLook) "✓ Sahip" else
-                                            (if (look.premiumRequired) "♛ " else "") +
-                                                "★ " + look.starCost,
+                                        when {
+                                            !avatar.isUnlocked -> "Önizle"
+                                            hasLook && (look.id != 2 || premiumActive) ->
+                                                "✓ Kullanılabilir"
+                                            look.premiumRequired -> "♛ Premium"
+                                            else -> "Önizle"
+                                        },
                                         color = if (hasLook) mint else amber,
                                         fontSize = 11.sp, fontWeight = FontWeight.Bold)
                                 }
                             }
                         }
                         Text(
-                            "Görünüş; aynı Lottie karakterinin sahnesini, renklerini ve ışığını değiştirir.",
+                            "Renk stilleri karakterin kendi Lottie çizimini de değiştirir. Yeni bir kıyafet değildir; yıldız harcamaz.",
                             color = pearl.copy(alpha = 0.8f), fontSize = 12.sp,
                             lineHeight = 16.sp)
                     }
                     1 -> {
                         ChoiceGroup(listOf("Sade", "Işık Yıldızı", "Altın Taç"),
-                            accessory, canUse) { value ->
+                            accessory, true) { value ->
                             accessory = value
-                            if (canUse && customization.setAccessory(avatar.id, value)) onUpdate()
+                            if (canUse) {
+                                if (customization.setAccessory(avatar.id, value)) onUpdate()
+                            } else {
+                                Toast.makeText(context,
+                                    "Aksesuarı önizliyorsun. Kaydetmek için önce avatarı aç.",
+                                    Toast.LENGTH_SHORT).show()
+                            }
                         }
+                        Text(if (canUse) "Ücretsiz aksesuar · seçimin kaydedilir."
+                            else "Ücretsiz dene · kaydetmek için avatarı aç.",
+                            color = pearl.copy(alpha = 0.85f), fontSize = 12.sp)
                     }
                     2 -> {
                         ChoiceGroup(listOf("Efektsiz", "Işıltılı Parıltı", "Altın Halo"),
-                            effect, canUse) { value ->
+                            effect, true) { value ->
                             effect = value
-                            if (canUse && customization.setEffect(avatar.id, value)) onUpdate()
+                            if (canUse) {
+                                if (customization.setEffect(avatar.id, value)) onUpdate()
+                            } else {
+                                Toast.makeText(context,
+                                    "Efekti önizliyorsun. Kaydetmek için önce avatarı aç.",
+                                    Toast.LENGTH_SHORT).show()
+                            }
                         }
+                        Text(if (canUse) "Ücretsiz efekt · seçimin kaydedilir."
+                            else "Ücretsiz dene · kaydetmek için avatarı aç.",
+                            color = pearl.copy(alpha = 0.85f), fontSize = 12.sp)
                     }
                     else -> {
+                        val tried = customization.previewCount(avatar.id)
                         val badges = listOf(
-                            "İlk Keşif" to avatar.isUnlocked,
-                            "Stil Koleksiyoncusu" to
-                                (customization.unlockedLooks(avatar.id) > 1),
-                            "Efsanevi Görünüş" to customization.lookOwned(avatar.id, 2)
+                            Triple("Atölye Kaşifi", "Avatar atölyesini ziyaret et.", true),
+                            Triple("Stil Meraklısı", "İki farklı görünüşü dene (${tried.coerceAtMost(2)}/2).", tried >= 2),
+                            Triple("Karakter Sahibi", "Bu avatarın kilidini yıldızlarla aç.", avatar.isUnlocked),
+                            Triple("Galaksi Ustası",
+                                "Premium erişimiyle Galaksi stilini seç.",
+                                avatar.isUnlocked && premiumActive &&
+                                    customization.selectedLook(avatar.id) == 2)
                         )
                         badges.forEach { badge ->
-                            Text((if (badge.second) "✓ " else "🔒 ") + badge.first,
+                            Column(
                                 modifier = Modifier.fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFF193A60)).padding(13.dp),
-                                color = if (badge.second) mint else pearl,
-                                fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
+                                    .background(if (badge.third) Color(0xFF1E5968)
+                                        else Color(0xFF193A60))
+                                    .clickable {
+                                        Toast.makeText(context, badge.second,
+                                            Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(13.dp),
+                                verticalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Text((if (badge.third) "✓ " else "🔒 ") + badge.first,
+                                    color = if (badge.third) mint else pearl,
+                                    fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                Text(badge.second, color = pearl.copy(alpha = 0.85f),
+                                    fontSize = 11.sp)
+                            }
                         }
                     }
                 }
@@ -215,11 +252,11 @@ fun Avatar3DetailDialog(
                         owned && customization.selectedLook(avatar.id) == previewLook ->
                             "✓ Bu görünüş seçili"
                         owned -> "Bu görünüşü kullan"
-                        else -> "Görünüşü aç · ★ " + chosen.starCost
+                        else -> "Renk stilini kullan"
                     }
                     Button(
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = !busy && !(owned && canUse &&
+                        enabled = !(owned && canUse &&
                             customization.selectedLook(avatar.id) == previewLook),
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(backgroundColor = amber,
@@ -234,8 +271,14 @@ fun Avatar3DetailDialog(
                                     onUpdate()
                                     Toast.makeText(context, "Görünüş seçildi", Toast.LENGTH_SHORT).show()
                                 }
-                                balance < chosen.starCost -> onNeedStars(chosen.starCost)
-                                else -> pendingLookId = previewLook
+                                else -> {
+                                    // No stars for Lottie recoloring: no currency debit.
+                                    if (customization.selectLook(avatar.id, previewLook)) {
+                                        onUpdate()
+                                        Toast.makeText(context, "Renk stili seçildi",
+                                            Toast.LENGTH_SHORT).show()
+                                    }
+                                }
                             }
                         }
                     ) { Text(action, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
@@ -248,51 +291,14 @@ fun Avatar3DetailDialog(
                         shape = RoundedCornerShape(14.dp)
                     ) { Text("Bu karakteri kullan", fontWeight = FontWeight.Bold) }
                 }
-                Text("Eski avatarlar ve satın alımlar korunur. Premium görünüş " +
-                    "için aktif üyelik ayrıca gereklidir.",
+                Text("Eski avatar ve yıldızların korunur. Renk paletleri yıldızla satılmaz; " +
+                    "Premium palet için aktif üyelik gerekir.",
                     color = pearl.copy(alpha = 0.75f), fontSize = 11.sp,
                     lineHeight = 15.sp)
             }
         }
     }
-    // A second, explicit confirmation is required before any look purchase.
-    pendingLookId?.let { requested ->
-        val lookToBuy = looks[requested]
-        Avatar3LookConfirmDialog(
-            avatar = avatar,
-            lookTitle = lookToBuy.title,
-            price = lookToBuy.starCost,
-            onDismiss = { pendingLookId = null },
-            onConfirm = {
-                pendingLookId = null
-                busy = true
-                scope.launch {
-                    val result = withContext(Dispatchers.IO) {
-                        customization.buyLook(avatar.id, requested)
-                    }
-                    busy = false
-                    when (result) {
-                        Avatar3LookPurchaseResult.SUCCESS -> {
-                            customization.selectLook(avatar.id, requested)
-                            previewLook = requested
-                            onUpdate()
-                            Toast.makeText(context, "Yeni görünüş açıldı!",
-                                Toast.LENGTH_SHORT).show()
-                        }
-                        Avatar3LookPurchaseResult.INSUFFICIENT_STARS ->
-                            onNeedStars(lookToBuy.starCost)
-                        Avatar3LookPurchaseResult.PREMIUM_REQUIRED ->
-                            onNeedPremium(avatar)
-                        else -> {
-                            onUpdate()
-                            Toast.makeText(context, "İşlem tamamlanamadı.",
-                                Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
-        )
-    }
+
 }
 
 @Composable

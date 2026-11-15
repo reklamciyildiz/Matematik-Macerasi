@@ -32,6 +32,7 @@ import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.yigit033.matematikmacarasi.models.Avatar
 import com.yigit033.matematikmacarasi.models.AvatarAnimationType
+import com.yigit033.matematikmacarasi.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -55,6 +56,14 @@ fun AnimatedAvatarView(
     lookId: Int = 0
 ) {
     val context = LocalContext.current
+    // Real separate vector-animation costumes for the ID=6 Kaşif pilot.
+    // The original classic Lottie, avatar ID, purchase and star data stay intact.
+    val pilotCostume = when {
+        avatar.id == 6 && lookId == 1 -> R.raw.avatar_explorer_forest_pilot
+        avatar.id == 6 && lookId == 2 -> R.raw.avatar_explorer_space_pilot
+        else -> 0
+    }
+    val lottieRes = if (pilotCostume != 0) pilotCostume else avatar.animationResId
     // Optional, versioned production-ready WebP overrides. If no asset has
     // been installed, preserve existing Lottie/XML art without breaking AAB
     // builds, player ownership or current avatar identity.
@@ -93,10 +102,10 @@ fun AnimatedAvatarView(
     }
     // Render a genuinely different palette within the Lottie vector artwork.
     // Heavy JSON recoloring runs off main, is cached, and never mutates the raw asset.
-    val recoloredJson by produceState<String?>(null, context, avatar.animationResId, lookId) {
+    val recoloredJson by produceState<String?>(null, context, avatar.animationResId, lookId, pilotCostume) {
         // Do not flash a previous look while another Lottie composition loads.
         value = null
-        value = if (lookId in 1..2 && avatar.animationResId != 0) {
+        value = if (pilotCostume == 0 && lookId in 1..2 && avatar.animationResId != 0) {
             withContext(Dispatchers.Default) {
                 Avatar3LottiePalette.load(context, avatar.animationResId, lookId)
             }
@@ -137,9 +146,9 @@ fun AnimatedAvatarView(
                 modifier = Modifier.fillMaxSize().padding(2.dp),
                 contentScale = ContentScale.Fit
             )
-            hasAnimation -> AnimatedAvatarArtwork(avatar, contentDescription, recoloredJson)
+            hasAnimation -> AnimatedAvatarArtwork(avatar, contentDescription, recoloredJson, lottieRes)
             avatar.animationType == AvatarAnimationType.LOTTIE &&
-                avatar.animationResId != 0 -> AvatarStaticLottieArtwork(avatar, contentDescription, recoloredJson)
+                lottieRes != 0 -> AvatarStaticLottieArtwork(avatar, contentDescription, recoloredJson, lottieRes)
             else -> AvatarStaticArtwork(avatar, contentDescription)
         }
     }
@@ -161,10 +170,10 @@ private fun AvatarStaticArtwork(avatar: Avatar, contentDescription: String?) {
  * illustration and avoids 15 simultaneous infinite animations.
  */
 @Composable
-private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String?, json: String?) {
+private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String?, json: String?, rawRes: Int) {
     val composition by rememberLottieComposition(
         spec = if (json != null) LottieCompositionSpec.JsonString(json)
-            else LottieCompositionSpec.RawRes(avatar.animationResId)
+            else LottieCompositionSpec.RawRes(rawRes)
     )
     if (composition == null) {
         AvatarStaticArtwork(avatar, contentDescription)
@@ -179,10 +188,10 @@ private fun AvatarStaticLottieArtwork(avatar: Avatar, contentDescription: String
 }
 
 @Composable
-private fun AnimatedAvatarArtwork(avatar: Avatar, contentDescription: String?, json: String?) {
+private fun AnimatedAvatarArtwork(avatar: Avatar, contentDescription: String?, json: String?, rawRes: Int) {
     val composition by rememberLottieComposition(
         spec = if (json != null) LottieCompositionSpec.JsonString(json)
-            else LottieCompositionSpec.RawRes(avatar.animationResId)
+            else LottieCompositionSpec.RawRes(rawRes)
     )
     val progress by animateLottieCompositionAsState(
         composition = composition,

@@ -33,7 +33,7 @@ object Avatar3LookCatalog {
         listOf("Klasik Canavar", "Turkuaz Canavar", "Galaksi Canavarı"),
         listOf("Klasik Matematikçi", "Turkuaz Matematikçi", "Galaksi Matematikçisi"),
         listOf("Klasik Dahi Kız", "Turkuaz Dahi", "Galaksi Dahisi"),
-        listOf("Klasik Kaşif", "Turkuaz Kaşif", "Galaksi Kaşifi"),
+        listOf("Klasik Kaşif", "Orman Kaşifi", "Uzay Kaşifi"),
         listOf("Klasik Büyücü", "Turkuaz Büyücü", "Galaksi Büyücüsü"),
         listOf("Klasik Bilge", "Turkuaz Bilge", "Galaksi Bilgesi"),
         listOf("Klasik Şekiller", "Turkuaz Şekiller", "Galaksi Şekilleri"),
@@ -51,9 +51,12 @@ object Avatar3LookCatalog {
             Avatar3Look(
                 id = index,
                 title = name,
-                subtitle = when (index) {
-                    0 -> "Orijinal animasyon"
-                    1 -> "Turkuaz tonlarda Lottie renkleri"
+                subtitle = when {
+                    avatarId == 6 && index == 0 -> "Orijinal Kaşif Öğrenci Lottie animasyonu"
+                    avatarId == 6 && index == 1 -> "Yeşil kaşif kıyafeti, sırt çantası ve orman şapkası"
+                    avatarId == 6 && index == 2 -> "Kask, uzay tulumu ve sırt roketi"
+                    index == 0 -> "Orijinal animasyon"
+                    index == 1 -> "Turkuaz tonlarda Lottie renkleri"
                     else -> "Mor ve altın galaksi paleti"
                 },
                 // These are color treatments on the original Lottie,

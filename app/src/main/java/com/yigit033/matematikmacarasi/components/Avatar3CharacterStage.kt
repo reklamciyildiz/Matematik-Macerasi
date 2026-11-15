@@ -98,6 +98,7 @@ fun Avatar3CharacterStage(
             avatar = avatar,
             size = size * 0.79f,
             animate = animate,
+            lookId = lookId,
             modifier = Modifier.size(size * 0.79f),
             contentDescription = avatar.name
         )

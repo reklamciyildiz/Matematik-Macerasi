@@ -346,8 +346,9 @@ class AvatarService(private val context: Context) {
     /**
      * Avatar kilidini açar
      */
-    @Synchronized
-    fun unlockAvatar(avatarId: Int): Boolean {
+    // The lock is global, not per AvatarService instance. Multiple activities
+    // may own separate instances and must not buy the same avatar twice.
+    fun unlockAvatar(avatarId: Int): Boolean = synchronized(avatarPurchaseLock) {
         Log.d("AvatarService", "Avatar kilidi açma başladı: $avatarId")
         
         try {
@@ -358,8 +359,12 @@ class AvatarService(private val context: Context) {
                 return false
             }
             
-            // Eğer avatar zaten açıksa hata döndür
-            if (avatar.isUnlocked) {
+            // Re-read durable ownership INSIDE the global transaction lock;
+            // another AvatarService instance may have a stale in-memory list.
+            val alreadyOwnedOnDisk = prefs.getStringSet(
+                "unlocked_avatar_ids", setOf("1")
+            )?.contains(avatarId.toString()) == true
+            if (avatar.isUnlocked || alreadyOwnedOnDisk) {
                 Log.w("AvatarService", "Avatar zaten açık: $avatarId")
                 return false
             }
@@ -473,6 +478,8 @@ class AvatarService(private val context: Context) {
     }
     
     companion object {
+        private val avatarPurchaseLock = Any()
+
         @Volatile
         private var instance: AvatarService? = null
         

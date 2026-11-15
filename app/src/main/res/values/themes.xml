@@ -6,7 +6,7 @@
     <!-- Android 12+ Splash Screen API için tema -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <!-- Splash ekranı arka plan rengi -->
-        <item name="windowSplashScreenBackground">@color/colorPrimary</item>
+        <item name="windowSplashScreenBackground">@color/mm_splash_navy</item>
         
         <!-- Splash ekranında gösterilecek ikon -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_brand_mark</item>

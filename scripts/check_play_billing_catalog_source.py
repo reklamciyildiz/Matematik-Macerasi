@@ -6,6 +6,7 @@ root = Path(__file__).resolve().parents[1]
 app = root / "app/src/main/java/com/yigit033/matematikmacarasi"
 source = (app / "services/payments/PurchaseManager.kt").read_text(encoding="utf-8")
 settings = (app / "screens/SettingsScreen.kt").read_text(encoding="utf-8")
+offer = (app / "screens/PremiumAdventureUI.kt").read_text(encoding="utf-8")
 subscription = (app / "services/payments/PlaySubscriptionClient.kt").read_text(encoding="utf-8")
 
 checks = {
@@ -22,10 +23,12 @@ checks = {
     "no unreliable app package detection before checkout": 'getPackageInfo("com.android.vending"' not in source and
        'getPackageInfo("com.google.android.gms"' not in source,
     "explicit user-initiated purchase only": "launchPurchaseFlow(activity, plan)" in source,
-    "UI only enables current-price ready checkout": "enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready" in settings,
-    "UI explicit retry action": "Google Play fiyatlarını yeniden kontrol et" in settings,
-    "UI visible error state": "catalogState.message" in settings,
-    "original code redemption retained": "Premium Kodum Var" in settings,
+    "UI only enables current-price ready checkout": "prices[chosen] != null && catalog is PurchaseManager.CatalogStatus.Ready" in offer and
+        "prices[plan] != null" in settings and
+        "purchaseManager.buyPremium(it,plan)" in settings,
+    "UI explicit retry action": "Google Play fiyatlarını yeniden kontrol et" in offer,
+    "UI visible error state": "status.message" in offer,
+    "original code redemption retained": "Premium Kodum Var" in offer and "onCodeClick = { codeDialog = true }" in settings,
     "original purchase restoration retained": "Satın Alımları Geri Yükle" in settings,
     "subscription ack only after Play server verification":
         "if(result==PlaySubscriptionClient.Verdict.VERIFIED" in source and

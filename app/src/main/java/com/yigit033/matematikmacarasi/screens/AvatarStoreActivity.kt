@@ -173,26 +173,9 @@ class AvatarStoreActivity : ComponentActivity() {
         super.onStop()
     }
     
-    override fun onPause() {
-        super.onPause()
-        // Animasyonları durdur ve kaynakları serbest bırak
-        try {
-            // Lottie önbelleğini doğrudan temizleyemiyoruz, GC'ye yardımcı olalım
-            System.gc()
-        } catch (e: Exception) {
-            Log.e("AvatarStoreActivity", "Bellek temizlenirken hata: ${e.message}", e)
-        }
-    }
-    
     override fun onDestroy() {
-        // Tüm kaynakları temizle
-        try {
-            // Lottie önbelleğini doğrudan temizleyemiyoruz, GC'ye yardımcı olalım
-            System.gc()
-        } catch (e: Exception) {
-            Log.e("AvatarStoreActivity", "Bellek temizlenirken hata: ${e.message}", e)
-        }
-        
+        // Compose and Lottie manage their own caches. Forcing System.gc() on
+        // the main thread when leaving the store causes visible frame stalls.
         // Coroutine scope'u iptal et
         coroutineScope.launch {
             try {

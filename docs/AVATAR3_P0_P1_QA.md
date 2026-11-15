@@ -11,8 +11,12 @@
 - Forest vector uses green field clothing, safari hat, binoculars and backpack;
   Space uses a light astronaut suit, helmet, jetpack and chest emblem. Both
   have gentle idle movement, eye blinks and a hand greeting.
-- These are original pilot *2D vector* animations; not the fully rendered 3D
-  poster concepts. The posters are visual-direction references, not shipped sprites.
+- **Three high-detail transparent WebP character sprites are shipped as app
+  assets**, for Classic, Forest and Space: `app/src/main/assets/avatars3/explorer_06_*.webp`.
+  The gallery, home, profile and workshop default to these premium stills
+  with subtle Compose bobbing; the workshop offers an explicit **"Lottie
+  animasyonunu izle"** switch for the separate playable vector animations.
+  The stills are not true 3D rigged animations; do not claim otherwise.
 - Forest look is included with an owned Kaşif; Space look requires active
   Premium. **Neither recoloring nor this pilot spends any additional stars.**
 
@@ -32,18 +36,23 @@
 - `./gradlew :app:testDebugUnitTest :app:assembleDebug`
 - GitHub Actions: **Android debug quality gate**, **Android R8 optimized QA build**.
 
-The source checker validates every pilot JSON file, its vector shape set,
-timelines, and mapping to look IDs. Static tests cannot prove visual quality,
-accessibility, performance or a Google Play purchase.
+The source checker validates each pilot JSON animation, its vector shape set
+and timeline, the production WebP signatures and sizes, mappings to look IDs,
+off-main image loading, and the workshop Lottie switch. Static tests and
+successful Android builds do not prove visual quality, accessibility,
+frame pacing, or an actual Google Play purchase.
 
 ## Manual 320dp, 360dp and 600dp/device QA
 
 | Case | Action | Expected |
 | --- | --- | --- |
-| Classic Kaşif | Preview avatar ID 6 look 0 | Original Lottie, existing ID/name/price |
-| Forest Kaşif | Tap look 1 | Green hat, forest clothing, binoculars; animated |
-| Space Kaşif | Tap look 2 | Full astronaut/helmet/jetpack vector; animated |
-| Motion | Keep each pilot visible | Bobbing; blink; small greeting motion; no freezes |
+| Classic Kaşif | Preview avatar ID 6 look 0 | Detailed classic artwork, legacy ID/name/price, original Lottie on toggle |
+| Forest Kaşif | Tap look 1 | Distinct high-detail green forest costume and own Lottie animation on toggle |
+| Space Kaşif | Tap look 2 | Distinct high-detail astronaut costume and own Lottie animation on toggle |
+| Motion | Switch to Lottie in each pilot | Idle bob, blink and greeting hand in the new forest/space Lotties; no freeze |
+| Artwork performance | Reopen and scroll all characters | Production WebPs load off-main, no memory spike or unbounded decode |
+| Gallery consistency | See character ID 6 across shop, home, profile | Same selected costume identity everywhere |
+| Preview honesty | Stay in detailed image mode | Gentle illustration bob only; no claim that still portrait is a rigged Lottie |
 | Locked preview | Avatar ID 6 not owned; tap 1/2 | Preview works, no accidental equip or stars spent |
 | Avatar unlock | Have 20 stars; buy avatar ID 6 | Confirm once; one 20-star debit; ownership persists |
 | Double tap | Repeatedly confirm buy on slow device | At most one debit; second request sees persisted ownership |

@@ -3,6 +3,7 @@ package com.yigit033.matematikmacarasi.components
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.yigit033.matematikmacarasi.models.Avatar
 import com.yigit033.matematikmacarasi.services.Avatar3Customization
+import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
 
 /** Shared player portrait; updates across screens when a look is customized. */
 @Composable
@@ -25,6 +27,10 @@ fun Avatar3PlayerPortrait(
 ) {
     val context = LocalContext.current
     val style = remember(context) { Avatar3Customization(context) }
+    val purchaseManager = remember(context) { PurchaseManager.getInstance(context) }
+    // Premium expiry/renewal changes the visible look without deleting
+    // a previously chosen Premium appearance from preferences.
+    val premiumEntitlement by purchaseManager.premiumState.collectAsState()
     var revision by remember(context) { mutableStateOf(0) }
     DisposableEffect(context) {
         val prefs = context.getSharedPreferences("avatar3_customization_v1", Context.MODE_PRIVATE)
@@ -34,7 +40,9 @@ fun Avatar3PlayerPortrait(
         prefs.registerOnSharedPreferenceChangeListener(listener)
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
-    val look = remember(avatar.id, revision) { style.selectedLook(avatar.id) }
+    val look = remember(avatar.id, revision, premiumEntitlement) {
+        style.selectedLook(avatar.id)
+    }
     val accessory = remember(avatar.id, revision) { style.selectedAccessory(avatar.id) }
     val effect = remember(avatar.id, revision) { style.selectedEffect(avatar.id) }
     Avatar3CharacterStage(

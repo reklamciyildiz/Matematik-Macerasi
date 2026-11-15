@@ -10,21 +10,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.models.Avatar
 
 /** One Lottie character identity, with three selectable stage looks.
@@ -102,15 +99,63 @@ fun Avatar3CharacterStage(
             modifier = Modifier.size(size * 0.79f),
             contentDescription = avatar.name
         )
+        // Accessory artwork sits over the character's head, not as a tiny
+        // unrelated corner label. All choices are fully previewable.
         if (accessory != 0) {
-            Text(
-                text = if (accessory == 1) "✦" else "♛",
-                modifier = Modifier.align(Alignment.TopEnd)
-                    .offset(x = (-4).dp, y = 3.dp),
-                color = if (accessory == 1) Color(0xFF97FCE7) else Color(0xFFFFDB84),
-                fontSize = (size.value / 5.4f).coerceIn(12f, 25f).sp,
-                fontWeight = FontWeight.Black
-            )
+            Canvas(Modifier.fillMaxSize()) {
+                val w = this.size.width
+                val h = this.size.height
+                if (accessory == 1) {
+                    val star = Path().apply {
+                        for (i in 0 until 10) {
+                            val angle = -kotlin.math.PI / 2.0 +
+                                i * kotlin.math.PI / 5.0
+                            val r = if (i % 2 == 0) w * 0.12 else w * 0.052
+                            val x = w * 0.50f + (kotlin.math.cos(angle) * r).toFloat()
+                            val y = h * 0.18f + (kotlin.math.sin(angle) * r).toFloat()
+                            if (i == 0) moveTo(x, y) else lineTo(x, y)
+                        }
+                        close()
+                    }
+                    drawCircle(
+                        color = Color(0xFF84FFF0).copy(alpha = 0.22f),
+                        radius = w * 0.18f, center = Offset(w * 0.5f, h * 0.18f)
+                    )
+                    drawPath(
+                        path = star,
+                        brush = Brush.verticalGradient(
+                            listOf(Color.White, Color(0xFF60EEDD))
+                        )
+                    )
+                } else {
+                    val crown = Path().apply {
+                        moveTo(w * 0.32f, h * 0.265f)
+                        lineTo(w * 0.28f, h * 0.12f)
+                        lineTo(w * 0.405f, h * 0.195f)
+                        lineTo(w * 0.50f, h * 0.08f)
+                        lineTo(w * 0.60f, h * 0.195f)
+                        lineTo(w * 0.72f, h * 0.12f)
+                        lineTo(w * 0.68f, h * 0.265f)
+                        close()
+                    }
+                    drawPath(
+                        path = crown,
+                        brush = Brush.verticalGradient(
+                            listOf(Color(0xFFFFFFCF), Color(0xFFFFB944))
+                        )
+                    )
+                    drawCircle(
+                        color = Color(0xFF55E8FF),
+                        radius = w * 0.027f,
+                        center = Offset(w * 0.50f, h * 0.20f)
+                    )
+                    drawCircle(
+                        color = Color.White.copy(alpha = 0.84f),
+                        radius = w * 0.013f,
+                        center = Offset(w * 0.495f, h * 0.194f)
+                    )
+                }
+            }
         }
     }
 }

@@ -131,7 +131,7 @@ class AvatarService(private val context: Context) {
                 animationResId = R.raw.avatar_math_girl_genius_animation
             ),
             
-            // 6. Kaşif Öğrenci - 25 yıldız
+            // 6. Kaşif Öğrenci - 20 yıldız
             Avatar(
                 id = 6,
                 name = "Kaşif Öğrenci",

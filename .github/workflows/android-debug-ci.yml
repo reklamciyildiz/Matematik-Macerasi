@@ -171,6 +171,10 @@ jobs:
         shell: bash
         run: python3 scripts/check_settings_profile_premium_ui.py
 
+      - name: Reference Premium selection and illustrated splash safety
+        shell: bash
+        run: python3 scripts/check_premium_settings_splash.py
+
       - name: Verify Pattern Forest game source, assets and integration
         shell: bash
         run: python3 scripts/check_pattern_forest.py

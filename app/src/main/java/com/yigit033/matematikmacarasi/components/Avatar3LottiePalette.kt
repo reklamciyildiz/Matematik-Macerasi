@@ -63,6 +63,31 @@ internal object Avatar3LottiePalette {
                         }
                     }
                 }
+                // Some of the existing avatar Lotties are gradient-only
+                // (e.g. Ada Lovelace). Recolor the actual gradient stops,
+                // otherwise their visual palette never changes.
+                if (node.optString("ty") == "gf" || node.optString("ty") == "gs") {
+                    val gradient = node.optJSONObject("g")
+                    val stops = gradient?.optInt("p", 0) ?: 0
+                    val k = gradient?.optJSONObject("k")?.optJSONArray("k")
+                    if (k != null && stops > 0) {
+                        if (k.opt(0) is Number) {
+                            for (i in 0 until stops) {
+                                if (rewrite(k, lookId, 1 + i * 4)) count++
+                            }
+                        } else {
+                            for (i in 0 until k.length()) {
+                                val frame = k.optJSONObject(i) ?: continue
+                                for (field in arrayOf("s", "e")) {
+                                    val values = frame.optJSONArray(field) ?: continue
+                                    for (j in 0 until stops) {
+                                        if (rewrite(values, lookId, 1 + j * 4)) count++
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 val keys = node.keys()
                 while (keys.hasNext()) {
                     val key = keys.next()
@@ -78,14 +103,14 @@ internal object Avatar3LottiePalette {
         return count
     }
 
-    private fun rewrite(values: JSONArray, lookId: Int): Boolean {
-        if (values.length() < 3 ||
-            values.opt(0) !is Number ||
-            values.opt(1) !is Number ||
-            values.opt(2) !is Number) return false
-        val red = values.optDouble(0).coerceIn(0.0, 1.0)
-        val green = values.optDouble(1).coerceIn(0.0, 1.0)
-        val blue = values.optDouble(2).coerceIn(0.0, 1.0)
+    private fun rewrite(values: JSONArray, lookId: Int, offset: Int = 0): Boolean {
+        if (values.length() < offset + 3 ||
+            values.opt(offset) !is Number ||
+            values.opt(offset + 1) !is Number ||
+            values.opt(offset + 2) !is Number) return false
+        val red = values.optDouble(offset).coerceIn(0.0, 1.0)
+        val green = values.optDouble(offset + 1).coerceIn(0.0, 1.0)
+        val blue = values.optDouble(offset + 2).coerceIn(0.0, 1.0)
         val c = AndroidColor.rgb((red * 255).toInt(), (green * 255).toInt(), (blue * 255).toInt())
         val hsv = FloatArray(3)
         AndroidColor.colorToHSV(c, hsv)
@@ -101,9 +126,9 @@ internal object Avatar3LottiePalette {
         hsv[1] = (hsv[1] * 1.13f).coerceIn(0.44f, 0.98f)
         hsv[2] = (hsv[2] * 1.09f).coerceIn(0f, 1f)
         val newColor = AndroidColor.HSVToColor(hsv)
-        values.put(0, AndroidColor.red(newColor) / 255.0)
-        values.put(1, AndroidColor.green(newColor) / 255.0)
-        values.put(2, AndroidColor.blue(newColor) / 255.0)
+        values.put(offset, AndroidColor.red(newColor) / 255.0)
+        values.put(offset + 1, AndroidColor.green(newColor) / 255.0)
+        values.put(offset + 2, AndroidColor.blue(newColor) / 255.0)
         return true
     }
 }

@@ -174,7 +174,7 @@ class AvatarStoreActivity : ComponentActivity() {
     }
     
     override fun onDestroy() {
-        // Compose and Lottie manage their own caches. Forcing System.gc() on
+        // Compose and Lottie manage their own caches. Forcing collection on
         // the main thread when leaving the store causes visible frame stalls.
         // Coroutine scope'u iptal et
         coroutineScope.launch {

@@ -446,37 +446,10 @@ class AvatarService(private val context: Context) {
             Log.d("AvatarService", "Avatar başarıyla açıldı: ${avatar.name} (ID: $avatarId)")
             Log.d("AvatarService", "Yıldız durumu güncellendi: $currentDisplayStars -> $newStars")
             
-            // 7. KRİTİK: Doğrulama ve ek güvence için tekrar UI güncelleme
-            CoroutineScope(Dispatchers.Main).launch {
-                try {
-                    // Kısa bir gecikme ile tekrar kontrol et ve bildir
-                    delay(300)
-                    
-                    // Güncel yıldız sayısını al ve kontrol et
-                    val verifiedStars = starManager.getDisplayStars()
-                    if (verifiedStars != newStars) {
-                        Log.w("AvatarService", "Yıldız tutarsızlığı bulundu: Beklenen=$newStars, Gerçek=$verifiedStars")
-                        
-                        // Tutarsızlık varsa düzelt ve bildir
-                        starManager.setDisplayStars(newStars)
-                        delay(100)
-                        EventBus.forceStarNotification(newStars)
-                        Log.d("AvatarService", "Yıldız tutarsızlığı düzeltildi ve bildirildi")
-                    } else {
-                        // Doğru olsa bile bir kez daha bildir
-                        EventBus.forceStarNotification(newStars)
-                        Log.d("AvatarService", "Yıldız doğrulaması tamam: $newStars")
-                    }
-                    
-                    // 500ms sonra tekrar kontrol et
-                    delay(500)
-                    EventBus.forceStarNotification(newStars)
-                    Log.d("AvatarService", "Son kontrol bildirimi yapıldı: $newStars")
-                } catch (e: Exception) {
-                    Log.e("AvatarService", "Doğrulama kontrolü sırasında hata: ${e.message}", e)
-                }
-            }
-            
+            // Ownership is already committed and StarManager publishes the
+            // current balance. NEVER restore a stale purchase-time balance
+            // after a delay: another game or reward may have changed it.
+            // In particular, no delayed setDisplayStars(newStars) belongs here.
             return true
         } catch (e: Exception) {
             Log.e("AvatarService", "Avatar açılırken işlem hatası: ${e.message}", e)

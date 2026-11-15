@@ -51,6 +51,7 @@ fun Avatar3DetailDialog(
     val context = LocalContext.current
     val looks = remember(avatar.id) { Avatar3LookCatalog.looks(avatar.id) }
     var tab by remember(avatar.id) { mutableStateOf(0) }
+    var previewLottie by remember(avatar.id) { mutableStateOf(false) }
     var previewLook by remember(avatar.id) {
         mutableStateOf(customization.selectedLook(avatar.id))
     }
@@ -101,8 +102,28 @@ fun Avatar3DetailDialog(
                         .background(Color(0xFF0B284B)).padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Avatar3CharacterStage(avatar, previewLook, accessory, effect,
-                        size = 156.dp, animate = true)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Avatar3CharacterStage(
+                            avatar, previewLook, accessory, effect,
+                            size = if (avatar.id == 6) 194.dp else 156.dp,
+                            animate = true,
+                            showVectorAnimation = previewLottie
+                        )
+                        if (avatar.id == 6) {
+                            Text(
+                                if (previewLottie) "✦ Detaylı karakter görseline dön"
+                                else "▶ Lottie animasyonunu izle",
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF245B81))
+                                    .clickable { previewLottie = !previewLottie }
+                                    .padding(horizontal = 15.dp, vertical = 10.dp),
+                                color = pearl,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
@@ -179,7 +200,10 @@ fun Avatar3DetailDialog(
                             }
                         }
                         Text(
-                            "Renk stilleri karakterin kendi Lottie çizimini de değiştirir. Yeni bir kıyafet değildir; yıldız harcamaz.",
+                            if (avatar.id == 6)
+                                "Kaşif'in üç ayrı kıyafeti var. Detaylı karakter görseli ve Lottie animasyonu arasında geçiş yapabilirsin. Ek yıldız harcanmaz."
+                            else
+                                "Renk stilleri Lottie karakterinin renklerini değiştirir; ayrı kıyafet değildir ve yıldız harcatmaz.",
                             color = pearl.copy(alpha = 0.8f), fontSize = 12.sp,
                             lineHeight = 16.sp)
                     }
@@ -222,7 +246,8 @@ fun Avatar3DetailDialog(
                             Triple("Stil Meraklısı", "İki farklı görünüşü dene (${tried.coerceAtMost(2)}/2).", tried >= 2),
                             Triple("Karakter Sahibi", "Bu avatarın kilidini yıldızlarla aç.", avatar.isUnlocked),
                             Triple("Galaksi Ustası",
-                                "Premium erişimiyle Galaksi stilini seç.",
+                                if (avatar.id == 6) "Premium erişimiyle Uzay Kaşifi görünüşünü seç."
+                                else "Premium erişimiyle Galaksi stilini seç.",
                                 avatar.isUnlocked && premiumActive &&
                                     customization.selectedLook(avatar.id) == 2)
                         )

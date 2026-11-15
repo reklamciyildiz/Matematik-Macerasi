@@ -102,6 +102,23 @@ checks = {
     "space has astronaut-specific equipment":
         all(token in json.dumps(space) for token in
             ["helmet base", "jetpack", "spacesuit chest", "helmet chin shield"]),
+    "pilot paint order protects faces and costumes":
+        forest["layers"][0]["shapes"][0]["nm"] == "leaf rib" and
+        space["layers"][0]["shapes"][0]["nm"] == "helmet insignia" and
+        forest["layers"][0]["shapes"][-1]["nm"] == "cast-shadow" and
+        space["layers"][0]["shapes"][-1]["nm"] == "cast-shadow",
+    "animated eyes blink in both pilot looks":
+        all(any(shape.get("nm") == "left pupil" and
+                any(x.get("ty") == "tr" and x.get("s", {}).get("a") == 1
+                    for x in shape.get("it", []))
+                for shape in asset["layers"][0]["shapes"])
+            for asset in (forest, space)),
+    "right hand gesture is rigged in both pilot looks":
+        all(any(shape.get("nm") == "raised right glove" and
+                any(x.get("ty") == "tr" and x.get("r", {}).get("a") == 1
+                    for x in shape.get("it", []))
+                for shape in asset["layers"][0]["shapes"])
+            for asset in (forest, space)),
     "pilot maps 6:1 and 6:2 to distinct raw animated Lotties":
         "avatar.id == 6 && lookId == 1 -> R.raw.avatar_explorer_forest_pilot" in view and
         "avatar.id == 6 && lookId == 2 -> R.raw.avatar_explorer_space_pilot" in view and

@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -242,9 +245,17 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
         .padding(horizontal=16.dp,vertical=15.dp),
         verticalArrangement=Arrangement.spacedBy(14.dp)) {
 
-        Row(Modifier.fillMaxWidth().heightIn(min=62.dp),
-            verticalAlignment=Alignment.CenterVertically,
-            horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.fillMaxWidth().heightIn(min=75.dp)) {
+            Image(
+                painter = painterResource(com.yigit033.matematikmacarasi.R.drawable.mm_premium_castle),
+                contentDescription = null,
+                modifier = Modifier.align(Alignment.TopEnd)
+                    .width(165.dp).height(82.dp),
+                contentScale = ContentScale.Fit
+            )
+            Row(Modifier.fillMaxWidth().heightIn(min=62.dp),
+                verticalAlignment=Alignment.CenterVertically,
+                horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             Surface(
                 modifier=Modifier.size(52.dp).clickable(onClick=onBackClick),
                 color=Color(0xFF215979),
@@ -262,205 +273,46 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
                 Text("Macera deneyimini kişiselleştir",
                     color=SettingsPalette.secondary,fontSize=12.sp)
             }
-        }
-
-        Surface(color=Color(0xFF1D5274),shape=RoundedCornerShape(24.dp),
-            border=BorderStroke(1.dp,SettingsPalette.gold.copy(alpha=.65f))) {
-            Column(Modifier.fillMaxWidth().padding(18.dp),
-                verticalArrangement=Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment=Alignment.CenterVertically,
-                    horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    Surface(color=SettingsPalette.gold,shape=CircleShape,
-                        modifier=Modifier.size(48.dp)) {
-                        Box(contentAlignment=Alignment.Center) {
-                            Icon(Icons.Default.Star,contentDescription=null,
-                                tint=SettingsPalette.deep,modifier=Modifier.size(27.dp))
-                        }
-                    }
-                    Column(Modifier.weight(1f)) {
-                        Text(if(isPremium)"Premium Aktif" else "Macera Premium",
-                            color=SettingsPalette.gold,fontSize=19.sp,
-                            fontWeight=FontWeight.Black)
-                        Text(if(isPremium)
-                            "Tüm macera dünyaları ve zorluklar erişimine açık"
-                            else "Daha fazla mağaza ve seçenek keşfet",
-                            color=SettingsPalette.text,fontSize=12.sp,
-                            lineHeight=16.sp)
-                    }
-                }
-                if(incompatibleLicense) {
-                    Text("⚠ Bu sürüm eski Cloudflare Premium lisansını okuyamıyor. " +
-                        "Kod hakkın silinmiş olmayabilir; lisansı doğrulayan doğru " +
-                        "yapılandırılmış APK'yı yükle. Uygulama verilerini temizleme.",
-                        color=SettingsPalette.gold,fontSize=12.sp,lineHeight=18.sp)
-                }
-                if(isPremium) {
-                    Text(if(subscriptionActive)
-                            "✓ Premium aboneliğin aktif. Bitiş ve yenileme bilgileri Google Play'de."
-                        else "✓ Premium erişimin korunuyor. Tekrar satın alma gerekmez.",
-                        color=SettingsPalette.mint,fontSize=12.sp)
-                    Text("✦ Tüm dersler ve zorluklar  ·  Özel avatarlar  ·  Ayrıntılı macera istatistikleri",
-                        color=SettingsPalette.text,fontSize=12.sp,lineHeight=19.sp)
-                    if(subscriptionActive) SettingsAction("Aboneliği Google Play'de Yönet",
-                        onClick={context.startActivity(Intent(Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/account/subscriptions")))})
-                } else {
-                    Text(
-                        "Tek Premium içerik · ${if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) "Üç" else "Bir"} ödeme seçeneği",
-                        color=SettingsPalette.gold,fontWeight=FontWeight.Bold,fontSize=13.sp
-                    )
-                    val offeredPlans = if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
-                        PremiumPlan.entries.toList()
-                    else listOf(PremiumPlan.LIFETIME)
-                    offeredPlans.forEach { plan ->
-                        val price=prices[plan]
-                        val suffix=when(plan) {
-                            PremiumPlan.MONTHLY->" / ay · otomatik yenilenir"
-                            PremiumPlan.YEARLY->" / yıl · otomatik yenilenir"
-                            PremiumPlan.LIFETIME->" · tek ödeme, süresiz"
-                        }
-                        val hint=if(price!=null) price else
-                            if(catalog is PurchaseManager.CatalogStatus.Loading)
-                                "Fiyat sorgulanıyor"
-                            else "Google Play'de şu anda kullanılamıyor"
-                        SettingsAction(
-                            plan.label+" · "+hint+suffix,
-                            prominent=plan==PremiumPlan.YEARLY ||
-                                (!BuildConfig.MM_SUBSCRIPTIONS_ENABLED && plan==PremiumPlan.LIFETIME),
-                            enabled=price!=null && catalog is PurchaseManager.CatalogStatus.Ready,
-                            onClick={
-                                purchaseAttempted = true
-                                lastCheckoutStatus = null
-                                (context as? ComponentActivity)?.let {
-                                    purchaseManager.buyPremium(it,plan)
-                                }
-                            }
-                        )
-                    }
-                    when(val catalogState = catalog) {
-                        is PurchaseManager.CatalogStatus.Loading -> {
-                            Row(verticalAlignment=Alignment.CenterVertically,
-                                horizontalArrangement=Arrangement.spacedBy(10.dp)) {
-                                CircularProgressIndicator(
-                                    modifier=Modifier.size(18.dp),strokeWidth=2.dp,
-                                    color=SettingsPalette.gold)
-                                Text("Google Play ürünleri kontrol ediliyor…",
-                                    color=SettingsPalette.secondary,fontSize=12.sp)
-                            }
-                        }
-                        is PurchaseManager.CatalogStatus.Error ->
-                            Text(catalogState.message,color=SettingsPalette.gold,
-                                fontSize=12.sp,lineHeight=17.sp)
-                        is PurchaseManager.CatalogStatus.Ready -> {
-                            if(catalogState.unavailablePlans.isNotEmpty()) {
-                                Text(
-                                    "Bazı ödeme seçenekleri bu Google Play hesabında " +
-                                        "görüntülenemiyor. Diğer seçenekler çalışabilir.",
-                                    color=SettingsPalette.gold,fontSize=12.sp,lineHeight=17.sp)
-                            }
-                        }
-                    }
-                    if(catalog !is PurchaseManager.CatalogStatus.Loading &&
-                        (catalog is PurchaseManager.CatalogStatus.Error ||
-                         prices.size < offeredPlans.size)) {
-                        SettingsAction("Google Play fiyatlarını yeniden kontrol et",
-                            onClick={ purchaseManager.refreshPlanPrices() })
-                        Text("Sorun devam ederse Play Store'un güncel olduğunu, " +
-                            "doğru Google hesabını ve internet bağlantısını kontrol edin.",
-                            color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
-                    }
-                    if(purchaseAttempted) {
-                        val checkoutMessage = when(lastCheckoutStatus) {
-                            is PurchaseManager.PurchaseStatus.ServiceUnavailable ->
-                                "Google Play ödeme servisine bağlanılamadı. Yeniden deneyin."
-                            is PurchaseManager.PurchaseStatus.ProductNotFound ->
-                                "Seçilen ödeme planı Google Play'de bulunamadı."
-                            is PurchaseManager.PurchaseStatus.Failed ->
-                                "Google Play ödeme ekranı açılamadı (kod " +
-                                    (lastCheckoutStatus as PurchaseManager.PurchaseStatus.Failed).code +
-                                    "). Yeniden deneyin."
-                            is PurchaseManager.PurchaseStatus.Pending ->
-                                "Satın alma işlemi beklemede. Google Play'den tamamlanmasını bekleyin."
-                            is PurchaseManager.PurchaseStatus.AlreadyOwned ->
-                                "Premium erişiminiz zaten etkin."
-                            is PurchaseManager.PurchaseStatus.Canceled ->
-                                "Satın alma iptal edildi."
-                            is PurchaseManager.PurchaseStatus.Success ->
-                                "Satın alma doğrulandı. Premium erişiminiz güncelleniyor."
-                            else -> null
-                        }
-                        if(checkoutMessage!=null) Text(checkoutMessage,
-                            color=SettingsPalette.gold,fontSize=12.sp,lineHeight=17.sp)
-                    }
-                    if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED) {
-                        Text("Aylık ve yıllık abonelikler aynı Premium haklarını sağlar. " +
-                            "İptal durumunda erişim ödenmiş sürenin sonunda sona erer; " +
-                            "ömür boyu plan otomatik yenilenmez.",
-                            color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
-                    }
-                    OutlinedButton(onClick={codeDialog=true},
-                        modifier=Modifier.fillMaxWidth().heightIn(min=48.dp),
-                        border=BorderStroke(1.dp,SettingsPalette.gold),
-                        colors=ButtonDefaults.outlinedButtonColors(
-                            contentColor=SettingsPalette.gold)) {
-                        Text("Premium Kodum Var")
-                    }
-                }
             }
         }
 
-        // Premium players already have everything unlocked. Don't put an
-        // exhausting sales comparison under their active-membership card.
+        // Reference-faithful UI owns visuals and plan selection; the existing
+        // PurchaseManager still owns catalog state, Play verification and billing.
+        PremiumAdventureOffer(
+            isPremium = isPremium,
+            subscriptionActive = subscriptionActive,
+            incompatibleLicense = incompatibleLicense,
+            subscriptionsEnabled = BuildConfig.MM_SUBSCRIPTIONS_ENABLED,
+            prices = prices,
+            catalog = catalog,
+            purchaseAttempted = purchaseAttempted,
+            lastCheckoutStatus = lastCheckoutStatus,
+            onPurchase = { plan ->
+                // Never initiate checkout without a real Google Play price
+                // and a Ready catalog. Tap on a plan row only selects a plan.
+                if (prices[plan] != null &&
+                    catalog is PurchaseManager.CatalogStatus.Ready) {
+                    purchaseAttempted = true
+                    lastCheckoutStatus = null
+                    (context as? ComponentActivity)?.let {
+                        purchaseManager.buyPremium(it,plan)
+                    }
+                }
+            },
+            onCodeClick = { codeDialog = true },
+            onRetryPrices = { purchaseManager.refreshPlanPrices() },
+            onManageSubscription = {
+                context.startActivity(Intent(Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/account/subscriptions")))
+            }
+        )
+
         if (!isPremium) {
-            SettingsSection("Ücretsiz Macera / Premium",
-                "Ücretsiz içeriklerle oyna, hazır olduğunda daha fazlasını keşfet") {
-                Text("ÜCRETSİZ MACERAN",color=SettingsPalette.mint,
-                    fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-                FeatureLine("Sınıfına uygun Temel oyunlar ve başlangıç dersleri")
-                FeatureLine("6 başlangıç avatarı ve temel macera istatistikleri")
-                HorizontalDivider(color=SettingsPalette.border)
-                Text("PREMIUM İLE AÇILANLAR",color=SettingsPalette.gold,
-                    fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-                FeatureLine("Orta, Zor, Çok Zor ve Uzman oyun seçenekleri",true)
-                FeatureLine("Tüm öğrenme dersleri ve ayrıntılı oyun istatistikleri",true)
-                FeatureLine("Özel avatarlar, Kendi Tezgâhım ve genişletilmiş Pazar",true)
-                TextButton(onClick={showPlanComparison = !showPlanComparison},
-                    modifier=Modifier.fillMaxWidth()) {
-                    Text(if(showPlanComparison) "Ayrıntıları gizle" else "Tüm hakları karşılaştır",
-                        color=SettingsPalette.gold,fontWeight=FontWeight.Bold)
-                    Icon(Icons.Default.ChevronRight,contentDescription=null,
-                        tint=SettingsPalette.gold,modifier=Modifier.size(19.dp))
-                }
-                if (showPlanComparison) {
-                    HorizontalDivider(color=SettingsPalette.border)
-                    Text("ÜCRETSİZ",color=SettingsPalette.mint,
-                        fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-                    FeatureLine("Dört işlem: seçilen sınıfa uygun Temel zorluk")
-                    FeatureLine("Orman Keşfi ve Antik Tapınak öğretici maceraları")
-                    FeatureLine("Sayı Avı, Geometri, Kesir, Zaman, Örüntü, Balon ve Uzay: Temel")
-                    FeatureLine("Her sınıfta iki farklı konudan ücretsiz başlangıç dersi")
-                    FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(false)} mağaza, 12 karar")
-                    FeatureLine("Labirent: günde 5 oyun")
-                    FeatureLine("İlk 6 avatar (bazıları yıldızla açılır) ve standart ikon")
-                    FeatureLine("Yıldız ve biten oyun özeti")
-                    HorizontalDivider(color=SettingsPalette.border)
-                    Text("PREMIUM",color=SettingsPalette.gold,
-                        fontWeight=FontWeight.ExtraBold,fontSize=12.sp)
-                    FeatureLine("Pazar: ${PremiumFeaturePolicy.marketShopCount(true)} mağaza, 40 karar",true)
-                    FeatureLine("Öğren: 1–8. sınıf kısa ve derinleşme dersleri",true)
-                    FeatureLine("Kendi Tezgâhım: stok, satış ve kâr",true)
-                    FeatureLine("Dört işlem ve Karışık Mod: Orta, Zor, Çok Zor, Uzman",true)
-                    FeatureLine("Sayı Avı, Geometri, Kesir, Zaman, Örüntü, Balon ve Uzay: Orta ve Zor",true)
-                    FeatureLine("9 ek özel avatar (yıldızla açılır) ve alternatif ikonlar",true)
-                    FeatureLine("Labirentte sınırsız oyun, oyun bazlı analizler ve günlük bonus",true)
-                    Text(if(BuildConfig.MM_SUBSCRIPTIONS_ENABLED)
-                            "Aylık/yıllık otomatik yenilenir; ömür boyu Premium tek seferliktir."
-                        else "Ömür boyu Premium tek seferlik ödeme ile alınır.",
-                        color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
-                }
-                Text("Çocuk güvenliği denetimi süresince reklamlar tüm oyuncular için kapalıdır.",
-                    color=SettingsPalette.secondary,fontSize=11.sp,lineHeight=16.sp)
-            }
+            PremiumAdventureComparison(
+                expanded = showPlanComparison,
+                onToggle = { showPlanComparison = !showPlanComparison },
+                subscriptionsEnabled = BuildConfig.MM_SUBSCRIPTIONS_ENABLED
+            )
         }
 
         SettingsSection("Satın Alma ve Premium Kodunu Geri Yükleme",

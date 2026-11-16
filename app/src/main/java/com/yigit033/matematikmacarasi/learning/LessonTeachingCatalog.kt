@@ -153,7 +153,7 @@ object LessonTeachingCatalog {
                     "15'in katlarını sayı şeridinde gör."
                 )
             )
-            Skill.EXTENDED, Skill.TOPIC_STARTER, Skill.DEEP_DIVE ->
+            Skill.EXTENDED, Skill.TOPIC_STARTER, Skill.DEEP_DIVE, Skill.JOURNEY ->
                 error("Use forLesson() for grade-specific lessons")
         }
     }

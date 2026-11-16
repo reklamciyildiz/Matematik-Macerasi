@@ -4,7 +4,10 @@ import kotlin.random.Random
 
 /** Grade-specific conceptual follow-up problems with deterministic questions. */
 object DeepLessonQuestionBank {
-    fun question(lesson: Lesson, seed: Long, index: Int): PracticeQuestion {
+    fun question(
+        lesson: Lesson, seed: Long, index: Int,
+        legacyGrade2Hundred: Boolean = false
+    ): PracticeQuestion {
         require(lesson.skill == Skill.DEEP_DIVE && index in 0..7)
         val r = Random(seed + index * 10007L + lesson.id.hashCode().toLong())
         fun n(low: Int, high: Int) = r.nextInt(low, high)
@@ -28,10 +31,21 @@ object DeepLessonQuestionBank {
                 explanation="${4*each} nesneyi dört eş gruba ayır; bir grupta $answer nesne olur."
             }
             "g2_hundred_place" -> {
-                val h=n(1,4);val t=n(1,10);val u=n(0,10)
-                answer=h*100+t*10+u
-                question="$h yüzlük, $t onluk ve $u birlik kaç eder?"
-                explanation="$h yüzlük ${h*100}, $t onluk ${t*10}, $u birlik eder; toplam $answer."
+                if (legacyGrade2Hundred) {
+                    // Existing pre-P2 sessions retain exact historic questions,
+                    // including their 123+ examples. Restarted sessions use
+                    // the current, grade-appropriate 1..100 question family.
+                    val h=n(1,4);val t=n(1,10);val u=n(0,10)
+                    answer=h*100+t*10+u
+                    question="$h yüzlük, $t onluk ve $u birlik kaç eder?"
+                    explanation="$h yüzlük ${h*100}, $t onluk ${t*10}, $u birlik eder; toplam $answer."
+                } else {
+                    val t=n(1,11)
+                    val u=if (t==10) 0 else n(0,10)
+                    answer=t*10+u
+                    question="$t onluk ve $u birlik kaç eder?"
+                    explanation="$t onluk ${t*10}, $u birlik eder; toplam $answer. On onluk yüzdür."
+                }
             }
             "g3_share_equal" -> {
                 val groups=n(2,7);val each=n(2,12);answer=each

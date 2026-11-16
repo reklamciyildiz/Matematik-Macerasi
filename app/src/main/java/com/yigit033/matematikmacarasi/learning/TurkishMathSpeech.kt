@@ -16,7 +16,7 @@ object TurkishMathSpeech {
         "yetmiş", "seksen", "doksan"
     )
     private val numeric = Regex("""(?<![\p{L}\p{N}])\d{1,7}(?![\p{L}\p{N}])""")
-    private val fraction = Regex("""(?<![\p{L}\p{N}])(\d{1,6})\s*/\s*(\d{1,6})(?![\p{L}\p{N}])""")
+    private val fraction = Regex("""(?<![\p{L}\p{N}])(\d{1,6})/(\d{1,6})(?![\p{L}\p{N}])""")
     private val decimal = Regex("""(?<![\p{L}\p{N}])(\d{1,6}),(\d{1,5})(?![\p{L}\p{N}])""")
     private val percent = Regex("""%\s*(\d{1,6})""")
     private val stepSuffix = Regex("""(?<![\p{L}\p{N}])(2|3|4|5|6|7|8|9|10)['’]?(?:er|şer|ar)(?![\p{L}])""")
@@ -86,10 +86,16 @@ object TurkishMathSpeech {
             val pct = it.groupValues[1].toIntOrNull()
             if (pct == null) it.value else "yüzde " + number(pct)
         }
+        // A spaced slash denotes division; a tight 3/8 denotes a fraction.
+        text = text.replace(Regex("""(?<=\d)\s+/\s+(?=\d)"""), " bölü ")
+        text = text.replace(Regex("""(?<=\d)\s*\+\s*(?=\d)"""), " artı ")
+        text = text.replace(Regex("""(?<=\d)\s+[-−]\s*(?=\d)"""), " eksi ")
+        text = text.replace(Regex("""(?<=\d)\^\s*(?=\d)"""), " üzeri ")
         text = text.replace("≤", " küçük veya eşittir ")
             .replace("≥", " büyük veya eşittir ")
             .replace("≠", " eşit değildir ")
             .replace("×", " çarpı ")
+            .replace("√", " karekök ")
             .replace("÷", " bölü ")
             .replace("→", " sonra ")
             .replace("=", " eşittir ")

@@ -10,6 +10,8 @@ profile=(root/"profile/ProfileActivity.kt").read_text(encoding="utf-8")
 avatar=(root/"screens/AvatarStoreActivity.kt").read_text(encoding="utf-8")
 popup=(root/"components/StatisticsDetailPopup.kt").read_text(encoding="utf-8")
 policy=(root/"profile/AdventureStatisticsPolicy.kt").read_text(encoding="utf-8")
+learning=(root/"profile/LearningAnalyticsPanel.kt").read_text(encoding="utf-8")
+learning_policy=(root/"learning/LearningAnalyticsModel.kt").read_text(encoding="utf-8")
 checks=[
     ("old purple stack removed","0xFFCE93D8" not in settings),
     ("readable section surface","color=SettingsPalette.panel" in settings),
@@ -52,8 +54,16 @@ checks=[
          ".background(Color.White.copy(alpha" not in profile),
     ("new personal info surface",'Text("Kaşif Bilgilerim"' in profile and
          '"Sınıf düzeyi"' in profile),
-    ("compact statistics tiles",'Text("Macera İstatistiklerim"' in profile and
-         'modifier = Modifier.weight(1f)' in profile),
+    ("separate compact game and learning statistics",
+         'Text("Oyun İstatistiklerim"' in profile and
+         'Öğrenme İstatistiklerim' in learning and
+         'modifier = Modifier.weight(1f)' in profile and
+         "LearningAnalyticsPanel(" in profile),
+    ("learning Free summary and Premium breakdown policy",
+         "LearningAnalyticsPolicy.canViewTopicBreakdown(isPremium)" in learning and
+         "LearningAnalyticsPolicy.canViewMistakeFocus(isPremium)" in learning and
+         "canViewTopicBreakdown(isPremium: Boolean)" in learning_policy and
+         "canViewSummary(isPremium: Boolean)" in learning_policy),
     ("statistics details retained",'"İlerleme Yıldızları"' in profile and
          '"Biten Oyunlar"' in profile and "StatisticsDetailPopup(" in profile),
     ("free summaries and premium breakdown protected",

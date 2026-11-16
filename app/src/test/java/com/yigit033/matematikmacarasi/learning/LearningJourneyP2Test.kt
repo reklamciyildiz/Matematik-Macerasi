@@ -46,6 +46,12 @@ class LearningJourneyP2Test {
                 assertEquals(0, route.completedCount { false })
                 assertFalse(route.finished { false })
                 assertEquals(route.lessonIds.first(), route.nextLesson { false })
+                if (route.lessonIds.size > 1) {
+                    val firstDone = setOf(route.lessonIds.first())
+                    assertEquals(1, route.completedCount { it in firstDone })
+                    assertEquals(route.lessonIds[1], route.nextLesson { it in firstDone })
+                    assertFalse(route.finished { it in firstDone })
+                }
                 assertTrue(route.finished { true })
                 assertEquals(route.lessonIds.last(), route.nextLesson { true })
             }

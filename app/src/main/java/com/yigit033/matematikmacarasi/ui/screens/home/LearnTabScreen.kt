@@ -352,15 +352,29 @@ fun LearnTabScreen(
                     Row(
                         modifier = Modifier.fillMaxWidth()
                             .background(Color(0xFF133A56), RoundedCornerShape(13.dp))
-                            .clickable {
-                                openLesson(lesson.id)
-                            }
-                            .heightIn(min = 51.dp).padding(10.dp),
+                            .clickable { openLesson(lesson.id) }
+                            .heightIn(min = 54.dp).padding(11.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(lesson.title, color = Color.White,
+                        Column(
                             modifier = Modifier.weight(1f),
-                            fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            verticalArrangement = Arrangement.spacedBy(3.dp)
+                        ) {
+                            Text(lesson.title, color = Color.White,
+                                fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            progress.lastSessionFocus(lesson.id)?.let { focus ->
+                                Text(
+                                    "Önerilen odak: " + focus.label,
+                                    color = hubCyan, fontSize = 11.sp,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                            if (progress.lastSessionFocus(lesson.id) == null) {
+                                Text("Kısa pekiştirme çalışması",
+                                    color = hubText, fontSize = 11.sp)
+                            }
+                        }
+                        Spacer(Modifier.width(7.dp))
                         Text("Tekrar Et", color = hubGold,
                             fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         Icon(Icons.Filled.ChevronRight,

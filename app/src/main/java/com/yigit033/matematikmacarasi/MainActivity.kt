@@ -150,8 +150,12 @@ class MainActivity : ComponentActivity() {
     private val playUpdateLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
-        if (result.resultCode != RESULT_OK && ::updateCheckService.isInitialized) {
-            updateCheckService.onUpdateFlowCancelled()
+        if (::updateCheckService.isInitialized) {
+            when (result.resultCode) {
+                RESULT_OK -> Unit
+                RESULT_CANCELED -> updateCheckService.onUpdateFlowCancelled()
+                else -> updateCheckService.onUpdateFlowFailed()
+            }
         }
     }
     // Observable state: oyun ve profil dönüşünde ana sayfa yenilenmeli.

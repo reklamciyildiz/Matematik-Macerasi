@@ -108,12 +108,14 @@ fun LearnTabScreen(
     }
     var selectedTopicId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var selectedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
+    var activeJourneyId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var lockedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var reportExpanded by rememberSaveable(userClass) { mutableStateOf(false) }
     var showRemainingOnly by rememberSaveable(userClass) { mutableStateOf(false) }
     var topicQuery by rememberSaveable(userClass) { mutableStateOf("") }
     val homeScroll = rememberScrollState()
-
+    val journeys = remember(userClass) { LearningJourneyCatalog.forGrade(grade) }
+    val lessonTitles = remember(userClass) { lessons.associate { it.id to it.title } }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -132,6 +134,7 @@ fun LearnTabScreen(
         LearningPremiumDialog(title = title, onDismiss = { lockedLessonId = null })
     }
     val openLesson: (String) -> Unit = { id ->
+        activeJourneyId = null
         if (canOpen(id)) {
             selectedTopicId = GradeCurriculumCatalog.topicForLesson(grade, id)?.id
             selectedLessonId = id
@@ -140,11 +143,30 @@ fun LearnTabScreen(
             lockedLessonId = id
         }
     }
+    val openJourneyLesson: (String, String) -> Unit = { id, routeId ->
+        if (canOpen(id)) {
+            selectedTopicId = null // return to the actual learning-journey library
+            selectedLessonId = id
+            activeJourneyId = routeId
+            revision++
+        } else {
+            lockedLessonId = id // do not silently bypass the Premium entitlement
+        }
+    }
 
     if (selectedLessonId != null) {
+        val activeQuest = journeys.firstOrNull {
+            it.id == activeJourneyId && selectedLessonId in it.lessonIds
+        }
+        val currentPosition = activeQuest?.lessonIds?.indexOf(selectedLessonId) ?: -1
+        val routeNextLessonId = activeQuest?.lessonIds?.getOrNull(currentPosition + 1)
         LearningPracticeSection(
             userClass = userClass,
             startLessonId = selectedLessonId,
+            nextJourneyLessonId = routeNextLessonId,
+            onOpenNextJourneyLesson = { id ->
+                activeJourneyId?.let { routeId -> openJourneyLesson(id, routeId) }
+            },
             onExit = { selectedLessonId = null; revision++ },
             onNavigateToGames = onNavigateToGames,
             modifier = modifier
@@ -172,8 +194,6 @@ fun LearnTabScreen(
             ?: lessons.firstOrNull { !progress.completed(it.id) }
             ?: last ?: lessons.firstOrNull()
     val completed = lessons.count { progress.completed(it.id) }
-    val journeys = remember(userClass) { LearningJourneyCatalog.forGrade(grade) }
-    val lessonTitles = remember(userClass) { lessons.associate { it.id to it.title } }
     val reviewDueLessons = lessons.filter { progress.isReviewDue(it.id) }
         .sortedBy { progress.nextReviewAt(it.id) }
     val searchText = topicQuery.trim().lowercase(java.util.Locale.forLanguageTag("tr-TR"))
@@ -275,7 +295,9 @@ fun LearnTabScreen(
                             lessonTitles = lessonTitles,
                             lessonDone = { progress.completed(it) },
                             canOpen = canOpen,
-                            onOpen = openLesson,
+                            onOpen = { lessonId ->
+                                openJourneyLesson(lessonId, quest.id)
+                            },
                             modifier = Modifier.width(292.dp)
                         )
                     }

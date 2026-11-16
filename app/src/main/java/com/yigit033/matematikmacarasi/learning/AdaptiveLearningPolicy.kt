@@ -21,6 +21,8 @@ enum class PracticeFocus(val label: String, val nextStep: String) {
     ORDER("İşlem sırası", "Hangi işlemin önce yapılacağını belirle, sonra sırayla çöz."),
     GEOMETRY("Şekiller ve ölçme", "Görseldeki kenarları, açıları veya ölçüleri tek tek kontrol et."),
     PATTERN("Örüntü kuralı", "İki ardışık terim arasındaki değişimi karşılaştır."),
+    DATA_READING("Grafik ve tablo okuma", "Sütunların değerlerini tek tek oku, önce büyüğü sonra küçüğü belirle."),
+    ROUNDING("Onluklara yuvarlama", "İki komşu onluğu bul, birler basamağının 5 veya daha büyük olup olmadığına bak."),
     STEP("Son işlem adımı", "Son hamleyi acele etmeden yeniden hesapla."),
     GENERAL("Kavramı tekrar gözden geçirme", "Örnek modeldeki adımları incele ve yeni soruda tekrar dene.")
 }
@@ -64,6 +66,9 @@ object AdaptiveLearningPolicy {
     fun focusForLesson(lesson: Lesson): PracticeFocus {
         val id = lesson.id.lowercase()
         return when {
+            "data" in id || "chart" in id -> PracticeFocus.DATA_READING
+            "round" in id -> PracticeFocus.ROUNDING
+            "inverse" in id -> PracticeFocus.COUNTING
             lesson.skill in listOf(Skill.COUNT_2, Skill.COUNT_3, Skill.COUNT_4) ||
                 "pattern" in id || "count" in id -> PracticeFocus.PATTERN
             "fraction" in id || "quarter" in id || "half" in id ||

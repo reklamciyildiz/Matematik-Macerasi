@@ -134,10 +134,22 @@ object PracticeVisualFactory {
                     groups(text, """(\d+) nesnenin (?:çeyreği|dörtte biri)""")
                         ?.let { listOf(it[0],1,4) },
                     "Dört eş parçaya bölünmüş bütün")
-            "g2_hundred_place" ->
-                build(PracticeVisualKind.HUNDREDS,
-                    groups(text, """(\d+) yüzlük, (\d+) onluk ve (\d+) birlik"""),
-                    "Yüzlük, onluk ve birlik blokları")
+            "g2_hundred_place" -> {
+                // P2's corrected current grade-2 question uses 0–100,
+                // while unfinished pre-P2 sessions retain the old grammar.
+                val corrected = groups(text, """(\d+) onluk ve (\d+) birlik""")
+                if (corrected != null) {
+                    build(
+                        PracticeVisualKind.TENS_AND_ONES,
+                        corrected,
+                        "Onluk ve birlik blokları"
+                    )
+                } else {
+                    build(PracticeVisualKind.HUNDREDS,
+                        groups(text, """(\d+) yüzlük, (\d+) onluk ve (\d+) birlik"""),
+                        "Eski oturum: yüzlük, onluk ve birlik blokları")
+                }
+            }
             "g3_share_equal" ->
                 build(PracticeVisualKind.EQUAL_SHARE,
                     groups(text, """(\d+) nesne (\d+) çocuğa eşit"""),

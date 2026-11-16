@@ -202,6 +202,14 @@ class UpdateCheckService private constructor(context: Context) {
         dismissUpdateDialog()
     }
 
+    fun onUpdateFlowFailed() {
+        isDownloading = false
+        showUpdateDialog = false
+        // A failed Play flow should be rechecked on the next foreground visit,
+        // not hidden for 24 hours as though the family chose "Daha Sonra".
+        prefs.edit().putLong(CHECKED_AT, 0L).apply()
+    }
+
     fun postponeInstallation() {
         // The download stays available. Offer installation on a later home visit.
         isInstallReady = false

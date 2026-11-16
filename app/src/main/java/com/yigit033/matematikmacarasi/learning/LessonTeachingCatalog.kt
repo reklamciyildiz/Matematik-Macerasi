@@ -63,6 +63,7 @@ object LessonTeachingCatalog {
         Skill.EXTENDED -> ExpandedLessonTeachingCatalog.forLesson(lesson)
         Skill.TOPIC_STARTER -> TopicStarterCatalog.forLesson(lesson)
         Skill.DEEP_DIVE -> DeepLessonTeachingCatalog.forLesson(lesson)
+        Skill.JOURNEY -> LearningJourneyLessonCatalog.forLesson(lesson)
         else -> forSkill(lesson.skill)
     }
 

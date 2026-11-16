@@ -21,12 +21,17 @@ import java.util.Locale
 class LessonNarrator(context: Context) {
     private val app = context.applicationContext
     private val audio = AudioService.getInstance(app)
+    private val studioAudio = PremiumLessonAudio(app)
     private val main = Handler(Looper.getMainLooper())
     private var speaker: TextToSpeech? = null
     private var closed = false
     private var utteranceSerial = 0L
     private var activeUtterance: String? = null
-    var available by mutableStateOf(false)
+    var available by mutableStateOf(studioAudio.hasAnyClips())
+        private set
+    var studioVoiceAvailable by mutableStateOf(studioAudio.hasAnyClips())
+        private set
+    var offlineVoiceAvailable by mutableStateOf(false)
         private set
     var loading by mutableStateOf(true)
         private set
@@ -39,7 +44,8 @@ class LessonNarrator(context: Context) {
                 if (!closed) {
                     val tts = speaker
                     if (status != TextToSpeech.SUCCESS || tts == null) {
-                        available = false
+                        offlineVoiceAvailable = false
+                        available = studioVoiceAvailable
                     } else {
                         val offlineVoice = runCatching {
                             tts.voices?.filter {
@@ -54,9 +60,11 @@ class LessonNarrator(context: Context) {
                             )
                         }.getOrNull()
                         if (offlineVoice != null) {
-                            available = tts.setVoice(offlineVoice) == TextToSpeech.SUCCESS
-                            if (available) {
-                                tts.setSpeechRate(0.90f)
+                            offlineVoiceAvailable = tts.setVoice(offlineVoice) == TextToSpeech.SUCCESS
+                            if (offlineVoiceAvailable) {
+                                // A natural pace for reading maths aloud; some
+                                // engines sound mechanical at the old 0.90 rate.
+                                tts.setSpeechRate(0.96f)
                                 tts.setPitch(1f)
                                 tts.setAudioAttributes(
                                     AudioAttributes.Builder()
@@ -94,8 +102,9 @@ class LessonNarrator(context: Context) {
                             }
                         } else {
                             // Fail closed rather than silently using a cloud voice.
-                            available = false
+                            offlineVoiceAvailable = false
                         }
+                        available = offlineVoiceAvailable || studioVoiceAvailable
                     }
                     loading = false
                 }
@@ -106,17 +115,45 @@ class LessonNarrator(context: Context) {
     val audioAllowed: Boolean
         get() = audio.isSoundEnabled() && audio.getEffectsVolume() > 0f
 
+    fun hasProfessionalClip(text: String): Boolean = studioAudio.hasClip(text)
+
+    /** In lessons with an HD clip, no device TTS engine is necessary. */
+    fun canSpeak(text: String): Boolean =
+        !closed && audioAllowed && text.isNotBlank() &&
+            (offlineVoiceAvailable || studioAudio.hasClip(text))
+
     fun say(text: String) {
-        if (closed || !available || !audioAllowed || text.isBlank()) return
-        // QUEUE_FLUSH may invoke an older utterance's onStop AFTER
-        // the new one starts. Only callbacks for the current ID may
-        // change the audio state, or a lesson can advance mid-sentence.
+        if (closed || !audioAllowed || text.isBlank()) return
+        // QUEUE_FLUSH may invoke onStop of a previously interrupted utterance.
+        // Only callbacks for the current request may end the speech session.
         val id = "mm-lesson-" + (++utteranceSerial)
         activeUtterance = id
         audio.onLessonNarrationChanged(true)
         speaking = true
+
+        if (studioAudio.play(text) {
+                main.post {
+                    if (!closed && activeUtterance == id) {
+                        activeUtterance = null
+                        speaking = false
+                        audio.onLessonNarrationChanged(false)
+                    }
+                }
+            }) {
+            // One consistent HD asset on every Android device, no runtime cloud.
+            runCatching { speaker?.stop() }
+            return
+        }
+
+        if (!offlineVoiceAvailable) {
+            activeUtterance = null
+            speaking = false
+            audio.onLessonNarrationChanged(false)
+            return
+        }
+        val spokenText = TurkishMathSpeech.normalize(text.take(1200))
         val result = runCatching {
-            speaker?.speak(text.take(1200), TextToSpeech.QUEUE_FLUSH, null, id)
+            speaker?.speak(spokenText, TextToSpeech.QUEUE_FLUSH, null, id)
         }.getOrNull()
         if (result != TextToSpeech.SUCCESS && activeUtterance == id) {
             activeUtterance = null
@@ -128,6 +165,7 @@ class LessonNarrator(context: Context) {
     fun stop() {
         if (closed) return
         activeUtterance = null
+        studioAudio.stop()
         runCatching { speaker?.stop() }
         speaking = false
         audio.onLessonNarrationChanged(false)
@@ -137,6 +175,7 @@ class LessonNarrator(context: Context) {
         if (closed) return
         closed = true
         activeUtterance = null
+        studioAudio.stop()
         runCatching { speaker?.stop() }
         runCatching { speaker?.shutdown() }
         speaker = null

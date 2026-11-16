@@ -1,0 +1,75 @@
+name: Android Update Center QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/MainActivity.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/services/UpdateCheckService.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/services/UpdatePromptPolicy.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/components/UpdateCenterDialog.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/HomeScreenNew.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/screens/SettingsScreen.kt'
+      - 'app/src/test/java/com/yigit033/matematikmacarasi/services/UpdatePromptPolicyTest.kt'
+      - 'app/build.gradle'
+      - '.github/workflows/update-center-qa.yml'
+  pull_request:
+    paths:
+      - 'app/**'
+      - '.github/workflows/update-center-qa.yml'
+  workflow_dispatch:
+
+jobs:
+  debug-build-and-update-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install compile SDK
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Configure Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Generate fake Firebase config for compile-only CI
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data = {
+              "project_info": {
+                  "project_number": "123456789012",
+                  "project_id": "matematik-macerasi-ci",
+                  "storage_bucket": "matematik-macerasi-ci.appspot.com",
+                  "firebase_url": "https://matematik-macerasi-ci-default-rtdb.firebaseio.com"
+              },
+              "client": [{
+                  "client_info": {
+                      "mobilesdk_app_id": "1:123456789012:android:1234567890abcdef12345678",
+                      "android_client_info": {"package_name": "com.yigit033.matematikmacarasi"}
+                  },
+                  "oauth_client": [{
+                      "client_id": "123456789012-ci-only.apps.googleusercontent.com",
+                      "client_type": 3
+                  }],
+                  "api_key": [{"current_key": "CI_ONLY_INVALID_API_KEY_NOT_FOR_PRODUCTION"}]
+              }],
+              "configuration_version": "1"
+          }
+          p = Path("app/google-services.json")
+          p.write_text(json.dumps(data), encoding="utf-8")
+          PY
+      - name: Test deterministic update policy
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:testDebugUnitTest --tests 'com.yigit033.matematikmacarasi.services.UpdatePromptPolicyTest' --no-daemon --stacktrace
+      - name: Compile Android debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace

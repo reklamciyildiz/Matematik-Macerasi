@@ -116,8 +116,13 @@ class LearningJourneyProgress(context: Context) {
         prefs.getBoolean("concept_passed_$id", false)
     fun conceptErrors(id: String): Int =
         prefs.getInt("concept_errors_$id", 0).coerceAtLeast(0)
-    fun recordConceptError(id: String) {
-        prefs.edit().putInt("concept_errors_$id", conceptErrors(id) + 1).apply()
+    fun recordConceptError(id: String, focus: PracticeFocus? = null) {
+        val editor = prefs.edit().putInt("concept_errors_$id", conceptErrors(id) + 1)
+        if (focus != null) {
+            editor.putInt(p1(id, "focus_${focus.name}"),
+                prefs.getInt(p1(id, "focus_${focus.name}"), 0) + 1)
+        }
+        editor.apply()
     }
     fun markConceptCheckPassed(id: String) {
         prefs.edit().putBoolean("concept_passed_$id", true).apply()

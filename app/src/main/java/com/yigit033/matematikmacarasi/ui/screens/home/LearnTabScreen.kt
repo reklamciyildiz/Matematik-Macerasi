@@ -66,6 +66,7 @@ import com.yigit033.matematikmacarasi.learning.GradeCurriculumCatalog
 import com.yigit033.matematikmacarasi.learning.InstructionBand
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import com.yigit033.matematikmacarasi.learning.LearningJourneyCatalog
 import com.yigit033.matematikmacarasi.learning.TopicArea
 
 private val hubOcean = Color(0xFF163E5E)
@@ -169,6 +170,8 @@ fun LearnTabScreen(
             ?: lessons.firstOrNull { !progress.completed(it.id) }
             ?: last ?: lessons.firstOrNull()
     val completed = lessons.count { progress.completed(it.id) }
+    val journeys = remember(userClass) { LearningJourneyCatalog.forGrade(grade) }
+    val lessonTitles = remember(userClass) { lessons.associate { it.id to it.title } }
     val reviewDueLessons = lessons.filter { progress.isReviewDue(it.id) }
         .sortedBy { progress.nextReviewAt(it.id) }
     val searchText = topicQuery.trim().lowercase(java.util.Locale.forLanguageTag("tr-TR"))
@@ -242,6 +245,30 @@ fun LearnTabScreen(
                     "Her sınıfta 2 ücretsiz başlangıç dersi; diğerleri Premium. Tam müfredat değildir.",
                 color = Color(0xFFBBD7E6), fontSize = 11.sp, lineHeight = 16.sp
             )
+        }
+
+        if (journeys.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    "Öğrenme Yolculuklarım",
+                    color = Color.White,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    "Kavramı keşfet, çözümlü örneği incele, kendin çöz, kısa değerlendirme yap ve oyunla pekiştir. Bu yollar hazır kısa derslerden oluşur; tam müfredat kapsamı değildir.",
+                    color = hubText, fontSize = 12.sp, lineHeight = 18.sp
+                )
+                journeys.forEach { quest ->
+                    LearningJourneyRouteCard(
+                        quest = quest,
+                        lessonTitles = lessonTitles,
+                        lessonDone = { progress.completed(it) },
+                        canOpen = canOpen,
+                        onOpen = openLesson
+                    )
+                }
+            }
         }
 
         if (next != null) {

@@ -132,6 +132,7 @@ class LearningJourneyP2Test {
                     lesson, seed, index, legacyGrade2Hundred = true
                 )
                 assertTrue(now.answer in 10..100)
+                assertTrue(now.choices.all { it in 0..100 })
                 assertTrue(beforeP2.answer >= 100)
                 assertNotEquals(now.text, beforeP2.text)
                 assertEquals(4, now.choices.distinct().size)

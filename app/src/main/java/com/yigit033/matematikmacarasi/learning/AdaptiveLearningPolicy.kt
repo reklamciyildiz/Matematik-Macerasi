@@ -60,10 +60,8 @@ object AdaptiveLearningPolicy {
         else -> PracticeBand.EXTENDED
     }
 
-    fun classify(lesson: Lesson, question: PracticeQuestion, selected: Int): PracticeFocus {
-        require(selected != question.answer) { "Only incorrect choices should be classified" }
-        if (question.answer != 0 && selected == -question.answer) return PracticeFocus.SIGNS
-        if (abs(selected.toLong() - question.answer.toLong()) == 1L) return PracticeFocus.STEP
+    /** Concept checks have text answers; their instructional focus is the lesson topic. */
+    fun focusForLesson(lesson: Lesson): PracticeFocus {
         val id = lesson.id.lowercase()
         return when {
             lesson.skill in listOf(Skill.COUNT_2, Skill.COUNT_3, Skill.COUNT_4) ||
@@ -86,6 +84,13 @@ object AdaptiveLearningPolicy {
                 "add" in id || "takeaway" in id -> PracticeFocus.COUNTING
             else -> PracticeFocus.GENERAL
         }
+    }
+
+    fun classify(lesson: Lesson, question: PracticeQuestion, selected: Int): PracticeFocus {
+        require(selected != question.answer) { "Only incorrect choices should be classified" }
+        if (question.answer != 0 && selected == -question.answer) return PracticeFocus.SIGNS
+        if (abs(selected.toLong() - question.answer.toLong()) == 1L) return PracticeFocus.STEP
+        return focusForLesson(lesson)
     }
 
     fun response(

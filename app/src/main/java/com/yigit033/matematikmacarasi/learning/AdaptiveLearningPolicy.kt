@@ -72,7 +72,7 @@ object AdaptiveLearningPolicy {
             lesson.skill in listOf(Skill.COUNT_2, Skill.COUNT_3, Skill.COUNT_4) ||
                 "pattern" in id || "count" in id -> PracticeFocus.PATTERN
             "fraction" in id || "quarter" in id || "half" in id ||
-                "third" in id || "percent" in id || "rational" in id ||
+                "denominator" in id || "third" in id || "percent" in id || "rational" in id ||
                 "decimal" in id || "tenths" in id -> PracticeFocus.FRACTIONS
             "place" in id || "hundred" in id -> PracticeFocus.PLACE_VALUE
             "signed" in id || "absolute" in id || "coordinate" in id ||

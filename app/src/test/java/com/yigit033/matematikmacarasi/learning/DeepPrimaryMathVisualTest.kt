@@ -20,6 +20,23 @@ class DeepPrimaryMathVisualTest {
         }
     }
 
+    @Test fun secondGradePlaceValueIllustrationsSupportBothCurrentAndLegacyQuestions() {
+        val current = PracticeVisualFactory.forQuestion(
+            "g2_hundred_place", "9 onluk ve 3 birlik kaç eder?"
+        )
+        assertNotNull(current)
+        assertEquals(PracticeVisualKind.TENS_AND_ONES, current!!.kind)
+        assertEquals(listOf(9, 3), current.values)
+        assertTrue(current.accessibilityText().contains("9 onluk"))
+
+        val previous = PracticeVisualFactory.forQuestion(
+            "g2_hundred_place", "1 yüzlük, 2 onluk ve 3 birlik kaç eder?"
+        )
+        assertNotNull(previous)
+        assertEquals(PracticeVisualKind.HUNDREDS, previous!!.kind)
+        assertEquals(listOf(1, 2, 3), previous.values)
+    }
+
     @Test fun tenFramesDoNotDrawTheAnswerAsAlreadyFilledItems() {
         val m=PracticeVisualFactory.forQuestion(
             "g1_make_ten","7 nesnenin 10 olması için kaç nesne eklemeliyiz?")!!

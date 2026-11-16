@@ -63,6 +63,8 @@ import com.yigit033.matematikmacarasi.services.AudioService
 import com.yigit033.matematikmacarasi.learning.Skill
 import com.yigit033.matematikmacarasi.learning.LearningJourneyProgress
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import com.yigit033.matematikmacarasi.learning.AdaptiveLearningPolicy
+import com.yigit033.matematikmacarasi.learning.PracticeBand
 import com.yigit033.matematikmacarasi.learning.LearningAccessPolicy
 import com.yigit033.matematikmacarasi.learning.LearningAccessMigration
 import com.yigit033.matematikmacarasi.services.payments.PurchaseManager
@@ -243,12 +245,37 @@ private fun PracticeLesson(
         mutableStateOf(progress.conceptCheckPassed(lesson.id))
     }
     var conceptWrong by remember(lesson.id) { mutableIntStateOf(0) }
-    var hinted by remember(lesson.id, index) { mutableStateOf(false) }
+    var hinted by remember(lesson.id, index) {
+        mutableStateOf(progress.currentHintUsed(lesson.id))
+    }
+    var questionMistakes by remember(lesson.id, index) {
+        mutableIntStateOf(progress.questionMistakes(lesson.id))
+    }
+    var lastWrongChoice by remember(lesson.id, index) {
+        mutableStateOf(progress.lastWrongChoice(lesson.id))
+    }
+    var supportActive by remember(lesson.id, index) {
+        mutableStateOf(progress.supportActive(lesson.id))
+    }
+    var supportUsed by remember(lesson.id, index) {
+        mutableStateOf(progress.supportUsed(lesson.id))
+    }
+    var supportFeedback by remember(lesson.id, index) { mutableStateOf("") }
+    var supportWrongCount by remember(lesson.id, index) { mutableIntStateOf(0) }
+    var practiceReturnFeedback by remember(lesson.id, index) { mutableStateOf("") }
     var right by remember(lesson.id, index) { mutableStateOf(false) }
     var feedback by remember(lesson.id, index) { mutableStateOf("") }
     var finished by remember(lesson.id) { mutableStateOf(false) }
-    val q = remember(lesson.id, seed, index) {
-        LearningPathCatalog.question(lesson, seed, index)
+    val practiceBand = remember(lesson.id, index) {
+        progress.practiceBand(lesson.id, index)
+    }
+    val q = remember(lesson.id, seed, index, practiceBand) {
+        if (progress.adaptiveEnabled(lesson.id))
+            AdaptiveLearningPolicy.question(lesson, seed, index, practiceBand)
+        else LearningPathCatalog.question(lesson, seed, index)
+    }
+    val supportQ = remember(lesson.id, seed, index, q.text) {
+        AdaptiveLearningPolicy.supportQuestion(lesson, seed, index, q)
     }
     // Upper grades still benefit from concise concept diagrams, not the
     // full decorative early-reader treatment used in first grade.
@@ -296,7 +323,8 @@ private fun PracticeLesson(
             narrator.say(speechText)
         }
     }
-    // Correct responses advance automatically; bad attempts do not count as learning.
+    // A question remains fixed while visible. Adaptive tier applies only to the
+    // NEXT question; the old 4/8-question completion and save format stay intact.
     LaunchedEffect(right, index, finished) {
         if (right && !finished) {
             delay(1250)
@@ -304,8 +332,15 @@ private fun PracticeLesson(
                 onFinish(wrong, hints)
                 finished = true
             } else {
-                index += 1
-                progress.setQuestionIndex(lesson.id, index)
+                val next = index + 1
+                progress.setNextQuestionBand(
+                    lesson.id, next,
+                    AdaptiveLearningPolicy.nextBand(
+                        practiceBand, questionMistakes, hinted, supportUsed
+                    )
+                )
+                progress.setQuestionIndex(lesson.id, next)
+                index = next
             }
         }
     }
@@ -420,6 +455,13 @@ private fun PracticeLesson(
                     " kez yeniden denendi",
                 color = Color(0xFFE1DBA6), fontSize = 12.sp
             )
+            progress.lastSessionFocus(lesson.id)?.let { focus ->
+                Text(
+                    "Birlikte yeniden çalışılabilecek alan: " + focus.label,
+                    color = Color(0xFFFFD887), fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
             progress.lastReviewComment(lesson.id)?.let { note ->
                 Text(
                     "Sonraki çalışma önerisi: " + note,

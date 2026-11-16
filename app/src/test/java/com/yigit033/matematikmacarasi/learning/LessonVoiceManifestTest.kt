@@ -52,7 +52,7 @@ class LessonVoiceManifestTest {
         assertTrue(lines.all { TurkishMathSpeech.normalize(it).isNotBlank() })
         if (System.getenv("MM_NARRATION_EXPORT") == "1") {
             val output = File(System.getProperty("user.dir"), "build/narration/manifest.tsv")
-            output.parentFile.mkdirs()
+            output.parentFile?.mkdirs()
             output.bufferedWriter(Charsets.UTF_8).use { writer ->
                 for (line in lines) {
                     val speech = TurkishMathSpeech.normalize(line)

@@ -59,6 +59,13 @@ class LearningJourneyProgress(context: Context) {
     fun supportUsed(id: String): Boolean =
         prefs.getBoolean(p1(id, "support_used"), false)
 
+    fun supportErrors(id: String): Int =
+        prefs.getInt(p1(id, "support_errors"), 0).coerceAtLeast(0)
+
+    fun recordSupportError(id: String) {
+        prefs.edit().putInt(p1(id, "support_errors"), supportErrors(id) + 1).apply()
+    }
+
     fun currentHintUsed(id: String): Boolean =
         prefs.getBoolean(p1(id, "hint_current"), false)
 
@@ -100,6 +107,7 @@ class LearningJourneyProgress(context: Context) {
             .remove(p1(id, "last_choice"))
             .putBoolean(p1(id, "support_active"), false)
             .putBoolean(p1(id, "support_used"), false)
+            .putInt(p1(id, "support_errors"), 0)
             .putBoolean(p1(id, "hint_current"), false)
             .apply()
     }
@@ -144,6 +152,7 @@ class LearningJourneyProgress(context: Context) {
                 .remove(p1(id, "last_choice"))
                 .putBoolean(p1(id, "support_active"), false)
                 .putBoolean(p1(id, "support_used"), false)
+                .putInt(p1(id, "support_errors"), 0)
                 .putBoolean(p1(id, "hint_current"), false)
             PracticeFocus.values().forEach { editor.remove(p1(id, "focus_${it.name}")) }
             editor.putInt("phase_$id", 0)
@@ -168,6 +177,7 @@ class LearningJourneyProgress(context: Context) {
                 .remove(p1(id, "last_choice"))
                 .putBoolean(p1(id, "support_active"), false)
                 .putBoolean(p1(id, "support_used"), false)
+                .putInt(p1(id, "support_errors"), 0)
                 .putBoolean(p1(id, "hint_current"), false)
             PracticeFocus.values().forEach { editor.remove(p1(id, "focus_${it.name}")) }
         }

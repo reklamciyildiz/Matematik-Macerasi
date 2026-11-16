@@ -182,7 +182,7 @@ fun UpdateDownloadBanner(progress: Int, modifier: Modifier = Modifier) {
                 if (progress > 0) Text("%" + progress, color = Gold, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
             LinearProgressIndicator(
-                progress = { progress.coerceIn(0, 100) / 100f },
+                progress = progress.coerceIn(0, 100) / 100f,
                 modifier = Modifier.fillMaxWidth().height(5.dp).clip(CircleShape),
                 color = Gold,
                 trackColor = Color.White.copy(alpha = 0.18f)

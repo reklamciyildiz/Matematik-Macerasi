@@ -13,6 +13,9 @@ on:
       - 'app/src/test/java/com/yigit033/matematikmacarasi/services/UpdatePromptPolicyTest.kt'
       - 'app/src/main/java/com/yigit033/matematikmacarasi/learning/**'
       - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/LearningPracticeSection.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/LearnTabScreen.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/LearningJourney*.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/LearningTransferChallenge.kt'
       - 'app/src/test/java/com/yigit033/matematikmacarasi/learning/**'
       - 'app/build.gradle'
       - '.github/workflows/update-center-qa.yml'
@@ -73,6 +76,6 @@ jobs:
       - name: Test update policy and adaptive-learning regressions
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:testDebugUnitTest --tests 'com.yigit033.matematikmacarasi.services.UpdatePromptPolicyTest' --tests 'com.yigit033.matematikmacarasi.learning.AdaptiveLearningPolicyTest' --no-daemon --stacktrace
+          ./gradlew :app:testDebugUnitTest --tests 'com.yigit033.matematikmacarasi.services.UpdatePromptPolicyTest' --tests 'com.yigit033.matematikmacarasi.learning.AdaptiveLearningPolicyTest' --tests 'com.yigit033.matematikmacarasi.learning.LearningJourneyP2Test' --no-daemon --stacktrace
       - name: Compile Android debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace

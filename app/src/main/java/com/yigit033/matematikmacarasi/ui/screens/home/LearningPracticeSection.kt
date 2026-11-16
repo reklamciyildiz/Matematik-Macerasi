@@ -668,84 +668,257 @@ private fun PracticeLesson(
                 }
             }
         } else {
-            // Four varied, deterministic questions, retaining the previous
-            // system's auto-advance and saved seed/attempt counters.
-            Text("Soru " + (index + 1) + " / " + totalQuestions,
-                color = HomeColors.TextSecondary, fontSize = 13.sp)
-            Text(q.text, fontWeight = FontWeight.ExtraBold, color = Color.White,
-                fontSize = if (earlyReader) 23.sp else 20.sp, lineHeight = 29.sp)
-            if (questionDiagram != null) {
-                PracticeQuestionIllustration(
-                    model = questionDiagram, grade = grade
-                )
+            // One stable question per index, with a genuinely different same-
+            // concept exercise when a learner needs supported practice.
+            val supportDiagram = remember(lesson.id, supportQ.text) {
+                PracticeVisualFactory.forQuestion(lesson.id, supportQ.text)
             }
-            q.choices.chunked(2).forEach { choices ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(9.dp)
-                ) {
-                    choices.forEach { choice ->
-                        Button(
-                            onClick = {
-                                if (choice == q.answer) {
-                                    right = true
-                                    feedback = q.explanation
-                                    sounds.playCorrectSound()
-                                    narrator.stop()
-                                } else {
-                                    wrong++
-                                    progress.recordWrong(lesson.id)
-                                    sounds.playWrongSound()
-                                    feedback = if (wrong > 1) script.check.wrongHint
-                                    else "Bu henüz doğru değil. Sayıları yeniden incele."
-                                    narrator.say(feedback)
-                                }
-                            },
-                            enabled = !right,
-                            modifier = Modifier.weight(1f).heightIn(min = 59.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (right && choice == q.answer)
-                                    Color(0xFF1C8D78) else Color(0xFF285C82)
-                            ),
-                            shape = RoundedCornerShape(13.dp)
-                        ) {
-                            Text(choice.toString(), fontSize = 21.sp,
-                                color = Color.White)
-                        }
-                    }
-                }
-            }
-            if (feedback.isNotEmpty()) {
-                Text(feedback, color = if (right) HomeColors.MagicCyan
-                    else Color(0xFFFFD1AE), fontSize = 14.sp, lineHeight = 20.sp)
-            }
-            if (!right && !hinted) {
-                OutlinedButton(
-                    onClick = {
+            val canOfferSupport = supportQ.text != q.text || supportQ.answer != q.answer
+            val offerSupport: () -> Unit = {
+                if (!right && !supportUsed && canOfferSupport) {
+                    narrator.stop()
+                    supportActive = true
+                    supportUsed = true
+                    progress.openSupport(lesson.id)
+                    if (!hinted) {
                         hinted = true
                         hints++
                         progress.recordHint(lesson.id)
-                        narrator.say(lesson.hint)
-                    },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
-                    border = androidx.compose.foundation.BorderStroke(
-                        1.dp, Color(0xFF5EAFC3)
-                    ),
-                    shape = RoundedCornerShape(13.dp)
-                ) {
-                    Text("İpucu Göster", color = HomeColors.MagicCyan,
-                        fontWeight = FontWeight.Bold)
+                    }
                 }
             }
-            if (hinted && !right) {
-                Text(lesson.hint, color = Color.White,
-                    fontSize = 13.sp, lineHeight = 19.sp)
+            Text(
+                "Soru " + (index + 1) + " / " + totalQuestions,
+                color = HomeColors.TextSecondary, fontSize = 13.sp
+            )
+            if (progress.adaptiveEnabled(lesson.id)) {
+                Text(
+                    "Çalışma biçimi: " + when (practiceBand) {
+                        PracticeBand.SUPPORTED -> "Daha küçük sayılarla destekli tekrar"
+                        PracticeBand.CORE -> "Temel çalışma"
+                        PracticeBand.EXTENDED -> "Farklı sayılarla ek pratik"
+                    },
+                    color = Color(0xFFFFD887), fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
-            if (right) {
-                Text("Doğru! " + (if (index == totalQuestions - 1) "Dersin tamamlanıyor…"
-                     else "Sonraki soruya geçiliyor…"),
-                    color = HomeColors.MagicCyan, fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold)
+            if (supportActive) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Color(0xFF184C62), RoundedCornerShape(18.dp))
+                        .border(1.dp, Color(0xFF76D3CD), RoundedCornerShape(18.dp))
+                        .padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(11.dp)
+                ) {
+                    Text("KÜÇÜK BİR PEKİŞTİRME", color = Color(0xFFFFD887),
+                        fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        "Aynı konuyu başka sayılarla deneyelim. Bu soru dersinin soru sayısını artırmaz.",
+                        color = Color.White, fontSize = 13.sp, lineHeight = 19.sp
+                    )
+                    Text(supportQ.text, color = Color.White,
+                        fontSize = if (earlyReader) 21.sp else 18.sp,
+                        lineHeight = 26.sp, fontWeight = FontWeight.Bold)
+                    if (supportDiagram != null) {
+                        PracticeQuestionIllustration(model = supportDiagram, grade = grade)
+                    } else {
+                        Text("Örnek model · Bu örnekteki sayılar farklı olabilir.",
+                            color = HomeColors.TextSecondary, fontSize = 11.sp)
+                        LessonTeachingIllustration(
+                            script = script, grade = grade,
+                            revealedStep = script.steps.lastIndex, showComplete = true
+                        )
+                    }
+                    supportQ.choices.chunked(2).forEach { choiceRow ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(9.dp)
+                        ) {
+                            choiceRow.forEach { choice ->
+                                Button(
+                                    onClick = {
+                                        if (choice == supportQ.answer) {
+                                            sounds.playCorrectSound()
+                                            narrator.stop()
+                                            progress.closeSupport(lesson.id)
+                                            supportActive = false
+                                            practiceReturnFeedback =
+                                                "Benzer soruyu çözdün! Şimdi asıl soruya geri dön."
+                                        } else {
+                                            wrong++
+                                            progress.recordWrong(lesson.id)
+                                            questionMistakes++
+                                            val response = AdaptiveLearningPolicy.response(
+                                                lesson, supportQ, choice
+                                            )
+                                            progress.recordAdaptiveMistake(
+                                                lesson.id, choice, response.focus, false
+                                            )
+                                            supportWrongCount++
+                                            supportFeedback = response.firstStep
+                                            sounds.playWrongSound()
+                                            narrator.say(supportFeedback)
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).heightIn(min = 58.dp),
+                                    shape = RoundedCornerShape(13.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF2B6C80)
+                                    )
+                                ) {
+                                    Text(choice.toString(), color = Color.White,
+                                        fontSize = 19.sp)
+                                }
+                            }
+                        }
+                    }
+                    if (supportFeedback.isNotEmpty()) {
+                        Text(
+                            supportFeedback,
+                            color = Color(0xFFFFDBB5), fontSize = 13.sp, lineHeight = 19.sp
+                        )
+                    }
+                    if (supportWrongCount >= 2) {
+                        Text(
+                            "Çözümlü örnek: " + supportQ.explanation,
+                            color = Color(0xFFB6F2DF), fontSize = 13.sp, lineHeight = 20.sp
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = {
+                            narrator.stop()
+                            progress.closeSupport(lesson.id)
+                            supportActive = false
+                        },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp)
+                    ) {
+                        Text("Asıl Soruma Dön", color = Color.White)
+                    }
+                }
+            } else {
+                Text(q.text, fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    fontSize = if (earlyReader) 23.sp else 20.sp, lineHeight = 29.sp)
+                if (questionDiagram != null) {
+                    PracticeQuestionIllustration(model = questionDiagram, grade = grade)
+                }
+                q.choices.chunked(2).forEach { choices ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(9.dp)
+                    ) {
+                        choices.forEach { choice ->
+                            Button(
+                                onClick = {
+                                    if (choice == q.answer) {
+                                        right = true
+                                        feedback = q.explanation
+                                        sounds.playCorrectSound()
+                                        narrator.stop()
+                                    } else {
+                                        wrong++
+                                        progress.recordWrong(lesson.id)
+                                        questionMistakes++
+                                        val response = AdaptiveLearningPolicy.response(
+                                            lesson, q, choice
+                                        )
+                                        progress.recordAdaptiveMistake(
+                                            lesson.id, choice, response.focus, true
+                                        )
+                                        lastWrongChoice = choice
+                                        feedback = "Bu cevap henüz doğru değil. " +
+                                            response.firstStep
+                                        sounds.playWrongSound()
+                                        narrator.say(feedback)
+                                        if (questionMistakes >= 2 && !supportUsed) offerSupport()
+                                    }
+                                },
+                                enabled = !right,
+                                modifier = Modifier.weight(1f).heightIn(min = 59.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (right && choice == q.answer)
+                                        Color(0xFF1C8D78) else Color(0xFF285C82)
+                                ),
+                                shape = RoundedCornerShape(13.dp)
+                            ) {
+                                Text(choice.toString(), fontSize = 21.sp,
+                                    color = Color.White)
+                            }
+                        }
+                    }
+                }
+                if (practiceReturnFeedback.isNotBlank() && !right) {
+                    Text(practiceReturnFeedback, color = Color(0xFF9DEED6),
+                        fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                }
+                if (lastWrongChoice != null && !right) {
+                    val coaching = AdaptiveLearningPolicy.response(
+                        lesson, q, lastWrongChoice!!
+                    )
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .background(Color(0xFF15455D), RoundedCornerShape(17.dp))
+                            .border(1.dp, Color(0xFF70C5BC), RoundedCornerShape(17.dp))
+                            .padding(13.dp),
+                        verticalArrangement = Arrangement.spacedBy(9.dp)
+                    ) {
+                        Text("BİRLİKTE İNCELEYELİM", color = Color(0xFFFFD887),
+                            fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+                        Text(coaching.heading, color = Color.White,
+                            fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(coaching.firstStep, color = Color.White,
+                            fontSize = 13.sp, lineHeight = 19.sp)
+                        Text(coaching.nextStep, color = Color(0xFFC4E5EC),
+                            fontSize = 12.sp, lineHeight = 18.sp)
+                        Text("Konuyu hatırlatan görsel model (sayıları farklı olabilir):",
+                            color = HomeColors.TextSecondary, fontSize = 11.sp)
+                        LessonTeachingIllustration(
+                            script = script, grade = grade,
+                            revealedStep = script.steps.lastIndex, showComplete = true
+                        )
+                        if (!supportUsed && canOfferSupport) {
+                            OutlinedButton(
+                                onClick = offerSupport,
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                            ) {
+                                Text("Benzer Bir Soruyla Tekrar Et",
+                                    color = Color(0xFFB9F5DC), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+                if (feedback.isNotEmpty()) {
+                    Text(feedback, color = if (right) HomeColors.MagicCyan
+                        else Color(0xFFFFD1AE), fontSize = 14.sp, lineHeight = 20.sp)
+                }
+                if (!right && !hinted) {
+                    OutlinedButton(
+                        onClick = {
+                            hinted = true
+                            hints++
+                            progress.recordHint(lesson.id)
+                            narrator.say(lesson.hint)
+                        },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp, Color(0xFF5EAFC3)
+                        ),
+                        shape = RoundedCornerShape(13.dp)
+                    ) {
+                        Text("İpucu Göster", color = HomeColors.MagicCyan,
+                            fontWeight = FontWeight.Bold)
+                    }
+                }
+                if (hinted && !right) {
+                    Text(lesson.hint, color = Color.White,
+                        fontSize = 13.sp, lineHeight = 19.sp)
+                }
+                if (right) {
+                    Text("Doğru! " + (if (index == totalQuestions - 1)
+                        "Dersin tamamlanıyor…" else "Sonraki soruya geçiliyor…"),
+                        color = HomeColors.MagicCyan, fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold)
+                }
             }
         }
     }

@@ -301,8 +301,11 @@ private fun PracticeLesson(
             script.steps[workedStep] + ". " + script.check.prompt +
                 ". Seçenekler: " + checkChoices.joinToString(". ")
         stage == 1 -> script.steps[workedStep]
-        else -> q.text + ". Seçenekler: " +
-            q.choices.joinToString(", ") { it.toString() }
+        else -> {
+            val visibleQuestion = if (supportActive) supportQ else q
+            visibleQuestion.text + ". Seçenekler: " +
+                visibleQuestion.choices.joinToString(", ") { it.toString() }
+        }
     }
 
     // Allow concept feedback to finish speaking before automatically moving on.
@@ -317,7 +320,7 @@ private fun PracticeLesson(
 
     // Young readers get a narrated first pass; older students can request audio.
     // No speech runs if Effects/Sound is disabled in the app settings.
-    LaunchedEffect(narrator.available, stage, workedStep, index, finished) {
+    LaunchedEffect(narrator.available, stage, workedStep, index, supportActive, finished) {
         if (earlyReader && narrator.available && narrator.audioAllowed &&
             !finished && stage in 0..2) {
             narrator.say(speechText)
@@ -694,7 +697,7 @@ private fun PracticeLesson(
             if (progress.adaptiveEnabled(lesson.id)) {
                 Text(
                     "Çalışma biçimi: " + when (practiceBand) {
-                        PracticeBand.SUPPORTED -> "Daha küçük sayılarla destekli tekrar"
+                        PracticeBand.SUPPORTED -> "Destekli tekrar"
                         PracticeBand.CORE -> "Temel çalışma"
                         PracticeBand.EXTENDED -> "Farklı sayılarla ek pratik"
                     },

@@ -4,169 +4,245 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
-import com.google.android.play.core.appupdate.AppUpdateInfo
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.InstallStateUpdatedListener
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.InstallStatus
 import com.google.android.play.core.install.model.UpdateAvailability
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
- * Uygulama güncelleme kontrolü ve yönetimi için servis
- * Play Store'dan güncelleme durumunu kontrol eder ve kullanıcıya bildirir
- * Android 14 (SDK 34) uyumlu yeni app-update kütüphanesi kullanır
+ * Single active update coordinator.
+ *
+ * Google Play owns update availability, installation and version ordering.
+ * Firebase's old VersionCheckService is retained only for already installed
+ * legacy APKs; it is no longer called by the active home screen.
+ *
+ * This service is application-scoped and never holds an Activity reference.
+ * The UI is only rendered from MainActivity after its launch artwork ends.
  */
-class UpdateCheckService private constructor(private val context: Context) {
-    
+class UpdateCheckService private constructor(context: Context) {
     companion object {
-        private const val TAG = "UpdateCheckService"
-        private const val PREFS_NAME = "update_check_prefs"
-        private const val LAST_CHECK_TIME = "last_check_time"
-        private const val LAST_SHOWN_VERSION = "last_shown_version"
-        private const val CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L // 24 saat
-        
-        @Volatile
-        private var INSTANCE: UpdateCheckService? = null
-        
-        fun getInstance(context: Context): UpdateCheckService {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: UpdateCheckService(context.applicationContext).also { INSTANCE = it }
+        private const val TAG = "UpdateCenter"
+        private const val PREFS_NAME = "update_center_v2"
+        private const val CHECKED_AT = "checked_at"
+        private const val DISMISSED_CODE = "dismissed_code"
+        private const val DISMISSED_AT = "dismissed_at"
+        private const val WHATS_NEW_SEEN = "whats_new_seen"
+        private const val FIRST_UPDATE_CENTER_VERSION = 24
+
+        @Volatile private var instance: UpdateCheckService? = null
+        fun getInstance(context: Context): UpdateCheckService =
+            instance ?: synchronized(this) {
+                instance ?: UpdateCheckService(context.applicationContext).also { instance = it }
             }
-        }
     }
-    
-    private val appUpdateManager: AppUpdateManager = AppUpdateManagerFactory.create(context)
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    
-    // UI State
+
+    private val appContext = context.applicationContext
+    private val manager: AppUpdateManager = AppUpdateManagerFactory.create(appContext)
+    private val prefs = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
     var showUpdateDialog by mutableStateOf(false)
         private set
-    
-    var updateInfo: AppUpdateInfo? = null
+    var isInstallReady by mutableStateOf(false)
         private set
-    
-    /**
-     * Güncelleme kontrolü yapar - ana ekran açılışında çağrılır
-     */
+    var isDownloading by mutableStateOf(false)
+        private set
+    var downloadProgress by mutableIntStateOf(0)
+        private set
+    var showWhatsNewDialog by mutableStateOf(false)
+        private set
+    var availableVersionCode by mutableIntStateOf(0)
+        private set
+
+    private var checking = false
+
+    private val installListener = InstallStateUpdatedListener { installState ->
+        when (installState.installStatus()) {
+            InstallStatus.DOWNLOADING -> {
+                isDownloading = true
+                showUpdateDialog = false
+                val total = installState.totalBytesToDownload()
+                downloadProgress = if (total > 0L) {
+                    ((installState.bytesDownloaded() * 100L) / total).toInt().coerceIn(0, 100)
+                } else 0
+            }
+            InstallStatus.DOWNLOADED -> {
+                isDownloading = false
+                isInstallReady = true
+                showUpdateDialog = false
+            }
+            InstallStatus.INSTALLED -> {
+                isDownloading = false
+                isInstallReady = false
+                downloadProgress = 0
+            }
+            InstallStatus.FAILED, InstallStatus.CANCELED -> {
+                isDownloading = false
+                downloadProgress = 0
+                // The game remains usable; a later check can offer the update again.
+            }
+        }
+    }
+
+    init {
+        runCatching { manager.registerListener(installListener) }
+            .onFailure { Log.w(TAG, "Listener registration unavailable", it) }
+        maybeShowWhatsNew()
+    }
+
+    /** Call on the home Activity's onResume. Never interrupt a game Activity. */
     fun checkForUpdates(activity: Activity) {
-        try {
-            // Son kontrol zamanını kontrol et
-            val lastCheckTime = prefs.getLong(LAST_CHECK_TIME, 0)
-            val currentTime = System.currentTimeMillis()
-            
-            if (currentTime - lastCheckTime < CHECK_INTERVAL_MS) {
-                Log.d(TAG, "Güncelleme kontrolü için henüz erken (24 saat geçmedi)")
-                return
-            }
-            
-            // Play Store'dan güncelleme bilgilerini al
-            appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-                try {
-                    Log.d(TAG, "Güncelleme durumu: ${appUpdateInfo.updateAvailability()}")
-                    Log.d(TAG, "Mevcut versiyon kodu: ${getCurrentVersionCode()}")
-                    Log.d(TAG, "Mevcut güncelleme kodu: ${appUpdateInfo.availableVersionCode()}")
-                    
-                    if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
-                        // Güncelleme mevcut - kullanıcıya göster
-                        val currentVersionCode = getCurrentVersionCode()
-                        val lastShownVersion = prefs.getInt(LAST_SHOWN_VERSION, 0)
-                        
-                        // Aynı versiyonu tekrar gösterme
-                        if (appUpdateInfo.availableVersionCode() != lastShownVersion) {
-                            updateInfo = appUpdateInfo
-                            showUpdateDialog = true
-                            
-                            Log.d(TAG, "Yeni güncelleme mevcut! Dialog gösteriliyor...")
-                        } else {
-                            Log.d(TAG, "Bu güncelleme daha önce gösterildi")
-                        }
-                    } else {
-                        Log.d(TAG, "Güncelleme mevcut değil")
+        if (activity.isFinishing || activity.isDestroyed || checking) return
+        val now = System.currentTimeMillis()
+        val lastCheck = prefs.getLong(CHECKED_AT, 0L)
+        if (now >= lastCheck && now - lastCheck < UpdatePromptPolicy.CHECK_AFTER_MS &&
+            !isDownloading && !isInstallReady) return
+        checking = true
+        manager.appUpdateInfo
+            .addOnSuccessListener { info ->
+                checking = false
+                prefs.edit().putLong(CHECKED_AT, System.currentTimeMillis()).apply()
+                when (info.installStatus()) {
+                    InstallStatus.DOWNLOADED -> {
+                        isDownloading = false
+                        isInstallReady = true
+                        showUpdateDialog = false
                     }
-                    
-                    // Son kontrol zamanını güncelle
-                    prefs.edit().putLong(LAST_CHECK_TIME, currentTime).apply()
-                    
-                } catch (e: Exception) {
-                    Log.e(TAG, "Güncelleme bilgisi işlenirken hata: ${e.message}", e)
+                    InstallStatus.DOWNLOADING -> {
+                        isDownloading = true
+                        showUpdateDialog = false
+                    }
                 }
-            }.addOnFailureListener { exception ->
-                Log.e(TAG, "Güncelleme kontrolü başarısız: ${exception.message}", exception)
+                if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                    info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE) && !isInstallReady &&
+                    !isDownloading) {
+                    val code = info.availableVersionCode()
+                    availableVersionCode = code
+                    if (UpdatePromptPolicy.shouldPrompt(
+                            code, currentVersionCode(),
+                            prefs.getInt(DISMISSED_CODE, 0),
+                            prefs.getLong(DISMISSED_AT, 0L), System.currentTimeMillis()
+                        )) {
+                        showUpdateDialog = true
+                    }
+                } else if (!isInstallReady && !isDownloading) {
+                    showUpdateDialog = false
+                }
             }
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "checkForUpdates sırasında hata: ${e.message}", e)
-        }
+            .addOnFailureListener {
+                checking = false
+                Log.w(TAG, "Play update check unavailable: " + it.javaClass.simpleName)
+                // No fabricated update prompt when Play Store is unavailable.
+            }
     }
-    
-    /**
-     * Kullanıcı güncellemeyi kabul ettiğinde Play Store'a yönlendirir
-     */
-    fun acceptUpdate(activity: Activity) {
-        try {
-            updateInfo?.let { info ->
-                // Gösterilen versiyonu kaydet (tekrar gösterme)
-                prefs.edit().putInt(LAST_SHOWN_VERSION, info.availableVersionCode()).apply()
-                
-                // Play Store'a yönlendir
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
-                    setPackage("com.android.vending") // Play Store uygulamasını zorla
-                }
-                
-                if (intent.resolveActivity(activity.packageManager) != null) {
-                    activity.startActivity(intent)
-                    Log.d(TAG, "Play Store'a yönlendirildi")
+
+    /** Always obtain a fresh AppUpdateInfo: PlayCore tokens are single-use. */
+    fun startFlexibleUpdate(
+        activity: Activity,
+        launcher: ActivityResultLauncher<IntentSenderRequest>
+    ) {
+        showUpdateDialog = false
+        manager.appUpdateInfo
+            .addOnSuccessListener { info ->
+                if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
+                    info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                    try {
+                        val started = manager.startUpdateFlowForResult(
+                            info, launcher,
+                            AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
+                        )
+                        if (!started) openPlayStore(activity)
+                    } catch (e: Exception) {
+                        Log.w(TAG, "In-app flow failed; opening Play", e)
+                        openPlayStore(activity)
+                    }
+                } else if (info.installStatus() == InstallStatus.DOWNLOADED) {
+                    isInstallReady = true
                 } else {
-                    // Play Store yoksa browser'da aç
-                    val browserIntent = Intent(Intent.ACTION_VIEW).apply {
-                        data = Uri.parse("https://play.google.com/store/apps/details?id=${context.packageName}")
-                    }
-                    activity.startActivity(browserIntent)
-                    Log.d(TAG, "Browser'da Play Store açıldı")
+                    openPlayStore(activity)
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Play Store'a yönlendirme hatası: ${e.message}", e)
-        } finally {
-            dismissUpdateDialog()
+            .addOnFailureListener {
+                Log.w(TAG, "Play flow unavailable; opening store", it)
+                openPlayStore(activity)
+            }
+    }
+
+    fun completeDownloadedUpdate() {
+        if (!isInstallReady) return
+        manager.completeUpdate().addOnFailureListener {
+            Log.w(TAG, "Play couldn't complete downloaded update", it)
+            // Keep the ready action available for retry; never trap the player.
         }
     }
-    
-    /**
-     * Kullanıcı güncellemeyi reddederse dialog'u kapat
-     */
+
     fun dismissUpdateDialog() {
         showUpdateDialog = false
-        updateInfo = null
-        Log.d(TAG, "Güncelleme dialog'u kapatıldı")
-    }
-    
-    /**
-     * Mevcut uygulama versiyon kodunu al
-     */
-    private fun getCurrentVersionCode(): Int {
-        return try {
-            val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-            @Suppress("DEPRECATION")
-            packageInfo.versionCode
-        } catch (e: Exception) {
-            Log.e(TAG, "Versiyon kodu alınamadı: ${e.message}", e)
-            0
+        if (availableVersionCode > 0) {
+            prefs.edit()
+                .putInt(DISMISSED_CODE, availableVersionCode)
+                .putLong(DISMISSED_AT, System.currentTimeMillis())
+                .apply()
         }
     }
-    
-    /**
-     * Test için güncelleme dialog'unu zorla göster
-     */
-    fun forceShowUpdateDialog() {
-        showUpdateDialog = true
-        Log.d(TAG, "Güncelleme dialog'u test için zorla gösterildi")
+
+    fun onUpdateFlowCancelled() {
+        isDownloading = false
+        dismissUpdateDialog()
     }
-} 
+
+    fun postponeInstallation() {
+        // The download stays available. Offer installation on a later home visit.
+        isInstallReady = false
+        prefs.edit().putLong(CHECKED_AT, 0L).apply()
+    }
+
+    fun dismissWhatsNew() {
+        showWhatsNewDialog = false
+        prefs.edit().putInt(WHATS_NEW_SEEN, currentVersionCode()).apply()
+    }
+
+    fun openWhatsNew() {
+        showWhatsNewDialog = true
+    }
+
+    private fun maybeShowWhatsNew() {
+        val code = currentVersionCode()
+        if (code < FIRST_UPDATE_CENTER_VERSION || prefs.getInt(WHATS_NEW_SEEN, 0) >= code) return
+        val updated = runCatching {
+            val info = appContext.packageManager.getPackageInfo(appContext.packageName, 0)
+            UpdatePromptPolicy.isUpdatedInstallation(info.firstInstallTime, info.lastUpdateTime)
+        }.getOrDefault(false)
+        if (updated) {
+            showWhatsNewDialog = true
+        } else {
+            // A new installation isn't an upgrade; don't show a misleading dialog.
+            prefs.edit().putInt(WHATS_NEW_SEEN, code).apply()
+        }
+    }
+
+    private fun currentVersionCode(): Int = runCatching {
+        val info = appContext.packageManager.getPackageInfo(appContext.packageName, 0)
+        if (Build.VERSION.SDK_INT >= 28) info.longVersionCode.toInt()
+        else @Suppress("DEPRECATION") info.versionCode
+    }.getOrDefault(0)
+
+    private fun openPlayStore(activity: Activity) {
+        val url = Uri.parse("https://play.google.com/store/apps/details?id=" + appContext.packageName)
+        val playIntent = Intent(Intent.ACTION_VIEW, url).setPackage("com.android.vending")
+        runCatching { activity.startActivity(playIntent) }.onFailure {
+            runCatching { activity.startActivity(Intent(Intent.ACTION_VIEW, url)) }
+                .onFailure { error -> Log.w(TAG, "Store unavailable", error) }
+        }
+    }
+}

@@ -133,6 +133,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import com.yigit033.matematikmacarasi.ui.components.BrandedLaunchSplash
+import com.yigit033.matematikmacarasi.ui.components.UpdateCenterDialog
+import com.yigit033.matematikmacarasi.ui.components.UpdateCenterMode
+import com.yigit033.matematikmacarasi.ui.components.UpdateDownloadBanner
 import com.yigit033.matematikmacarasi.services.GameStatisticsService
 import com.yigit033.matematikmacarasi.GameType
 import com.yigit033.matematikmacarasi.utils.NetworkUtils
@@ -145,6 +148,13 @@ import com.yigit033.matematikmacarasi.ui.components.CompactBannerAdComponent
 import com.yigit033.matematikmacarasi.ui.screens.home.HomeScreenNew
 
 class MainActivity : ComponentActivity() {
+    private val playUpdateLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK && ::updateCheckService.isInitialized) {
+            updateCheckService.onUpdateFlowCancelled()
+        }
+    }
     // Observable state: oyun ve profil dönüşünde ana sayfa yenilenmeli.
     private var lastResumeTime by mutableLongStateOf(0L)
 
@@ -237,6 +247,34 @@ class MainActivity : ComponentActivity() {
                         exit = fadeOut(animationSpec = tween(durationMillis = 460))
                     ) {
                         BrandedLaunchSplash()
+                    }
+                    // Only the main menu presents update UX. Never interrupt a game.
+                    if (!showLaunchArt) {
+                        when {
+                            updateCheckService.showWhatsNewDialog -> UpdateCenterDialog(
+                                mode = UpdateCenterMode.WHATS_NEW,
+                                onPrimary = { updateCheckService.dismissWhatsNew() },
+                                onSecondary = { updateCheckService.dismissWhatsNew() }
+                            )
+                            updateCheckService.isInstallReady -> UpdateCenterDialog(
+                                mode = UpdateCenterMode.READY,
+                                onPrimary = { updateCheckService.completeDownloadedUpdate() },
+                                onSecondary = { updateCheckService.postponeInstallation() }
+                            )
+                            updateCheckService.showUpdateDialog -> UpdateCenterDialog(
+                                mode = UpdateCenterMode.AVAILABLE,
+                                onPrimary = {
+                                    updateCheckService.startFlexibleUpdate(this@MainActivity, playUpdateLauncher)
+                                },
+                                onSecondary = { updateCheckService.dismissUpdateDialog() }
+                            )
+                        }
+                        if (updateCheckService.isDownloading) {
+                            UpdateDownloadBanner(
+                                progress = updateCheckService.downloadProgress,
+                                modifier = Modifier.align(Alignment.BottomCenter)
+                            )
+                        }
                     }
                 }
             }

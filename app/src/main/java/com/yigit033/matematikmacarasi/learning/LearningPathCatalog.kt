@@ -56,7 +56,10 @@ object LearningPathCatalog {
     }
 
     /** Tek oturum boyunca aynı seed, aynı soru; yanlış seçenekler doğru cevap olamaz. */
-    fun question(lesson: Lesson, seed: Long, index: Int): PracticeQuestion {
+    fun question(
+        lesson: Lesson, seed: Long, index: Int,
+        legacyGrade2Hundred: Boolean = false
+    ): PracticeQuestion {
         require(index in 0 until practiceQuestionCount(lesson))
         if (lesson.skill == Skill.EXTENDED) {
             return ExpandedLessonQuestionBank.question(lesson, seed, index)
@@ -65,7 +68,7 @@ object LearningPathCatalog {
             return TopicStarterQuestionBank.question(lesson, seed, index)
         }
         if (lesson.skill == Skill.DEEP_DIVE) {
-            return DeepLessonQuestionBank.question(lesson, seed, index)
+            return DeepLessonQuestionBank.question(lesson, seed, index, legacyGrade2Hundred)
         }
         if (lesson.skill == Skill.JOURNEY) {
             return LearningJourneyQuestionBank.question(lesson, seed, index)

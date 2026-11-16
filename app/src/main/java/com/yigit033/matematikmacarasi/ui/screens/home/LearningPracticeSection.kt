@@ -86,6 +86,8 @@ import kotlinx.coroutines.delay
 fun LearningPracticeSection(
     userClass: String,
     startLessonId: String? = null,
+    nextJourneyLessonId: String? = null,
+    onOpenNextJourneyLesson: (String) -> Unit = {},
     onExit: () -> Unit = {},
     onNavigateToGames: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -129,6 +131,10 @@ fun LearningPracticeSection(
                 lessonName = selected.title, onBack = back, modifier = modifier)
             return
         }
+        val nextLesson = lessons.firstOrNull { it.id == nextJourneyLessonId }
+        val nextAccessible = nextLesson != null && LearningAccessPolicy.accessible(
+            grade, nextLesson.id, hasPremium, migratedAccess.grandfatheredIds()
+        )
         PracticeLesson(selected, userClass, store,
             onBack = back,
             onFinish = { wrong, hints ->
@@ -136,6 +142,10 @@ fun LearningPracticeSection(
                     LearningPathCatalog.practiceQuestionCount(selected))
                 version++
             },
+            nextJourneyLessonName = nextLesson?.title,
+            nextJourneyLessonId = nextLesson?.id,
+            nextJourneyLessonAccessible = nextAccessible,
+            onOpenNextJourneyLesson = onOpenNextJourneyLesson,
             onNavigateToGames = onNavigateToGames,
             modifier = modifier)
         return
@@ -202,6 +212,10 @@ private fun PracticeLesson(
     progress: LearningJourneyProgress,
     onBack: () -> Unit,
     onFinish: (Int, Int) -> Unit,
+    nextJourneyLessonName: String?,
+    nextJourneyLessonId: String?,
+    nextJourneyLessonAccessible: Boolean,
+    onOpenNextJourneyLesson: (String) -> Unit,
     onNavigateToGames: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -538,6 +552,42 @@ private fun PracticeLesson(
                 lesson = lesson,
                 sessionSeed = seed
             )
+            if (nextJourneyLessonId != null && nextJourneyLessonName != null) {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Color(0xFF174B64), RoundedCornerShape(17.dp))
+                        .padding(13.dp),
+                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    Text(
+                        "YOLCULUĞUN SONRAKİ DERSİ",
+                        color = Color(0xFFFFD887),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    Text(
+                        nextJourneyLessonName,
+                        color = Color.White,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Button(
+                        onClick = { onOpenNextJourneyLesson(nextJourneyLessonId) },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 53.dp),
+                        shape = RoundedCornerShape(13.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = HomeColors.MagicCyan
+                        )
+                    ) {
+                        Text(
+                            if (nextJourneyLessonAccessible) "Sonraki Derse Geç"
+                            else "Sonraki Ders · Premium",
+                            color = Color(0xFF09283B),
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+            }
             OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp)

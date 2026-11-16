@@ -125,8 +125,9 @@ class UpdateCheckService private constructor(context: Context) {
                     }
                 }
                 if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE &&
-                    info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE) && !isInstallReady &&
-                    !isDownloading) {
+                    !isInstallReady && !isDownloading) {
+                    // If Play disallows the flexible flow, the CTA falls back
+                    // to the official Play listing instead of hiding the update.
                     val code = info.availableVersionCode()
                     availableVersionCode = code
                     if (UpdatePromptPolicy.shouldPrompt(

@@ -115,6 +115,11 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
         }
     }
+    // Assets.openFd() requires pre-recorded MP3 voiceovers to be uncompressed.
+    // Default APK/AAB behavior for MP3 should already do this; enforce it.
+    androidResources {
+        noCompress += ['mp3']
+    }
 }
 
 // A Play release MUST use the same signed-license backend as the already

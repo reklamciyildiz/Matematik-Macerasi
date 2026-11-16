@@ -386,10 +386,11 @@ private fun PracticeLesson(
         ) {
             Text(
                 when {
-                    finished -> "DERS TAMAMLANDI"
-                    stage == 0 -> "1/3 · KONUYU ANLA"
-                    stage == 1 -> "2/3 · ÖRNEĞİ İNCELE"
-                    else -> "3/3 · KAVRAMA KONTROLÜ"
+                    finished -> "5/5 · OYUNLA PEKİŞTİR"
+                    stage == 0 -> "1/5 · KAVRAMI KEŞFET"
+                    stage == 1 -> "2/5 · ÖRNEĞİ İNCELE"
+                    index >= totalQuestions - 2 -> "4/5 · KISA DEĞERLENDİRME"
+                    else -> "3/5 · KENDİN ÇÖZ"
                 },
                 modifier = Modifier.weight(1f),
                 color = Color(0xFFFFD887), fontSize = 12.sp,
@@ -440,9 +441,9 @@ private fun PracticeLesson(
             progress = { when {
                 finished -> 1f
                 stage == 0 -> 0.12f
-                stage == 1 -> .32f + .25f *
+                stage == 1 -> .24f + .24f *
                     (workedStep + 1).toFloat() / script.steps.size.toFloat()
-                else -> .62f + .38f * index.toFloat() / totalQuestions.toFloat()
+                else -> .50f + .45f * index.toFloat() / totalQuestions.toFloat()
             } },
             modifier = Modifier.fillMaxWidth(),
             color = HomeColors.MagicCyan, trackColor = Color(0xFF2E5271)
@@ -481,6 +482,9 @@ private fun PracticeLesson(
                 color = HomeColors.TextSecondary, fontSize = 12.sp, lineHeight = 17.sp
             )
             val target = when (lesson.id) {
+                "g2_backward_count" -> SayiAvi2Activity::class.java
+                "g2_inverse_ops" -> SubtractionGameActivity::class.java
+                "g4_unit_fraction_compare" -> FractionCrystalsActivity::class.java
                 "count_2", "count_3" -> SayiAvi2Activity::class.java
                 "count_4" -> ForestAdventureActivity::class.java
                 "add_10", "add_20", "g1_make_ten" -> AdditionGameActivity::class.java
@@ -519,12 +523,16 @@ private fun PracticeLesson(
                 }
             } else {
                 Text(
-                    "Bu kazanımı doğrudan çalıştıran bir matematik oyunu henüz yok. " +
-                        "Dersi tekrar ederek farklı sorular deneyebilirsin.",
+                    "Bu dersle doğrudan eşleşen ayrı bir oyun henüz yok. " +
+                        "Aşağıdaki mini oyunla aynı konudan yeni sorular çözebilirsin.",
                     color = HomeColors.TextSecondary,
                     fontSize = 12.sp, lineHeight = 18.sp
                 )
             }
+            LearningTransferChallenge(
+                lesson = lesson,
+                sessionSeed = seed
+            )
             OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 50.dp)
@@ -692,6 +700,13 @@ private fun PracticeLesson(
                     }
                 }
             }
+            if (index >= totalQuestions - 2) {
+                Text(
+                    "KISA DEĞERLENDİRME · Son iki soru. Modeli inceleyip kendi çözümünü seç. " +
+                        "Bu sonuç tek başına bir kazanım sertifikası değildir.",
+                    color = Color(0xFFFFD887), fontSize = 12.sp, lineHeight = 18.sp
+                )
+            }
             Text(
                 "Soru " + (index + 1) + " / " + totalQuestions,
                 color = HomeColors.TextSecondary, fontSize = 13.sp
@@ -724,7 +739,9 @@ private fun PracticeLesson(
                     Text(supportQ.text, color = Color.White,
                         fontSize = if (earlyReader) 21.sp else 18.sp,
                         lineHeight = 26.sp, fontWeight = FontWeight.Bold)
-                    if (supportDiagram != null) {
+                    if (lesson.skill == Skill.JOURNEY) {
+                        LearningJourneyQuestionDiagram(lesson.id, supportQ.text)
+                    } else if (supportDiagram != null) {
                         PracticeQuestionIllustration(model = supportDiagram, grade = grade)
                     } else {
                         Text("Örnek model · Bu örnekteki sayılar farklı olabilir.",
@@ -805,7 +822,9 @@ private fun PracticeLesson(
                 Text(q.text, fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
                     fontSize = if (earlyReader) 23.sp else 20.sp, lineHeight = 29.sp)
-                if (questionDiagram != null) {
+                if (lesson.skill == Skill.JOURNEY) {
+                    LearningJourneyQuestionDiagram(lesson.id, q.text)
+                } else if (questionDiagram != null) {
                     PracticeQuestionIllustration(model = questionDiagram, grade = grade)
                 }
                 q.choices.chunked(2).forEach { choices ->

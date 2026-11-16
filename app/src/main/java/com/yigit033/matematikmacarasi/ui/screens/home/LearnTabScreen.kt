@@ -154,15 +154,18 @@ fun LearnTabScreen(
         }
     }
 
-    if (selectedLessonId != null) {
+    // Take a stable snapshot; Compose's delegated mutableState var is not
+    // smart-castable and must not be captured nullable by route callbacks.
+    val activeLesson = selectedLessonId
+    if (activeLesson != null) {
         val activeQuest = journeys.firstOrNull {
-            it.id == activeJourneyId && selectedLessonId in it.lessonIds
+            it.id == activeJourneyId && activeLesson in it.lessonIds
         }
-        val currentPosition = activeQuest?.lessonIds?.indexOf(selectedLessonId) ?: -1
+        val currentPosition = activeQuest?.lessonIds?.indexOf(activeLesson) ?: -1
         val routeNextLessonId = activeQuest?.lessonIds?.getOrNull(currentPosition + 1)
         LearningPracticeSection(
             userClass = userClass,
-            startLessonId = selectedLessonId,
+            startLessonId = activeLesson,
             nextJourneyLessonId = routeNextLessonId,
             onOpenNextJourneyLesson = { id ->
                 activeJourneyId?.let { routeId -> openJourneyLesson(id, routeId) }

@@ -23,6 +23,14 @@ class LearningJourneyProgress(context: Context) {
     fun hints(id: String): Int = prefs.getInt("session_hints_$id", 0).coerceAtLeast(0)
     fun seed(id: String): Long = prefs.getLong("session_seed_$id", 0L)
 
+    /**
+     * Preserves the exact numeric questions in a grade-2 place-value lesson
+     * started before the P2 scope correction. New/restarted sessions use <=100.
+     */
+    fun legacyGrade2HundredBank(id: String): Boolean =
+        id == "g2_hundred_place" &&
+            prefs.getBoolean("p2_legacy_grade2_hundred_$id", false)
+
     fun nextReviewAt(id: String): Long = prefs.getLong("review_due_$id", 0L)
     fun lastReviewSignal(id: String): ReviewSignal? =
         prefs.getString("review_signal_$id", null)
@@ -138,6 +146,17 @@ class LearningJourneyProgress(context: Context) {
 
     fun open(id: String) {
         val editor = prefs.edit().putString("last_lesson_id", id)
+        if (id == "g2_hundred_place") {
+            val key = "p2_legacy_grade2_hundred_$id"
+            // Old active sessions started without this key. New and completed
+            // lessons get the corrected bank. No reset of question index/score.
+            if (!prefs.contains(key)) {
+                editor.putBoolean(key, seed(id) > 0L && stage(id) in 0..2)
+            }
+            if (stage(id) == 3 || seed(id) == 0L) {
+                editor.putBoolean(key, false)
+            }
+        }
         // A completed session remains in history but replay starts fresh.
         if (stage(id) == 3) {
             val initialBand = AdaptiveLearningPolicy.initialBand(

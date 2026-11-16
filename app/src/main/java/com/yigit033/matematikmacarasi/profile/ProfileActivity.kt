@@ -45,6 +45,7 @@ import com.yigit033.matematikmacarasi.ui.theme.MatematikMacerasiTheme
 import android.util.Log
 import com.yigit033.matematikmacarasi.components.Avatar3PlayerPortrait
 import com.yigit033.matematikmacarasi.learning.LearningPathCatalog
+import com.yigit033.matematikmacarasi.learning.LearningAnalyticsStore
 import com.yigit033.matematikmacarasi.services.StarManager
 import android.app.Activity
 import android.widget.Toast
@@ -256,13 +257,15 @@ fun ProfileScreen(
     var selectedClass by remember { mutableStateOf(currentClass) }
     var expanded by remember { mutableStateOf(false) }
 
-    // Honest lesson progress is available to Free and Premium users alike.
-    val lessonProgressPrefs = remember(currentContext) {
-        currentContext.getSharedPreferences("p2_learning_pilot_v1", Context.MODE_PRIVATE)
-    }
-    val classLessons = remember(selectedClass) { LearningPathCatalog.forGrade(selectedClass) }
-    val finishedLessons = classLessons.count {
-        lessonProgressPrefs.getBoolean("done_${it.id}", false)
+    // Separate authentic grade-scoped learning records from game statistics.
+    // Unknown pre-P3 shared lesson grades are never retroactively guessed.
+    val analyticsStore = remember(currentContext) { LearningAnalyticsStore(currentContext) }
+    val learningGrade = selectedClass.substringBefore(".").trim().toIntOrNull()
+        ?.takeIf { it in 1..8 }
+    val classLearning = remember(selectedClass) {
+        learningGrade?.let { grade ->
+            analyticsStore.snapshot(grade, LearningPathCatalog.forGrade("$grade. Sınıf"))
+        }
     }
     
     // İstatistikleri al
@@ -518,45 +521,13 @@ fun ProfileScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Real grade-aware learning progress, not fabricated achievements.
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                        elevation = 3.dp,
-                        shape = RoundedCornerShape(19.dp),
-                        backgroundColor = Color(0xFF174767),
-                        border = BorderStroke(1.dp, Color(0xFF508FA9))
-                    ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth().padding(17.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.AutoStories, contentDescription = null,
-                                    tint = Color(0xFFFFD47B), modifier = Modifier.size(24.dp))
-                                Spacer(Modifier.width(9.dp))
-                                Text("Öğrenme Yolculuğum", color = Color.White,
-                                    fontSize = 17.sp, fontWeight = FontWeight.ExtraBold)
-                            }
-                            Text(
-                                "${selectedClass} · ${finishedLessons} / ${classLessons.size} kısa ders tamamlandı",
-                                color = Color(0xFFD6EAF3), fontSize = 13.sp
-                            )
-                            LinearProgressIndicator(
-                                progress = if (classLessons.isEmpty()) 0f
-                                    else finishedLessons.toFloat() / classLessons.size,
-                                modifier = Modifier.fillMaxWidth().height(7.dp)
-                                    .clip(RoundedCornerShape(10.dp)),
-                                color = Color(0xFF74E4D5),
-                                backgroundColor = Color(0xFF315F78)
-                            )
-                            Text(
-                                if (selectedClass.substringBefore(".").trim().toIntOrNull()?.let { it >= 5 } == true)
-                                    "Şimdilik temel tekrar dersleri sunuluyor; tam sınıf müfredatı değildir."
-                                else "Kısa derslerini Öğren bölümünde sürdürebilirsin.",
-                                color = Color(0xFFB8D9E5), fontSize = 11.sp
-                            )
-                        }
-                    }
+                    // P3 learning analytics are intentionally independent of
+                    // the game-only adventure metrics below.
+                    LearningAnalyticsPanel(
+                        selectedClass = selectedClass,
+                        snapshot = classLearning,
+                        isPremium = isPremium
+                    )
 
                     // Bu sayfalar zaten projede mevcut; profil üzerinden tek yerde bulunurlar.
                     Card(
@@ -817,9 +788,9 @@ fun ProfileScreen(
                                 }
                                 Spacer(Modifier.width(11.dp))
                                 Column {
-                                    Text("Macera İstatistiklerim", color = Color.White,
+                                    Text("Oyun İstatistiklerim", color = Color.White,
                                         fontSize = 18.sp, fontWeight = FontWeight.ExtraBold)
-                                    Text("Gerçek oyun kayıtlarına dayalı özet",
+                                    Text("Yalnız oyunlardan elde edilen kayıtlı veriler",
                                         color = Color(0xFFB7D6E4), fontSize = 11.sp)
                                 }
                             }

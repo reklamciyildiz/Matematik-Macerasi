@@ -9,6 +9,7 @@ import android.content.SharedPreferences
  * This is device-local progress, not cloud sync and not proof of mastery.
  */
 class LearningJourneyProgress(context: Context) {
+    private val applicationContext = context.applicationContext
     private val prefs: SharedPreferences = context.applicationContext
         .getSharedPreferences("p2_learning_pilot_v1", Context.MODE_PRIVATE)
 
@@ -224,7 +225,10 @@ class LearningJourneyProgress(context: Context) {
             .apply()
     }
 
-    fun complete(id: String, wrong: Int, hints: Int, totalQuestions: Int = 4) {
+    fun complete(
+        id: String, wrong: Int, hints: Int, totalQuestions: Int = 4,
+        grade: Int? = null
+    ) {
         require(totalQuestions in 4..8)
         val accuracy = 100 * totalQuestions / (totalQuestions + wrong.coerceAtLeast(0))
         val advice = LearningReviewPolicy.recommend(
@@ -257,5 +261,14 @@ class LearningJourneyProgress(context: Context) {
         if (focus != null) editor.putString(p1(id, "last_focus"), focus.name)
         else editor.remove(p1(id, "last_focus"))
         editor.apply()
+        if (grade != null && grade in 1..8) {
+            // Preserve the old global lesson progress for compatibility, but
+            // record NEW learning sessions against their actual grade.
+            LearningAnalyticsStore(applicationContext).recordCompleted(
+                grade = grade, lessonId = id, seed = seed(id),
+                percent = accuracy, wrong = wrong, hints = hints,
+                reviewDueAt = nextReviewAt(id), focus = focus?.name
+            )
+        }
     }
 }

@@ -55,8 +55,6 @@ import com.yigit033.matematikmacarasi.services.EventBus
 import com.yigit033.matematikmacarasi.services.GameStatisticsService
 import com.yigit033.matematikmacarasi.services.PlayerProfileService
 import com.yigit033.matematikmacarasi.services.StarManager
-import com.yigit033.matematikmacarasi.services.VersionCheckService
-import com.yigit033.matematikmacarasi.ui.dialogs.UpdateDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -94,7 +92,6 @@ fun HomeScreenNew(
     val gameStatisticsService = remember { GameStatisticsService.getInstance(context) }
     val playerProfileService = remember { PlayerProfileService.getInstance(context) }
     val starManager = remember { StarManager.getInstance(context) }
-    val versionCheckService = remember { VersionCheckService.getInstance(context) }
 
     // 3. UI State'leri
     var userName by remember { mutableStateOf(playerProfileService.getUserName().ifBlank { "Matematik Gezgini" }) }
@@ -111,10 +108,6 @@ fun HomeScreenNew(
 
     // Dialog State'leri
     var showDailyTasksDialog by remember { mutableStateOf(false) }
-    var showUpdateDialog by remember { mutableStateOf(false) }
-    var isForceUpdate by remember { mutableStateOf(false) }
-    var updateMessage by remember { mutableStateOf("") }
-    var updateUrl by remember { mutableStateOf("") }
 
     // Geri tuşu kontrolü: Ana Sayfa dışındaki bir sekmedeyken Ana Sayfa'ya döner
     BackHandler(enabled = currentTab != HomeTab.HOME) {
@@ -172,31 +165,6 @@ fun HomeScreenNew(
                 playerAge = playerProfileService.getPlayerAge()
                 totalScore = gameStatisticsService.getTotalScore()
                 completedGamesCount = gameStatisticsService.getCompletedGamesCount()
-            }
-        }
-    }
-
-    // Sürüm kontrolü (arka planda bir kere)
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.IO) {
-            when (val result = versionCheckService.checkForUpdate()) {
-                is VersionCheckService.UpdateStatus.ForceUpdateRequired -> {
-                    withContext(Dispatchers.Main) {
-                        isForceUpdate = true
-                        updateMessage = result.versionInfo.force_update_message
-                        updateUrl = result.versionInfo.update_url
-                        showUpdateDialog = true
-                    }
-                }
-                is VersionCheckService.UpdateStatus.UpdateAvailable -> {
-                    withContext(Dispatchers.Main) {
-                        isForceUpdate = false
-                        updateMessage = result.versionInfo.update_message
-                        updateUrl = result.versionInfo.update_url
-                        showUpdateDialog = true
-                    }
-                }
-                else -> {}
             }
         }
     }
@@ -404,24 +372,7 @@ fun HomeScreenNew(
             )
         }
 
-        // Güncelleme Dialogu
-        if (showUpdateDialog) {
-            UpdateDialog(
-                isForceUpdate = isForceUpdate,
-                message = updateMessage,
-                onUpdateClick = {
-                    versionCheckService.openPlayStore(updateUrl)
-                    if (!isForceUpdate) {
-                        showUpdateDialog = false
-                    }
-                },
-                onDismiss = {
-                    if (!isForceUpdate) {
-                        showUpdateDialog = false
-                    }
-                }
-            )
-        }
+
     }
 }
 

@@ -194,6 +194,7 @@ object LearningJourneyQuestionBank {
         val answer: Int
         val prompt: String
         val explanation: String
+        val distractors: List<Int>
         fun n(from: Int, until: Int): Int = random.nextInt(from, until)
         when (lesson.id) {
             "g2_backward_count" -> {
@@ -203,6 +204,7 @@ object LearningJourneyQuestionBank {
                 answer = start - 3 * step
                 prompt = "$start, ${start-step}, ${start-2*step}, ? · $step'er geriye say."
                 explanation = "Her adımda $step çıkar: ${start-2*step} − $step = $answer."
+                distractors = listOf(start-2*step, answer-step, start-step, answer+3*step)
             }
             "g2_inverse_ops" -> {
                 val a = n(6, 48)
@@ -210,6 +212,7 @@ object LearningJourneyQuestionBank {
                 answer = b
                 prompt = "${a+b} − $a = ? · Toplama ile kontrol et."
                 explanation = "$a + $b = ${a+b}; bu nedenle ${a+b} − $a = $b."
+                distractors = listOf(a, a+b, b+1, b-1)
             }
             "g3_story_two_step" -> {
                 val group = n(2, 7)
@@ -218,6 +221,7 @@ object LearningJourneyQuestionBank {
                 answer = group * each + extra
                 prompt = "$group sepette ${each}'er elma var. $extra elma daha eklendi. Toplam kaç?"
                 explanation = "Önce $group × $each = ${group*each}; ardından $extra ekle: $answer."
+                distractors = listOf(group*each, group*each+extra*2, group+each+extra, group*(each+extra))
             }
             "g3_data_difference" -> {
                 val a = n(7, 20)
@@ -225,6 +229,7 @@ object LearningJourneyQuestionBank {
                 answer = a-b
                 prompt = "Grafikte elma=$a, armut=$b. Elma kaç tane fazladır?"
                 explanation = "Elma $a, armut $b. Aradaki fark: $a − $b = $answer."
+                distractors = listOf(a+b, a, b, answer+1, answer-1)
             }
             "g4_round_tens" -> {
                 val tens = n(101, 970)
@@ -233,6 +238,7 @@ object LearningJourneyQuestionBank {
                 answer = (value + 5) / 10 * 10
                 prompt = "$value sayısını en yakın onluğa yuvarla."
                 explanation = "Komşu onluklar ${tens*10} ve ${(tens+1)*10}. Birler basamağı $units olduğu için sonuç $answer."
+                distractors = listOf(answer-10, answer+10, answer-20, answer+20, answer-30, answer+30)
             }
             "g4_unit_fraction_compare" -> {
                 val small = n(2, 11)
@@ -240,16 +246,28 @@ object LearningJourneyQuestionBank {
                 answer = small
                 prompt = "1/$small ve 1/$large birim kesirlerinden büyük olanın paydası kaçtır?"
                 explanation = "Aynı bütünün $small eş parçasından biri, $large eş parçasından birinden büyüktür. Büyük birim kesir 1/$small."
+                distractors = listOf(large, small+1, large-1, small-1, 2, 3, 4, 5)
             }
             else -> error("Missing P2 question generator for ${lesson.id}")
         }
+        // Distractors must be mathematically plausible. In rounding tasks
+        // every option is another multiple of 10; otherwise the child could
+        // guess the only value ending in zero without knowing rounding.
+        // In unit-fraction tasks every option must be a valid denominator.
         val options = linkedSetOf(answer)
-        for (delta in listOf(-1, 1, -2, 2, -10, 10, -20, 20, 3, 5, 100)) {
-            val candidate = answer + delta
-            if (candidate >= 0) options.add(candidate)
-            if (options.size >= 4) break
+        val fallback = listOf(
+            answer - 1, answer + 1, answer - 2, answer + 2,
+            answer - 10, answer + 10, answer - 20, answer + 20,
+            2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+        )
+        for (candidate in distractors + fallback) {
+            if (candidate < 0) continue
+            if (lesson.id == "g4_round_tens" && (candidate % 10 != 0 || candidate !in 1000..9999)) continue
+            if (lesson.id == "g4_unit_fraction_compare" && candidate !in 2..20) continue
+            options.add(candidate)
+            if (options.size == 4) break
         }
-        require(options.size >= 4)
-        return PracticeQuestion(prompt, options.take(4).shuffled(random), answer, explanation)
+        require(options.size == 4) { "Not enough valid options for ${lesson.id}" }
+        return PracticeQuestion(prompt, options.toList().shuffled(random), answer, explanation)
     }
 }

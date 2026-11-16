@@ -56,8 +56,18 @@ class LearningJourneyProgress(context: Context) {
     fun supportActive(id: String): Boolean =
         prefs.getBoolean(p1(id, "support_active"), false)
 
+    fun supportUsed(id: String): Boolean =
+        prefs.getBoolean(p1(id, "support_used"), false)
+
+    fun currentHintUsed(id: String): Boolean =
+        prefs.getBoolean(p1(id, "hint_current"), false)
+
     fun openSupport(id: String) {
-        prefs.edit().putBoolean(p1(id, "support_active"), true).apply()
+        prefs.edit()
+            .putBoolean(p1(id, "support_active"), true)
+            .putBoolean(p1(id, "support_used"), true)
+            .putBoolean(p1(id, "hint_current"), true)
+            .apply()
     }
 
     fun closeSupport(id: String) {
@@ -89,6 +99,8 @@ class LearningJourneyProgress(context: Context) {
             .putInt(p1(id, "current_wrong"), 0)
             .remove(p1(id, "last_choice"))
             .putBoolean(p1(id, "support_active"), false)
+            .putBoolean(p1(id, "support_used"), false)
+            .putBoolean(p1(id, "hint_current"), false)
             .apply()
     }
 
@@ -126,6 +138,8 @@ class LearningJourneyProgress(context: Context) {
                 .putInt(p1(id, "current_wrong"), 0)
                 .remove(p1(id, "last_choice"))
                 .putBoolean(p1(id, "support_active"), false)
+                .putBoolean(p1(id, "support_used"), false)
+                .putBoolean(p1(id, "hint_current"), false)
             PracticeFocus.values().forEach { editor.remove(p1(id, "focus_${it.name}")) }
             editor.putInt("phase_$id", 0)
                 .putInt("index_$id", 0)
@@ -148,6 +162,8 @@ class LearningJourneyProgress(context: Context) {
                 .putInt(p1(id, "current_wrong"), 0)
                 .remove(p1(id, "last_choice"))
                 .putBoolean(p1(id, "support_active"), false)
+                .putBoolean(p1(id, "support_used"), false)
+                .putBoolean(p1(id, "hint_current"), false)
             PracticeFocus.values().forEach { editor.remove(p1(id, "focus_${it.name}")) }
         }
         editor.apply()
@@ -168,7 +184,10 @@ class LearningJourneyProgress(context: Context) {
     }
 
     fun recordHint(id: String) {
-        prefs.edit().putInt("session_hints_$id", hints(id) + 1).apply()
+        prefs.edit()
+            .putInt("session_hints_$id", hints(id) + 1)
+            .putBoolean(p1(id, "hint_current"), true)
+            .apply()
     }
 
     fun complete(id: String, wrong: Int, hints: Int, totalQuestions: Int = 4) {

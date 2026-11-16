@@ -108,6 +108,24 @@ class LearningJourneyP2Test {
         }
     }
 
+    @Test fun correctedSecondGradeDeepPlaceIsAtMost100WithLegacyFallback() {
+        val lesson = LearningPathCatalog.forGrade("2. Sınıf")
+            .first { it.id == "g2_hundred_place" }
+        for (seed in 1L..120L) {
+            for (index in 0..7) {
+                val now = LearningPathCatalog.question(lesson, seed, index)
+                val beforeP2 = LearningPathCatalog.question(
+                    lesson, seed, index, legacyGrade2Hundred = true
+                )
+                assertTrue(now.answer in 10..100)
+                assertTrue(beforeP2.answer >= 100)
+                assertNotEquals(now.text, beforeP2.text)
+                assertEquals(4, now.choices.distinct().size)
+                assertEquals(4, beforeP2.choices.distinct().size)
+            }
+        }
+    }
+
     @Test fun theP1AdaptiveEngineCanReuseAllNewQuestionsWithoutChangingSkill() {
         for (unit in LearningJourneyLessonCatalog.all()) {
             val lesson = unit.lesson

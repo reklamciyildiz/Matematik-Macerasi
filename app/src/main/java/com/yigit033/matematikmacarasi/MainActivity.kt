@@ -143,7 +143,6 @@ import com.yigit033.matematikmacarasi.services.payments.BillingTestActivity
 import com.yigit033.matematikmacarasi.services.DailyGameLimitService
 import com.yigit033.matematikmacarasi.services.DailyPremiumBonusService
 import com.yigit033.matematikmacarasi.services.UpdateCheckService
-import com.yigit033.matematikmacarasi.ui.components.UpdateDialog
 import com.yigit033.matematikmacarasi.ui.components.CompactBannerAdComponent
 import com.yigit033.matematikmacarasi.ui.screens.home.HomeScreenNew
 
@@ -800,40 +799,6 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
     // MainActivity erişimi
     val mainActivity = context as? MainActivity
     
-    // Version check için state
-    var showUpdateDialog by remember { mutableStateOf(false) }
-    var isForceUpdate by remember { mutableStateOf(false) }
-    var updateMessage by remember { mutableStateOf("") }
-    var updateUrl by remember { mutableStateOf("") }
-    val versionCheckService = remember { com.yigit033.matematikmacarasi.services.VersionCheckService.getInstance(context) }
-    
-    // Version check - Uygulama açılışında bir kere
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-            when (val result = versionCheckService.checkForUpdate()) {
-                is com.yigit033.matematikmacarasi.services.VersionCheckService.UpdateStatus.ForceUpdateRequired -> {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        isForceUpdate = true
-                        updateMessage = result.versionInfo.force_update_message
-                        updateUrl = result.versionInfo.update_url
-                        showUpdateDialog = true
-                    }
-                }
-                is com.yigit033.matematikmacarasi.services.VersionCheckService.UpdateStatus.UpdateAvailable -> {
-                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                        isForceUpdate = false
-                        updateMessage = result.versionInfo.update_message
-                        updateUrl = result.versionInfo.update_url
-                        showUpdateDialog = true
-                    }
-                }
-                else -> {
-                    // No update needed or error
-                }
-            }
-        }
-    }
-    
     // Kullanıcı adını güncelle (lastResumeTime değiştiğinde)
     LaunchedEffect(lastResumeTime) {
         mainActivity?.let {
@@ -1053,25 +1018,6 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
         }
     }
 
-    // Güncelleme dialog'u
-    if (showUpdateDialog) {
-        com.yigit033.matematikmacarasi.ui.dialogs.UpdateDialog(
-            isForceUpdate = isForceUpdate,
-            message = updateMessage,
-            onUpdateClick = {
-                versionCheckService.openPlayStore(updateUrl)
-                if (!isForceUpdate) {
-                    showUpdateDialog = false
-                }
-            },
-            onDismiss = {
-                if (!isForceUpdate) {
-                    showUpdateDialog = false
-                }
-            }
-        )
-    }
-    
     // Günlük görevler dialog
     if (showDailyTasks) {
         DailyTasksDialog(

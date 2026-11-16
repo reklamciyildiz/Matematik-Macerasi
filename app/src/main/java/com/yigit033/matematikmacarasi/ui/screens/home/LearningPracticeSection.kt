@@ -271,8 +271,13 @@ private fun PracticeLesson(
     val practiceBand = remember(lesson.id, index) {
         progress.practiceBand(lesson.id, index)
     }
-    val q = remember(lesson.id, seed, index, practiceBand) {
-        if (progress.adaptiveEnabled(lesson.id))
+    val legacyPlaceBank = remember(lesson.id) {
+        progress.legacyGrade2HundredBank(lesson.id)
+    }
+    val q = remember(lesson.id, seed, index, practiceBand, legacyPlaceBank) {
+        if (legacyPlaceBank)
+            LearningPathCatalog.question(lesson, seed, index, legacyGrade2Hundred = true)
+        else if (progress.adaptiveEnabled(lesson.id))
             AdaptiveLearningPolicy.question(lesson, seed, index, practiceBand)
         else LearningPathCatalog.question(lesson, seed, index)
     }

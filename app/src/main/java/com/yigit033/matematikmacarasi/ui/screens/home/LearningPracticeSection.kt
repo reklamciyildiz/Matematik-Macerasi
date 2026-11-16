@@ -621,7 +621,7 @@ private fun PracticeLesson(
                                 conceptSelected = choiceIndex
                                 if (choiceIndex != correctConceptIndex) {
                                     conceptWrong++
-                                    progress.recordConceptError(lesson.id)
+                                    progress.recordConceptError(lesson.id, AdaptiveLearningPolicy.focusForLesson(lesson))
                                     sounds.playWrongSound()
                                     narrator.say(script.check.wrongHint)
                                 } else {

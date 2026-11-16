@@ -50,14 +50,15 @@ object DeepLessonTeachingCatalog {
             "Bir bölü dört ifadesinde bütün dört eş parçaya ayrılır.")
 
         "g2_hundred_place" -> script(TeachingVisual.EQUATION,
-            "Yüzlük, Onluk, Birlik","Bir yüzlük yüz tane birliktir.",
-            "123 sayısı 100 + 20 + 3 diye çözülür.",
-            listOf(1,2,3),"100 + 20 + 3 = 123",
-            listOf("Bir yüzlük 100 eder.","İki onluk 20 eder.",
-                "Üç birlik ekleyince 123 oluşur."),
-            "123 sayısındaki 2 neyi anlatır?",
-            "İki onluğu yani 20'yi.","İki yüzlüğü.",
-            "2, onlar basamağındadır: değeri 20'dir.")
+            "Onluk, Birlik ve 100","On tane onluk bir yüzlük eder.",
+            "93 sayısı 90 + 3 olarak çözülür; 10 onluk 100 eder.",
+            listOf(9,3),"9 onluk + 3 birlik = 93",
+            listOf("Dokuz onluk 90 birlik eder.",
+                "Üç birlik daha ekle: 90 + 3 = 93.",
+                "Bir onluk daha olsaydı 10 onluk = 100 ederdi."),
+            "93 sayısındaki 9 hangi değeri anlatır?",
+            "Dokuz onluk, yani 90'ı.","Dokuz birliği.",
+            "9 onlar basamağındadır; basamak değeri 90'dır.")
 
         "g3_share_equal" -> script(TeachingVisual.EQUAL_GROUPS,
             "Herkese Eşit Dağıt","Üç çocuğa altışar nesne verelim.",

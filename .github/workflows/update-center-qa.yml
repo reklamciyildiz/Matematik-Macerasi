@@ -1,4 +1,4 @@
-name: Android Update Center QA
+name: Android Update + Learning QA
 
 on:
   push:
@@ -11,6 +11,9 @@ on:
       - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/HomeScreenNew.kt'
       - 'app/src/main/java/com/yigit033/matematikmacarasi/screens/SettingsScreen.kt'
       - 'app/src/test/java/com/yigit033/matematikmacarasi/services/UpdatePromptPolicyTest.kt'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/learning/**'
+      - 'app/src/main/java/com/yigit033/matematikmacarasi/ui/screens/home/LearningPracticeSection.kt'
+      - 'app/src/test/java/com/yigit033/matematikmacarasi/learning/**'
       - 'app/build.gradle'
       - '.github/workflows/update-center-qa.yml'
   pull_request:
@@ -20,7 +23,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  debug-build-and-update-policy:
+  debug-build-and-learning-policy:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     permissions:
@@ -67,9 +70,9 @@ jobs:
           p = Path("app/google-services.json")
           p.write_text(json.dumps(data), encoding="utf-8")
           PY
-      - name: Test deterministic update policy
+      - name: Test update policy and adaptive-learning regressions
         run: |
           chmod +x ./gradlew
-          ./gradlew :app:testDebugUnitTest --tests 'com.yigit033.matematikmacarasi.services.UpdatePromptPolicyTest' --no-daemon --stacktrace
+          ./gradlew :app:testDebugUnitTest --tests 'com.yigit033.matematikmacarasi.services.UpdatePromptPolicyTest' --tests 'com.yigit033.matematikmacarasi.learning.AdaptiveLearningPolicyTest' --no-daemon --stacktrace
       - name: Compile Android debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace

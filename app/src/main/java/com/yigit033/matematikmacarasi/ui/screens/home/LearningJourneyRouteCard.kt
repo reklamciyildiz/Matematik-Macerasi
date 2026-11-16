@@ -178,7 +178,7 @@ fun LearningJourneyRouteCard(
             Text(
                 when {
                     !available -> "Premium Dersi İncele"
-                    complete -> "Yolculuğu Tekrar Oyna"
+                    complete -> "Son Dersi Tekrar Et"
                     else -> "Yolculuğa Devam Et"
                 },
                 fontWeight = FontWeight.ExtraBold, fontSize = 14.sp,

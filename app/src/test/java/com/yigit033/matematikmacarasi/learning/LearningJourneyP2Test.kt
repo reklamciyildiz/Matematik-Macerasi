@@ -65,6 +65,20 @@ class LearningJourneyP2Test {
         }
     }
 
+    @Test fun newProblemFamiliesReceiveTopicSpecificWrongAnswerGuidance() {
+        fun focus(id: String, answer: Int, selected: Int): PracticeFocus {
+            val lesson = LearningJourneyLessonCatalog.all().first { it.lesson.id == id }.lesson
+            val q = PracticeQuestion("Konu sorusu", listOf(answer, selected, answer+2, selected+2).distinct()
+                .let { list -> if (list.size == 4) list else listOf(answer, selected, 999, 998) },
+                answer, "Çözüm")
+            return AdaptiveLearningPolicy.classify(lesson, q, selected)
+        }
+        assertEquals(PracticeFocus.COUNTING, focus("g2_inverse_ops", 4, 9))
+        assertEquals(PracticeFocus.DATA_READING, focus("g3_data_difference", 4, 9))
+        assertEquals(PracticeFocus.ROUNDING, focus("g4_round_tens", 1650, 1660))
+        assertEquals(PracticeFocus.FRACTIONS, focus("g4_unit_fraction_compare", 3, 7))
+    }
+
     @Test fun newEightQuestionFamiliesAreDeterministicAndMathematicallyCorrect() {
         for (unit in LearningJourneyLessonCatalog.all()) {
             for (seed in 0L..120L) {

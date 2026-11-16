@@ -39,7 +39,7 @@ fun LearningJourneyQuestionDiagram(
     questionText: String,
     modifier: Modifier = Modifier
 ) {
-    val integers = Regex("""\\d+""").findAll(questionText)
+    val integers = Regex("""\d+""").findAll(questionText)
         .mapNotNull { it.value.toIntOrNull() }.toList()
     if (integers.isEmpty()) return
     Column(

@@ -261,7 +261,9 @@ private fun PracticeLesson(
         mutableStateOf(progress.supportUsed(lesson.id))
     }
     var supportFeedback by remember(lesson.id, index) { mutableStateOf("") }
-    var supportWrongCount by remember(lesson.id, index) { mutableIntStateOf(0) }
+    var supportWrongCount by remember(lesson.id, index) {
+        mutableIntStateOf(progress.supportErrors(lesson.id))
+    }
     var practiceReturnFeedback by remember(lesson.id, index) { mutableStateOf("") }
     var right by remember(lesson.id, index) { mutableStateOf(false) }
     var feedback by remember(lesson.id, index) { mutableStateOf("") }
@@ -758,6 +760,7 @@ private fun PracticeLesson(
                                                 lesson.id, choice, response.focus, false
                                             )
                                             supportWrongCount++
+                                            progress.recordSupportError(lesson.id)
                                             supportFeedback = response.firstStep
                                             sounds.playWrongSound()
                                             narrator.say(supportFeedback)

@@ -1049,18 +1049,8 @@ fun HomeScreen(lastResumeTime: Long = 0, modifier: Modifier = Modifier) {
         )
     }
     
-    // Güncelleme dialog'u - Play Store güncelleme kontrolü
-    val updateCheckService = remember { UpdateCheckService.getInstance(context) }
-    if (updateCheckService.showUpdateDialog) {
-        UpdateDialog(
-            onUpdateClick = { 
-                updateCheckService.acceptUpdate(context as Activity)
-            },
-            onDismiss = { 
-                updateCheckService.dismissUpdateDialog()
-            }
-        )
-    }
+    // All Play update UI lives in MainActivity's Update Center 2.0 overlay.
+    // The legacy alternate HomeScreen must never open an independent dialog.
 }
 
 @Composable

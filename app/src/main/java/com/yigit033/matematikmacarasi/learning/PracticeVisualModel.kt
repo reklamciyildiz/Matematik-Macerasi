@@ -137,17 +137,18 @@ object PracticeVisualFactory {
             "g2_hundred_place" -> {
                 // P2's corrected current grade-2 question uses 0–100,
                 // while unfinished pre-P2 sessions retain the old grammar.
-                val corrected = groups(text, """(\d+) onluk ve (\d+) birlik""")
-                if (corrected != null) {
+                val legacy = groups(text, """(\d+) yüzlük, (\d+) onluk ve (\d+) birlik""")
+                if (legacy != null) {
+                    // Check legacy FIRST. Otherwise its trailing "... onluk ve
+                    // ... birlik" substring would incorrectly match the new grammar.
+                    build(PracticeVisualKind.HUNDREDS, legacy,
+                        "Eski oturum: yüzlük, onluk ve birlik blokları")
+                } else {
                     build(
                         PracticeVisualKind.TENS_AND_ONES,
-                        corrected,
+                        groups(text, """(\d+) onluk ve (\d+) birlik"""),
                         "Onluk ve birlik blokları"
                     )
-                } else {
-                    build(PracticeVisualKind.HUNDREDS,
-                        groups(text, """(\d+) yüzlük, (\d+) onluk ve (\d+) birlik"""),
-                        "Eski oturum: yüzlük, onluk ve birlik blokları")
                 }
             }
             "g3_share_equal" ->

@@ -128,7 +128,11 @@ object DeepLessonQuestionBank {
         }
         val options = linkedSetOf(answer)
         for (value in listOf(answer-1, answer+1, answer-2, answer+2,
-            -answer, answer+3, answer+5, answer*2, answer-5, answer+10)) {
+            -answer, answer+3, answer+5, answer*2, answer-5, answer+10,
+            answer-10, answer-20, answer+20)) {
+            if (lesson.id == "g2_hundred_place" && !legacyGrade2Hundred && value !in 0..100) {
+                continue
+            }
             options.add(value)
             if (options.size == 4) break
         }

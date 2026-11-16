@@ -42,7 +42,7 @@ class TurkishMathSpeechTest {
 
     @Test fun neverMutatesMeaningOfChildrenWords() {
         assertEquals("Aşağıdan yukarıya say.", TurkishMathSpeech.normalize("Aşağıdan yukarıya say."))
-        assertTrue(TurkishMathSpeech.normalize("4 / 0").contains("/"))
+        assertEquals("dört bölü sıfır", TurkishMathSpeech.normalize("4 / 0"))
         assertFalse(TurkishMathSpeech.normalize("1/2").contains("/"))
         assertEquals("", TurkishMathSpeech.normalize(" "))
     }

@@ -55,6 +55,11 @@ jobs:
           "$SDK_MANAGER" "platforms;android-36" "build-tools;36.0.0"
       - name: Configure Gradle
         uses: gradle/actions/setup-gradle@v4
+      - name: Configure AndroidX and CI Gradle memory
+        run: |
+          echo 'android.useAndroidX=true' >> gradle.properties
+          echo 'android.enableJetifier=true' >> gradle.properties
+          echo 'org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8' >> gradle.properties
       - name: Generate fake Firebase config for compile-only CI
         shell: bash
         run: |

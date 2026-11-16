@@ -17,6 +17,7 @@ internal class PremiumLessonAudio(context: Context) {
     private val assets = context.applicationContext.assets
     private var player: MediaPlayer? = null
     private var onFinished: (() -> Unit)? = null
+    private val clipAvailability = HashMap<String, Boolean>()
 
     companion object {
         const val ASSET_FOLDER = "lesson_narration/tr-TR"
@@ -29,11 +30,14 @@ internal class PremiumLessonAudio(context: Context) {
             "$ASSET_FOLDER/" + hash(text) + ".mp3"
     }
 
-    fun hasClip(text: String): Boolean = runCatching {
-        if (text.isBlank()) false else {
-            assets.openFd(assetPath(text)).use { it.length > 0L }
+    fun hasClip(text: String): Boolean {
+        if (text.isBlank()) return false
+        val path = assetPath(text)
+        return clipAvailability.getOrPut(path) {
+            runCatching { assets.openFd(path).use { it.length > 0L } }
+                .getOrDefault(false)
         }
-    }.getOrDefault(false)
+    }
 
     fun hasAnyClips(): Boolean = runCatching {
         assets.list(ASSET_FOLDER)?.any { it.endsWith(".mp3") } == true

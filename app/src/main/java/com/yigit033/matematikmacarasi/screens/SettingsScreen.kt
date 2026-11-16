@@ -71,6 +71,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.yigit033.matematikmacarasi.services.AudioService
+import com.yigit033.matematikmacarasi.services.UpdateCheckService
+import com.yigit033.matematikmacarasi.ui.components.UpdateCenterDialog
+import com.yigit033.matematikmacarasi.ui.components.UpdateCenterMode
 import com.yigit033.matematikmacarasi.services.NotificationService
 import com.yigit033.matematikmacarasi.services.PremiumCodeValidator
 import com.yigit033.matematikmacarasi.services.payments.PremiumFeaturePolicy
@@ -208,6 +211,7 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
     var notifications by remember {
         mutableStateOf(prefs.getBoolean("notifications_enabled",true))
     }
+    var showReleaseNotes by remember { mutableStateOf(false) }
     var codeDialog by remember {mutableStateOf(false)}
     var code by remember {mutableStateOf("")}
     var verifying by remember {mutableStateOf(false)}
@@ -428,11 +432,26 @@ fun SettingsScreen(onBackClick:()->Unit = {},audioService:AudioService) {
         }
 
         SettingsSection("Uygulama Hakkında","") {
+            SettingsAction("✨ Bu Sürümde Neler Yeni?", onClick = { showReleaseNotes = true })
             Text("Matematik Macerası  ·  ${AppVersionUtils.getFullVersionInfo(context)}",
                 color=SettingsPalette.text,fontSize=13.sp)
             Text("Geliştirici: YGT Studio",color=SettingsPalette.secondary,fontSize=12.sp)
         }
         Spacer(Modifier.height(20.dp))
+    }
+
+    if (showReleaseNotes) {
+        UpdateCenterDialog(
+            mode = UpdateCenterMode.WHATS_NEW,
+            onPrimary = {
+                showReleaseNotes = false
+                UpdateCheckService.getInstance(context).dismissWhatsNew()
+            },
+            onSecondary = {
+                showReleaseNotes = false
+                UpdateCheckService.getInstance(context).dismissWhatsNew()
+            }
+        )
     }
 
     if(codeDialog) {

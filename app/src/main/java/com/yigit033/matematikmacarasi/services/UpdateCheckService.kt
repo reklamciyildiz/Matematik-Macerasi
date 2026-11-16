@@ -37,6 +37,7 @@ class UpdateCheckService private constructor(context: Context) {
         private const val CHECKED_AT = "checked_at"
         private const val DISMISSED_CODE = "dismissed_code"
         private const val DISMISSED_AT = "dismissed_at"
+        private const val INSTALL_POSTPONED_AT = "install_postponed_at"
         private const val WHATS_NEW_SEEN = "whats_new_seen"
         private const val FIRST_UPDATE_CENTER_VERSION = 24
 
@@ -78,7 +79,7 @@ class UpdateCheckService private constructor(context: Context) {
             }
             InstallStatus.DOWNLOADED -> {
                 isDownloading = false
-                isInstallReady = true
+                isInstallReady = shouldOfferInstallation()
                 showUpdateDialog = false
             }
             InstallStatus.INSTALLED -> {
@@ -115,7 +116,7 @@ class UpdateCheckService private constructor(context: Context) {
                 when (info.installStatus()) {
                     InstallStatus.DOWNLOADED -> {
                         isDownloading = false
-                        isInstallReady = true
+                        isInstallReady = shouldOfferInstallation()
                         showUpdateDialog = false
                     }
                     InstallStatus.DOWNLOADING -> {
@@ -167,7 +168,7 @@ class UpdateCheckService private constructor(context: Context) {
                         openPlayStore(activity)
                     }
                 } else if (info.installStatus() == InstallStatus.DOWNLOADED) {
-                    isInstallReady = true
+                    isInstallReady = shouldOfferInstallation()
                 } else {
                     openPlayStore(activity)
                 }
@@ -204,7 +205,10 @@ class UpdateCheckService private constructor(context: Context) {
     fun postponeInstallation() {
         // The download stays available. Offer installation on a later home visit.
         isInstallReady = false
-        prefs.edit().putLong(CHECKED_AT, 0L).apply()
+        prefs.edit()
+            .putLong(INSTALL_POSTPONED_AT, System.currentTimeMillis())
+            .putLong(CHECKED_AT, 0L)
+            .apply()
     }
 
     fun dismissWhatsNew() {
@@ -231,10 +235,18 @@ class UpdateCheckService private constructor(context: Context) {
         }
     }
 
+    private fun shouldOfferInstallation(): Boolean {
+        val postponed = prefs.getLong(INSTALL_POSTPONED_AT, 0L)
+        val now = System.currentTimeMillis()
+        return postponed <= 0L || now < postponed ||
+            now - postponed >= UpdatePromptPolicy.REMIND_AFTER_MS
+    }
+
+    @Suppress("DEPRECATION")
     private fun currentVersionCode(): Int = runCatching {
         val info = appContext.packageManager.getPackageInfo(appContext.packageName, 0)
         if (Build.VERSION.SDK_INT >= 28) info.longVersionCode.toInt()
-        else @Suppress("DEPRECATION") info.versionCode
+        else info.versionCode
     }.getOrDefault(0)
 
     private fun openPlayStore(activity: Activity) {

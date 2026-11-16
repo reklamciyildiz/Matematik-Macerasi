@@ -22,6 +22,9 @@ class TurkishMathSpeechTest {
         assertEquals("eksi üç", TurkishMathSpeech.normalize("−3"))
         assertEquals("eksi dört", TurkishMathSpeech.normalize("-4"))
         assertEquals("altı bölü iki", TurkishMathSpeech.normalize("6 ÷ 2"))
+        assertEquals("altı bölü iki", TurkishMathSpeech.normalize("6 / 2"))
+        assertEquals("üç artı dört", TurkishMathSpeech.normalize("3+4"))
+        assertEquals("üç üzeri iki", TurkishMathSpeech.normalize("3^2"))
     }
 
     @Test fun pronouncesTurkishDecimalsAndPercentsWithoutGuessingMagnitude() {

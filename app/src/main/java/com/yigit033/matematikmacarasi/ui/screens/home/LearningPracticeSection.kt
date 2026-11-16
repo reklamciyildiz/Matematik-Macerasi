@@ -138,8 +138,11 @@ fun LearningPracticeSection(
         PracticeLesson(selected, userClass, store,
             onBack = back,
             onFinish = { wrong, hints ->
-                store.complete(selected.id, wrong, hints,
-                    LearningPathCatalog.practiceQuestionCount(selected))
+                store.complete(
+                    selected.id, wrong, hints,
+                    LearningPathCatalog.practiceQuestionCount(selected),
+                    grade = grade
+                )
                 version++
             },
             nextJourneyLessonName = nextLesson?.title,

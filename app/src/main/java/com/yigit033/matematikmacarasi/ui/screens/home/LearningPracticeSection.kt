@@ -138,8 +138,11 @@ fun LearningPracticeSection(
         PracticeLesson(selected, userClass, store,
             onBack = back,
             onFinish = { wrong, hints ->
-                store.complete(selected.id, wrong, hints,
-                    LearningPathCatalog.practiceQuestionCount(selected))
+                store.complete(
+                    selected.id, wrong, hints,
+                    LearningPathCatalog.practiceQuestionCount(selected),
+                    grade = grade
+                )
                 version++
             },
             nextJourneyLessonName = nextLesson?.title,
@@ -341,8 +344,8 @@ private fun PracticeLesson(
 
     // Young readers get a narrated first pass; older students can request audio.
     // No speech runs if Effects/Sound is disabled in the app settings.
-    LaunchedEffect(narrator.available, stage, workedStep, index, supportActive, finished) {
-        if (earlyReader && narrator.available && narrator.audioAllowed &&
+    LaunchedEffect(narrator.available, speechText, stage, finished) {
+        if (earlyReader && narrator.canSpeak(speechText) &&
             !finished && stage in 0..2) {
             narrator.say(speechText)
         }
@@ -420,7 +423,7 @@ private fun PracticeLesson(
                     if (narrator.speaking) narrator.stop()
                     else narrator.say(speechText)
                 },
-                enabled = narrator.available && narrator.audioAllowed,
+                enabled = narrator.canSpeak(speechText),
                 modifier = Modifier.heightIn(min = 46.dp),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(
                     horizontal = 12.dp, vertical = 5.dp),
@@ -444,6 +447,13 @@ private fun PracticeLesson(
                     color = HomeColors.MagicCyan, fontSize = 12.sp,
                     fontWeight = FontWeight.Bold)
             }
+        }
+        if (narrator.hasProfessionalClip(speechText) && narrator.audioAllowed) {
+            Text(
+                "Doğal Türkçe anlatım · Önceden hazırlanmış yüksek kaliteli kayıt",
+                color = Color(0xFFB2F0DA), fontSize = 11.sp,
+                lineHeight = 16.sp
+            )
         }
         if (!narrator.loading && !narrator.available) {
             Text(

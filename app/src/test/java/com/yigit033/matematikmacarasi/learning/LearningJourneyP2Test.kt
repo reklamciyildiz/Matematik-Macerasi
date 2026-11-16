@@ -111,10 +111,21 @@ class LearningJourneyP2Test {
                         "g4_round_tens" -> {
                             assertTrue(numbers[0] in 1000..9999)
                             assertEquals((numbers[0] + 5) / 10 * 10, q.answer)
+                            assertTrue(
+                                "Every rounding option must be a ten: ${q.choices}",
+                                q.choices.all { it in 1000..9999 && it % 10 == 0 }
+                            )
                         }
                         "g4_unit_fraction_compare" -> {
                             assertTrue(numbers[1] in 2..20 && numbers[3] in 2..20)
                             assertEquals(minOf(numbers[1], numbers[3]), q.answer)
+                            assertTrue(
+                                "All choices must be valid unit-fraction denominators",
+                                q.choices.all { it in 2..20 }
+                            )
+                            // Wrong answers must include the OTHER printed
+                            // denominator, not only random nearby numbers.
+                            assertTrue(q.choices.contains(numbers[3]))
                         }
                     }
                 }

@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -259,14 +261,24 @@ fun LearnTabScreen(
                     "Kavramı keşfet, çözümlü örneği incele, kendin çöz, kısa değerlendirme yap ve oyunla pekiştir. Bu yollar hazır kısa derslerden oluşur; tam müfredat kapsamı değildir.",
                     color = hubText, fontSize = 12.sp, lineHeight = 18.sp
                 )
-                journeys.forEach { quest ->
-                    LearningJourneyRouteCard(
-                        quest = quest,
-                        lessonTitles = lessonTitles,
-                        lessonDone = { progress.completed(it) },
-                        canOpen = canOpen,
-                        onOpen = openLesson
-                    )
+                Text(
+                    "Diğer yolculuklar için yana kaydır.",
+                    color = hubCyan, fontSize = 11.sp
+                )
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(journeys, key = { it.id }) { quest ->
+                        LearningJourneyRouteCard(
+                            quest = quest,
+                            lessonTitles = lessonTitles,
+                            lessonDone = { progress.completed(it) },
+                            canOpen = canOpen,
+                            onOpen = openLesson,
+                            modifier = Modifier.width(292.dp)
+                        )
+                    }
                 }
             }
         }

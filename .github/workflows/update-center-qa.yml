@@ -95,5 +95,20 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :app:testDebugUnitTest --tests 'com.yigit033.matematikmacarasi.services.UpdatePromptPolicyTest' --tests 'com.yigit033.matematikmacarasi.learning.AdaptiveLearningPolicyTest' --tests 'com.yigit033.matematikmacarasi.learning.LearningJourneyP2Test' --tests 'com.yigit033.matematikmacarasi.learning.LearningAnalyticsModelTest' --tests 'com.yigit033.matematikmacarasi.learning.TurkishMathSpeechTest' --tests 'com.yigit033.matematikmacarasi.learning.LessonVoiceManifestTest' --no-daemon --stacktrace
+      - name: Validate free offline narration tool without external AI provider
+        shell: bash
+        run: |
+          python3 -m py_compile tools/narration/synthesize_ema_offline.py
+          python3 - <<'PY'
+          import base64, subprocess, tempfile
+          from pathlib import Path
+          with tempfile.TemporaryDirectory() as d:
+              p=Path(d) / "manifest.tsv"
+              p.write_text("a"*64 + "\t" +
+                           base64.b64encode("İki çarpı üç.".encode()).decode() +
+                           "\n", encoding="utf-8")
+              subprocess.run(["python3", "tools/narration/synthesize_ema_offline.py",
+                              "--manifest", str(p), "--dry-run"], check=True)
+          PY
       - name: Compile Android debug APK
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace

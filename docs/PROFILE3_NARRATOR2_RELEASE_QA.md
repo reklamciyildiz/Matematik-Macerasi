@@ -23,22 +23,24 @@
 
 **Çok önemli teslim sınırı:** Bu kod değişikliği tek başına **yeni bir insan kalitesinde ses dosyasının APK'da bulunduğu** anlamına GELMEZ. Google Cloud / fal / stüdyo sağlayıcısıyla üretilmiş ve kulağa iyi gelen gerçek MP3'leri henüz bu depoya eklemedik. Bu dosyalar olmadan hâlihazırdaki cihaz TTS motoru duyulacaktır; telaffuz daha düzgündür ama timbre dramatik şekilde değişmiş sayılmaz.
 
-### HD sesleri doğru üretme akışı (sadece geliştirici tarafı)
+### Ücretsiz ve çevrimdışı profesyonel ses üretimi (sıfır API ücreti)
 
-Google Cloud'da Text-to-Speech API'yi ve faturalandırmayı etkinleştir; uygun yetkilendirmeyle üretim için bir servis hesabı oluştur. Hesap JSON içeriğinin Base64 değerini yalnız GitHub Actions secrets içine `MM_NARRATION_TTS_SERVICE_ACCOUNT_B64` adıyla koy. JSON anahtarını **asla APK, Gradle veya GitHub commit'ine ekleme**.
+**Google Cloud Chirp 3 HD üretim betiği ve GitHub ücretli servis iş akışı kaldırıldı.**
+Ücretli API/abonelik/faturalandırma **kullanılmamalıdır**.
 
-1. GitHub Actions → **Build Licensed Turkish HD Narration Pack** → Run workflow.
-2. İlk denemede **audition_only=true**; Türkçe Chirp 3 HD sesini seç (başlangıç seçeneği `tr-TR-Chirp3-HD-Kore`). Farklı sesleri çocuk kullanımına uygun doğallık, matematik telaffuzu, sıcaklık ve duraklamalara göre karşılaştır.
-3. Workflow, gerçek Kotlin ders metinlerini ve adımlarını manifest'e döker; yalnız sabit, uygulamanın kendisine ait metni sağlayıcıya gönderir. Çocukların yanıtları veya mikrofon verileri asla servisle paylaşılmaz.
-4. Test seslerini `turkish-hd-lesson-voice-...` artifact'inden dinle ve onayla. Sonra **audition_only=false** ile tüm paket üretilir.
-5. Sesleri `app/src/main/assets/lesson_narration/tr-TR/` içine yerleştir; bunları ayrı bir kod incelemesine sok. Her ses kaydı MP3 olmalı, bozuk/eksik dosya olmamalı, hem 1–2 hem 3–4 hem 5–8 seviyesinde örnekler kulağa incelenmeli.
-6. Yerel APK/AAB dosya boyutunu karşılaştır; tek tip sesin tüm 1–8 derslerinde gerçekten kullanıldığını cihazda dinle. Mesaj ve soru içerikleri ses paketi olmadan mevcut çevrimdışı TTS ile çalışır.
+**Seçilen ücretsiz üretici:** [EMA Lightning](https://github.com/canberk7/ema-lightning).
+Kod ve model **Apache-2.0**, ticari kullanıma açık ve yerel CPU/GPU üzerinde çalışır. Üretilen MP3'ler Android'e gömülür; kullanıcı cihazında öğrenme sesi için sunucuya istek gönderilmez. **Ayrı stüdyo ses kaydı mevcut değilse bu motorun mutlaka daha doğal geleceği garanti edilmez; gerçek dinleme değerlendirmesi zorunludur.**
 
-Google Cloud resmî belgelerine göre Türkçe Chirp 3 HD sesleri desteklenir ve üretilen dosyalar hizmet koşullarına uyumlu olarak uygulamalarda kullanılabilir. Fakat kalite **dinleme testi yapılmadan garanti edilemez** ve hizmet ücretli kota/faturalandırmaya bağlıdır:
+1. Windows bilgisayarında Python 3.11–3.13, açık kaynak FFmpeg ve `python -m pip install ema-lightning` ile ücretsiz üreticiyi kur. Model ilk çalıştırmada ücretsiz açık ağırlıkları indirebilir; sonraki sentez yerel olur.
+2. Proje kökünde PowerShell: `$env:MM_NARRATION_EXPORT="1"; .\gradlew.bat :app:testDebugUnitTest --tests "com.yigit033.matematikmacarasi.learning.LessonVoiceManifestTest"; Remove-Item Env:MM_NARRATION_EXPORT`. Bu işlem yalnız uygulamada yazılmış sabit ders metinlerini `app/build/narration/manifest.tsv` dosyasına çıkarır.
+3. `python tools/narration/synthesize_ema_offline.py --dry-run` ile manifest'i ve ses adedi verisini kontrol et.
+4. `python tools/narration/synthesize_ema_offline.py --limit 8` komutuyla **yalnız sekiz dinleme örneği** üret; matematik okunuşlarını, çocuklara uygunluğu, telaffuz ve kalitesini değerlendir.
+5. Beğenildiyse `python tools/narration/synthesize_ema_offline.py --limit 0` ile tüm sabit anlatımları yerel bilgisayarda üret; APK boyutunu ve lisans bildirimini incele. Üretimi otomatik tetikleme; satın alma, kredi kartı veya bulut hesabı gerekmez.
+6. Önceden eklenen `PremiumLessonAudio` asset path'i bu MP3'lerle uyumlu: `app/src/main/assets/lesson_narration/tr-TR/`. **Gerçek MP3'ler bu commit ile eklenmedi; kullanıcı şu anda önceki Android ses motorunu duyacaktır.**
 
-- https://docs.cloud.google.com/text-to-speech/docs/list-voices-and-types
-- https://docs.cloud.google.com/text-to-speech/quotas
-- https://cloud.google.com/text-to-speech/pricing
+Sıfır ücretli API çağrısı garanti edilmesi, tüm geliştirme faaliyetlerinin sıfır kaynak maliyeti olduğu anlamına gelmez (kişisel bilgisayar elektrik tüketimi, cihaz, indirme interneti ve hesabın GitHub Actions kota koşulları ayrı konudur). Bu yol **ses üretiminde ayrı faturalandırma kullanmaz**.
+
+Seslerin üretildiğini veya premium ses kalitesinin doğrulandığını söylemeden önce gerçekten dinle.
 
 ### Son QA kapıları
 
@@ -46,9 +48,9 @@ Google Cloud resmî belgelerine göre Türkçe Chirp 3 HD sesleri desteklenir ve
 - [x] Eski ortak ders kimliklerine ait geçmişin sınıflara uydurularak dağıtılmaması
 - [x] Free/Premium öğrenme konu ayrıntılarının ayrı politika ile korunması
 - [x] Yeni Türkçe matematik konuşma testleri, stüdyo kayıt çalma ve çevrimdışı TTS fallback kodu
-- [x] Lisanslı HD kaydı yalnız sunucu tarafında üretmek için güvenli manifest/CI aracı
+- [x] Ücretsiz, Apache-2.0 açık kaynak modeli kullanarak yerel MP3 üretim aracı; ücretli Cloud betiği kaldırıldı
 - [ ] Yeni branch için GitHub Android build + otomatik testler başarılı (ayrı doğrulanmalı)
-- [ ] Gerçek yüksek kaliteli MP3 paketinin onaylanıp depoya eklenmesi
+- [ ] Ücretsiz EMA Lightning ile gerçek MP3 paketinin dinlenerek onaylanması ve depoya eklenmesi
 - [ ] Son cihazda Free/Premium özet-derinlik ve Play/Cloudflare lisans regresyonu
 - [ ] Sınıf değiştirince doğru sınıfın raporlanması; eski ortak ders kayıtları dürüst uyarısı
 - [ ] USB/BT kulaklık, ekran kapalı, müzik ducking, TTS yokken ve ses ayarı kapalıyken test

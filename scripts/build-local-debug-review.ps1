@@ -49,17 +49,10 @@ try {
     if (-not (Test-Path -LiteralPath $apk -PathType Leaf)) {
         throw "Gradle returned success, but app-debug.apk was not found."
     }
-    $version = "1.3.6"
-    $code = "24"
-    $gradle = Get-Content -LiteralPath (Join-Path $root "app\build.gradle") -Raw
-    if ($gradle -match '(?m)^\s*versionName\s+"([^"]+)"') { $version = $Matches[1] }
-    if ($gradle -match '(?m)^\s*versionCode\s+(\d+)') { $code = $Matches[1] }
-    $outDir = Join-Path $root "local-debug-review"
-    New-Item -Path $outDir -ItemType Directory -Force | Out-Null
-    $output = Join-Path $outDir ("Matematik-Macerasi-{0}-code{1}-debug.apk" -f $version, $code)
-    Copy-Item -LiteralPath $apk -Destination $output -Force
-    $item = Get-Item -LiteralPath $output
-    $hash = Get-FileHash -LiteralPath $output -Algorithm SHA256
+    # Keep the standard Gradle debug APK as the only output.
+    # No second folder, renamed APK or copy is created.
+    $item = Get-Item -LiteralPath $apk
+    $hash = Get-FileHash -LiteralPath $apk -Algorithm SHA256
     Write-Host ""
     Write-Host "DEBUG_APK_READY"
     Write-Host ("Path: " + $item.FullName)

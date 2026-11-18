@@ -1,5 +1,10 @@
 # Project-wide Gradle settings.
-org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+# Large Compose screens need enough room for Kotlin/ASM code generation.
+# Limit workers to avoid compiling debug + release at the same time on a PC.
+# These are example defaults: your private local gradle.properties is not overwritten.
+org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8
+org.gradle.workers.max=1
+kotlin.compiler.execution.strategy=in-process
 android.useAndroidX=true
 kotlin.code.style=official
 android.nonTransitiveRClass=true

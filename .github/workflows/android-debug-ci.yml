@@ -201,6 +201,13 @@ jobs:
           chmod +x ./gradlew
           ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
 
+      # The user's local failure happened in compileReleaseKotlin while the
+      # debug Kotlin compiler was also running. Check release codegen separately
+      # without an upload keystore, production secrets, signed AAB, or backend deploy.
+      - name: Compile release Kotlin with bounded memory (no AAB signing)
+        shell: bash
+        run: ./gradlew --no-daemon --max-workers=1 :app:compileReleaseKotlin
+
   firebase-rtdb-rules-emulator:
     name: Firebase RTDB rules emulator (local-only)
     runs-on: ubuntu-latest

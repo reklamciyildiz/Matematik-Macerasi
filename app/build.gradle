@@ -14,7 +14,9 @@ android {
         applicationId "com.yigit033.matematikmacarasi"
         minSdk 24
         targetSdk 36
-        versionCode 24
+        // Code 24 was already uploaded to Play Console (production draft).
+        // Rebuild the same 1.3.6 release with a new immutable upload code.
+        versionCode 25
         versionName "1.3.6"
 
         // Safe default for unconfigured debug/CI builds; NOT the deployed Worker status.

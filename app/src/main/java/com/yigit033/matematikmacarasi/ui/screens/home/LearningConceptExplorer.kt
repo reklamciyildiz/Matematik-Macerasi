@@ -1,5 +1,7 @@
 package com.yigit033.matematikmacarasi.ui.screens.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -72,6 +74,11 @@ private fun ExplorerSurface(title: String, explanation: String, content: @Compos
 @Composable
 private fun InteractiveMathLine(topicId: String) {
     var marked by rememberSaveable(topicId) { mutableIntStateOf(4) }
+    val animatedPosition by animateFloatAsState(
+        targetValue = marked.toFloat(),
+        animationSpec = tween(durationMillis = 280),
+        label = "Sayı doğrusunda bir adım"
+    )
     ExplorerSurface("Sayı doğrusunu keşfet",
         "Sayıları soldan sağa sıralarız. Bir adım sağa gidince sayı 1 artar.") {
         Canvas(
@@ -89,11 +96,10 @@ private fun InteractiveMathLine(topicId: String) {
                 val x = left + n * tick
                 drawLine(Color(0xFFB8DDEC), Offset(x, y - 6.dp.toPx()),
                     Offset(x, y + 6.dp.toPx()), 2.dp.toPx())
-                if (n == marked) {
-                    drawCircle(explorerGold, 10.dp.toPx(), Offset(x,y))
-                    drawCircle(Color(0xFF194963), 4.dp.toPx(), Offset(x,y))
-                }
             }
+            val highlightedX = left + animatedPosition * tick
+            drawCircle(explorerGold, 10.dp.toPx(), Offset(highlightedX,y))
+            drawCircle(Color(0xFF194963), 4.dp.toPx(), Offset(highlightedX,y))
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             for (n in 0..10) {

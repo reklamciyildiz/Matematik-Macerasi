@@ -55,10 +55,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -91,6 +94,7 @@ fun LearnTabScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val reducedColumnsForLargeText = LocalDensity.current.fontScale > 1.2f
     val progress = remember(context) { LearningJourneyProgress(context) }
     val curriculum = remember(userClass) { GradeCurriculumCatalog.forClass(userClass) }
     val lessons = remember(userClass) { LearningPathCatalog.forGrade(userClass) }
@@ -563,7 +567,8 @@ fun LearnTabScreen(
             }
             Text(
                 listedTopics.size.toString() + " konu gösteriliyor · " +
-                    lessons.size.toString() + " kullanılabilir kısa ders",
+                    listedTopics.flatMap { it.lessonIds }.distinct().size.toString() +
+                    " kısa ders",
                 color = hubText, fontSize = 11.sp
             )
         }
@@ -618,7 +623,7 @@ fun LearnTabScreen(
                 }
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
                     // Two cards only when minimum readable width is available.
-                    if (maxWidth >= 356.dp) {
+                    if (maxWidth >= 356.dp && !reducedColumnsForLargeText) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             topics.chunked(2).forEach { pair ->
                                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -712,6 +717,7 @@ private fun MathAreaFilterChip(label: String, selected: Boolean, onClick: () -> 
                 RoundedCornerShape(14.dp))
             .clickable(role = Role.Button, onClickLabel = "Alan filtresi: " + label,
                 onClick = onClick)
+            .semantics { this.selected = selected }
             .heightIn(min = 48.dp)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center

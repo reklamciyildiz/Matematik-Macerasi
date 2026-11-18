@@ -1,0 +1,49 @@
+name: P3 original learning cover art
+
+on:
+  push:
+    branches: ['feat/p3-learning-discovery']
+    paths:
+      - 'tools/learning/generate_p3_covers.py'
+      - '.github/workflows/p3-learning-cover-art.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-webp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Create original math area WebP atlas without paid image APIs
+        run: |
+          python -m pip install 'Pillow==11.3.0'
+          python tools/learning/generate_p3_covers.py
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("app/src/main/res/drawable-nodpi/learn_topic_atlas.webp")
+          data=p.read_bytes()
+          assert data[:4]==b'RIFF' and data[8:12]==b'WEBP'
+          assert 5_000<len(data)<100_000
+          print(f"Six area cards share one {len(data)}-byte WebP")
+          PY
+      - name: Commit reviewed original art to feature branch
+        if: github.ref == 'refs/heads/feat/p3-learning-discovery'
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- app/src/main/res/drawable-nodpi/learn_topic_atlas.webp
+          if git diff --cached --quiet; then
+            echo "Artwork identical; no commit needed."
+          else
+            git commit -m "art(p3): add six original math topic WebP covers"
+            git push origin HEAD:feat/p3-learning-discovery
+          fi

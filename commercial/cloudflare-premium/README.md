@@ -1,9 +1,49 @@
-# Matematik Macerası — Cloudflare Premium API (güvenli hazırlık)
+# Matematik Macerası — Cloudflare Premium Kod API (Worker + D1)
 
-**Durum: kod hazır; Cloudflare hesabında HENÜZ kurulmadı / CANLIYA ALINMADI.**
-Bu klasördeki kod, Firebase Spark veya Google Play Billing ayarlarını değiştirmez.
-Android geçişi `MM_USE_CLOUDFLARE=false` olarak başlar. Firebase RTDB'nin
-tam kilitleme kurallarını eski APK'lar kullanılmaya devam ederken yayımlamayın.
+## Gerçek durum ve geçmiş (18 Kasım 2026 belgeleme düzeltmesi)
+
+**Bu proje yalnızca hazırlık aşamasında değildir.** Eski başlık, 7 Kasım 2026'da
+*ilk dağıtım yapılmadan önce* yazılmış ve takip eden kurulumlarda güncellenmemiştir.
+
+- **7 Kasım 2026:** Cloudflare D1 oluşturuldu; gerçek `database_id`
+  `wrangler.toml` dosyasına kaydedildi. Cloudflare Worker gerçek ortamda
+  dağıtılıp `/v1/activate` ve `/v1/renew` akışları test edildiği önceki
+  operatör testlerinde raporlandı. 1. ve 2. cihaz `ACTIVE`, 3. cihaz
+  kapasite aşımında HTTP 400 sonucunu verdi.
+- **7–8 Kasım 2026:** Firebase'deki eski Premium kod/aktivasyon kayıtları
+  için D1 geçişi üzerinde çalışıldı. 8 Kasım'daki kullanıcı denetiminde
+  **3/3 kod ve 4/4 aktivasyon** eşleşti; yetim/kota aşımı kayıtları sıfırdı.
+  Bu rakamlar o günkü örneklemin sonucudur, bugünkü D1'in canlı sayımı değildir.
+- **Android:** `CloudflarePremiumClient` ve `PremiumCodeValidator` üzerinden
+  imzalı lisans akışı uygulanmıştır. `MM_USE_CLOUDFLARE` build-time bayrağı
+  **yerel `gradle.properties` ile açılır**. Proje varsayılanının `false`
+  olması yalnız yapılandırılmamış/debug/CI derlemelerini güvenli tutmak içindir;
+  Worker'ın kurulmadığı veya gerçek cihazda kapalı olduğu anlamına gelmez.
+- **Play release:** `app/build.gradle` içindeki release kapısı,
+  `MM_RELEASE_PREMIUM_MODE=cloudflare` ve `MM_USE_CLOUDFLARE=true`
+  olmadan AAB üretimine izin vermez. Yalnız kod değil, eski hak aktarımı
+  ve geri yükleme için bağımsız QA işaretleri de aranır.
+- **Bağımsız sistem:** Google Play'in aylık/yıllık **abonelik doğrulaması**
+  ayrı `commercial/play-subscriptions` Worker'ıdır. Cloudflare **Premium kod**
+  API'sinin kurulmuş olması, aboneliklerin canlı satın alma/iptal/restore
+  testlerinin tamamlandığını kanıtlamaz.
+
+**Doğrulama sınırı:** Bunlar Git geçmişi ve önceki operatör testlerinin
+kanıtladığı *geçmiş* durumdur. Bu README'nin güncellenmesi bugünkü Worker
+erişilebilirliğini, Cloudflare secret'larının güncel hâlini, D1'in canlı
+veri sayısını, gerçek Play alışverişlerini veya bütün eski APK'ların
+geri yüklenmesini yeniden test etmez. Tekrar doğrulama gerekiyorsa salt
+okunur kontrol ve güvenli smoke testi yapılmalı; secret'lar, Firebase
+kayıtları veya Premium yetkileri rastgele sıfırlanmamalıdır.
+
+Aşağıdaki **Aşama 1–5** adımları geçmişte kullanılan *kurulum/kurtarma
+talimatlarıdır*. Mevcut canlı Worker veya D1 üzerinde bu adımları sıfırdan
+tekrar çalıştırmayın. Özellikle `generate-secrets.mjs` ile yeni anahtar
+üretmek mevcut imzalı lisansları geçersiz kılabilir.
+
+Firebase Spark veya Google Play Billing ayarları bu klasörün okunmasıyla
+değişmez. Eski APK'lar RTDB'ye erişebiliyorsa tam Firebase kilitleme
+kurallarını göç ve cihaz doğrulaması olmadan yayımlamayın.
 
 ## Mimari
 

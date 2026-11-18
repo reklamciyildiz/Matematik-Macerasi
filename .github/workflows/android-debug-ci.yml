@@ -93,6 +93,10 @@ jobs:
           kotlin.compiler.execution.strategy=in-process
           PROPS
 
+      - name: Play Console portrait hardware compatibility preflight
+        shell: bash
+        run: python3 scripts/check_play_screen_compatibility.py
+
       - name: Verify P3 illustrated learning discovery, age and Premium guards
         shell: bash
         run: python3 scripts/check_p3_learning_visuals.py
@@ -200,6 +204,22 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
+
+      - name: Check actual compiled APK feature badging for Play compatibility
+        shell: bash
+        run: |
+          AAPT2="${ANDROID_HOME}/build-tools/36.0.0/aapt2"
+          if [ ! -x "$AAPT2" ]; then
+            echo "::error::aapt2 missing; cannot verify compiled app manifest"
+            exit 1
+          fi
+          "$AAPT2" dump badging app/build/outputs/apk/debug/app-debug.apk > /tmp/mm_badging.txt
+          if ! grep -Fq "uses-feature-not-required: name='android.hardware.screen.portrait'" /tmp/mm_badging.txt; then
+            echo "::error::Compiled APK still requires portrait hardware; check merged manifest"
+            grep -F 'android.hardware.screen.portrait' /tmp/mm_badging.txt || true
+            exit 1
+          fi
+          echo "PASS: Compiled APK explicitly marks android.hardware.screen.portrait optional"
 
       # The user's local failure happened in compileReleaseKotlin while the
       # debug Kotlin compiler was also running. Check release codegen separately

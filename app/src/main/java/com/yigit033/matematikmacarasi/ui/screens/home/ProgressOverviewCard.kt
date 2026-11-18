@@ -56,6 +56,9 @@ fun ProgressOverviewCard(
     onViewDetailsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Split the previous deeply nested Compose tree into small composable
+    // methods. Same children, spacing, colors and click behavior, but Kotlin
+    // bytecode generation no longer has to optimize one enormous lambda.
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -70,160 +73,175 @@ fun ProgressOverviewCard(
             .border(1.dp, HomeColors.LightSectionBorder, RoundedCornerShape(24.dp))
             .padding(14.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            // Başlık Satırı (Referanstaki 📊 "Gelişimim" + "Detayları Gör ▶")
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.BarChart,
-                        contentDescription = null,
-                        tint = Color(0xFF0284C7),
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Gelişimim",
-                        color = HomeColors.TextDark,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .clickable { onViewDetailsClick() }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = "Detayları Gör",
-                        color = Color(0xFF0284C7),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color(0xFF0284C7),
-                        modifier = Modifier.size(14.dp)
-                    )
-                }
-            }
-
+        Column(modifier = Modifier.fillMaxWidth()) {
+            ProgressOverviewHeader(onViewDetailsClick = onViewDetailsClick)
             Spacer(modifier = Modifier.height(12.dp))
+            ProgressOverviewStats(
+                totalScore = totalScore,
+                completedGamesCount = completedGamesCount,
+                userStars = userStars,
+                dailyTasksCompleted = dailyTasksCompleted,
+                dailyTasksTotal = dailyTasksTotal
+            )
+        }
+    }
+}
 
-            // 4 Pastel İstatistik Kutusu (2x2 Grid)
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // 1. Satır: Yıldızlar & Tamamlanan Görev
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // 1. Sarı Kart: Toplam Yıldız
-                    PastelStatCard(
-                        title = "Toplam Yıldız",
-                        value = userStars.toString(),
-                        icon = Icons.Filled.Star,
-                        iconTint = HomeColors.StarAmber,
-                        bgColor = HomeColors.StatAmberBg,
-                        borderColor = HomeColors.StatAmberBorder,
-                        textColor = HomeColors.StatAmberText,
-                        modifier = Modifier.weight(1f)
-                    )
+@Composable
+private fun ProgressOverviewHeader(onViewDetailsClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.BarChart,
+                contentDescription = null,
+                tint = Color(0xFF0284C7),
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "Gelişimim",
+                color = HomeColors.TextDark,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .clickable { onViewDetailsClick() }
+                .padding(horizontal = 4.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = "Detayları Gör",
+                color = Color(0xFF0284C7),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.width(2.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = Color(0xFF0284C7),
+                modifier = Modifier.size(14.dp)
+            )
+        }
+    }
+}
 
-                    // 2. Mavi Kart: Tamamlanan Görev / Oyun
-                    PastelStatCard(
-                        title = "Tamamlanan Oyun",
-                        value = completedGamesCount.toString(),
-                        icon = Icons.Filled.EmojiEvents,
-                        iconTint = Color(0xFF2563EB),
-                        bgColor = HomeColors.StatBlueBg,
-                        borderColor = HomeColors.StatBlueBorder,
-                        textColor = HomeColors.StatBlueText,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+@Composable
+private fun ProgressOverviewStats(
+    totalScore: Int,
+    completedGamesCount: Int,
+    userStars: Int,
+    dailyTasksCompleted: Int,
+    dailyTasksTotal: Int
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            PastelStatCard(
+                title = "Toplam Yıldız",
+                value = userStars.toString(),
+                icon = Icons.Filled.Star,
+                iconTint = HomeColors.StarAmber,
+                bgColor = HomeColors.StatAmberBg,
+                borderColor = HomeColors.StatAmberBorder,
+                textColor = HomeColors.StatAmberText,
+                modifier = Modifier.weight(1f)
+            )
+            PastelStatCard(
+                title = "Tamamlanan Oyun",
+                value = completedGamesCount.toString(),
+                icon = Icons.Filled.EmojiEvents,
+                iconTint = Color(0xFF2563EB),
+                bgColor = HomeColors.StatBlueBg,
+                borderColor = HomeColors.StatBlueBorder,
+                textColor = HomeColors.StatBlueText,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            PastelStatCard(
+                title = "Toplam Puan",
+                value = totalScore.toString(),
+                icon = Icons.Filled.SignalCellularAlt,
+                iconTint = Color(0xFF059669),
+                bgColor = HomeColors.StatGreenBg,
+                borderColor = HomeColors.StatGreenBorder,
+                textColor = HomeColors.StatGreenText,
+                modifier = Modifier.weight(1f)
+            )
+            DailyGoalStatCard(
+                completed = dailyTasksCompleted,
+                total = dailyTasksTotal,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
 
-                // 2. Satır: Toplam Puan & Günlük Hedef
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // 3. Yeşil Kart: Toplam Puan
-                    PastelStatCard(
-                        title = "Toplam Puan",
-                        value = totalScore.toString(),
-                        icon = Icons.Filled.SignalCellularAlt,
-                        iconTint = Color(0xFF059669),
-                        bgColor = HomeColors.StatGreenBg,
-                        borderColor = HomeColors.StatGreenBorder,
-                        textColor = HomeColors.StatGreenText,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // 4. Pembe Kart: Günlük / Haftalık Hedef
-                    val target = dailyTasksTotal.coerceAtLeast(1)
-                    val progress = (dailyTasksCompleted.toFloat() / target.toFloat()).coerceIn(0f, 1f)
-
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(HomeColors.StatPinkBg)
-                            .border(1.2.dp, HomeColors.StatPinkBorder, RoundedCornerShape(16.dp))
-                            .padding(10.dp)
-                    ) {
-                        Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.TrackChanges,
-                                    contentDescription = null,
-                                    tint = Color(0xFFE11D48),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = "$dailyTasksCompleted / $target",
-                                    color = HomeColors.StatPinkText,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Black
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Günün Hedefi",
-                                color = HomeColors.TextDarkMuted,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            LinearProgressIndicator(
-                                progress = { progress },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(4.dp)
-                                    .clip(RoundedCornerShape(2.dp)),
-                                color = Color(0xFFE11D48),
-                                trackColor = Color(0xFFFECDD3),
-                                strokeCap = StrokeCap.Round
-                            )
-                        }
-                    }
-                }
+@Composable
+private fun DailyGoalStatCard(
+    completed: Int,
+    total: Int,
+    modifier: Modifier = Modifier
+) {
+    val target = total.coerceAtLeast(1)
+    val progress = (completed.toFloat() / target.toFloat()).coerceIn(0f, 1f)
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(HomeColors.StatPinkBg)
+            .border(1.2.dp, HomeColors.StatPinkBorder, RoundedCornerShape(16.dp))
+            .padding(10.dp)
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.TrackChanges,
+                    contentDescription = null,
+                    tint = Color(0xFFE11D48),
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "$completed / $target",
+                    color = HomeColors.StatPinkText,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Black
+                )
             }
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Günün Hedefi",
+                color = HomeColors.TextDarkMuted,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = Color(0xFFE11D48),
+                trackColor = Color(0xFFFECDD3),
+                strokeCap = StrokeCap.Round
+            )
         }
     }
 }

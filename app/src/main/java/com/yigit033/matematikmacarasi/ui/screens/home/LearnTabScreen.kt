@@ -864,6 +864,7 @@ private fun CurriculumTopicDetail(
                 }
             }
         }
+        LearningConceptExplorer(topic)
         if (topic.playable) {
             Text("Kullanılabilir Kısa Dersler", color = Color.White,
                 fontSize = 17.sp, fontWeight = FontWeight.Bold)

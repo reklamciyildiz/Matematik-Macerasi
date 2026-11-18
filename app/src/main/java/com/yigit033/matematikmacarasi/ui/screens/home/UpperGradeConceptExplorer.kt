@@ -311,13 +311,16 @@ private fun AdvancedSignedNumberLine(grade:Int,step:Int) {
     }
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
         for(i in 0..8) {
-            Text(number(i-4),color=if(i==step)p3Gold else p3Text,fontSize=9.sp,
+            Text(number(if(grade==5)i else i-4),
+                color=if(i==step)p3Gold else p3Text,fontSize=9.sp,
                 fontWeight=if(i==step)FontWeight.Bold else FontWeight.Normal)
         }
     }
-    Explanation(if(denom==2)
-        "Her aralık 1/2 birimdir. 0'ın solu negatif, sağı pozitiftir."
-        else "Her aralık 1 birimdir. 0'ın solu negatif, sağı pozitiftir.")
+    Explanation(when {
+        denom==2 -> "Her aralık 1/2 birimdir. 0'ın solu negatif, sağı pozitiftir."
+        grade==5 -> "Doğal sayıların 0'dan 8'e kadar konumunu incele."
+        else -> "Her aralık 1 birimdir. 0'ın solu negatif, sağı pozitiftir."
+    })
 }
 
 @Composable

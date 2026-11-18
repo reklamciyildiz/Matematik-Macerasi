@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -54,8 +55,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -88,6 +94,7 @@ fun LearnTabScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val reducedColumnsForLargeText = LocalDensity.current.fontScale > 1.2f
     val progress = remember(context) { LearningJourneyProgress(context) }
     val curriculum = remember(userClass) { GradeCurriculumCatalog.forClass(userClass) }
     val lessons = remember(userClass) { LearningPathCatalog.forGrade(userClass) }
@@ -112,6 +119,7 @@ fun LearnTabScreen(
     var lockedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var reportExpanded by rememberSaveable(userClass) { mutableStateOf(false) }
     var showRemainingOnly by rememberSaveable(userClass) { mutableStateOf(false) }
+    var selectedAreaName by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var topicQuery by rememberSaveable(userClass) { mutableStateOf("") }
     val homeScroll = rememberScrollState()
     val journeys = remember(userClass) { LearningJourneyCatalog.forGrade(grade) }
@@ -206,7 +214,8 @@ fun LearnTabScreen(
             (topic.title + " " + topic.summary + " " + topic.area.label + " " +
                 topic.outcomes.joinToString(" ")).lowercase(
                 java.util.Locale.forLanguageTag("tr-TR")).contains(searchText)
-        matches && (!showRemainingOnly || unfinished)
+        matches && (!showRemainingOnly || unfinished) &&
+            (selectedAreaName == null || selectedAreaName == topic.area.name)
     }
     val topicsByArea = listedTopics.groupBy { it.area }
     val ageLine = when (curriculum.band) {
@@ -243,7 +252,7 @@ fun LearnTabScreen(
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Matematik Kitaplığım", color = Color.White,
+                    Text("Matematik Keşif Kitaplığım", color = Color.White,
                         fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                     Text(userClass.ifBlank { "1. Sınıf" } + " · " + ageLine,
                         color = hubText, fontSize = 11.sp, lineHeight = 16.sp)
@@ -452,13 +461,41 @@ fun LearnTabScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            Text("Konu Kitaplığım",
+            Text("Konuları Keşfet",
                 color = Color.White, fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold)
             Text(
-                "Sınıfına uygun başlangıç derslerini konu başlıklarına göre keşfet.",
+                "Resimli konuları incele; görsel örneklerle matematiği adım adım öğren.",
                 color = hubText, fontSize = 12.sp, lineHeight = 17.sp
             )
+            Text("MATEMATİK ALANLARI", color = hubGold,
+                fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    MathAreaFilterChip("Hepsi", selectedAreaName == null) {
+                        selectedAreaName = null
+                    }
+                }
+                items(TopicArea.values().filter { area ->
+                    curriculum.topics.any { it.area == area }
+                }, key = { it.name }) { area ->
+                    val title = when (area) {
+                        TopicArea.NUMBERS -> "Sayılar"
+                        TopicArea.OPERATIONS -> "İşlemler"
+                        TopicArea.GEOMETRY -> "Geometri"
+                        TopicArea.DATA -> "Veri"
+                        TopicArea.ALGEBRA -> "Cebir"
+                        TopicArea.REVIEW -> "Tekrar"
+                    }
+                    MathAreaFilterChip(title, selectedAreaName == area.name) {
+                        selectedAreaName = if (selectedAreaName == area.name)
+                            null else area.name
+                    }
+                }
+            }
             if (grade >= 3) {
                 OutlinedTextField(
                     value = topicQuery,
@@ -530,7 +567,8 @@ fun LearnTabScreen(
             }
             Text(
                 listedTopics.size.toString() + " konu gösteriliyor · " +
-                    lessons.size.toString() + " kullanılabilir kısa ders",
+                    listedTopics.flatMap { it.lessonIds }.distinct().size.toString() +
+                    " kısa ders",
                 color = hubText, fontSize = 11.sp
             )
         }
@@ -549,7 +587,11 @@ fun LearnTabScreen(
                     color = hubText, fontSize = 12.sp
                 )
                 Button(
-                    onClick = { topicQuery = ""; showRemainingOnly = false },
+                    onClick = {
+                        topicQuery = ""
+                        showRemainingOnly = false
+                        selectedAreaName = null
+                    },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = hubCyan)
@@ -561,7 +603,7 @@ fun LearnTabScreen(
         }
 
         topicsByArea.forEach { (area, topics) ->
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         when (area) {
@@ -575,18 +617,43 @@ fun LearnTabScreen(
                     Spacer(Modifier.width(8.dp))
                     Text(area.label, color = hubText,
                         fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.weight(1f))
+                    Text(topics.size.toString() + " konu", color = hubCyan,
+                        fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                 }
-                topics.forEach { topic ->
-                    val readyCount = topic.lessonIds.size
-                    val doneCount = topic.lessonIds.count { progress.completed(it) }
-                    val lockedCount = topic.lessonIds.count { !canOpen(it) }
-                    CurriculumTopicCard(
-                        topic = topic,
-                        done = doneCount,
-                        count = readyCount,
-                        lockedCount = lockedCount,
-                        onClick = { selectedTopicId = topic.id }
-                    )
+                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                    // Two cards only when minimum readable width is available.
+                    if (maxWidth >= 356.dp && !reducedColumnsForLargeText) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            topics.chunked(2).forEach { pair ->
+                                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    pair.forEach { topic ->
+                                        CurriculumTopicCard(
+                                            topic = topic,
+                                            done = topic.lessonIds.count { progress.completed(it) },
+                                            count = topic.lessonIds.size,
+                                            lockedCount = topic.lessonIds.count { !canOpen(it) },
+                                            onClick = { selectedTopicId = topic.id },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    if (pair.size == 1) Spacer(Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    } else {
+                        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                            topics.forEach { topic ->
+                                CurriculumTopicCard(
+                                    topic = topic,
+                                    done = topic.lessonIds.count { progress.completed(it) },
+                                    count = topic.lessonIds.size,
+                                    lockedCount = topic.lessonIds.count { !canOpen(it) },
+                                    onClick = { selectedTopicId = topic.id }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -641,104 +708,106 @@ fun LearnTabScreen(
 }
 
 @Composable
+private fun MathAreaFilterChip(label: String, selected: Boolean, onClick: () -> Unit) {
+    val background = if (selected) Color(0xFF28798E) else Color(0xFF173D5B)
+    Box(
+        modifier = Modifier
+            .background(background, RoundedCornerShape(14.dp))
+            .border(1.dp, if (selected) hubCyan else Color(0xFF486F85),
+                RoundedCornerShape(14.dp))
+            .clickable(role = Role.Button, onClickLabel = "Alan filtresi: " + label,
+                onClick = onClick)
+            .semantics { this.selected = selected }
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(label, color = if (selected) Color.White else hubText,
+            fontSize = 13.sp,
+            fontWeight = if (selected) FontWeight.ExtraBold else FontWeight.SemiBold)
+    }
+}
+
+@Composable
 private fun CurriculumTopicCard(
     topic: CurriculumTopic,
     done: Int,
     count: Int,
     lockedCount: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val accent = when (topic.area) {
         TopicArea.NUMBERS -> Color(0xFF90DDF2)
         TopicArea.OPERATIONS -> Color(0xFFFFD18A)
-        TopicArea.GEOMETRY -> Color(0xFFB9B0FA)
+        TopicArea.GEOMETRY -> Color(0xFFCCBCFF)
         TopicArea.DATA -> Color(0xFF8EE1BE)
-        TopicArea.ALGEBRA -> Color(0xFFFFBAA2)
-        TopicArea.REVIEW -> Color(0xFFD2C8A7)
+        TopicArea.ALGEBRA -> Color(0xFFFFBADE)
+        TopicArea.REVIEW -> Color(0xFFFFD49C)
     }
-    val icon = when (topic.area) {
-        TopicArea.GEOMETRY -> Icons.Filled.School
-        TopicArea.DATA -> Icons.Filled.BarChart
-        TopicArea.REVIEW -> Icons.Filled.CheckCircle
-        else -> Icons.Filled.AutoStories
+    val allLocked = count > 0 && lockedCount == count
+    val status = when {
+        count == 0 -> "Henüz ders yok"
+        allLocked -> "Premium dersler"
+        lockedCount > 0 ->
+            (count - lockedCount).toString() + " açık · " + lockedCount + " Premium"
+        done == count -> "Kısa dersler tamam"
+        else -> "Dersler keşfe hazır"
     }
-    Row(
-        modifier = Modifier.fillMaxWidth()
+    Column(
+        modifier = modifier
             .background(
-                Brush.horizontalGradient(
-                    listOf(Color(0xFF215A70), Color(0xFF123951))
-                ), RoundedCornerShape(18.dp)
-            )
-            .border(
-                1.dp, accent.copy(alpha = 0.48f),
-                RoundedCornerShape(18.dp)
-            )
-            .clickable(onClick = onClick)
-            .heightIn(min = 82.dp)
-            .padding(horizontal = 14.dp, vertical = 13.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(11.dp)
+                Brush.verticalGradient(listOf(Color(0xFF235B77), Color(0xFF123953))),
+                RoundedCornerShape(20.dp))
+            .border(1.dp, accent.copy(alpha = 0.55f), RoundedCornerShape(20.dp))
+            .clickable(role = Role.Button,
+                onClickLabel = "Konuyu incele: " + topic.title, onClick = onClick)
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Box(
-            modifier = Modifier.size(43.dp)
-                .background(
-                    accent.copy(alpha = 0.18f),
-                    RoundedCornerShape(13.dp)
-                )
-                .border(
-                    1.dp, accent.copy(alpha = 0.45f),
-                    RoundedCornerShape(13.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(icon, contentDescription = null,
-                tint = accent, modifier = Modifier.size(23.dp))
-        }
-        Column(
-            Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Text(topic.title, color = Color.White,
-                fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(
-                topic.summary, color = hubText,
-                fontSize = 11.sp, lineHeight = 15.sp
-            )
+        Box(Modifier.fillMaxWidth()) {
+            LearningTopicCover(topic.area, Modifier.fillMaxWidth().height(110.dp))
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.align(Alignment.TopEnd)
+                    .padding(8.dp)
+                    .background(Color(0xDF12364E), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                LinearProgressIndicator(
-                    progress = { if (count == 0) 0f
-                        else done.toFloat() / count.toFloat() },
-                    modifier = Modifier.weight(1f).height(6.dp),
-                    color = accent,
-                    trackColor = Color(0xFF315D76)
+                Icon(
+                    if (allLocked) Icons.Filled.Lock
+                    else if (count > 0 && done == count) Icons.Filled.CheckCircle
+                    else Icons.Filled.AutoStories,
+                    contentDescription = null, tint = accent,
+                    modifier = Modifier.size(15.dp)
                 )
-                Text(
-                    "Ders " + done + "/" + count,
-                    color = accent, fontSize = 11.sp,
-                    fontWeight = FontWeight.ExtraBold
-                )
+                Spacer(Modifier.width(4.dp))
+                Text(if (allLocked) "PREMIUM" else done.toString() + "/" + count.toString(),
+                    color = Color.White, fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold)
             }
-            Text(
-                when {
-                    count == 0 -> "Ders henüz eklenmedi"
-                    lockedCount == count -> "Premium · Ön izleme açık"
-                    lockedCount > 0 -> "${count - lockedCount} açık · $lockedCount Premium ders"
-                    done == count -> "Giriş dersleri bitti · Konu tamamlanmadı"
-                    else -> "Konuya giriş dersleri hazır"
-                },
-                color = accent, fontSize = 11.sp
-            )
         }
-        Icon(
-            if (lockedCount == count) Icons.Filled.Lock else Icons.Filled.ChevronRight,
-            contentDescription = if (lockedCount == count) "Premium konu: " + topic.title
-                else "Konuyu incele: " + topic.title,
-            tint = accent, modifier = Modifier.size(22.dp)
+        Text(
+            topic.title, color = Color.White, fontSize = 15.sp,
+            lineHeight = 18.sp, fontWeight = FontWeight.ExtraBold,
+            maxLines = 2, overflow = TextOverflow.Ellipsis
         )
+        Text(
+            topic.summary, color = hubText, fontSize = 11.sp, lineHeight = 15.sp,
+            maxLines = 3, minLines = 2, overflow = TextOverflow.Ellipsis
+        )
+        LinearProgressIndicator(
+            progress = { if (count == 0) 0f else done.toFloat() / count },
+            modifier = Modifier.fillMaxWidth().height(6.dp),
+            color = accent, trackColor = Color(0xFF315D76)
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(status, color = accent, fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold, lineHeight = 14.sp,
+                maxLines = 2, modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.ChevronRight, contentDescription = null,
+                tint = accent, modifier = Modifier.size(20.dp))
+        }
     }
 }
 
@@ -770,6 +839,8 @@ private fun CurriculumTopicDetail(
             Text("Konu Kitaplığına Dön", color = hubCyan,
                 fontWeight = FontWeight.Bold)
         }
+        LearningTopicCover(topic.area,
+            modifier = Modifier.fillMaxWidth().height(155.dp))
         Column(
             modifier = Modifier.fillMaxWidth()
                 .background(
@@ -799,6 +870,7 @@ private fun CurriculumTopicDetail(
                 }
             }
         }
+        LearningConceptExplorer(topic)
         if (topic.playable) {
             Text("Kullanılabilir Kısa Dersler", color = Color.White,
                 fontSize = 17.sp, fontWeight = FontWeight.Bold)

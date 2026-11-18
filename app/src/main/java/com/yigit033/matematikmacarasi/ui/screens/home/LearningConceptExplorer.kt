@@ -44,6 +44,10 @@ import com.yigit033.matematikmacarasi.learning.TopicArea
  */
 @Composable
 internal fun LearningConceptExplorer(topic: CurriculumTopic) {
+    if (topic.grade in 5..8) {
+        UpperGradeConceptExplorer(topic)
+        return
+    }
     if (topic.grade > 4) return
     when (topic.area) {
         TopicArea.NUMBERS, TopicArea.OPERATIONS -> InteractiveMathLine(topic.id)

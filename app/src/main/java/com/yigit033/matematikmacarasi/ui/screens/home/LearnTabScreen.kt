@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -56,6 +57,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -112,6 +115,7 @@ fun LearnTabScreen(
     var lockedLessonId by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var reportExpanded by rememberSaveable(userClass) { mutableStateOf(false) }
     var showRemainingOnly by rememberSaveable(userClass) { mutableStateOf(false) }
+    var selectedAreaName by rememberSaveable(userClass) { mutableStateOf<String?>(null) }
     var topicQuery by rememberSaveable(userClass) { mutableStateOf("") }
     val homeScroll = rememberScrollState()
     val journeys = remember(userClass) { LearningJourneyCatalog.forGrade(grade) }
@@ -206,7 +210,8 @@ fun LearnTabScreen(
             (topic.title + " " + topic.summary + " " + topic.area.label + " " +
                 topic.outcomes.joinToString(" ")).lowercase(
                 java.util.Locale.forLanguageTag("tr-TR")).contains(searchText)
-        matches && (!showRemainingOnly || unfinished)
+        matches && (!showRemainingOnly || unfinished) &&
+            (selectedAreaName == null || selectedAreaName == topic.area.name)
     }
     val topicsByArea = listedTopics.groupBy { it.area }
     val ageLine = when (curriculum.band) {
@@ -243,7 +248,7 @@ fun LearnTabScreen(
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Matematik Kitaplığım", color = Color.White,
+                    Text("Matematik Keşif Kitaplığım", color = Color.White,
                         fontSize = 21.sp, fontWeight = FontWeight.ExtraBold)
                     Text(userClass.ifBlank { "1. Sınıf" } + " · " + ageLine,
                         color = hubText, fontSize = 11.sp, lineHeight = 16.sp)
@@ -452,13 +457,41 @@ fun LearnTabScreen(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            Text("Konu Kitaplığım",
+            Text("Konuları Keşfet",
                 color = Color.White, fontSize = 20.sp,
                 fontWeight = FontWeight.ExtraBold)
             Text(
-                "Sınıfına uygun başlangıç derslerini konu başlıklarına göre keşfet.",
+                "Resimli konuları incele; görsel örneklerle matematiği adım adım öğren.",
                 color = hubText, fontSize = 12.sp, lineHeight = 17.sp
             )
+            Text("MATEMATİK ALANLARI", color = hubGold,
+                fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    MathAreaFilterChip("Hepsi", selectedAreaName == null) {
+                        selectedAreaName = null
+                    }
+                }
+                items(TopicArea.values().filter { area ->
+                    curriculum.topics.any { it.area == area }
+                }, key = { it.name }) { area ->
+                    val title = when (area) {
+                        TopicArea.NUMBERS -> "Sayılar"
+                        TopicArea.OPERATIONS -> "İşlemler"
+                        TopicArea.GEOMETRY -> "Geometri"
+                        TopicArea.DATA -> "Veri"
+                        TopicArea.ALGEBRA -> "Cebir"
+                        TopicArea.REVIEW -> "Tekrar"
+                    }
+                    MathAreaFilterChip(title, selectedAreaName == area.name) {
+                        selectedAreaName = if (selectedAreaName == area.name)
+                            null else area.name
+                    }
+                }
+            }
             if (grade >= 3) {
                 OutlinedTextField(
                     value = topicQuery,
@@ -549,7 +582,11 @@ fun LearnTabScreen(
                     color = hubText, fontSize = 12.sp
                 )
                 Button(
-                    onClick = { topicQuery = ""; showRemainingOnly = false },
+                    onClick = {
+                        topicQuery = ""
+                        showRemainingOnly = false
+                        selectedAreaName = null
+                    },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = hubCyan)

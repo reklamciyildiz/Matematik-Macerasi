@@ -53,10 +53,10 @@ object UpperGradeConceptPolicy {
     fun safeStep(kind: AdvancedPreviewKind, step: Int): Int =
         step.coerceIn(0, steps(kind) - 1)
 
-    /** For 7th grade show halves; grades 5/6 use exact whole-number positions. */
+    /** Grade 5 uses natural numbers 0..8; grade 6 signed integers -4..4;
+     * grade 7 signed halves -2..2 (with 1/2 ticks). */
     fun lineNumerator(grade: Int, step: Int): Int =
-        if (grade == 7) safeStep(AdvancedPreviewKind.NUMBER_LINE, step) - 4
-        else safeStep(AdvancedPreviewKind.NUMBER_LINE, step) - 4
+        safeStep(AdvancedPreviewKind.NUMBER_LINE, step) - if (grade == 5) 0 else 4
 
     fun lineDenominator(grade: Int): Int = if (grade == 7) 2 else 1
 
